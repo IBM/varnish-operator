@@ -1,0 +1,17 @@
+// This file is generated. Do not edit manually, as changes will be destroyed
+
+import directors;
+
+{{ range $index, $_ := . -}}
+backend container{{ $index }} {
+  .host = "{{ .Host }}";
+  .port = "{{ .Port }}";
+}
+{{ end }}
+
+sub init_backends {
+  new container_rr = directors.round_robin();
+  {{- range $index, $_ := . }}
+  container_rr.add_backend(container{{ $index }});
+  {{- end }}
+}

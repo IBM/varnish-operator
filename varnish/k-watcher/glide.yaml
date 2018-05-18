@@ -1,0 +1,9 @@
+package: icm-varnish/varnish/k-watcher
+import:
+  - package: k8s.io/client-go
+    version: v6.0.0
+  - package: github.com/sirupsen/logrus
+    version: v1.0.5
+  - package: github.com/caarlos0/env
+    version: v3.2.0
+  - package: github.com/juju/errors

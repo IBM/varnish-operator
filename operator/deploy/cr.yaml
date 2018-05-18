@@ -1,0 +1,4 @@
+apiVersion: "icm.ibm.com/v1alpha1"
+kind: "VarnishService"
+metadata:
+  name: "example"

@@ -4,7 +4,8 @@ import (
 	"context"
 	"runtime"
 
-	stub "icm-varnish-k8s-operator/operator/pkg/stub"
+	stub "icm-varnish-k8s-operator/pkg/stub"
+
 	sdk "github.com/operator-framework/operator-sdk/pkg/sdk"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 

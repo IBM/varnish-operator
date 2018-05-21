@@ -19,3 +19,7 @@
 [[constraint]]
   name = "github.com/juju/errors"
   branch = "master"
+
+[[constraint]]
+  name = "github.com/caarlos0/env"
+  version = "v3.2.0"

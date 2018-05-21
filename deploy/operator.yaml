@@ -30,7 +30,7 @@ spec:
         - name: icm-varnish-k8s-operator
           image: registry.ng.bluemix.net/icm-varnish/varnish-operator:v0.0.1
           command:
-          - icm-varnish-k8s-operator/operator
+          - icm-varnish-k8s-operator
           imagePullPolicy: Always
       imagePullSecrets:
         - name: docker-reg-secret

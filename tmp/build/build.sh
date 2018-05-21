@@ -11,8 +11,8 @@ fi
 
 BIN_DIR="$(pwd)/tmp/_output/bin"
 mkdir -p ${BIN_DIR}
-PROJECT_NAME="icm-varnish-k8s-operator/operator"
-REPO_PATH="icm-varnish-k8s-operator/operator"
+PROJECT_NAME="icm-varnish-k8s-operator"
+REPO_PATH="icm-varnish-k8s-operator"
 BUILD_PATH="${REPO_PATH}/cmd/${PROJECT_NAME}"
 echo "building "${PROJECT_NAME}"..."
 GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ${BIN_DIR}/${PROJECT_NAME} $BUILD_PATH

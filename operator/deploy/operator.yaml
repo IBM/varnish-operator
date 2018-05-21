@@ -15,20 +15,22 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: icm-varnish-k8s-operator/operator
+  name: icm-varnish-k8s-operator
 spec:
   replicas: 1
   selector:
     matchLabels:
-      name: icm-varnish-k8s-operator/operator
+      name: icm-varnish-k8s-operator
   template:
     metadata:
       labels:
-        name: icm-varnish-k8s-operator/operator
+        name: icm-varnish-k8s-operator
     spec:
       containers:
-        - name: icm-varnish-k8s-operator/operator
-          image: varnish-service:v0.0.1
+        - name: icm-varnish-k8s-operator
+          image: registry.ng.bluemix.net/icm-varnish/varnish-operator:v0.0.1
           command:
           - icm-varnish-k8s-operator/operator
           imagePullPolicy: Always
+      imagePullSecrets:
+        - name: docker-reg-secret

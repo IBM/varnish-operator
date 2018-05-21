@@ -88,8 +88,8 @@ func deploymentForVarnishService(cr *icmv1alpha1.VarnishService) *appsv1beta2.De
 				},
 				Spec: v1.PodSpec{
 					Containers: []v1.Container{{
-						Image: "varnish-cache:1.0.1",
-						Name:  "varnish-cache",
+						Image: "registry.ng.bluemix.net/icm-varnish/varnish:1.0.1",
+						Name:  "varnish",
 						Ports: []v1.ContainerPort{{
 							ContainerPort: 8080,
 							Name:          "varnish-backend",

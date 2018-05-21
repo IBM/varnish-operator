@@ -23,6 +23,8 @@ yes I know. A lot of stuff...
 
 ### Building
 
+**WARNING**: building requires docker to be running. HOWEVER, if you try to use docker associated with a minikube deployment, trying to build the image will blow up with a "permission denied" error, **and destroy your minikube deployment**. Use `docker-machine` or anything not-minikube to build this.
+
 Part of the project involves code generation. The documentation is...thin on what gets generated and what doesn't, but it appears that the `operator/pkg/apis/icm/v1alpha1/types.go` file drives code generation.
 
 What this means is that, on first run and any time you change the `types.go` file:

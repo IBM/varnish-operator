@@ -107,6 +107,7 @@ For a practical example of what that is, see this StackOverflow question where s
 Reproduced here:
 
 Q: How to watch events on a kubernetes service using its go client
+
 A: this can be done like this:
 
 ```go

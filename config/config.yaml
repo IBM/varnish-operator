@@ -1,3 +1,0 @@
-apiVersion: icm.ibm.com/v1alpha1
-kind: VarnishService
-projectName: icm-varnish-k8s-operator

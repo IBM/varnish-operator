@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"icm-varnish-k8s-operator/varnish/k-watcher/cmd/util"
 	"icm-varnish-k8s-operator/varnish/k-watcher/cmd/varnish"
@@ -15,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 // config that reads in env variables
@@ -130,12 +132,20 @@ func init() {
 		logAndPanic(errors.Trace(err), "missing environment variables")
 	}
 
-	icc, err := rest.InClusterConfig()
+	kubecfgFilepath := flag.String("kubecfg", "", "Path to kube config")
+	flag.Parse()
+
+	var kubecfg *rest.Config
+	if *kubecfgFilepath == "" {
+		kubecfg, err = rest.InClusterConfig()
+	} else {
+		kubecfg, err = clientcmd.BuildConfigFromFlags("", *kubecfgFilepath)
+	}
 	if err != nil {
 		logAndPanic(errors.Trace(err), "couldn't get config")
 	}
 
-	clientset, err = kubernetes.NewForConfig(icc)
+	clientset, err = kubernetes.NewForConfig(kubecfg)
 	if err != nil {
 		logAndPanic(errors.Trace(err), "couldn't create clientset")
 	}

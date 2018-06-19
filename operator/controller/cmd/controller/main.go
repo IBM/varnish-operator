@@ -2,12 +2,15 @@ package main
 
 import (
 	"flag"
+	"os"
+	"os/signal"
+	"syscall"
 
 	vsclientset "icm-varnish-k8s-operator/operator/controller/pkg/client/clientset/versioned"
+	"icm-varnish-k8s-operator/operator/controller/pkg/controller"
 
 	"github.com/juju/errors"
 	log "github.com/sirupsen/logrus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -54,15 +57,13 @@ func init() {
 }
 
 func main() {
-	list, err := vsclient.IcmV1alpha1().VarnishServices("default").List(metav1.ListOptions{})
-	if err != nil {
-		logAndPanic(err, "could not list varnish services")
-	}
+	c := controller.NewVarnishServiceController(vsclient, 3)
+	stopCh := make(chan struct{})
+	defer close(stopCh)
+	go c.Run(stopCh)
 
-	for _, vs := range list.Items {
-		log.WithFields(log.Fields{
-			"replicas": vs.Spec.Replicas,
-			"name":     vs.Name,
-		}).Info("varnish service")
-	}
+	sigterm := make(chan os.Signal, 1)
+	signal.Notify(sigterm, syscall.SIGTERM)
+	signal.Notify(sigterm, syscall.SIGINT)
+	<-sigterm
 }

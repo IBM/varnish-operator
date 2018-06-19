@@ -33,14 +33,21 @@ var conf *config
 var vc *varnish.Configurator
 var vtmpl *varnish.VCLTemplate
 
+// references call site for logError/logAndPanic
+func generateErrorStack(err error, msg string) string {
+	wrapped := errors.NewErrWithCause(err, msg)
+	wrapped.SetLocation(2)
+	return errors.ErrorStack(&wrapped)
+}
+
 // logError logs the err and message
 func logError(err error, msg string) {
-	log.WithField("error", errors.Details(err)).Error(msg)
+	log.Error(generateErrorStack(err, msg))
 }
 
 // logAndPanic logs the err and message, then panics (exits the program)
 func logAndPanic(err error, msg string) {
-	log.WithField("error", errors.Details(err)).Panic(msg)
+	log.Panic(generateErrorStack(err, msg))
 }
 
 // loadConfig uses the codingconcepts/env library to read in environment variables into a struct
@@ -104,12 +111,12 @@ func onChange(oldObj, newObj interface{}) {
 
 	VCL, err := vtmpl.GenerateVCL(newBackends)
 	if err != nil {
-		logError(errors.Trace(err), "Could not generate VCL")
+		logError(err, "Could not generate VCL")
 		return
 	}
 
 	if err = vc.ReloadWithVCL(VCL); err != nil {
-		logError(errors.Trace(err), "could not reload varnish with new VCL")
+		logError(err, "could not reload varnish with new VCL")
 		return
 	}
 
@@ -129,7 +136,7 @@ func init() {
 
 	conf, err = loadConfig()
 	if err != nil {
-		logAndPanic(errors.Trace(err), "missing environment variables")
+		logAndPanic(err, "missing environment variables")
 	}
 
 	kubecfgFilepath := flag.String("kubecfg", "", "Path to kube config")
@@ -142,17 +149,17 @@ func init() {
 		kubecfg, err = clientcmd.BuildConfigFromFlags("", *kubecfgFilepath)
 	}
 	if err != nil {
-		logAndPanic(errors.Trace(err), "couldn't get config")
+		logAndPanic(err, "couldn't get config")
 	}
 
 	clientset, err = kubernetes.NewForConfig(kubecfg)
 	if err != nil {
-		logAndPanic(errors.Trace(err), "couldn't create clientset")
+		logAndPanic(err, "couldn't create clientset")
 	}
 
 	templateFilename := fmt.Sprintf("%s.tmpl", conf.BackendsFile)
 	if vtmpl, err = varnish.NewVCLTemplate(conf.VCLDir, templateFilename); err != nil {
-		logAndPanic(errors.Trace(err), "couldn't create VCL Template")
+		logAndPanic(err, "couldn't create VCL Template")
 	}
 
 	vc = varnish.NewConfigurator(conf.VCLDir, conf.BackendsFile, "vcl_reload")
@@ -168,7 +175,7 @@ func main() {
 		onChange,
 	)
 	if err != nil {
-		logAndPanic(errors.Trace(err), "could not initialize endpoints watcher")
+		logAndPanic(err, "could not initialize endpoints watcher")
 	}
 
 	stopCh := make(chan struct{})

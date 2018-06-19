@@ -1,8 +1,13 @@
 required = [
-  "k8s.io/code-generator/cmd/client-gen"
+  "k8s.io/code-generator/cmd/client-gen",
+  "k8s.io/code-generator/cmd/conversion-gen",
+  "k8s.io/code-generator/cmd/deepcopy-gen",
+  "k8s.io/code-generator/cmd/defaulter-gen",
+  "k8s.io/code-generator/cmd/informer-gen",
+  "k8s.io/code-generator/cmd/lister-gen",
 ]
 
-[[constraint]]
+[[override]]
   name = "k8s.io/api"
   version = "kubernetes-1.10.2"
 
@@ -10,7 +15,7 @@ required = [
   name = "k8s.io/apiextensions-apiserver"
   version = "kubernetes-1.10.2"
 
-[[constraint]]
+[[override]]
   name = "k8s.io/apimachinery"
   version = "kubernetes-1.10.2"
 
@@ -31,24 +36,5 @@ required = [
   version = "v3.2.0"
 
 [[constraint]]
-  name = "github.com/pkg/errors"
-  version = "0.8.0"
-
-[prune]
-  non-go = true
-  go-tests = true
-  unused-packages = true
-
-  [[prune.project]]
-    name = "k8s.io/code-generator"
-    unused-packages = false
-    non-go = false
-    go-tests = false
-
-  # honestly no idea why this is necessary, but it is
-  # see https://github.com/kubernetes/sample-controller/issues/6
-  [[prune.project]]
-    name = "k8s.io/gengo"
-    unused-packages = false
-    non-go = false
-    go-tests = false
+  name = "github.com/juju/errors"
+  branch = "master"

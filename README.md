@@ -152,29 +152,21 @@ There are a few finicky parts to the code generation tool that are worth noting:
 
 #### Gopkg.toml Dependency
 
-When including the code-generation library as a dependency with `dep`, it becomes quickly evident that there is no actual code dependency on the library, so `dep` will not download anything. In fact, `dep` will complain that it is not being used when running `dep ensure`. At time of writing, there is no "supported" way to fix this, but there is a hacky and obtuse workaround possible. [Following this github issue](https://github.com/kubernetes/sample-controller/issues/6), it is possible to add special `prune` settings that force `dep` to download the files:
+When including the code-generation library as a dependency with `dep`, it becomes quickly evident that there is no actual code dependency on the library, so `dep` will not download anything. In fact, `dep` will complain that it is not being used when running `dep ensure`. To fix this, you can "require" that certain packages be included in the dep build. the `required` field must go before any `[[constraint]]` or `[[override]]` field, so it is usually safest to just make it the first line in the file:
 
 ```toml
+required = [
+  "k8s.io/code-generator/cmd/client-gen",
+  "k8s.io/code-generator/cmd/conversion-gen",
+  "k8s.io/code-generator/cmd/deepcopy-gen",
+  "k8s.io/code-generator/cmd/defaulter-gen",
+  "k8s.io/code-generator/cmd/informer-gen",
+  "k8s.io/code-generator/cmd/lister-gen",
+]
+
 [[constraint]]
   name = "k8s.io/code-generator"
   version = "kubernetes-1.10.2"
-
-[prune]
-  non-go = true
-  go-tests = true
-  unused-packages = true
-
-  [[prune.project]]
-    name = "k8s.io/code-generator"
-    unused-packages = false
-    non-go = false
-    go-tests = false
-
-  [[prune.project]]
-    name = "k8s.io/gengo"
-    unused-packages = false
-    non-go = false
-    go-tests = false
 ```
 
 * The first block `[prune]` is the default settings for all packages

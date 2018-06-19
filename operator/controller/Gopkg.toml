@@ -46,6 +46,7 @@ required = [
     go-tests = false
 
   # honestly no idea why this is necessary, but it is
+  # see https://github.com/kubernetes/sample-controller/issues/6
   [[prune.project]]
     name = "k8s.io/gengo"
     unused-packages = false

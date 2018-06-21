@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "github.com/caarlos0/env"
+  packages = ["."]
+  revision = "1cddc31c48c56ecd700d873edb9fd5b6f5df922a"
+  version = "v3.3.0"
+
+[[projects]]
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   revision = "346938d642f2ec3594ed81d874461961cd0faa76"
@@ -274,36 +280,7 @@
   packages = [
     "discovery",
     "discovery/fake",
-    "kubernetes",
     "kubernetes/scheme",
-    "kubernetes/typed/admissionregistration/v1alpha1",
-    "kubernetes/typed/admissionregistration/v1beta1",
-    "kubernetes/typed/apps/v1",
-    "kubernetes/typed/apps/v1beta1",
-    "kubernetes/typed/apps/v1beta2",
-    "kubernetes/typed/authentication/v1",
-    "kubernetes/typed/authentication/v1beta1",
-    "kubernetes/typed/authorization/v1",
-    "kubernetes/typed/authorization/v1beta1",
-    "kubernetes/typed/autoscaling/v1",
-    "kubernetes/typed/autoscaling/v2beta1",
-    "kubernetes/typed/batch/v1",
-    "kubernetes/typed/batch/v1beta1",
-    "kubernetes/typed/batch/v2alpha1",
-    "kubernetes/typed/certificates/v1beta1",
-    "kubernetes/typed/core/v1",
-    "kubernetes/typed/events/v1beta1",
-    "kubernetes/typed/extensions/v1beta1",
-    "kubernetes/typed/networking/v1",
-    "kubernetes/typed/policy/v1beta1",
-    "kubernetes/typed/rbac/v1",
-    "kubernetes/typed/rbac/v1alpha1",
-    "kubernetes/typed/rbac/v1beta1",
-    "kubernetes/typed/scheduling/v1alpha1",
-    "kubernetes/typed/settings/v1alpha1",
-    "kubernetes/typed/storage/v1",
-    "kubernetes/typed/storage/v1alpha1",
-    "kubernetes/typed/storage/v1beta1",
     "pkg/apis/clientauthentication",
     "pkg/apis/clientauthentication/v1alpha1",
     "pkg/version",
@@ -319,7 +296,6 @@
     "tools/clientcmd/api/v1",
     "tools/metrics",
     "tools/pager",
-    "tools/reference",
     "transport",
     "util/buffer",
     "util/cert",
@@ -379,6 +355,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5fa3c6ecbb75de193081c034b3ae9451e787f7b0cc08db0e4bb112df942c1996"
+  inputs-digest = "dc299ed872816def6b2d8df65f8ff841def56dd9919a51babd80ffd13be7953c"
   solver-name = "gps-cdcl"
   solver-version = 1

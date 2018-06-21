@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"icm-varnish-k8s-operator/operator/controller/pkg/config"
 	"os"
 	"os/signal"
 	"syscall"
@@ -57,9 +58,14 @@ func init() {
 }
 
 func main() {
-	c := controller.NewVarnishServiceController(vsclient, 3)
+	conf, err := config.LoadConfig()
+	if err != nil {
+		logAndPanic(err, "could not load config")
+	}
+	c := controller.NewVarnishServiceController(vsclient, conf)
 	stopCh := make(chan struct{})
 	defer close(stopCh)
+	log.Info("starting Varnish Service operator")
 	go c.Run(stopCh)
 
 	sigterm := make(chan os.Signal, 1)

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"icm-varnish-k8s-operator/operator/controller/pkg/config"
 	"icm-varnish-k8s-operator/operator/controller/pkg/handlers"
 	"time"
 
@@ -66,14 +67,14 @@ func New(clientset vsclientset.Interface, eventHandler handlers.Handler, maxRetr
 		clientset:    clientset,
 		queue:        queue,
 		informer:     informer,
-		eventHandler: &handlers.Default{},
+		eventHandler: eventHandler,
 		maxRetries:   maxRetries,
 	}
 }
 
 // NewVarnishServiceController creates a new instance of Controller for a VarnishService
-func NewVarnishServiceController(clientset vsclientset.Interface, maxRetries int) *Controller {
-	return New(clientset, &handlers.VarnishServiceHandler{}, maxRetries)
+func NewVarnishServiceController(clientset vsclientset.Interface, conf *config.Config) *Controller {
+	return New(clientset, &handlers.VarnishServiceHandler{Conf: conf}, conf.OperatorRetryCount)
 }
 
 // Run starts the Controller listening for its resource
@@ -126,7 +127,7 @@ func (c *Controller) processNextItem() bool {
 }
 
 func (c *Controller) processItem(key CacheKey) error {
-	obj, exists, err := c.informer.GetIndexer().GetByKey(key.Key)
+	obj, _, err := c.informer.GetIndexer().GetByKey(key.Key)
 	if err != nil {
 		return errors.Errorf("Error fetching object with key %s from store: %v", key, err)
 	}
@@ -138,9 +139,7 @@ func (c *Controller) processItem(key CacheKey) error {
 		return c.eventHandler.ObjectUpdated(obj)
 	case Delete:
 		return c.eventHandler.ObjectDeleted(obj)
+	default:
+		return errors.NotImplementedf("invalid form of Act: %v", key.Act)
 	}
-	if !exists {
-		return c.eventHandler.ObjectDeleted(obj)
-	}
-	return c.eventHandler.ObjectAdded(obj)
 }

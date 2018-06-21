@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -27,10 +28,16 @@ type VarnishServiceList struct {
 	Items []VarnishService `json:"items"`
 }
 
+// ServiceWrapper is just a way to generate a path "service.spec"
+type ServiceWrapper struct {
+	Spec apiv1.ServiceSpec
+}
+
 // VarnishServiceSpec describes the spec for a VarnishService
 type VarnishServiceSpec struct {
 	// Replicas represents the number of varnish nodes
 	Replicas int32
+	Service  ServiceWrapper
 }
 
 // VarnishServiceStatus describes the status for a VarnishService

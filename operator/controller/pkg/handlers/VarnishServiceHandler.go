@@ -9,8 +9,9 @@ import (
 	"github.com/juju/errors"
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
-	apiv1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 const (
@@ -56,72 +57,145 @@ type headlessConfig struct {
 	ServiceName       string
 	AppLabels         map[string]string
 	AppSelectors      map[string]string
-	VarnishBackedPort apiv1.ServicePort
-	OtherPorts        []apiv1.ServicePort
+	VarnishBackedPort v1.ServicePort
+	OtherPorts        []v1.ServicePort
 }
 
-func newHeadlessService(globalConf config.Config, headlessConf headlessConfig) *apiv1.Service {
-	return &apiv1.Service{
+func newHeadlessService(globalConf config.Config, headlessConf headlessConfig) *v1.Service {
+	return &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   headlessConf.ServiceName,
 			Labels: headlessConf.AppLabels,
 			Annotations: map[string]string{
-				"icm.ibm.com/owner":               varnishServiceName,
+				"icm.ibm.com/owner":               globalConf.VarnishName,
 				"icm.ibm.com/varnish-backed-port": string(headlessConf.VarnishBackedPort.Port),
 			},
 		},
-		Spec: apiv1.ServiceSpec{
+		Spec: v1.ServiceSpec{
 			Ports:     append(headlessConf.OtherPorts, headlessConf.VarnishBackedPort),
 			Selector:  headlessConf.AppSelectors,
 			ClusterIP: "None",
-			Type:      apiv1.ServiceTypeClusterIP,
+			Type:      v1.ServiceTypeClusterIP,
+		},
+	}
+}
+
+type varnishServiceConf struct {
+	AppName      string
+	AppLabels    map[string]string
+	AppSelectors map[string]string
+	Type         v1.ServiceType
+}
+
+func newService(globalConf *config.Config, serviceConf varnishServiceConf) *v1.Service {
+	varnishServiceName := fmt.Sprintf("%s-%s", serviceConf.AppName, varnishServiceName)
+	return &v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   varnishServiceName,
+			Labels: serviceConf.AppLabels,
+			Annotations: map[string]string{
+				"icm.ibm.com/owner":    globalConf.VarnishName,
+				"prometheus.io/scrape": "true",
+				"prometheus.io/port":   string(globalConf.VarnishExporterTargetPort),
+			},
+		},
+		Spec: v1.ServiceSpec{
+			Ports: []v1.ServicePort{
+				{
+					Name:       globalConf.VarnishName,
+					Port:       globalConf.VarnishPort,
+					TargetPort: intstr.IntOrString{IntVal: globalConf.VarnishTargetPort},
+					Protocol:   v1.ProtocolTCP,
+				},
+				{
+					Name:       globalConf.VarnishExporterName,
+					Port:       globalConf.VarnishExporterPort,
+					TargetPort: intstr.IntOrString{IntVal: globalConf.VarnishExporterTargetPort},
+					Protocol:   v1.ProtocolTCP,
+				},
+			},
+			Selector: serviceConf.AppSelectors,
+			Type:     serviceConf.Type,
 		},
 	}
 }
 
 type varnishDeploymentConfig struct {
-	AppName         string
-	AppSelectors    map[string]string
-	AppLabels       map[string]string
-	VarnishReplicas int32
-	VarnishMemory   int32
-	BackendsFile    string
-	DefaultFile     string
-	Namespace       string
+	AppName             string
+	AppSelectors        map[string]string
+	AppLabels           map[string]string
+	VarnishReplicas     int32
+	VarnishMemory       int32
+	BackendsFile        string
+	DefaultFile         string
+	Namespace           string
+	Resources           *v1.ResourceRequirements
+	ExporterResources   *v1.ResourceRequirements
+	LimitResourceCPU    string
+	LimitResourceMem    string
+	RequestsResourceCPU string
+	RequestsResourceMem string
+	VolumeMountName     string
+	VolumeMountPath     string
+	LivenessProbe       *v1.Probe
+	ReadinessProbe      *v1.Probe
+	ImagePullPolicy     v1.PullPolicy
 }
 
-func newVarnishDeployment(globalConf config.Config, deploymentConf varnishDeploymentConfig) *appsv1.Deployment {
-	replicas := deploymentConf.VarnishReplicas
+func newVarnishDeployment(globalConf config.Config, deploymentConf varnishDeploymentConfig) (*appsv1.Deployment, error) {
 	varnishDeploymentName := fmt.Sprintf("%s-%s", deploymentConf.AppName, varnishServiceName)
+	// limitResourceCPU, err := resource.ParseQuantity(deploymentConf.LimitResourceCPU)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// limitResourceMem, err := resource.ParseQuantity(deploymentConf.LimitResourceMem)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// requestsResourceCPU, err := resource.ParseQuantity(deploymentConf.RequestsResourceCPU)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// requestsResourceMem, err := resource.ParseQuantity(deploymentConf.RequestsResourceMem)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	return &appsv1.Deployment{
+	deployment := appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   varnishDeploymentName,
 			Labels: deploymentConf.AppLabels,
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: &replicas,
+			Replicas: &deploymentConf.VarnishReplicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: deploymentConf.AppSelectors,
 			},
-			Template: apiv1.PodTemplateSpec{
+			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: deploymentConf.AppSelectors,
 				},
-				Spec: apiv1.PodSpec{
-					Containers: []apiv1.Container{
+				Spec: v1.PodSpec{
+					Volumes: []v1.Volume{
 						{
-							Name:            deploymentConf.AppName,
-							Image:           globalConf.FullImagePath(),
-							ImagePullPolicy: apiv1.PullAlways,
-							Ports: []apiv1.ContainerPort{
+							Name: deploymentConf.VolumeMountName,
+							VolumeSource: v1.VolumeSource{
+								EmptyDir: &v1.EmptyDirVolumeSource{},
+							},
+						},
+					},
+					Containers: []v1.Container{
+						{
+							Name:  varnishDeploymentName,
+							Image: globalConf.VarnishImageFullPath,
+							Ports: []v1.ContainerPort{
 								{
 									Name:          globalConf.VarnishName,
 									HostPort:      globalConf.VarnishPort,
 									ContainerPort: globalConf.VarnishPort,
 								},
 							},
-							Env: []apiv1.EnvVar{
+							Env: []v1.EnvVar{
 								{Name: "APP_NAME", Value: deploymentConf.AppName},
 								{Name: "BACKENDS_FILE", Value: deploymentConf.BackendsFile},
 								{Name: "DEFAULT_FILE", Value: deploymentConf.DefaultFile},
@@ -131,15 +205,55 @@ func newVarnishDeployment(globalConf config.Config, deploymentConf varnishDeploy
 								{Name: "VARNISH_MEMORY", Value: fmt.Sprintf("%dM", deploymentConf.VarnishMemory)},
 								{Name: "VCL_DIR", Value: globalConf.VCLDir},
 							},
-							// TODO: continue converting yaml file to golang
-							Resources: apiv1.ResourceRequirements{
-								Limits:   apiv1.ResourceList{},
-								Requests: apiv1.ResourceList{},
+							Resources: *deploymentConf.Resources,
+							// Resources: v1.ResourceRequirements{
+							// 	Limits: v1.ResourceList{
+							// 		v1.ResourceCPU:    limitResourceCPU,
+							// 		v1.ResourceMemory: limitResourceMem,
+							// 	},
+							// 	Requests: v1.ResourceList{
+							// 		v1.ResourceCPU:    requestsResourceCPU,
+							// 		v1.ResourceMemory: requestsResourceMem,
+							// 	},
+							// },
+							VolumeMounts: []v1.VolumeMount{
+								{
+									Name:      deploymentConf.VolumeMountName,
+									MountPath: deploymentConf.VolumeMountPath,
+								},
 							},
+							LivenessProbe:   deploymentConf.LivenessProbe,
+							ReadinessProbe:  deploymentConf.ReadinessProbe,
+							ImagePullPolicy: deploymentConf.ImagePullPolicy,
+						},
+						{
+							Name:  fmt.Sprintf("%s-exporter", varnishDeploymentName),
+							Image: globalConf.VarnishImageFullPath,
+							Ports: []v1.ContainerPort{
+								{
+									Name:          fmt.Sprintf("%s-exporter", varnishDeploymentName),
+									ContainerPort: globalConf.VarnishExporterPort,
+								},
+							},
+							Resources: *deploymentConf.ExporterResources,
+							VolumeMounts: []v1.VolumeMount{
+								{
+									Name:      deploymentConf.VolumeMountName,
+									MountPath: deploymentConf.VolumeMountPath,
+								},
+							},
+						},
+					},
+					RestartPolicy: globalConf.RestartPolicy,
+					ImagePullSecrets: []v1.LocalObjectReference{
+						{
+							Name: globalConf.ImagePullSecret,
 						},
 					},
 				},
 			},
 		},
 	}
+
+	return &deployment, nil
 }

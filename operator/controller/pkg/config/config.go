@@ -12,18 +12,22 @@ import (
 
 // Config describes constant values that will be applied to all varnish services, but may change per-cluster
 type Config struct {
-	OperatorRetryCount        int           `env:"OPERATOR_RETRY_COUNT" envDefault:"3"`
-	VarnishExporterPort       int32         `env:"VARNISH_EXPORTER_PORT,required"`
-	VarnishExporterTargetPort int32         `env:"VARNISH_EXPORTER_TARGET_PORT,required"`
-	VarnishPort               int32         `env:"VARNISH_PORT,required"`
-	VarnishTargetPort         int32         `env:"VARNISH_TARGET_PORT,required"`
-	VarnishImageHost          string        `env:"VARNISH_IMAGE_HOST,required"`
-	VarnishImageNamespace     string        `env:"VARNISH_IMAGE_NAMESPACE" envDefault:"icm-varnish"`
-	VarnishImageName          string        `env:"VARNISH_IMAGE_NAME" envDefault:"varnish"`
-	VarnishImageTag           string        `env:"VARNISH_IMAGE_TAG,required"`
-	VarnishImagePullPolicy    v1.PullPolicy `env:"VARNISH_IMAGE_PULL_POLICY" envDefault:"Always"`
-	VarnishName               string        `env:"VARNISH_NAME" envDefault:"varnish"`
-	VCLDir                    string        `env:"VCL_DIR" envDefault:"/etc/varnish"`
+	ImagePullSecret           string           `env:"IMAGE_PULL_SECRET,required"`
+	OperatorRetryCount        int              `env:"OPERATOR_RETRY_COUNT" envDefault:"3"`
+	RestartPolicy             v1.RestartPolicy `env:"RESTART_POLICY" envDefault:"Always"`
+	VarnishExporterPort       int32            `env:"VARNISH_EXPORTER_PORT,required"`
+	VarnishExporterTargetPort int32            `env:"VARNISH_EXPORTER_TARGET_PORT,required"`
+	VarnishPort               int32            `env:"VARNISH_PORT,required"`
+	VarnishTargetPort         int32            `env:"VARNISH_TARGET_PORT,required"`
+	VarnishImageHost          string           `env:"VARNISH_IMAGE_HOST,required"`
+	VarnishImageNamespace     string           `env:"VARNISH_IMAGE_NAMESPACE" envDefault:"icm-varnish"`
+	VarnishImageName          string           `env:"VARNISH_IMAGE_NAME" envDefault:"varnish"`
+	VarnishImageTag           string           `env:"VARNISH_IMAGE_TAG,required"`
+	VarnishImagePullPolicy    v1.PullPolicy    `env:"VARNISH_IMAGE_PULL_POLICY" envDefault:"Always"`
+	VarnishName               string           `env:"VARNISH_NAME" envDefault:"varnish"`
+	VCLDir                    string           `env:"VCL_DIR" envDefault:"/etc/varnish"`
+	VarnishImageFullPath      string
+	VarnishExporterName       string
 }
 
 func verifyImagePullPolicy(v v1.PullPolicy) error {
@@ -36,6 +40,19 @@ func verifyImagePullPolicy(v v1.PullPolicy) error {
 		return nil
 	default:
 		return errors.NotSupportedf("ImagePullPolicy %s not supported", v)
+	}
+}
+
+func verifyRestartPolicy(v v1.RestartPolicy) error {
+	switch v {
+	case v1.RestartPolicyAlways:
+		return nil
+	case v1.RestartPolicyNever:
+		return nil
+	case v1.RestartPolicyOnFailure:
+		return nil
+	default:
+		return errors.NotSupportedf("RestartPolicy %s not supported", v)
 	}
 }
 
@@ -63,10 +80,15 @@ func LoadConfig() (*Config, error) {
 	if err := verifyImagePullPolicy(c.VarnishImagePullPolicy); err != nil {
 		return &c, errors.Trace(err)
 	}
+	if err := verifyRestartPolicy(c.RestartPolicy); err != nil {
+		return &c, errors.Trace(err)
+	}
+	c.VarnishImageFullPath = c.fullImagePath()
+	c.VarnishExporterName = fmt.Sprintf("%s-exporter", c.VarnishName)
 	return &c, nil
 }
 
 // FullImagePath compiles the full path to the image
-func (c *Config) FullImagePath() string {
+func (c *Config) fullImagePath() string {
 	return fmt.Sprintf("%s/%s/%s:%s", c.VarnishImageHost, c.VarnishImageNamespace, c.VarnishImageName, c.VarnishImageTag)
 }

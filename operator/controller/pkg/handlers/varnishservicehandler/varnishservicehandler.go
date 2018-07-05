@@ -1,4 +1,4 @@
-package handlers
+package varnishservicehandler
 
 import (
 	"fmt"
@@ -12,6 +12,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/kubernetes"
 )
 
 const (
@@ -21,63 +22,52 @@ const (
 // VarnishServiceHandler describes the functions that handle events coming in for the VarnishService CRD
 type VarnishServiceHandler struct {
 	Conf *config.Config
+	Client *kubernetes.Clientset
 }
 
-// ObjectAdded prints out the VarnishService
+// ObjectAdded is called when a new instance of a VarnishService is detected, and so creates all of the necessary resources
 func (h *VarnishServiceHandler) ObjectAdded(obj interface{}) error {
 	vs, ok := obj.(*icmapiv1alpha1.VarnishService)
 	if !ok {
 		return errors.NotValidf("object was not of type VarnishService. Found %s", reflect.TypeOf(vs))
 	}
+
+	if err := applyHeadlessService(h.Client, h.Conf, vs); err != nil {
+		return errors.Trace(err)
+	}
+
 	log.Infof("adding %+v", vs)
 	return nil
 }
 
-// ObjectUpdated prints out the VarnishService
+// ObjectUpdated is called when a change to an existing VarnishService is detected, and applies any relevant changes
 func (h *VarnishServiceHandler) ObjectUpdated(obj interface{}) error {
 	vs, ok := obj.(*icmapiv1alpha1.VarnishService)
 	if !ok {
 		return errors.NotValidf("object was not of type VarnishService. Found %s", reflect.TypeOf(vs))
 	}
+
+	if err := applyHeadlessService(h.Client, h.Conf, vs); err != nil {
+		return errors.Trace(err)
+	}
+
 	log.Infof("adding %+v", vs)
 	return nil
 }
 
-// ObjectDeleted prints out the VarnishService
+// ObjectDeleted is called when an existing instance of VarnishService is deleted, so it cleans up all dependent resources
 func (h *VarnishServiceHandler) ObjectDeleted(obj interface{}) error {
 	vs, ok := obj.(*icmapiv1alpha1.VarnishService)
 	if !ok {
 		return errors.NotValidf("object was not of type VarnishService. Found %s", reflect.TypeOf(vs))
 	}
+
+	if err := deleteHeadlessService(h.Client, vs); err != nil {
+		return errors.Trace(err)
+	}
+	
 	log.Infof("adding %+v", vs)
 	return nil
-}
-
-type headlessConfig struct {
-	ServiceName       string
-	AppLabels         map[string]string
-	AppSelectors      map[string]string
-	VarnishBackedPort v1.ServicePort
-	OtherPorts        []v1.ServicePort
-}
-
-func newHeadlessService(globalConf config.Config, headlessConf headlessConfig) *v1.Service {
-	return &v1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:   headlessConf.ServiceName,
-			Labels: headlessConf.AppLabels,
-			Annotations: map[string]string{
-				"icm.ibm.com/owner":               globalConf.VarnishName,
-				"icm.ibm.com/varnish-backed-port": string(headlessConf.VarnishBackedPort.Port),
-			},
-		},
-		Spec: v1.ServiceSpec{
-			Ports:     append(headlessConf.OtherPorts, headlessConf.VarnishBackedPort),
-			Selector:  headlessConf.AppSelectors,
-			ClusterIP: "None",
-			Type:      v1.ServiceTypeClusterIP,
-		},
-	}
 }
 
 type varnishServiceConf struct {
@@ -87,7 +77,7 @@ type varnishServiceConf struct {
 	Type         v1.ServiceType
 }
 
-func newService(globalConf *config.Config, serviceConf varnishServiceConf) *v1.Service {
+func newService(globalConf *config.Config, serviceConf *varnishServiceConf) *v1.Service {
 	varnishServiceName := fmt.Sprintf("%s-%s", serviceConf.AppName, varnishServiceName)
 	return &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
@@ -140,9 +130,10 @@ type varnishDeploymentConfig struct {
 	LivenessProbe       *v1.Probe
 	ReadinessProbe      *v1.Probe
 	ImagePullPolicy     v1.PullPolicy
+	ServiceAccountName  string
 }
 
-func newVarnishDeployment(globalConf config.Config, deploymentConf varnishDeploymentConfig) (*appsv1.Deployment, error) {
+func newVarnishDeployment(globalConf *config.Config, deploymentConf *varnishDeploymentConfig) (*appsv1.Deployment, error) {
 	varnishDeploymentName := fmt.Sprintf("%s-%s", deploymentConf.AppName, varnishServiceName)
 	// limitResourceCPU, err := resource.ParseQuantity(deploymentConf.LimitResourceCPU)
 	// if err != nil {
@@ -244,7 +235,8 @@ func newVarnishDeployment(globalConf config.Config, deploymentConf varnishDeploy
 							},
 						},
 					},
-					RestartPolicy: globalConf.RestartPolicy,
+					RestartPolicy:      globalConf.RestartPolicy,
+					ServiceAccountName: deploymentConf.ServiceAccountName,
 					ImagePullSecrets: []v1.LocalObjectReference{
 						{
 							Name: globalConf.ImagePullSecret,

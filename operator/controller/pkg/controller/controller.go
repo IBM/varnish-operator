@@ -3,6 +3,7 @@ package controller
 import (
 	"icm-varnish-k8s-operator/operator/controller/pkg/config"
 	"icm-varnish-k8s-operator/operator/controller/pkg/handlers"
+	vshandler "icm-varnish-k8s-operator/operator/controller/pkg/handlers/varnishservicehandler"
 	"time"
 
 	"github.com/juju/errors"
@@ -74,7 +75,7 @@ func New(clientset vsclientset.Interface, eventHandler handlers.Handler, maxRetr
 
 // NewVarnishServiceController creates a new instance of Controller for a VarnishService
 func NewVarnishServiceController(clientset vsclientset.Interface, conf *config.Config) *Controller {
-	return New(clientset, &handlers.VarnishServiceHandler{Conf: conf}, conf.OperatorRetryCount)
+	return New(clientset, &vshandler.VarnishServiceHandler{Conf: conf}, conf.OperatorRetryCount)
 }
 
 // Run starts the Controller listening for its resource

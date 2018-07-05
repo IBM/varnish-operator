@@ -2,21 +2,22 @@ package main
 
 import (
 	"flag"
+	vsclientset "icm-varnish-k8s-operator/operator/controller/pkg/client/clientset/versioned"
 	"icm-varnish-k8s-operator/operator/controller/pkg/config"
+	"icm-varnish-k8s-operator/operator/controller/pkg/controller"
 	"os"
 	"os/signal"
 	"syscall"
 
-	vsclientset "icm-varnish-k8s-operator/operator/controller/pkg/client/clientset/versioned"
-	"icm-varnish-k8s-operator/operator/controller/pkg/controller"
-
 	"github.com/juju/errors"
 	log "github.com/sirupsen/logrus"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
 var vsclient *vsclientset.Clientset
+var client *kubernetes.Clientset
 
 // references call site for logError/logAndPanic
 func generateErrorStack(err error, msg string) string {
@@ -52,6 +53,10 @@ func init() {
 	}
 
 	vsclient, err = vsclientset.NewForConfig(kubecfg)
+	if err != nil {
+		logAndPanic(err, "couldn't create varnish-service clientset")
+	}
+	client, err = kubernetes.NewForConfig(kubecfg)
 	if err != nil {
 		logAndPanic(err, "couldn't create clientset")
 	}

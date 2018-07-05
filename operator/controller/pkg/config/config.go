@@ -28,6 +28,7 @@ type Config struct {
 	VCLDir                    string           `env:"VCL_DIR" envDefault:"/etc/varnish"`
 	VarnishImageFullPath      string
 	VarnishExporterName       string
+	VarnishCommonLabels map[string]string
 }
 
 func verifyImagePullPolicy(v v1.PullPolicy) error {
@@ -85,6 +86,9 @@ func LoadConfig() (*Config, error) {
 	}
 	c.VarnishImageFullPath = c.fullImagePath()
 	c.VarnishExporterName = fmt.Sprintf("%s-exporter", c.VarnishName)
+	c.VarnishCommonLabels = map[string]string{
+		"owner": c.VarnishName,
+	}
 	return &c, nil
 }
 

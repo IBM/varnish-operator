@@ -50,4 +50,6 @@ type VarnishServiceSpec struct {
 type VarnishServiceStatus struct {
 	// Nodes represents the names of the varnish nodes
 	Nodes []string `json:"nodes"`
+	// Replicas represents the current number of varnish nodes
+	Replicas int32 `json:"replicas"`
 }

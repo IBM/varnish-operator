@@ -22,7 +22,7 @@ const (
 // VarnishServiceHandler describes the functions that handle events coming in for the VarnishService CRD
 type VarnishServiceHandler struct {
 	Conf *config.Config
-	Client *kubernetes.Clientset
+	Client kubernetes.Interface
 }
 
 // ObjectAdded is called when a new instance of a VarnishService is detected, and so creates all of the necessary resources

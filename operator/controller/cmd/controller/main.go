@@ -16,8 +16,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-var vsclient *vsclientset.Clientset
-var client *kubernetes.Clientset
+var vsclient vsclientset.Interface
+var client kubernetes.Interface
 
 // references call site for logError/logAndPanic
 func generateErrorStack(err error, msg string) string {
@@ -67,7 +67,7 @@ func main() {
 	if err != nil {
 		logAndPanic(err, "could not load config")
 	}
-	c := controller.NewVarnishServiceController(vsclient, conf)
+	c := controller.NewVarnishServiceController(client, vsclient, conf)
 	stopCh := make(chan struct{})
 	defer close(stopCh)
 	log.Info("starting Varnish Service operator")

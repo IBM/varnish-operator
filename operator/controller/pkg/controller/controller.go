@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
+	"k8s.io/client-go/kubernetes"
 )
 
 // Controller describes everything the Varnish Service operator acts on
@@ -74,8 +75,8 @@ func New(clientset vsclientset.Interface, eventHandler handlers.Handler, maxRetr
 }
 
 // NewVarnishServiceController creates a new instance of Controller for a VarnishService
-func NewVarnishServiceController(clientset vsclientset.Interface, conf *config.Config) *Controller {
-	return New(clientset, &vshandler.VarnishServiceHandler{Conf: conf}, conf.OperatorRetryCount)
+func NewVarnishServiceController(kclient kubernetes.Interface, vsclient vsclientset.Interface, conf *config.Config) *Controller {
+	return New(vsclient, &vshandler.VarnishServiceHandler{Conf: conf, Client: kclient}, conf.OperatorRetryCount)
 }
 
 // Run starts the Controller listening for its resource
@@ -89,7 +90,7 @@ func (c *Controller) Run(stopCh <-chan struct{}) {
 
 	// wait for cache to sync before starting worker
 	if !cache.WaitForCacheSync(stopCh, c.informer.HasSynced) {
-		utilruntime.HandleError(errors.New("Timed out waiting for caches to sync"))
+		handleError(errors.New("Timed out waiting for caches to sync"))
 		return
 	}
 
@@ -121,7 +122,7 @@ func (c *Controller) processNextItem() bool {
 		c.queue.AddRateLimited(key)
 	} else {
 		c.queue.Forget(key)
-		utilruntime.HandleError(err)
+		handleError(err)
 	}
 
 	return true

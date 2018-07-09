@@ -4,35 +4,24 @@ import (
 	icmapiv1alpha1 "icm-varnish-k8s-operator/operator/controller/pkg/apis/icm/v1alpha1"
 	"icm-varnish-k8s-operator/operator/controller/pkg/config"
 
-	"fmt"
 	"icm-varnish-k8s-operator/operator/controller/pkg/patch"
 
-	"github.com/json-iterator/go"
 	"github.com/juju/errors"
 	log "github.com/sirupsen/logrus"
-	v1 "k8s.io/api/core/v1"
+	"k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
+	"fmt"
+	"strconv"
 )
 
-var json = jsoniter.ConfigFastest
-
-var LastAppliedConfigurationKey = "icm.ibm.com/last-applied-configuration"
-
-func applyHeadlessService(client *kubernetes.Clientset, globalConf *config.Config, vs *icmapiv1alpha1.VarnishService) error {
+func applyHeadlessService(client kubernetes.Interface, globalConf *config.Config, vs *icmapiv1alpha1.VarnishService) error {
 	serviceClient := client.CoreV1().Services(vs.Namespace)
 
-	var lastAppliedState, desiredState, currState *v1.Service
+	var lastAppliedState, desiredState, currState, res *v1.Service
 	var err error
-
-	currState, err = serviceClient.Get(vs.Name, metav1.GetOptions{})
-	if kerrors.IsNotFound(err) {
-		currState = nil
-	} else if err != nil {
-		return errors.Annotate(err, "could not apply headless service")
-	}
 
 	varnishBackedPort, otherPorts, err := extractVarnishPort(vs.Spec.Service.Spec.Ports, vs.Spec.Service.Spec.VarnishPortName)
 	if err != nil {
@@ -51,18 +40,28 @@ func applyHeadlessService(client *kubernetes.Clientset, globalConf *config.Confi
 		return errors.Annotate(err, "could not create new headless service")
 	}
 
-	lastAppliedState, err = lastAppliedHeadlessService(currState)
-	if err != nil {
-		return errors.Annotate(err, "could not retrieve last applied state")
-	}
+	currState, err = serviceClient.Get(conf.ServiceName, metav1.GetOptions{})
+	if kerrors.IsNotFound(err) {
+		res, err = serviceClient.Create(desiredState)
+		if err != nil {
+			return errors.Annotate(err, "could not create new varnish service")
+		}
+	} else if err != nil {
+		return errors.Annotate(err, "could not get current state of headless service")
+	} else {
+		lastAppliedState, err = lastAppliedHeadlessService(currState)
+		if err != nil {
+			return errors.Annotate(err, "could not retrieve last applied state")
+		}
 
-	patchData, err := patch.NewStrategicMergePatch(lastAppliedState, desiredState, currState)
-	if err != nil {
-		return errors.Trace(err)
-	}
-	res, err := serviceClient.Patch(vs.Name, types.StrategicMergePatchType, patchData)
-	if err != nil {
-		return errors.Annotate(err, "problem executing patch")
+		patchData, err := patch.NewStrategicMergePatch(lastAppliedState, desiredState, currState)
+		if err != nil {
+			return errors.Trace(err)
+		}
+		res, err = serviceClient.Patch(conf.ServiceName, types.StrategicMergePatchType, patchData)
+		if err != nil {
+			return errors.Annotate(err, "problem executing patch")
+		}
 	}
 
 	log.WithField("headless-service", res).Info("applied headless service")
@@ -87,23 +86,30 @@ func lastAppliedHeadlessService(currState *v1.Service) (*v1.Service, error) {
 }
 
 func extractVarnishPort(ports []v1.ServicePort, varnishPortName string) (*v1.ServicePort, []v1.ServicePort, error) {
-	var varnishBackedPort *v1.ServicePort
-	otherPorts := make([]v1.ServicePort, len(ports)-1)
+	if len(ports) == 0 {
+		return nil, nil, errors.New("no ports exposed on this service")
+	} else {
+		var varnishBackedPort *v1.ServicePort
+		otherPorts := make([]v1.ServicePort, len(ports)-1)
 
-	for _, port := range ports {
-		if port.Name == varnishPortName {
-			if varnishBackedPort != nil {
-				return nil, nil, errors.New("more than one port had name of VarnishBackedPort")
+		for _, port := range ports {
+			if port.Name == varnishPortName {
+				if varnishBackedPort != nil {
+					return nil, nil, errors.New("more than one port had name of VarnishBackedPort")
+				}
+				varnishBackedPort = &port
+			} else {
+				otherPorts = append(otherPorts, port)
 			}
-			varnishBackedPort = &port
-		} else {
-			otherPorts = append(otherPorts, port)
 		}
+		if varnishBackedPort == nil {
+			return nil, nil, errors.New("no port assigned the varnish port name")
+		}
+		return varnishBackedPort, otherPorts, nil
 	}
-	return varnishBackedPort, otherPorts, nil
 }
 
-func deleteHeadlessService(client *kubernetes.Clientset, vs *icmapiv1alpha1.VarnishService) error {
+func deleteHeadlessService(client kubernetes.Interface, vs *icmapiv1alpha1.VarnishService) error {
 	serviceClient := client.CoreV1().Services(vs.Namespace)
 
 	return serviceClient.Delete(vs.Name, &metav1.DeleteOptions{})
@@ -124,7 +130,7 @@ func newHeadlessService(globalConf *config.Config, headlessConf *headlessConfig)
 			Labels: headlessConf.AppLabels,
 			Annotations: map[string]string{
 				"icm.ibm.com/owner":               globalConf.VarnishName,
-				"icm.ibm.com/varnish-backed-port": string(headlessConf.VarnishBackedPort.Port),
+				"icm.ibm.com/varnish-backed-port": strconv.Itoa(int(headlessConf.VarnishBackedPort.Port)),
 			},
 		},
 		Spec: v1.ServiceSpec{
@@ -135,7 +141,7 @@ func newHeadlessService(globalConf *config.Config, headlessConf *headlessConfig)
 		},
 	}
 	var err error
-	s.Annotations[LastAppliedConfigurationKey], err = json.MarshalToString(s)
+	addApplyAnnotation(&s)
 
 	if err != nil {
 		return nil, errors.Annotate(err, "could not marshal Service to JSON")

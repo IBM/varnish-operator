@@ -40,3 +40,9 @@ spec:
             replicas:
               type: integer
               minimum: 1
+            service:
+              properties:
+                spec:
+                  properties:
+                    varnishPortName:
+                      type: string

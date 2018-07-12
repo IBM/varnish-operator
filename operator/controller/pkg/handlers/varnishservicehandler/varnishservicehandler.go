@@ -135,22 +135,6 @@ type varnishDeploymentConfig struct {
 
 func newVarnishDeployment(globalConf *config.Config, deploymentConf *varnishDeploymentConfig) (*appsv1.Deployment, error) {
 	varnishDeploymentName := fmt.Sprintf("%s-%s", deploymentConf.AppName, varnishServiceName)
-	// limitResourceCPU, err := resource.ParseQuantity(deploymentConf.LimitResourceCPU)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// limitResourceMem, err := resource.ParseQuantity(deploymentConf.LimitResourceMem)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// requestsResourceCPU, err := resource.ParseQuantity(deploymentConf.RequestsResourceCPU)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// requestsResourceMem, err := resource.ParseQuantity(deploymentConf.RequestsResourceMem)
-	// if err != nil {
-	// 	return nil, err
-	// }
 
 	deployment := appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -197,16 +181,6 @@ func newVarnishDeployment(globalConf *config.Config, deploymentConf *varnishDepl
 								{Name: "VCL_DIR", Value: globalConf.VCLDir},
 							},
 							Resources: *deploymentConf.Resources,
-							// Resources: v1.ResourceRequirements{
-							// 	Limits: v1.ResourceList{
-							// 		v1.ResourceCPU:    limitResourceCPU,
-							// 		v1.ResourceMemory: limitResourceMem,
-							// 	},
-							// 	Requests: v1.ResourceList{
-							// 		v1.ResourceCPU:    requestsResourceCPU,
-							// 		v1.ResourceMemory: requestsResourceMem,
-							// 	},
-							// },
 							VolumeMounts: []v1.VolumeMount{
 								{
 									Name:      deploymentConf.VolumeMountName,

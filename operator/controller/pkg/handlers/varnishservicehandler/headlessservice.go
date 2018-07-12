@@ -42,6 +42,16 @@ func applyHeadlessService(client kubernetes.Interface, globalConf *config.Config
 
 	currState, err = serviceClient.Get(conf.ServiceName, metav1.GetOptions{})
 	if kerrors.IsNotFound(err) {
+		blockOwnerDeletion := true
+		desiredState.OwnerReferences = []metav1.OwnerReference{
+			{
+				APIVersion:         vs.APIVersion,
+				Kind:               vs.Kind,
+				Name:               vs.Name,
+				UID:                vs.UID,
+				BlockOwnerDeletion: &blockOwnerDeletion,
+			},
+		}
 		res, err = serviceClient.Create(desiredState)
 		if err != nil {
 			return errors.Annotate(err, "could not create new varnish service")
@@ -111,8 +121,8 @@ func extractVarnishPort(ports []v1.ServicePort, varnishPortName string) (*v1.Ser
 
 func deleteHeadlessService(client kubernetes.Interface, vs *icmapiv1alpha1.VarnishService) error {
 	serviceClient := client.CoreV1().Services(vs.Namespace)
-
-	return serviceClient.Delete(vs.Name, &metav1.DeleteOptions{})
+	propogationForegound := metav1.DeletePropagationForeground
+	return serviceClient.Delete(vs.Name, &metav1.DeleteOptions{PropagationPolicy: &propogationForegound})
 }
 
 type headlessConfig struct {
@@ -125,6 +135,9 @@ type headlessConfig struct {
 
 func newHeadlessService(globalConf *config.Config, headlessConf *headlessConfig) (*v1.Service, error) {
 	s := v1.Service{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   headlessConf.ServiceName,
 			Labels: headlessConf.AppLabels,

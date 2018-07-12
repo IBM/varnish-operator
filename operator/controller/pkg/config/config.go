@@ -15,10 +15,10 @@ type Config struct {
 	ImagePullSecret           string           `env:"IMAGE_PULL_SECRET,required"`
 	OperatorRetryCount        int              `env:"OPERATOR_RETRY_COUNT" envDefault:"3"`
 	RestartPolicy             v1.RestartPolicy `env:"RESTART_POLICY" envDefault:"Always"`
-	VarnishExporterPort       int32            `env:"VARNISH_EXPORTER_PORT,required"`
-	VarnishExporterTargetPort int32            `env:"VARNISH_EXPORTER_TARGET_PORT,required"`
-	VarnishPort               int32            `env:"VARNISH_PORT,required"`
-	VarnishTargetPort         int32            `env:"VARNISH_TARGET_PORT,required"`
+	VarnishExporterPort       int32            `env:"VARNISH_EXPORTER_PORT" envDefault:"2034"`
+	VarnishExporterTargetPort int32            `env:"VARNISH_EXPORTER_TARGET_PORT" envDefault:"2034"`
+	VarnishPort               int32            `env:"VARNISH_PORT" envDefault:"2035"`
+	VarnishTargetPort         int32            `env:"VARNISH_TARGET_PORT" envDefault:"2035"`
 	VarnishImageHost          string           `env:"VARNISH_IMAGE_HOST,required"`
 	VarnishImageNamespace     string           `env:"VARNISH_IMAGE_NAMESPACE" envDefault:"icm-varnish"`
 	VarnishImageName          string           `env:"VARNISH_IMAGE_NAME" envDefault:"varnish"`

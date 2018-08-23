@@ -2,7 +2,6 @@ package varnish
 
 import (
 	"bytes"
-	"icm-varnish-k8s-operator/varnish/k-watcher/cmd/util"
 	"io"
 	"path/filepath"
 	"text/template"
@@ -32,7 +31,7 @@ func NewVCLTemplate(dir string, filename string) (*VCLTemplate, error) {
 }
 
 // GenerateVCL uses a list of backends to generate a new VCL template, passing back a Reader representing the new template
-func (vt *VCLTemplate) GenerateVCL(backends []util.Backend) (io.Reader, error) {
+func (vt *VCLTemplate) GenerateVCL(ips []string, targetPort int32) (io.Reader, error) {
 	t, err := vt.t.Clone()
 	if err != nil {
 		return nil, errors.Annotate(err, "problem initializing template")
@@ -40,7 +39,7 @@ func (vt *VCLTemplate) GenerateVCL(backends []util.Backend) (io.Reader, error) {
 
 	var b bytes.Buffer
 
-	if err := t.ExecuteTemplate(&b, vt.filename, backends); err != nil {
+	if err := t.ExecuteTemplate(&b, vt.filename, map[string]interface{}{"IPs": ips, "TargetPort": targetPort}); err != nil {
 		return nil, errors.Annotate(err, "problem resolving template")
 	}
 	return &b, nil

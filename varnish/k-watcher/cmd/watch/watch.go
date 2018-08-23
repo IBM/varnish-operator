@@ -5,7 +5,7 @@ import (
 
 	"github.com/juju/errors"
 	"k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/fields"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/cache"
 )
@@ -35,14 +35,17 @@ func objTypeFor(resource string) (runtime.Object, error) {
 	}
 }
 
-// WatchResource watches the named resource for changes and runs the onChange function with every change.
+// Resource watches the named resource for changes and runs the onChange function with every change.
 // For add events, onChange will pass in (nil, newObj), and for delete events, onChange will pass in (oldObj, nil)
-func WatchResource(c cache.Getter, resource string, namespace string, selector fields.Selector, onChange func(oldObj, newObj interface{})) (cache.Store, cache.Controller, error) {
+func Resource(c cache.Getter, resource string, namespace string, labelSelectorString string, onChange func(oldObj, newObj interface{})) (cache.Store, cache.Controller, error) {
 	objType, err := objTypeFor(resource)
 	if err != nil {
 		return nil, nil, errors.Trace(err)
 	}
-	listWatch := cache.NewListWatchFromClient(c, resource, namespace, selector)
+	optionsModifier := func(options *metav1.ListOptions) {
+		options.LabelSelector = labelSelectorString
+	}
+	listWatch := cache.NewFilteredListWatchFromClient(c, resource, namespace, optionsModifier)
 
 	handlerFns := cache.ResourceEventHandlerFuncs{
 		AddFunc:    func(obj interface{}) { onChange(nil, obj) },

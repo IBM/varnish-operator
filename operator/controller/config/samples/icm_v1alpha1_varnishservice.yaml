@@ -1,0 +1,48 @@
+apiVersion: icm.ibm.com/v1alpha1
+kind: VarnishService
+metadata:
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: varnishservice-sample
+  namespace: varnish-ns
+spec:
+  deployment:
+    replicas: 3
+    varnishMemory: "1024M"
+    backendsFile: backends.vcl
+    defaultFile: default.vcl
+    varnishResources:
+      limits:
+        cpu: 1
+        memory: "2048Mi"
+      requests:
+        cpu: 1
+        memory: "2048Mi"
+    varnishExporterResources:
+      limits:
+        cpu: 0.2
+        memory: "200Mi"
+      requests:
+        cpu: 0.1
+        memory: "100Mi"
+    sharedVolume:
+      name: libvarnish
+      path: /var/lib/varnish
+    # livenessProbe:
+    #   httpGet:
+    #     path: /liveness
+    #     port: 8080
+    readinessProbe:
+      exec:
+        command: [/usr/bin/varnishadm, ping]
+      initialDelaySeconds: 5
+    imagePullSecretName: docker-reg-secret
+    # affinity:
+    # tolerations:
+  service:
+    varnishPortName: varnish-port
+    selector:
+      app: HttPerf
+    ports:
+    - port: 8080
+      protocol: TCP

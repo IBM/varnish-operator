@@ -1,10 +1,11 @@
-vendor
-bin
-_output
+
+# Binaries for programs and plugins
 
 # Test binary, build with `go test -c`
 *.test
-*.out
+
+vendor
+test
 
 # editor and IDE paraphernalia
 .idea

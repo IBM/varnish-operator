@@ -1,11 +1,9 @@
-FROM golang:1.10.3-alpine AS builder
+FROM instrumentisto/dep:0.5-alpine AS builder
 
 WORKDIR /go/src/icm-varnish-k8s-operator/varnish/k-watcher
-
-# assumes you have already called `dep ensure`
-COPY k-watcher/vendor vendor/
 COPY k-watcher/cmd cmd
 COPY k-watcher/main.go k-watcher/Gopkg.toml ./
+RUN dep ensure -v
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o k-watcher main.go
 
 FROM alpine:3.7

@@ -2,16 +2,16 @@
 
 import directors;
 
-{{ range $index, $_ := . -}}
+{{ range $index, $IP := .IPs -}}
 backend container{{ $index }} {
-  .host = "{{ .Host }}";
-  .port = "{{ .Port }}";
+  .host = "{{ $IP }}";
+  .port = "{{ $.TargetPort }}";
 }
-{{ end }}
+{{- end }}
 
 sub init_backends {
   new container_rr = directors.round_robin();
-  {{- range $index, $_ := . }}
+  {{- range $index, $_ := .IPs }}
   container_rr.add_backend(container{{ $index }});
   {{- end }}
 }

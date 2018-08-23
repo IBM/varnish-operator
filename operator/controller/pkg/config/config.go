@@ -2,34 +2,59 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 	"strconv"
 
 	"github.com/caarlos0/env"
-	"github.com/juju/errors"
-	v1 "k8s.io/api/core/v1"
+	"github.com/pkg/errors"
+	"k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 // Config describes constant values that will be applied to all varnish services, but may change per-cluster
 type Config struct {
-	ImagePullSecret           string           `env:"IMAGE_PULL_SECRET,required"`
-	OperatorRetryCount        int              `env:"OPERATOR_RETRY_COUNT" envDefault:"3"`
-	RestartPolicy             v1.RestartPolicy `env:"RESTART_POLICY" envDefault:"Always"`
-	VarnishExporterPort       int32            `env:"VARNISH_EXPORTER_PORT" envDefault:"2034"`
-	VarnishExporterTargetPort int32            `env:"VARNISH_EXPORTER_TARGET_PORT" envDefault:"2034"`
-	VarnishPort               int32            `env:"VARNISH_PORT" envDefault:"2035"`
-	VarnishTargetPort         int32            `env:"VARNISH_TARGET_PORT" envDefault:"2035"`
-	VarnishImageHost          string           `env:"VARNISH_IMAGE_HOST,required"`
-	VarnishImageNamespace     string           `env:"VARNISH_IMAGE_NAMESPACE" envDefault:"icm-varnish"`
-	VarnishImageName          string           `env:"VARNISH_IMAGE_NAME" envDefault:"varnish"`
-	VarnishImageTag           string           `env:"VARNISH_IMAGE_TAG,required"`
-	VarnishImagePullPolicy    v1.PullPolicy    `env:"VARNISH_IMAGE_PULL_POLICY" envDefault:"Always"`
-	VarnishName               string           `env:"VARNISH_NAME" envDefault:"varnish"`
-	VCLDir                    string           `env:"VCL_DIR" envDefault:"/etc/varnish"`
-	VarnishImageFullPath      string
-	VarnishExporterName       string
-	VarnishCommonLabels map[string]string
+	VarnishImageHost                       string           `env:"VARNISH_IMAGE_HOST,required"`
+	VarnishImageNamespace                  string           `env:"VARNISH_IMAGE_NAMESPACE" envDefault:"icm-varnish"`
+	VarnishImageName                       string           `env:"VARNISH_IMAGE_NAME" envDefault:"varnish"`
+	VarnishImageTag                        string           `env:"VARNISH_IMAGE_TAG,required"`
+	VarnishImagePullPolicy                 v1.PullPolicy    `env:"VARNISH_IMAGE_PULL_POLICY" envDefault:"Always"`
+	ImagePullSecret                        string           `env:"IMAGE_PULL_SECRET,required"`
+	VarnishExporterPort                    int32            `env:"VARNISH_EXPORTER_PORT" envDefault:"9131"`
+	VarnishExporterTargetPort              int32            `env:"VARNISH_EXPORTER_TARGET_PORT" envDefault:"9131"`
+	VarnishPort                            int32            `env:"VARNISH_PORT" envDefault:"2035"`
+	VarnishTargetPort                      int              `env:"VARNISH_TARGET_PORT" envDefault:"2035"`
+	VarnishName                            string           `env:"VARNISH_NAME" envDefault:"varnish"`
+	VCLDir                                 string           `env:"VCL_DIR" envDefault:"/etc/varnish"`
+	DefaultVarnishMemory                   string           `env:"DEFAULT_VARNISH_MEMORY" envDefault:"1024M"`
+	DefaultBackendsFile                    string           `env:"DEFAULT_BACKENDS_FILE" envDefault:"backends.vcl"`
+	DefaultDefaultFile                     string           `env:"DEFAULT_DEFAULT_FILE" envDefault:"default.vcl"`
+	DefaultVarnishResourceLimitCPU         string           `env:"DEFAULT_VARNISH_RESOURCE_LIMIT_CPU" envDefault:"1"`
+	DefaultVarnishResourceLimitMem         string           `env:"DEFAULT_VARNISH_RESOURCE_LIMIT_MEM" envDefault:"2048Mi"`
+	DefaultVarnishResourceReqCPU           string           `env:"DEFAULT_VARNISH_RESOURCE_REQ_CPU" envDefault:"1"`
+	DefaultVarnishResourceReqMem           string           `env:"DEFAULT_VARNISH_RESOURCE_REQ_MEM" envDefault:"2048Mi"`
+	DefaultVarnishExporterResourceLimitCPU string           `env:"DEFAULT_VARNISH_EXPORTER_RESOURCE_LIMIT_CPU" envDefault:"0.2"`
+	DefaultVarnishExporterResourceLimitMem string           `env:"DEFAULT_VARNISH_EXPORTER_RESOURCE_LIMIT_MEM" envDefault:"200Mi"`
+	DefaultVarnishExporterResourceReqCPU   string           `env:"DEFAULT_VARNISH_EXPORTER_RESOURCE_REQ_CPU" envDefault:"0.1"`
+	DefaultVarnishExporterResourceReqMem   string           `env:"DEFAULT_VARNISH_EXPORTER_RESOURCE_REQ_MEM" envDefault:"100Mi"`
+	DefaultVarnishRestartPolicy            v1.RestartPolicy `env:"DEFAULT_VARNISH_RESTART_POLICY" envDefault:"Always"`
+	DefaultVolumeMountName                 string           `env:"DEFAULT_VOLUME_MOUNT_NAME" envDefault:"libvarnish"`
+	DefaultVolumeMountPath                 string           `env:"DEFAULT_VOLUME_MOUNT_PATH" envDefault:"/var/lib/varnish"`
+	DefaultLivenessProbeHTTPPath           string           `env:"DEFAULT_LIVENESS_PROBE_HTTP_PATH"`
+	DefaultLivenessProbePort               int              `env:"DEFAULT_LIVENESS_PROBE_PORT"`
+	DefaultReadinessProbeCommand           []string         `env:"DEFAULT_READINESS_PROBE_COMMAND" envDefault:"/usr/bin/varnishadm,ping"`
+	VarnishImageFullPath                   string
+	VarnishExporterName                    string
+	VarnishCommonLabels                    map[string]string
+	DefaultVarnishResources                v1.ResourceRequirements
+	DefaultVarnishExporterResources        v1.ResourceRequirements
+	DefaultLivenessProbe                   *v1.Probe
+	DefaultReadinessProbe                  v1.Probe
 }
+
+// GlobalConf is config that affects the operator directly, as well as provides default values for varnish instances
+var GlobalConf *Config
 
 func verifyImagePullPolicy(v v1.PullPolicy) error {
 	switch v {
@@ -40,7 +65,7 @@ func verifyImagePullPolicy(v v1.PullPolicy) error {
 	case v1.PullIfNotPresent:
 		return nil
 	default:
-		return errors.NotSupportedf("ImagePullPolicy %s not supported", v)
+		return errors.Errorf("ImagePullPolicy %s not supported", v)
 	}
 }
 
@@ -53,14 +78,14 @@ func verifyRestartPolicy(v v1.RestartPolicy) error {
 	case v1.RestartPolicyOnFailure:
 		return nil
 	default:
-		return errors.NotSupportedf("RestartPolicy %s not supported", v)
+		return errors.Errorf("RestartPolicy %s not supported", v)
 	}
 }
 
 func int32Parser(v string) (interface{}, error) {
 	i, err := strconv.ParseInt(v, 10, 32)
 	if err != nil {
-		return nil, errors.NotSupportedf("%s is not an int32", v)
+		return nil, errors.Errorf("%s is not an int32", v)
 	}
 	return int32(i), nil
 }
@@ -76,23 +101,105 @@ var (
 func LoadConfig() (*Config, error) {
 	c := Config{}
 	if err := env.ParseWithFuncs(&c, parseFuncMap); err != nil {
-		return &c, errors.Trace(err)
+		return &c, errors.WithStack(err)
 	}
 	if err := verifyImagePullPolicy(c.VarnishImagePullPolicy); err != nil {
-		return &c, errors.Trace(err)
+		return &c, errors.WithStack(err)
 	}
-	if err := verifyRestartPolicy(c.RestartPolicy); err != nil {
-		return &c, errors.Trace(err)
+	if err := verifyRestartPolicy(c.DefaultVarnishRestartPolicy); err != nil {
+		return &c, errors.WithStack(err)
 	}
 	c.VarnishImageFullPath = c.fullImagePath()
 	c.VarnishExporterName = fmt.Sprintf("%s-exporter", c.VarnishName)
 	c.VarnishCommonLabels = map[string]string{
 		"owner": c.VarnishName,
 	}
+
+	varnishResourceLimitCPU, err := resource.ParseQuantity(c.DefaultVarnishResourceLimitCPU)
+	if err != nil {
+		return &c, errors.WithStack(err)
+	}
+	varnishResourceLimitMem, err := resource.ParseQuantity(c.DefaultVarnishResourceLimitMem)
+	if err != nil {
+		return &c, errors.WithStack(err)
+	}
+	varnishResourceReqCPU, err := resource.ParseQuantity(c.DefaultVarnishResourceReqCPU)
+	if err != nil {
+		return &c, errors.WithStack(err)
+	}
+	varnishResourceReqMem, err := resource.ParseQuantity(c.DefaultVarnishResourceReqMem)
+	if err != nil {
+		return &c, errors.WithStack(err)
+	}
+	c.DefaultVarnishResources = v1.ResourceRequirements{
+		Limits: v1.ResourceList{
+			v1.ResourceCPU:    varnishResourceLimitCPU,
+			v1.ResourceMemory: varnishResourceLimitMem,
+		},
+		Requests: v1.ResourceList{
+			v1.ResourceCPU:    varnishResourceReqCPU,
+			v1.ResourceMemory: varnishResourceReqMem,
+		},
+	}
+
+	varnishExporterResourceLimitCPU, err := resource.ParseQuantity(c.DefaultVarnishExporterResourceLimitCPU)
+	if err != nil {
+		return &c, errors.WithStack(err)
+	}
+	varnishExporterResourceLimitMem, err := resource.ParseQuantity(c.DefaultVarnishExporterResourceLimitMem)
+	if err != nil {
+		return &c, errors.WithStack(err)
+	}
+	varnishExporterResourceReqCPU, err := resource.ParseQuantity(c.DefaultVarnishExporterResourceReqCPU)
+	if err != nil {
+		return &c, errors.WithStack(err)
+	}
+	varnishExporterResourceReqMem, err := resource.ParseQuantity(c.DefaultVarnishExporterResourceReqMem)
+	if err != nil {
+		return &c, errors.WithStack(err)
+	}
+	c.DefaultVarnishExporterResources = v1.ResourceRequirements{
+		Limits: v1.ResourceList{
+			v1.ResourceCPU:    varnishExporterResourceLimitCPU,
+			v1.ResourceMemory: varnishExporterResourceLimitMem,
+		},
+		Requests: v1.ResourceList{
+			v1.ResourceCPU:    varnishExporterResourceReqCPU,
+			v1.ResourceMemory: varnishExporterResourceReqMem,
+		},
+	}
+
+	if c.DefaultLivenessProbeHTTPPath != "" && c.DefaultLivenessProbePort != 0 {
+		c.DefaultLivenessProbe = &v1.Probe{
+			Handler: v1.Handler{
+				HTTPGet: &v1.HTTPGetAction{
+					Path: c.DefaultLivenessProbeHTTPPath,
+					Port: intstr.FromInt(c.DefaultLivenessProbePort),
+				},
+			},
+		}
+	}
+
+	c.DefaultReadinessProbe = v1.Probe{
+		Handler: v1.Handler{
+			Exec: &v1.ExecAction{
+				Command: c.DefaultReadinessProbeCommand,
+			},
+		},
+	}
+
 	return &c, nil
 }
 
 // FullImagePath compiles the full path to the image
 func (c *Config) fullImagePath() string {
 	return fmt.Sprintf("%s/%s/%s:%s", c.VarnishImageHost, c.VarnishImageNamespace, c.VarnishImageName, c.VarnishImageTag)
+}
+
+func init() {
+	var err error
+	if GlobalConf, err = LoadConfig(); err != nil {
+		log.Fatal(err)
+	}
+
 }

@@ -3,8 +3,8 @@ package util
 // DiffBackends returns
 // backends that only exist in a1
 // backends that only exist in a2
-func DiffBackends(a1, a2 []Backend) (onlyA1, onlyA2 []Backend) {
-	diffM := make(map[Backend]int)
+func DiffBackends(a1, a2 []string) (onlyA1, onlyA2 []string) {
+	diffM := make(map[string]int)
 
 	for _, v := range a1 {
 		diffM[v] = 1

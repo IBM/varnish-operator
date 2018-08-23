@@ -1,0 +1,182 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    control-plane: controller-manager
+    controller-tools.k8s.io: "1.0"
+  name: {{ printf "%scontroller-manager" .Values.namePrefix | quote }}
+  namespace: {{ .Values.namespace | quote }}
+spec:
+  selector:
+    matchLabels:
+      control-plane: controller-manager
+      controller-tools.k8s.io: "1.0"
+  serviceName: varnish-service-controller-manager-service
+  replicas: {{ .Values.operator.replicas }}
+  template:
+    metadata:
+      labels:
+        control-plane: controller-manager
+        controller-tools.k8s.io: "1.0"
+    spec:
+      containers:
+      - name: manager
+        {{- with .Values.operator }}{{- /* operator */}}
+          {{- with .controllerImage }}{{- /* operator.controllerImage */}}
+        image: {{ printf "%s/%s/%s:%s" .host .namespace .name .tag | quote }}
+            {{- with .pullPolicy }}{{- /* operator.controllerImage.pullPolicy */}}
+        imagePullPolicy: {{ . | title | quote }}
+            {{- end }}
+          {{- end }}
+        env:
+          {{- with .varnishImage }}{{- /* operator.varnishImage */}}
+            {{- with .host }}{{- /* operator.varnishImage.host */}}
+        - name: VARNISH_IMAGE_HOST
+          value: {{ . | quote }}
+            {{- end }}
+            {{- with .namespace }}{{- /* operator.varnishImage.namespace */}}
+        - name: VARNISH_IMAGE_NAMESPACE
+          value: {{ . | quote }}
+            {{- end }}
+            {{- with .name }}{{- /* operator.varnishImage.name */}}
+        - name: VARNISH_IMAGE_NAME
+          value: {{ . | quote }}
+            {{- end }}
+            {{- with .tag }}{{- /* operator.varnishImage.tag */}}
+        - name: VARNISH_IMAGE_TAG
+          value: {{ . | quote }}
+            {{- end }}
+            {{- with .pullPolicy }}{{- /* operator.varnishImage.pullPolicy */}}
+        - name: VARNISH_IMAGE_PULL_POLICY
+          value: {{ . | title | quote }}
+            {{- end }}
+            {{- with .imagePullSecretName }}{{- /* operator.varnishImage.imagePullSecretName */}}
+        - name: IMAGE_PULL_SECRET
+          value: {{ . | quote }}
+            {{- end }}
+          {{- end }}
+          {{- with .retryCount }}{{- /* operator.retryCount */}}
+        - name: RETRY_COUNT
+          value: {{ . | quote }}
+          {{- end }}
+        {{- end }}
+        {{- with .Values.varnish }}{{- /* varnish */}}
+          {{- with .exporterPort }}{{- /* varnish.exporterPort */}}
+        - name: VARNISH_EXPORTER_PORT
+          value: {{ . | quote }}
+          {{- end }}
+          {{- with .exporterTargetPort }}{{- /* varnish.exporterTargetPort */}}
+        - name: VARNISH_EXPORTER_TARGET_PORT
+          value: {{ . | quote }}
+          {{- end }}
+          {{- with .port }}{{- /* varnish.port */}}
+        - name: VARNISH_PORT
+          value: {{ . | quote }}
+          {{- end }}
+          {{- with .targetPort }}{{- /* varnish.targetPort */}}
+        - name: VARNISH_TARGET_PORT
+          value: {{ . | quote }}
+          {{- end }}
+          {{- with .vclDir }}{{- /* varnish.vclDir */}}
+        - name: VCL_DIR
+          value: {{ . | quote }}
+          {{- end }}
+        {{- end }}
+        {{- with .Values.default }}{{- /* default */}}
+          {{- with .varnishMemory }}{{- /* default.varnishMemory */}}
+        - name: DEFAULT_VARNISH_MEMORY
+          value: {{ . | quote }}
+          {{- end }}
+          {{- with .backendsFile }}{{- /* default.backendsFile */}}
+        - name: DEFAULT_BACKENDS_FILE
+          value: {{ . | quote }}
+          {{- end }}
+          {{- with .defaultFile }}{{- /* default.defaultFile */}}
+        - name: DEFAULT_DEFAULT_FILE
+          value: {{ . | quote }}
+          {{- end }}
+          {{- with .varnishResources }}{{- /* default.varnishResources */}}
+            {{- with .limits }}{{- /* default.varnishResources.limits */}}
+              {{- with .cpu }}{{- /* default.varnishResources.limits.cpu */}}
+        - name: DEFAULT_VARNISH_RESOURCE_LIMIT_CPU
+          value: {{ . | quote }}
+              {{- end }}
+              {{- with .memory }}{{- /* default.varnishResources.limits.memory */}}
+        - name: DEFAULT_VARNISH_RESOURCE_LIMIT_MEM
+          value: {{ . | quote }}
+              {{- end }}
+            {{- end }}
+            {{- with .requests }}{{- /* default.varnishResources.requests */}}
+              {{- with .cpu }}{{- /* default.varnishResources.requests.cpu */}}
+        - name: DEFAULT_VARNISH_RESOURCE_REQ_CPU
+          value: {{ . | quote }}
+              {{- end }}
+              {{- with .memory }}{{- /* default.varnishResources.requests.memory */}}
+        - name: DEFAULT_VARNISH_RESOURCE_REQ_MEM
+          value: {{ . | quote }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+          {{- with .varnishExporterResources }}{{- /* default.varnishExporterResources */}}
+            {{- with .limits }}{{- /* default.varnishExporterResources.limits */}}
+              {{- with .cpu }}{{- /* default.varnishExporterResources.limits.cpu */}}
+        - name: DEFAULT_VARNISH_EXPORTER_RESOURCE_LIMIT_CPU
+          value: {{ . | quote }}
+              {{- end }}
+              {{- with .memory }}{{- /* default.varnishExporterResources.limits.memory */}}
+        - name: DEFAULT_VARNISH_EXPORTER_RESOURCE_LIMIT_MEM
+          value: {{ . | quote }}
+              {{- end }}
+            {{- end }}
+            {{- with .requests }}{{- /* default.varnishExporterResources.requests */}}
+              {{- with .cpu }}{{- /* default.varnishExporterResources.requests.cpu */}}
+        - name: DEFAULT_VARNISH_EXPORTER_RESOURCE_REQ_CPU
+          value: {{ . | quote }}
+              {{- end }}
+              {{- with .memory }}{{- /* default.varnishExporterResources.requests.memory */}}
+        - name: DEFAULT_VARNISH_EXPORTER_RESOURCE_REQ_MEM
+          value: {{ . | quote }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+          {{- with .varnishRestartPolicy }}{{- /* default.varnishRestartPolicy */}}
+        - name: DEFAULT_VARNISH_RESTART_POLICY
+          value: {{ . | title | quote }}
+          {{- end }}
+          {{- with .volumeMount }}{{- /* default.volumeMount */}}
+            {{- with .name }}{{- /* default.volumeMount.name */}}
+        - name: DEFAULT_VOLUME_MOUNT_NAME
+          value: {{ . | quote }}
+            {{- end }}
+            {{- with .path }}{{- /* default.volumeMount.path */}}
+        - name: DEFAULT_VOLUME_MOUNT_PATH
+          value: {{ . | quote }}
+            {{- end }}
+          {{- end }}
+          {{- with .livenessProbe }}{{- /* default.livenessProbe */}}
+            {{- with .httpPath }}{{- /* default.livenessProbe.httpPath */}}
+        - name: DEFAULT_LIVENESS_PROBE_HTTP_PATH
+          value: {{ . | quote }}
+            {{- end }}
+            {{- with .port }}{{- /* default.livenessProbe.port */}}
+        - name: DEFAULT_LIVENESS_PROBE_PORT
+          value: {{ . | quote }}
+            {{- end }}
+          {{- end }}
+          {{- with .readinessProbe }}{{- /* default.readinessProbe */}}
+            {{- with .command }}{{- /* default.readinessProbe.command */}}
+        - name: DEFAULT_READINESS_PROBE_COMMAND
+          value: {{ . | quote }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+        resources:
+          limits:
+            cpu: {{ .Values.operator.resources.limits.cpu | quote }}
+            memory: {{ .Values.operator.resources.limits.memory | quote }}
+          requests:
+            cpu: {{ .Values.operator.resources.requests.cpu | quote }}
+            memory: {{ .Values.operator.resources.requests.memory | quote }}
+      imagePullSecrets:
+      - name: {{ .Values.operator.controllerImage.imagePullSecretName | quote }}
+      terminationGracePeriodSeconds: 10

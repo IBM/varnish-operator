@@ -3,17 +3,19 @@ package main
 import (
 	"flag"
 	"fmt"
+	"icm-varnish-k8s-operator/varnish/k-watcher/cmd/logger"
 	"icm-varnish-k8s-operator/varnish/k-watcher/cmd/util"
 	"icm-varnish-k8s-operator/varnish/k-watcher/cmd/varnish"
 	"icm-varnish-k8s-operator/varnish/k-watcher/cmd/watch"
+	"os"
+	"os/signal"
 	"reflect"
-	"time"
+	"strconv"
+	"syscall"
 
-	"github.com/codingconcepts/env"
+	"github.com/caarlos0/env"
 	"github.com/juju/errors"
-	log "github.com/sirupsen/logrus"
 	"k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -21,11 +23,11 @@ import (
 
 // config that reads in env variables
 type config struct {
-	AppName       string `env:"APP_NAME" required:"true"`
-	BackendsFile  string `env:"BACKENDS_FILE" required:"true"`
-	Namespace     string `env:"NAMESPACE" required:"true"`
-	PortWatchName string `env:"PORT_WATCH_NAME" required:"true"`
-	VCLDir        string `env:"VCL_DIR" required:"true"`
+	AppSelectorString string `env:"APP_SELECTOR_STRING,required"`
+	BackendsFile      string `env:"BACKENDS_FILE,required"`
+	Namespace         string `env:"NAMESPACE,required"`
+	TargetPort        int32  `env:"TARGET_PORT,required"`
+	VCLDir            string `env:"VCL_DIR,required"`
 }
 
 var clientset *kubernetes.Clientset
@@ -33,43 +35,40 @@ var conf *config
 var vc *varnish.Configurator
 var vtmpl *varnish.VCLTemplate
 
-// references call site for logError/logAndPanic
-func generateErrorStack(err error, msg string) string {
-	wrapped := errors.NewErrWithCause(err, msg)
-	wrapped.SetLocation(2)
-	return errors.ErrorStack(&wrapped)
-}
-
-// logError logs the err and message
-func logError(err error, msg string) {
-	log.Error(generateErrorStack(err, msg))
-}
-
-// logAndPanic logs the err and message, then panics (exits the program)
-func logAndPanic(err error, msg string) {
-	log.Panic(generateErrorStack(err, msg))
-}
-
 // loadConfig uses the codingconcepts/env library to read in environment variables into a struct
 func loadConfig() (*config, error) {
 	c := config{}
-	if err := env.Set(&c); err != nil {
+	int32Type := reflect.TypeOf(int32(0))
+	int32Parse := func(v string) (interface{}, error) {
+		i, err := strconv.ParseInt(v, 10, 32)
+		if err != nil {
+			return nil, errors.Errorf("%s is not an int32", v)
+		}
+		return int32(i), nil
+	}
+
+	parsers := env.CustomParsers{
+		int32Type: int32Parse,
+	}
+
+	if err := env.ParseWithFuncs(&c, parsers); err != nil {
 		return &c, errors.Trace(err)
 	}
 	return &c, nil
 }
 
 // getBackends pulls out the valid backends from the endpoints list.
-// This entails pulling out only those address/port combos whose ports have the PortWatchName
-func getBackends(ep *v1.Endpoints) (backendList []util.Backend) {
+// This entails pulling out only those address/port combos whose ports match the incoming TargetPort
+func getBackends(ep *v1.Endpoints, targetPort int32) (backendList []string) {
 	if ep == nil {
 		return
 	}
 	for _, endpoint := range ep.Subsets {
 		for _, address := range endpoint.Addresses {
 			for _, port := range endpoint.Ports {
-				if port.Name == conf.PortWatchName {
-					backendList = append(backendList, util.Backend{Host: address.IP, Port: port.Port})
+				if port.Port == targetPort {
+					backendList = append(backendList, address.IP)
+					break
 				}
 			}
 		}
@@ -94,36 +93,33 @@ func castToEp(obj interface{}) (*v1.Endpoints, error) {
 func onChange(oldObj, newObj interface{}) {
 	oldEp, err := castToEp(oldObj)
 	if err != nil {
-		logError(err, "oldEp was not the correct type")
+		logger.Error(err, "oldEp was not the correct type")
 		return
 	}
 
 	newEp, err := castToEp(newObj)
 	if err != nil {
-		logError(err, "newEp was not the correct type")
+		logger.Error(err, "newEp was not the correct type")
 		return
 	}
 
-	oldBackends := getBackends(oldEp)
-	newBackends := getBackends(newEp)
+	oldBackends := getBackends(oldEp, conf.TargetPort)
+	newBackends := getBackends(newEp, conf.TargetPort)
 
 	removed, added := util.DiffBackends(oldBackends, newBackends)
 
-	VCL, err := vtmpl.GenerateVCL(newBackends)
+	VCL, err := vtmpl.GenerateVCL(newBackends, conf.TargetPort)
 	if err != nil {
-		logError(err, "Could not generate VCL")
+		logger.Error(err, "Could not generate VCL")
 		return
 	}
 
 	if err = vc.ReloadWithVCL(VCL); err != nil {
-		logError(err, "could not reload varnish with new VCL")
+		logger.Error(err, "could not reload varnish with new VCL")
 		return
 	}
 
-	log.WithFields(log.Fields{
-		"added":   added,
-		"removed": removed,
-	}).Info("backends updated")
+	logger.Info("backends updated", "added", added, "removed", removed)
 }
 
 // initializes:
@@ -136,7 +132,7 @@ func init() {
 
 	conf, err = loadConfig()
 	if err != nil {
-		logAndPanic(err, "missing environment variables")
+		logger.Panic(err, "missing environment variables")
 	}
 
 	kubecfgFilepath := flag.String("kubecfg", "", "Path to kube config")
@@ -149,17 +145,17 @@ func init() {
 		kubecfg, err = clientcmd.BuildConfigFromFlags("", *kubecfgFilepath)
 	}
 	if err != nil {
-		logAndPanic(err, "couldn't get config")
+		logger.Panic(err, "couldn't get config")
 	}
 
 	clientset, err = kubernetes.NewForConfig(kubecfg)
 	if err != nil {
-		logAndPanic(err, "couldn't create clientset")
+		logger.Panic(err, "couldn't create clientset")
 	}
 
 	templateFilename := fmt.Sprintf("%s.tmpl", conf.BackendsFile)
 	if vtmpl, err = varnish.NewVCLTemplate(conf.VCLDir, templateFilename); err != nil {
-		logAndPanic(err, "couldn't create VCL Template")
+		logger.Panic(err, "couldn't create VCL Template")
 	}
 
 	vc = varnish.NewConfigurator(conf.VCLDir, conf.BackendsFile, "vcl_reload")
@@ -167,28 +163,30 @@ func init() {
 
 // starts watch of the endpoints backend in the cluster, triggering a new VCL + varnish reload on changes
 func main() {
-	_, controller, err := watch.WatchResource(
+	defer logger.Sync()
+	_, controller, err := watch.Resource(
 		clientset.CoreV1().RESTClient(),
 		"endpoints",
 		conf.Namespace,
-		fields.OneTermEqualSelector("metadata.name", conf.AppName),
+		conf.AppSelectorString,
 		onChange,
 	)
 	if err != nil {
-		logAndPanic(err, "could not initialize endpoints watcher")
+		logger.Panic(err, "could not initialize endpoints watcher")
 	}
 
 	stopCh := make(chan struct{})
+	defer close(stopCh)
 	go controller.Run(stopCh)
 
-	log.WithFields(log.Fields{
-		"resource":      "endpoints",
-		"namespace":     conf.Namespace,
-		"metadata.name": conf.AppName,
-		"portWatchName": conf.PortWatchName,
-	}).Info("endpoints watcher has started")
+	logger.Info("endpoints watcher has started",
+		"resource", "endpoints",
+		"namespace", conf.Namespace,
+		"appSelector", conf.AppSelectorString,
+		"watchedPort", conf.TargetPort)
 
-	for {
-		time.Sleep(time.Second)
-	}
+	sigterm := make(chan os.Signal, 1)
+	signal.Notify(sigterm, syscall.SIGTERM)
+	signal.Notify(sigterm, syscall.SIGINT)
+	<-sigterm
 }

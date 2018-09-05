@@ -20,7 +20,7 @@ required = [
 
 [[constraint]]
 name = "github.com/caarlos0/env"
-version = "v3.2.0"
+version = "v3.3.0"
 
 # STANZAS BELOW ARE GENERATED AND MAY BE WRITTEN - DO NOT MODIFY BELOW THIS LINE.
 

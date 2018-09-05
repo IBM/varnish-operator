@@ -39,10 +39,10 @@ spec:
           - deployment
           - cacheBypassIP
           type: object
-      type: object
   version: v1alpha1
 status:
   acceptedNames:
     kind: ""
     plural: ""
   conditions: null
+  storedVersions: null

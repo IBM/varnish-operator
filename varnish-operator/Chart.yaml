@@ -1,0 +1,7 @@
+apiVersion: v1
+appVersion: 0.0.5
+description: operator that can deploy a VarnishService, which acts like a Service but includes a layer of Varnish
+name: varnish-operator
+version: 0.1.0
+keywords:
+  - varnish

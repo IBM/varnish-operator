@@ -1,35 +1,25 @@
 #!groovy
-// @Library("icm-jenkins-common")
-// import com.ibm.icm.*
+@Library("icm-jenkins-common@0.19.0")
+import com.ibm.icm.*
 
-// releaseBranch = 'master'
-// dockerRegistryNamespace = 'icm-varnish'
-// dockerImageName = 'varnish'
+region = 'us-south'
+bxApiKeyId = 'icm_bluemix_1638245'
+releaseBranch = 'master'
+dockerRegistry = 'registry.ng.bluemix.net'
+dockerRegistryNamespace = 'icm-varnish'
+dockerImageName = 'varnish-controller'
+artifactoryHostName = "na.artifactory.swg-devops.com"
+artifactoryRepo = "wcp-icm-helm-local"
+artifactoryCredentialId='TAAS-Artifactory-User-Password-Global'
 
-// defaultHelmChartInfo = new HelmChartInfo([
-//         chart              : 'varnish',
-//         releaseName        : 'varnish-cache',
-// ])
-
-// availableClusters =
-//         [new DeployClusterInfo([
-//                 region          : 'us-south',
-//                 name            : 'icm-poc-shared',
-//                 releaseNamespace: 'varnish-ns',
-//                 bxApiKeyId      : 'icm_bluemix_1638245',
-//                 dockerRegistry  : "registry.ng.bluemix.net"
-//         ])]
-
-// node {
-//     GitInfo gitInfo = icmCheckoutStages()
-//     icmInstallBxCliWithPlugins(BxPluginConsts.CONTAINER_PLUGINS)
-//     availableClusters.each {
-//         DockerImageInfo dockerImageInfo = icmGetDockerImageInfo(it.dockerRegistry, dockerRegistryNamespace,
-//                 dockerImageName, releaseBranch, gitInfo)
-//         icmDockerBuild(dockerImageInfo)
-//         icmLoginToBx(it.bxApiKeyId, it.region, BxPluginConsts.CONTAINER_PLUGINS)
-
-//         icmDockerPush(dockerImageInfo)
-//         icmDeployWithHelmStages(it, defaultHelmChartInfo, dockerImageInfo)
-//     }
-// }
+node {
+    GitInfo gitInfo = icmCheckoutStages()
+    icmDockerBuildStage(gitInfo)
+    icmInstallBxCliWithPluginsStage(BxPluginConsts.CONTAINER_PLUGINS)
+    DockerImageInfo dockerImageInfo = icmGetDockerImageInfo(dockerRegistry, dockerRegistryNamespace, dockerImageName, releaseBranch, gitInfo)
+    icmLoginToBxStage(bxApiKeyId, region, BxPluginConsts.CONTAINER_PLUGINS)
+    icmDockerPushStage(dockerImageInfo, gitInfo)
+    if (gitInfo.branch == releaseBranch) {
+        icmArtifactoryHelmChartPackageAndPublish('varnish-operator', artifactoryCredentialId, artifactoryHostName, artifactoryRepo)
+    }
+}

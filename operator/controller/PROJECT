@@ -1,3 +1,0 @@
-version: "1"
-domain: ibm.com
-repo: icm-varnish-k8s-operator/operator/controller

@@ -1,0 +1,26 @@
+FROM golang:1.10.3-alpine AS builder
+
+# Copy in the go src
+WORKDIR /go/src/icm-varnish-k8s-operator
+
+# assumes you have already called `dep ensure`
+COPY vendor/ vendor/
+COPY pkg/    pkg/
+COPY cmd/    cmd/
+
+
+# Build
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager icm-varnish-k8s-operator/cmd/manager
+
+FROM alpine:3.7
+LABEL maintainer="thurston sandberg <thurston.sandberg@us.ibm.com>"
+
+RUN apk update &&\
+    apk upgrade
+
+COPY --from=builder /go/src/icm-varnish-k8s-operator/manager /manager
+
+RUN addgroup -g 901 controller && adduser -D -u 901 -G controller controller
+# RUN chown -R controller
+USER controller
+ENTRYPOINT ["/manager"]

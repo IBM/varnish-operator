@@ -90,12 +90,15 @@ func withDeploymentInheritance(desired, found *appsv1.Deployment) {
 		desired.Annotations["deployment.kubernetes.io/revision"] = found.Annotations["deployment.kubernetes.io/revision"]
 	}
 }
+
+// EqualDeployment compares 2 deployments for equality
 func EqualDeployment(desired, found *appsv1.Deployment) bool {
 	desiredCopy := withDeploymentDefaults(desired)
 	withDeploymentInheritance(desiredCopy, found)
 	return cmp.Equal(desiredCopy, found, deployOpts...)
 }
 
+// DiffDeployment generates a patch diff between 2 deployments
 func DiffDeployment(desired, found *appsv1.Deployment) string {
 	desiredCopy := withDeploymentDefaults(desired)
 	withDeploymentInheritance(desiredCopy, found)

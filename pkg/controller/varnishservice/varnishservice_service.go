@@ -91,6 +91,7 @@ func (r *ReconcileVarnishService) reconcileServiceGeneric(instance *icmapiv1alph
 		return logger.RError(err, "Could not Get desired")
 	} else if !compare.EqualService(desired, found) {
 		logger.Info("Updating Service", "diff", compare.DiffService(desired, found), "name", desired.Name, "namespace", desired.Namespace)
+		desired.Spec.ClusterIP = found.Spec.ClusterIP
 		found.Spec = desired.Spec
 		err = r.Update(context.TODO(), found)
 		if err != nil {

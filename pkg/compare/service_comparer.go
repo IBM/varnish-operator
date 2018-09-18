@@ -38,11 +38,13 @@ func withServiceDefaults(s *v1.Service) *v1.Service {
 	return &ss
 }
 
+// EqualService compares 2 services for equality
 func EqualService(desired, found *v1.Service) bool {
 	desiredCopy := withServiceDefaults(desired)
 	return cmp.Equal(desiredCopy, found, serviceOpts...)
 }
 
+// DiffService generates a patch diff between 2 services
 func DiffService(desired, found *v1.Service) string {
 	desiredCopy := withServiceDefaults(desired)
 	return cmp.Diff(desiredCopy, found, serviceOpts...)

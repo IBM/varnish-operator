@@ -1,16 +1,29 @@
+# the apiVersion will almost never change
 apiVersion: icm.ibm.com/v1alpha1
+# VarnishResource can now be a Kind thanks to adding it as a CustomResource
 kind: VarnishService
 metadata:
+  # Add any labels you think will help
   labels:
-    controller-tools.k8s.io: "1.0"
+    middleware: varnish
+  # any name is fine
   name: varnishservice-sample
+  # the namespace must have the docker registry secret used by the operator in it
   namespace: varnish-ns
+# The spec is divided into 2 parts: the deployment portion and the service portion
+# The deployment portion has all of the details for the actual Varnish deployment
+# The service portion is literally the exact same spec as a regular Service resource
 spec:
   deployment:
+    # The number of varnish instances to run
     replicas: 3
+    # The amount of memory allocated to Varnish on Varnish's startup, in the form of `varnishd -F -s malloc,${varnishMemory} ...`
     varnishMemory: "1024M"
+    # the name of the file to be maintained through the Kubernetes API (by watching the pods in a deployment)
     backendsFile: backends.vcl
+    # the name of the base VCL file with the caching logic. While this file cannot currently be changed, in the future it will possible to customize its behavior
     defaultFile: default.vcl
+    # Resources allocated to the Varnish pod through Kubernetes. `requests.memory` Should be greater than `varnishMemory` above
     varnishResources:
       limits:
         cpu: 1
@@ -18,6 +31,19 @@ spec:
       requests:
         cpu: 1
         memory: "2048Mi"
+    # the restart policy for the varnish containers
+    varnishRestartPolicy: Always
+    # probe to determine liveness of the Varnish container. TODO: Not currently working
+    # livenessProbe:
+    #   httpGet:
+    #     path: /liveness
+    #     port: 8080
+    # probe used to confirm readiness of the Varnish container. Unlikely to need to be changed, but can be either a command or an HTTP request
+    readinessProbe:
+      exec:
+        command: [/usr/bin/varnishadm, ping]
+      initialDelaySeconds: 5
+    # Resources allocated to the Varnish Exporter pod, which handles metrics for Varnish. Only change these if there is instability in the metrics
     varnishExporterResources:
       limits:
         cpu: 0.2
@@ -25,22 +51,39 @@ spec:
       requests:
         cpu: 0.1
         memory: "100Mi"
+    # Name and path of the EmptyDir volume shared between Varnish and Varnish Exporter. There should not be a reason to change these fields
     sharedVolume:
       name: libvarnish
       path: /var/lib/varnish
-    # livenessProbe:
-    #   httpGet:
-    #     path: /liveness
-    #     port: 8080
-    readinessProbe:
-      exec:
-        command: [/usr/bin/varnishadm, ping]
-      initialDelaySeconds: 5
+    # Name of the secret for the docker registry. The secret needs to exist in the namespace before creating this resource
     imagePullSecretName: docker-reg-secret
-    # affinity:
+    # Affinity to apply to the pods in the Varnish deployment. For more on affinity, see https://kubernetes.io/docs/concepts/configuration/assign-pod-node#affinity-and-anti-affinity
+    # Also, see the README.md#affinites for suggested configurations
+    affinity:
+      # Keyword indicating that pods should repel each other based on the spec
+      podAntiAffinity:
+        # Keyword indicating that the anti-affinity should apply to all pods being scheduled from now on, but to leave currently running pods alone
+        requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            # Apply the anti-affinity to all pods that match the following expression.
+            # In this case, it finds pods with label "middleware: varnish".
+            # All labels applied to the VarnishService are also applied to its dependent resources, including the Varnish deployment.
+            matchExpressions:
+            - key: middleware
+              operator: In
+              values:
+              - varnish
+          # This groups nodes according to the label key given. Technically any arbitrary label can be used for grouping, but there is a set of predefined labels on nodes that are almost always used.
+          # Read https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#an-example-of-a-pod-that-uses-pod-affinity for a good explanation of topologyKey.
+          topologyKey: "kubernetes.io/hostname"
+
+    # Tolerations to apply to the pods in the Varnish deployment. For more on tolerations, see https://kubernetes.io/docs/concepts/configuration/taint-and-toleration  
+    # Also, see the README.md#tolerations for suggested configurations
     # tolerations:
+  # This is a regular service spec. For details on a service spec, see https://kubernetes.io/docs/concepts/services-networking/service
+  # In the same way as you would with a vanilla service, choose a selector that targets a deployment. The resulting VarnishService will act like a regular Service, plus have Varnish caching.
+  # WARNING: this service must ONLY expose a single port. Specifying multiple ports will result in an error
   service:
-    varnishPortName: varnish-port
     selector:
       app: HttPerf
     ports:

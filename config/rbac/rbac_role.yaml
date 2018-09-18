@@ -29,6 +29,14 @@ rules:
   - patch
   - delete
 - apiGroups:
+  - icm.ibm.com
+  resources:
+  - varnishservices/status
+  verbs:
+  - get
+  - update
+  - patch
+- apiGroups:
   - ""
   resources:
   - services

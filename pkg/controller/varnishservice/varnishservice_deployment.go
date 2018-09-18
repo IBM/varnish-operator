@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
+	"icm-varnish-k8s-operator/pkg/compare"
 	"icm-varnish-k8s-operator/pkg/config"
 	"icm-varnish-k8s-operator/pkg/logger"
-	"reflect"
 	"strconv"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -18,53 +18,55 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func (r *ReconcileVarnishService) reconcileDeployment(instance *icmapiv1alpha1.VarnishService, serviceAccountName string, applicationPort *v1.ServicePort) (*map[string]string, error) {
-	deployConfig, err := newVarnishDeploymentConfig(r.globalConf, instance, serviceAccountName, applicationPort)
+func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *icmapiv1alpha1.VarnishService, serviceAccountName string, applicationPort *v1.ServicePort, endpointSelector map[string]string) (map[string]string, error) {
+	deployConfig, err := newVarnishDeploymentConfig(r.globalConf, instance, serviceAccountName, applicationPort, endpointSelector)
 	if err != nil {
 		return nil, logger.RError(err, "could not generate deployment config")
 	}
-	deploy, err := newVarnishDeployment(r.globalConf, deployConfig)
+	desired, err := newVarnishDeployment(r.globalConf, deployConfig)
 	if err != nil {
 		return nil, logger.RError(err, "could not generate deployment")
 	}
-	if err := controllerutil.SetControllerReference(instance, deploy, r.scheme); err != nil {
-		return nil, logger.RError(err, "could not set controller as the OwnerReference for deployment", "name", deploy.Name, "namespace", deploy.Namespace)
+	if err := controllerutil.SetControllerReference(instance, desired, r.scheme); err != nil {
+		return nil, logger.RError(err, "could not set controller as the OwnerReference for deployment", "name", desired.Name, "namespace", desired.Namespace)
 	}
 
 	found := &appsv1.Deployment{}
-	if err = r.reconcileDeploymentStatus(instance, found); err != nil {
-		return nil, err
-	}
 
-	err = r.Get(context.TODO(), types.NamespacedName{Name: deploy.Name, Namespace: deploy.Namespace}, found)
+	err = r.Get(context.TODO(), types.NamespacedName{Name: desired.Name, Namespace: desired.Namespace}, found)
+	// If the deployment does not exist, create it
+	// Else if there was a problem doing the GET, just return an error
+	// Else if the deployment exists, and it is different, update
+	// Else no changes, do nothing
 	if err != nil && kerrors.IsNotFound(err) {
-		// logger.Info("Creating Deployment", "namespace", deploy.Namespace, "name", deploy.Name)
-		logger.Info("Creating Deployment", "config", deploy)
-		err = r.Create(context.TODO(), deploy)
+		logger.Info("Creating Deployment", "config", desired)
+		err = r.Create(context.TODO(), desired)
 		if err != nil {
-			return nil, logger.RError(err, "could not create deployment", "name", deploy.Name, "namespace", deploy.Namespace)
+			return nil, logger.RError(err, "could not create deployment", "name", desired.Name, "namespace", desired.Namespace)
 		}
 	} else if err != nil {
-		return nil, logger.RError(err, "could not get current state of deployment", "name", deploy.Name, "namespace", deploy.Namespace)
-	} else if !reflect.DeepEqual(deploy.Spec, found.Spec) {
-		found.Spec = deploy.Spec
-		// logger.Info("Updating Deployment", "namespace", deploy.Namespace, "name", deploy.Name)
-		logger.Info("Updating Deployment", "config", found)
+		return nil, logger.RError(err, "could not get current state of deployment", "name", desired.Name, "namespace", desired.Namespace)
+	} else if !compare.EqualDeployment(desired, found) {
+		logger.Info("Updating Deployment", "diff", compare.DiffDeployment(desired, found))
+		found.Spec = desired.Spec
 		err = r.Update(context.TODO(), found)
 		if err != nil {
-			return nil, logger.RError(err, "could not update deployment", "name", deploy.Name, "namespace", deploy.Namespace)
+			return nil, logger.RError(err, "could not update deployment", "name", desired.Name, "namespace", desired.Namespace)
 		}
+	} else {
+		logger.V5Info("No updates for Deployment")
 	}
-	logger.Info("No updates for Deployment")
 
-	return &deployConfig.Labels, nil
+	instanceStatus.Status.Deployment = found.Status
+
+	return deployConfig.Labels, nil
 }
 
 type varnishDeploymentConfig struct {
 	Name                 string
 	Namespace            string
 	Labels               map[string]string
-	AppSelector          map[string]string
+	EndpointSelector     map[string]string
 	VarnishRestartPolicy *v1.RestartPolicy
 	VarnishReplicas      int32
 	VarnishMemory        string
@@ -72,8 +74,8 @@ type varnishDeploymentConfig struct {
 	DefaultFile          string
 	Resources            *v1.ResourceRequirements
 	ExporterResources    *v1.ResourceRequirements
-	VolumeMountName      string
-	VolumeMountPath      string
+	SharedVolumeName     string
+	SharedVolumePath     string
 	LivenessProbe        *v1.Probe
 	ReadinessProbe       *v1.Probe
 	ServiceAccountName   string
@@ -83,19 +85,9 @@ type varnishDeploymentConfig struct {
 	Tolerations          []v1.Toleration
 }
 
-// it appears this function does nothing in ibm cloud. Meaning, they have disabled status for custom resources. Leaving it here for now, however.
-func (r *ReconcileVarnishService) reconcileDeploymentStatus(instance *icmapiv1alpha1.VarnishService, currentDeployment *appsv1.Deployment) error {
-	if !reflect.DeepEqual(instance.Status.Deployment, currentDeployment.Status) {
-		instance.Status.Deployment = currentDeployment.Status
-		if err := r.Status().Update(context.TODO(), instance); err != nil {
-			return logger.RError(err, "Could not update deployment status", "name", instance.Name, "namespace", instance.Namespace)
-		}
-	}
-	return nil
-}
-
-func newVarnishDeploymentConfig(globalConf *config.Config, vs *icmapiv1alpha1.VarnishService, serviceAccountName string, applicationPort *v1.ServicePort) (*varnishDeploymentConfig, error) {
+func newVarnishDeploymentConfig(globalConf *config.Config, vs *icmapiv1alpha1.VarnishService, serviceAccountName string, applicationPort *v1.ServicePort, endpointSelector map[string]string) (*varnishDeploymentConfig, error) {
 	vdc := varnishDeploymentConfig{
+		EndpointSelector:   endpointSelector,
 		ServiceAccountName: serviceAccountName,
 		Port:               *applicationPort,
 		Affinity:           vs.Spec.Deployment.Affinity,
@@ -106,11 +98,7 @@ func newVarnishDeploymentConfig(globalConf *config.Config, vs *icmapiv1alpha1.Va
 		return &vdc, errors.New("name not defined")
 	}
 
-	vdc.Labels = map[string]string{"component": vs.Name + "-varnish"}
-
-	if vdc.AppSelector = vs.Spec.Service.Selector; len(vdc.AppSelector) == 0 {
-		return &vdc, errors.New("must have selector to target application backed by Varnish")
-	}
+	vdc.Labels = map[string]string{"varnish-component": vs.Name + "-varnish"}
 
 	if vdc.VarnishReplicas = vs.Spec.Deployment.Replicas; vdc.VarnishReplicas == 0 {
 		return &vdc, errors.New("replicas not defined")
@@ -142,11 +130,11 @@ func newVarnishDeploymentConfig(globalConf *config.Config, vs *icmapiv1alpha1.Va
 	if vdc.VarnishRestartPolicy = vs.Spec.Deployment.VarnishRestartPolicy; vdc.VarnishRestartPolicy == nil {
 		vdc.VarnishRestartPolicy = &globalConf.DefaultVarnishRestartPolicy
 	}
-	if vdc.VolumeMountName = vs.Spec.Deployment.SharedVolume.Name; vdc.VolumeMountName == "" {
-		vdc.VolumeMountName = globalConf.DefaultVolumeMountName
+	if vdc.SharedVolumeName = vs.Spec.Deployment.SharedVolume.Name; vdc.SharedVolumeName == "" {
+		vdc.SharedVolumeName = globalConf.DefaultSharedVolumeName
 	}
-	if vdc.VolumeMountPath = vs.Spec.Deployment.SharedVolume.Path; vdc.VolumeMountPath == "" {
-		vdc.VolumeMountPath = globalConf.DefaultVolumeMountPath
+	if vdc.SharedVolumePath = vs.Spec.Deployment.SharedVolume.Path; vdc.SharedVolumePath == "" {
+		vdc.SharedVolumePath = globalConf.DefaultSharedVolumePath
 	}
 	if vdc.LivenessProbe = vs.Spec.Deployment.LivenessProbe; vdc.LivenessProbe == nil {
 		vdc.LivenessProbe = globalConf.DefaultLivenessProbe
@@ -159,7 +147,6 @@ func newVarnishDeploymentConfig(globalConf *config.Config, vs *icmapiv1alpha1.Va
 }
 
 func newVarnishDeployment(globalConf *config.Config, deploymentConf *varnishDeploymentConfig) (*appsv1.Deployment, error) {
-
 	deployment := appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      deploymentConf.Name,
@@ -178,7 +165,7 @@ func newVarnishDeployment(globalConf *config.Config, deploymentConf *varnishDepl
 				Spec: v1.PodSpec{
 					Volumes: []v1.Volume{
 						{
-							Name: deploymentConf.VolumeMountName,
+							Name: deploymentConf.SharedVolumeName,
 							VolumeSource: v1.VolumeSource{
 								EmptyDir: &v1.EmptyDirVolumeSource{},
 							},
@@ -194,7 +181,7 @@ func newVarnishDeployment(globalConf *config.Config, deploymentConf *varnishDepl
 								},
 							},
 							Env: []v1.EnvVar{
-								{Name: "APP_SELECTOR_STRING", Value: labels.SelectorFromSet(deploymentConf.AppSelector).String()},
+								{Name: "ENDPOINT_SELECTOR_STRING", Value: labels.SelectorFromSet(deploymentConf.EndpointSelector).String()},
 								{Name: "BACKENDS_FILE", Value: deploymentConf.BackendsFile},
 								{Name: "DEFAULT_FILE", Value: deploymentConf.DefaultFile},
 								{Name: "NAMESPACE", Value: deploymentConf.Namespace},
@@ -206,8 +193,8 @@ func newVarnishDeployment(globalConf *config.Config, deploymentConf *varnishDepl
 							Resources: *deploymentConf.Resources,
 							VolumeMounts: []v1.VolumeMount{
 								{
-									Name:      deploymentConf.VolumeMountName,
-									MountPath: deploymentConf.VolumeMountPath,
+									Name:      deploymentConf.SharedVolumeName,
+									MountPath: deploymentConf.SharedVolumePath,
 								},
 							},
 							LivenessProbe:   deploymentConf.LivenessProbe,
@@ -225,8 +212,8 @@ func newVarnishDeployment(globalConf *config.Config, deploymentConf *varnishDepl
 							Resources: *deploymentConf.ExporterResources,
 							VolumeMounts: []v1.VolumeMount{
 								{
-									Name:      deploymentConf.VolumeMountName,
-									MountPath: deploymentConf.VolumeMountPath,
+									Name:      deploymentConf.SharedVolumeName,
+									MountPath: deploymentConf.SharedVolumePath,
 								},
 							},
 						},

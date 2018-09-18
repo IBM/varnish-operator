@@ -15,12 +15,12 @@ import (
 
 // Config describes constant values that will be applied to all varnish services, but may change per-cluster
 type Config struct {
-	VarnishImageHost                       string           `env:"VARNISH_IMAGE_HOST,required"`
+	VarnishImageHost                       string           `env:"VARNISH_IMAGE_HOST" envDefault:"registry.ng.bluemix.net"`
 	VarnishImageNamespace                  string           `env:"VARNISH_IMAGE_NAMESPACE" envDefault:"icm-varnish"`
 	VarnishImageName                       string           `env:"VARNISH_IMAGE_NAME" envDefault:"varnish"`
 	VarnishImageTag                        string           `env:"VARNISH_IMAGE_TAG,required"`
 	VarnishImagePullPolicy                 v1.PullPolicy    `env:"VARNISH_IMAGE_PULL_POLICY" envDefault:"Always"`
-	ImagePullSecret                        string           `env:"IMAGE_PULL_SECRET,required"`
+	ImagePullSecret                        string           `env:"IMAGE_PULL_SECRET" envDefault:"docker-reg-secret"`
 	VarnishExporterPort                    int32            `env:"VARNISH_EXPORTER_PORT" envDefault:"9131"`
 	VarnishExporterTargetPort              int32            `env:"VARNISH_EXPORTER_TARGET_PORT" envDefault:"9131"`
 	VarnishPort                            int32            `env:"VARNISH_PORT" envDefault:"2035"`
@@ -39,8 +39,8 @@ type Config struct {
 	DefaultVarnishExporterResourceReqCPU   string           `env:"DEFAULT_VARNISH_EXPORTER_RESOURCE_REQ_CPU" envDefault:"0.1"`
 	DefaultVarnishExporterResourceReqMem   string           `env:"DEFAULT_VARNISH_EXPORTER_RESOURCE_REQ_MEM" envDefault:"100Mi"`
 	DefaultVarnishRestartPolicy            v1.RestartPolicy `env:"DEFAULT_VARNISH_RESTART_POLICY" envDefault:"Always"`
-	DefaultVolumeMountName                 string           `env:"DEFAULT_VOLUME_MOUNT_NAME" envDefault:"libvarnish"`
-	DefaultVolumeMountPath                 string           `env:"DEFAULT_VOLUME_MOUNT_PATH" envDefault:"/var/lib/varnish"`
+	DefaultSharedVolumeName                string           `env:"DEFAULT_SHARED_VOLUME_NAME" envDefault:"libvarnish"`
+	DefaultSharedVolumePath                string           `env:"DEFAULT_SHARED_VOLUME_PATH" envDefault:"/var/lib/varnish"`
 	DefaultLivenessProbeHTTPPath           string           `env:"DEFAULT_LIVENESS_PROBE_HTTP_PATH"`
 	DefaultLivenessProbePort               int              `env:"DEFAULT_LIVENESS_PROBE_PORT"`
 	DefaultReadinessProbeCommand           []string         `env:"DEFAULT_READINESS_PROBE_COMMAND" envDefault:"/usr/bin/varnishadm,ping"`

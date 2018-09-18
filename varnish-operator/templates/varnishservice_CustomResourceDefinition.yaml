@@ -14,6 +14,9 @@ spec:
     - vs
   scope: Namespaced
   subresources:
+    scale:
+      specReplicasPath: .spec.deployment.replicas
+      statusReplicasPath: .status.deployment.replicas
     status: {}
   validation:
     openAPIV3Schema:
@@ -26,25 +29,85 @@ spec:
           type: object
         spec:
           properties:
+            deployment:
+              properties:
+                affinity:
+                  type: object
+                backendsFile:
+                  type: string
+                defaultFile:
+                  type: string
+                imagePullSecretName:
+                  type: string
+                livenessProbe:
+                  type: object
+                readinessProbe:
+                  type: object
+                replicas:
+                  format: int32
+                  type: integer
+                sharedVolume:
+                  properties:
+                    name:
+                      type: string
+                    path:
+                      type: string
+                  required:
+                  - name
+                  - path
+                  type: object
+                tolerations:
+                  items:
+                    type: object
+                  type: array
+                varnishExporterResources:
+                  type: object
+                varnishMemory:
+                  type: string
+                varnishResources:
+                  type: object
+                varnishRestartPolicy:
+                  type: string
+              required:
+              - replicas
+              - imagePullSecretName
+              type: object
             service:
+              properties:
+                ports:
+                  maxItems: 1
+                  type: array
               type: object
           required:
           - service
+          - deployment
           type: object
         status:
           properties:
-            cacheBypassIP:
-              type: string
             deployment:
               type: object
-          required:
-          - deployment
-          - cacheBypassIP
+            service:
+              properties:
+                cached:
+                  properties:
+                    ip:
+                      type: string
+                    loadBalancer:
+                      type: object
+                  type: object
+                noCached:
+                  properties:
+                    ip:
+                      type: string
+                    loadBalancer:
+                      type: object
+                  type: object
+              type: object
           type: object
   version: v1alpha1
 status:
   acceptedNames:
     kind: ""
     plural: ""
-  conditions: null
-  storedVersions: null
+  conditions: []
+  storedVersions: []

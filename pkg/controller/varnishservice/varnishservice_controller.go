@@ -3,8 +3,8 @@ package varnishservice
 import (
 	"context"
 	"errors"
-
 	icmv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
+	"icm-varnish-k8s-operator/pkg/compare"
 	"icm-varnish-k8s-operator/pkg/config"
 	"icm-varnish-k8s-operator/pkg/logger"
 
@@ -81,6 +81,7 @@ type ReconcileVarnishService struct {
 // Automatically generate RBAC rules to allow the Controller to read and write Deployments
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=icm.ibm.com,resources=varnishservices,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=icm.ibm.com,resources=varnishservices/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=services;serviceaccounts,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles;rolebindings,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=endpoints,verbs=list;watch
@@ -98,6 +99,10 @@ func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcil
 		return reconcile.Result{}, logger.RError(err, "could not read VarnishService")
 	}
 
+	instanceStatus := &icmv1alpha1.VarnishService{}
+	instance.ObjectMeta.DeepCopyInto(&instanceStatus.ObjectMeta)
+	instance.Status.DeepCopyInto(&instanceStatus.Status)
+
 	serviceAccountName, err := r.reconcileServiceAccount(instance)
 	if err != nil {
 		return reconcile.Result{}, err
@@ -113,15 +118,25 @@ func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcil
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-	if err = r.reconcileBackendService(instance, applicationPort); err != nil {
-		return reconcile.Result{}, err
-	}
-	deploymentSelector, err := r.reconcileDeployment(instance, serviceAccountName, applicationPort)
+	endpointSelector, err := r.reconcileNoCachedService(instance, instanceStatus, applicationPort)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-	if err = r.reconcileFrontendService(instance, applicationPort, deploymentSelector); err != nil {
+	deploymentSelector, err := r.reconcileDeployment(instance, instanceStatus, serviceAccountName, applicationPort, endpointSelector)
+	if err != nil {
 		return reconcile.Result{}, err
+	}
+	if err = r.reconcileCachedService(instance, instanceStatus, applicationPort, deploymentSelector); err != nil {
+		return reconcile.Result{}, err
+	}
+
+	if !compare.EqualVarnishServiceStatus(&instance.Status, &instanceStatus.Status) {
+		logger.Info("Updating VarnishService Status", "diff", compare.DiffVarnishServiceStatus(&instance.Status, &instanceStatus.Status))
+		if err = r.Status().Update(context.TODO(), instanceStatus); err != nil {
+			return reconcile.Result{}, logger.RError(err, "could not update VarnishService Status", "name", instance.Name, "namespace", instance.Namespace)
+		}
+	} else {
+		logger.V5Info("No updates for VarnishService status")
 	}
 
 	return reconcile.Result{}, nil

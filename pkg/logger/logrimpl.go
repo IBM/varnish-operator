@@ -34,6 +34,10 @@ func Info(msg string, keysAndValues ...interface{}) {
 	zapLogger.Info(msg, keysAndValues...)
 }
 
+func V5Info(msg string, keysAndValues ...interface{}) {
+	zapLogger.V(5).Info(msg, keysAndValues...)
+}
+
 // Error is exactly the same as zapLogger.Error
 func Error(err error, msg string, keysAndValues ...interface{}) {
 	zapLogger.Error(err, msg, keysAndValues...)

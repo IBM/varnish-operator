@@ -42,15 +42,16 @@ func (r *ReconcileVarnishService) reconcileRoleBinding(instance *icmapiv1alpha1.
 
 	err := r.Get(context.TODO(), types.NamespacedName{Name: roleBinding.Name, Namespace: roleBinding.Namespace}, found)
 	// If the role does not exist, create it
+	// Else if there was a problem doing the GET, just return
+	// Else if the roleBinding exists, and it is different, update
+	// Else no changes, do nothing
 	if err != nil && kerrors.IsNotFound(err) {
 		logger.Info("Creating roleBinding", "name", roleBinding.Name, "namespace", roleBinding.Namespace)
 		if err = r.Create(context.TODO(), roleBinding); err != nil {
 			return logger.RError(err, "Unable to create roleBinding")
 		}
-		// If there was a problem doing the GET, just return
 	} else if err != nil {
 		return logger.RError(err, "Could not Get roleBinding")
-		// If the roleBinding exists, and it is different, update
 	} else if !reflect.DeepEqual(found.Subjects, roleBinding.Subjects) || !reflect.DeepEqual(found.RoleRef, roleBinding.RoleRef) {
 		found.Subjects = roleBinding.Subjects
 		found.RoleRef = roleBinding.RoleRef
@@ -58,8 +59,8 @@ func (r *ReconcileVarnishService) reconcileRoleBinding(instance *icmapiv1alpha1.
 		if err = r.Update(context.TODO(), found); err != nil {
 			return logger.RError(err, "Could not Update roleBinding")
 		}
+	} else {
+		logger.V5Info("no updates for rolebinding", "name", roleBinding.Name, "namespace", roleBinding.Namespace)
 	}
-	// If no changes, do nothing
-	logger.Info("no updates for rolebinding", "name", roleBinding.Name, "namespace", roleBinding.Namespace)
 	return nil
 }

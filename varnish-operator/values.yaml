@@ -17,7 +17,7 @@ operator:
     namespace: icm-varnish
     name: varnish
     # You might specify a tag version to ensure that you control the lifecycle of what version of varnish is deployed
-    tag: 1.1.2
+    tag: 1.1.5
     # pullPolicy is passed directly to the varnish deployment, that controls how the varnish image will be pulled for new containers
     pullPolicy: Always
   controllerImage:
@@ -33,7 +33,7 @@ operator:
     namespace: icm-varnish
     name: varnish-controller
     # You might specify a tag version to ensure that you control the lifecycle of what version of varnish is deployed
-    tag: 0.0.5
+    tag: 0.0.7
     # pullPolicy is passed directly to the varnish deployment, that controls how the varnish image will be pulled for new containers
     pullPolicy: Always
   # specifies the pod count of the Manager. Right now, the only valid value is 1
@@ -83,7 +83,7 @@ default:
   # restart policy used for Varnish containers
   varnishRestartPolicy: Always
   # Name and path of the EmptyDir volume shared between Varnish and Varnish Exporter. There should not be a reason to change these fields
-  volumeMount:
+  sharedVolume:
     name: libvarnish
     path: /var/lib/varnish
   # http path used to confirm liveness of the Varnish container. TODO: Not currently working

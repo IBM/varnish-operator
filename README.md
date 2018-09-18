@@ -1,0 +1,123 @@
+# The VarnishService Kubernetes Operator
+
+VarnishService fills a space currently missing within Kubernetes on IBM Cloud: Varnish. IBM does not provide any managed Varnish instances, and Kubernetes does not have anything that works like Varnish does. Thus, this project aims to fill that space by providing a convenient way to deploy Varnish instances.
+
+By default, deploying a Varnish directly as a Deployment into Kubernetes is not immediately useful because the VCL must have IP addresses for its backends. The only obvious way to get an IP address is via a Kubernetes Service, but that Service already acts as a load balancer to the Deployment it backs, which means undefined behavior from the Varnish perspective, and adds an extra network hop. Thus, trying to use Varnish in a regular deployment is unproductive.
+
+Instead, the VarnishService operator manages the deployment of your Varnish, filling in the IP addresses of the pods for you, and manages the required infrastructure. The operator itself is made up of 2 components:
+
+**CustomResourceDefinition**: the actual "VarnishService", that acts in the same way that a Service resource does, except with an added Varnish layer between the Service and the Deployment it backs. You would define a resource of Kind "VarnishService", and specify all the regular specs for a Service, plus some new fields that control how man Varnish instances you want, how much memory/cpu they get, and other relevant information for the Varnish cluster.
+
+**Controller**: The controller is an application deployed into your cluster that knows how to react to the VarnishService CustomResource. Meaning, this application watches for new or changed VarnishServices and handles the actual underlying infrastructure. That means it must be running at all times in the cluster, although it lives in its own namespace away from your application.
+
+## Kubernetes Version Requirement
+
+This operator assumes that the `/status` and `/scale` subresources area enabled for Custom Resources, which means that you must have enabled this alpha feature for Kubernetes v1.10 (impossible on IBM Kubernetes Service) or are using at least v1.11, where it is enabled by default.
+
+## Installation
+
+The VarnishService Operator is packaged as a [Helm Chart](https://helm.sh/), hosted on [Artifactory](na.artifactory.swg-devops.com). To get access to this Artifactory, you must be a user on the Weather Channel Bluemix account 1638245.
+
+### Getting Helm Access
+
+After you are a user on the correct Bluemix account, you must generate an API key within [Artifactory](na.artifactory.swg-devops.com) for Helm to use. You can generate an API key on your profile page, found in the upper-right of the home page. Using that generated API Key, you can log in to Helm using [these instructions](https://www.jfrog.com/confluence/display/RTF/Helm+Chart+Repositories), where the username is your email and the password is your API key. Specifically, that will look like:
+
+```sh
+helm repo add wcp-icm-helm-virtual https://na.artifactory.swg-devops.com/artifactory/wcp-icm-helm-virtual --username=<your-email> --password=<api-key>
+```
+
+### Getting Container Registry Access
+
+As part of the helm install, you will also need access to the Container Registry in order to pull the Docker images associated with the Helm charts. This can be done using the IBMCloud CLI:
+
+```sh
+ic cr token-add --non-expiring --description 'for Varnish operator'
+```
+
+And from the output, save the `Token` field.
+
+### Adding The Key To The Namespace
+
+Once you have generated your docker registry key, you must either use an existing or create a new namespace. Add a secret with the docker registry token to that namespace:
+
+```sh
+kubectl create secret docker-registry <name> --docker-server=registry.ng.bluemix.net --docker-username=token --docker-password=<token> --docker-email=<any-email>
+```
+
+Note that
+
+* `<name>` can be any name
+* `docker-username` MUST be `token`
+* `docker-email` can be any email. For example, `a@b.c`
+
+By default the Helm install will assume a namespace called `varnish-service-system` exists.
+
+### Configuring The Operator
+
+The operator has options to customize the installation into your cluster, exposed as values in the Helm `values.yaml` file. [See the default `values.yaml` annotated with descriptions of each field](/operator/varnish-operator/values.yaml) to see what can be customized when deploying this operator.
+
+### Installing The Operator
+
+Once a Namespace has been created with a docker registry secret and an appropriate `values.yaml` has been assembled, install the operator using
+
+```sh
+helm upgrade --install <name-of-release> wcp-icm-helm-virtual/varnish-operator --version <your-version> --wait --namespace <namespace-with-registry-token>
+```
+
+Note that
+
+* `<namespace-with-registry-token>` must match `namespace` in the `values.yaml` file.
+
+## Usage
+
+Once the operator is installed, your cluster should have a new resource, `varnishservice` (with aliases `varnishservices` and `vs`). From this point, you can create a yaml file with the `VarnishService` Kind.
+
+### Configuring Access
+
+Since the VarnishService requires pulling images from the same private repository as the Operator, the same docker registry key must exist in the target namespace for the VarnishService. Thus, add a secret with the docker registry token to that namespace before creating the resource.
+
+### Configuring The VarnishService Resource
+
+VarnishService has [an example yaml file annotated with descriptions of each field](/operator/controller/config/samples/icm_v1alpha1_varnishservice.yaml) To see what can be customized for the VarnishService.
+
+### Creating a VarnishService Resource
+
+Once the VarnishService resource yaml has been created, simply `kubectl apply -f <varnish-service>.yaml` to create the resource. Once complete, you should see:
+
+* a deployment with the name `<varnish-service-name>-deployment`. This is the Varnish cluster, and should have inherited everything under the `deployment` part of the spec.
+* 2 services, one `<varnish-service-name>-cached` and one `<varnish-service-name>-nocached`. As is implied by the names, using `<varnish-service-name>-cached` will forward to the underlying deployment fronted by Varnish, while `<varnish-service-name>-nocached` will target the underlying deployment directly, with no Varnish caching. `<varnish-service-name>-cached` will have inherited everything under the `service` part of the spec, other than its `selector` and `port`, which will be redirected to the Varnish deployment.
+* A role/rolebinding/serviceAccount combination to give the Varnish deployment the ability to read the IP addresses for the underlying deployment pods.
+
+### Updating a VarnishService Resource
+
+Just as with any other Kubernetes resource, using `kubectl apply`, `kubectl patch`, or `kubectl replace` will all update the resource appropriately. The operator will handle how that update propagates to its dependent resources.
+
+### Deleting a VarnishService Resource
+
+Simply calling `kubectl delete` on the VarnishResource will recursively delete all dependent resources, so that is the only action you need to take. In fact, deleting any of the dependent resources will not do anything, in the same way that deleting the pod of a deployment will not. The operator will "fix" the deletion by creating a new resource to replace that which was deleted.
+
+### Checking Status of a VarnishService Resource
+
+The VarnishService keeps track of its current status as events occur in the system. This can be seen through the `Status` field, visible from `kubectl describe vs <your-varnishservice>`. Currently, it mirrors the status of the Varnish deployment as well as reports on the IP address of the `cached` and `nocached` services created as part of the VarnishService.
+
+## Keeping Varnish Stable
+
+Kubernetes is built on the premise that its runnable environments are ephemeral, meaning they can be created or deleted at will, with little to no effect on the overall system. In the case of Varnish, which is purely an in-memory caching layer, deleting and creating instances all the time would cause the cache to perform very poorly. Thus, there is a need to keep Varnish stable, ie tell Kubernetes that these particular runnable environments should _not_ be treated as ephemeral.
+
+Kubernetes does not provide this functionality out of the box, but you can trick it into approximating this behavior, and that is through the concepts of guaranteed resources and affinities.
+
+### Guaranteed Resources
+
+The way that Kubernetes manages deployed pods on nodes is through monitoring the resources that a pod is using. Specifically, it uses the `limits` and `requests` values for `cpu` and `memory` to determine how much resources to give a pod, and when it might be OK to reschedule a pod somewhere else (namely, if a node is running out of resources and some pods are using more resources than requested). For a detailed breakdown of what `limits` and `requests` mean, [see the Kubernetes documentation on QoS](https://kubernetes.io/docs/tasks/configure-pod-container/quality-service-pod/). In QoS parlance, you want the Varnish nodes to be a "Guaranteed" QoS. In short, you want to always set the `limits` and `requests` fields, and you want `limits` and `requests` to be identical.
+
+### Affinities
+
+[Kubernetes allows decent control](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#inter-pod-affinity-and-anti-affinity-beta-feature) on where pods get deployed based on labels associated with pods and/or nodes. For instance, you can configure pods of the same deployment to repel each other, meaning new pods entering the deployment will try to avoid nodes that already have a pod of that type. That way, you if any one node goes down, it will only take a single pod with it. Likewise, you can configure pods to be attracted to each other, for colocation that could decrease latency between pods. Note that reading through the above linked documentation is valuable, as it goes into limitations to affinities, as well as deeply explains how they work and when to use them.
+
+For the purposes of this Varnish deployment, you will most likely want to configure a [pod anti-affinity](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#never-co-located-in-the-same-node)(see the deployment yaml right above this section for the example) so that each pod of the varnish deployment is on a different node. Since Varnish nodes do not need to talk to each other (at least in the free versions supported by this operator), there is no need for colocation, and so you should focus on minimizing the impact of lost nodes. An example of what that might look like is in the [example annotated yaml file](/operator/controller/config/samples/icm_v1alpha1_varnishservice.yaml) under `spec.deployment.affinity`.
+
+### Further Investigations
+
+#### Taints/Tolerations
+
+Kubernetes has a mechanism to repel pods away from a node (taints) unless the pods are specifically allowed on that node (tolerations). I am still evaluating if this could be useful in keeping Varnish stable, since it is conceivably possible that Kubernetes will sometimes just move pods around nodes to better fit things, even with a guaranteed resource configuration. It is unclear how often that might happen, if at all, so some testing will need to be done before further exploring taints/tolerations. At any rate, it is possible to add a toleration to the Varnish pod, in case users see value in it.

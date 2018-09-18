@@ -3,6 +3,22 @@ kind: CustomResourceDefinition
 metadata:
   name: varnishservices.icm.ibm.com
 spec:
+  # add vs shortname
   names:
     shortNames:
-      - vs
+    - vs
+  # limit number of ports to 1
+  validation:
+    openAPIV3Schema:
+      properties:
+        spec:
+          properties:
+            service:
+              properties:
+                ports:
+                  type: array
+                  maxItems: 1
+# replace `conditions: null` and `storedVersions: null` with empty arrays
+status:
+  conditions: []
+  storedVersions: []

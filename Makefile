@@ -21,16 +21,14 @@ manager: generate fmt vet
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet
-	go run ${ROOT_DIR}cmd/manager/main.go
-
-# Install CRDs into a cluster
-install: manifests
-	kubectl apply -f ${ROOT_DIR}config/crds
+	VARNISH_IMAGE_TAG=$(shell cat ${ROOT_DIR}../icm-varnish/version) go run ${ROOT_DIR}cmd/manager/main.go
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
-deploy: manifests
-	kubectl apply -f ${ROOT_DIR}config/crds
+install: manifests
 	kustomize build ${ROOT_DIR}config/default | kubectl apply -f -
+
+uninstall:
+	kustomize build ${ROOT_DIR}config/default | kubectl delete -f -
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests:
@@ -50,7 +48,7 @@ generate:
 
 # Prepare .yaml files for helm
 helm-prepare: manifests update-image-version
-	${ROOT_DIR}hack/create_helm_files.sh ${ROOT_DIR}helm
+	${ROOT_DIR}hack/create_helm_files.sh ${ROOT_DIR}varnish-operator/templates
 
 helm-upgrade: helm-prepare
 	@if [ -z "${NAMESPACE}" ]; then\
@@ -61,12 +59,15 @@ helm-upgrade: helm-prepare
 		echo "trying to read \"namePrefix\" line in config/default/kustomization.yaml. Did something change?";\
 		exit 1;\
 	fi
-	helm upgrade --install --namespace ${NAMESPACE} --force varnish-operator --wait --debug --set operator.controllerImage.tag=$(shell cat version) --set namespace=${NAMESPACE} --set namePrefix=${NAME_PREFIX} ${ROOT_DIR}helm
+	helm upgrade --install --namespace ${NAMESPACE} --force varnish-operator --wait --debug --set operator.controllerImage.tag=$(shell cat ${ROOT_DIR}version) --set namespace=${NAMESPACE} --set namePrefix=${NAME_PREFIX} ${ROOT_DIR}varnish-operator
 
 # Build the docker image
 # docker-build: test
 docker-build: fake-test update-image-version
-	docker build ${ROOT_DIR} -t ${IMG}
+	docker build ${ROOT_DIR} -t ${IMG} -f Dockerfile.local
+
+docker-build-dep: fake-test update-image-version
+    docker build ${ROOT_DIR} -t ${IMG} -f Dockerfile
 
 update-image-version:
 	@echo "updating kustomize image patch file for manager resource"

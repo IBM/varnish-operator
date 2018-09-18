@@ -31,26 +31,25 @@ func (r *ReconcileVarnishService) reconcileServiceAccount(instance *icmapiv1alph
 
 	err := r.Get(context.TODO(), types.NamespacedName{Name: serviceAccount.Name, Namespace: serviceAccount.Namespace}, found)
 	// If the service account does not exist, create it
+	// Else if there was a problem doing the GET, just return
+	// Else if the service exists, and it is different, update
+	// Else no changes, do nothing
 	if err != nil && kerrors.IsNotFound(err) {
-		logger.Info("Creating service", "config", serviceAccount)
-		// logger.Info("Creating service", "namespace", service.Namespace, "name", service.Name)
+		logger.Info("Creating service account", "config", serviceAccount)
 		if err = r.Create(context.TODO(), serviceAccount); err != nil {
 			return "", logger.RError(err, "Unable to create service account")
 		}
-		// If there was a problem doing the GET, just return
 	} else if err != nil {
 		return "", logger.RError(err, "Could not Get service account")
-		// If the service exists, and it is different, update
 	} else if !reflect.DeepEqual(serviceAccount.ImagePullSecrets, found.ImagePullSecrets) {
 		found.ImagePullSecrets = serviceAccount.ImagePullSecrets
 		logger.Info("Updating service account", "config", found)
-		// logger.Info("Updating service", "namespace", service.Namespace, "name", service.Name)
 		err = r.Update(context.TODO(), found)
 		if err != nil {
 			return "", logger.RError(err, "Unable to update service")
 		}
+	} else {
+		logger.V5Info("No updates for service account", "name", serviceAccount.Name, "namespace", serviceAccount.Namespace)
 	}
-	// If no changes, do nothing
-	logger.Info("No updates for service account", "name", serviceAccount.Name, "namespace", serviceAccount.Namespace)
 	return saName, nil
 }

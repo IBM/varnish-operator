@@ -18,15 +18,9 @@ namePrefix: varnish-service-
 # YAML string, with resources separated by document
 # markers ("---").
 resources:
-- ../rbac/rbac_role_binding.yaml
 - ../rbac/rbac_role.yaml
+- ../rbac/rbac_role_binding.yaml
 - ../crds/icm_v1alpha1_varnishservice.yaml
-# for now, don't let kustomize generate the manager files because they need to have helm templates in them.
-# kustomize doesn't like helm templates
-# - ../manager/*.yaml
 
 patches:
 - crd_patch.yaml
-# for now, don't let kustomize generate the manager files because they need to have helm templates in them.
-# kustomize doesn't like helm templates
-# - manager_image_patch.yaml

@@ -37,24 +37,25 @@ func (r *ReconcileVarnishService) reconcileRole(instance *icmapiv1alpha1.Varnish
 
 	err := r.Get(context.TODO(), types.NamespacedName{Name: role.Name, Namespace: role.Namespace}, found)
 	// If the role does not exist, create it
+	// Else if there was a problem doing the GET, just return
+	// Else if the role exists, and it is different, update
+	// Else no changes, do nothing
 	if err != nil && kerrors.IsNotFound(err) {
-		// logger.Info("Creating role", "name", role.Name, "namespace", role.Namespace)
 		logger.Info("Creating role", "config", role)
 		if err = r.Create(context.TODO(), role); err != nil {
 			return "", logger.RError(err, "Unable to create role")
 		}
-		// If there was a problem doing the GET, just return
 	} else if err != nil {
 		return "", logger.RError(err, "Could not Get role")
-		// If the role exists, and it is different, update
 	} else if !reflect.DeepEqual(found.Rules, role.Rules) {
 		found.Rules = role.Rules
 		logger.Info("Updating role", "config", found)
 		if err = r.Update(context.TODO(), found); err != nil {
 			return "", logger.RError(err, "Could not Update role")
 		}
+	} else {
+		logger.V5Info("no updates for role", "name", role.Name, "namespace", role.Namespace)
+
 	}
-	// If no changes, do nothing
-	logger.Info("no updates for role", "name", role.Name, "namespace", role.Namespace)
 	return role.Name, nil
 }

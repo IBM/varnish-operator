@@ -22,6 +22,10 @@ required = [
 name = "github.com/caarlos0/env"
 version = "v3.3.0"
 
+[[constraint]]
+name = "github.com/google/go-cmp"
+version = "v0.2.0"
+
 # STANZAS BELOW ARE GENERATED AND MAY BE WRITTEN - DO NOT MODIFY BELOW THIS LINE.
 
 [[constraint]]

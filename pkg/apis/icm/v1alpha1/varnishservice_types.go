@@ -39,16 +39,27 @@ type VarnishDeployment struct {
 // VarnishServiceSpec defines the desired state of VarnishService
 // Important: Run "make" to regenerate code after modifying this file
 type VarnishServiceSpec struct {
-	Service    v1.ServiceSpec `json:"service"`
-	Deployment VarnishDeployment
+	Service    v1.ServiceSpec    `json:"service"`
+	Deployment VarnishDeployment `json:"deployment"`
+}
+
+// VarnishServiceSingleServiceStatus describes the status of one service as it exists within a VarnishService
+type VarnishServiceSingleServiceStatus struct {
+	v1.ServiceStatus `json:",inline"`
+	IP               string `json:"ip,omitempty"`
+}
+
+// VarnishServiceServiceStatus defines the observed state of the Service portion of VarnishService
+type VarnishServiceServiceStatus struct {
+	Cached   VarnishServiceSingleServiceStatus `json:"cached,omitempty"`
+	NoCached VarnishServiceSingleServiceStatus `json:"noCached,omitempty"`
 }
 
 // VarnishServiceStatus defines the observed state of VarnishService
 type VarnishServiceStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
-	Deployment appsv1.DeploymentStatus `json:"deployment"`
-	// Replicas represents the current number of varnish nodes
-	CacheBypassIP string `json:"cacheBypassIP"`
+	Deployment appsv1.DeploymentStatus     `json:"deployment,omitempty"`
+	Service    VarnishServiceServiceStatus `json:"service,omitempty"`
 }
 
 // +genclient
@@ -57,6 +68,7 @@ type VarnishServiceStatus struct {
 // VarnishService is the Schema for the varnishservices API
 // +k8s:openapi-gen=true
 // +kubebuilder:subresource:status
+// +kubebuilder:subresource:scale:specpath=.spec.deployment.replicas,statuspath=.status.deployment.replicas,selectorpath=
 type VarnishService struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

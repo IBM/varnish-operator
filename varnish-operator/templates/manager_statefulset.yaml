@@ -143,13 +143,13 @@ spec:
         - name: DEFAULT_VARNISH_RESTART_POLICY
           value: {{ . | title | quote }}
           {{- end }}
-          {{- with .volumeMount }}{{- /* default.volumeMount */}}
-            {{- with .name }}{{- /* default.volumeMount.name */}}
-        - name: DEFAULT_VOLUME_MOUNT_NAME
+          {{- with .sharedVolume }}{{- /* default.sharedVolume */}}
+            {{- with .name }}{{- /* default.sharedVolume.name */}}
+        - name: DEFAULT_SHARED_VOLUME_NAME
           value: {{ . | quote }}
             {{- end }}
-            {{- with .path }}{{- /* default.volumeMount.path */}}
-        - name: DEFAULT_VOLUME_MOUNT_PATH
+            {{- with .path }}{{- /* default.sharedVolume.path */}}
+        - name: DEFAULT_SHARED_VOLUME_PATH
           value: {{ . | quote }}
             {{- end }}
           {{- end }}

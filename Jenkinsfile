@@ -15,9 +15,8 @@ artifactoryCredentialId='TAAS-Artifactory-User-Password-Global'
 node {
     GitInfo gitInfo = icmCheckoutStages()
     icmDockerBuildStage(gitInfo)
-    icmInstallBxCliWithPluginsStage(BxPluginConsts.CONTAINER_PLUGINS)
     DockerImageInfo dockerImageInfo = icmGetDockerImageInfo(dockerRegistry, dockerRegistryNamespace, dockerImageName, releaseBranch, gitInfo)
-    icmLoginToBxStage(bxApiKeyId, region, BxPluginConsts.CONTAINER_PLUGINS)
+    icmBxSetupStages(bxApiKeyId, region, BxPluginConsts.CONTAINER_PLUGINS)
     icmDockerPushStage(dockerImageInfo, gitInfo)
     if (gitInfo.branch == releaseBranch) {
         icmArtifactoryHelmChartPackageAndPublish('varnish-operator', artifactoryCredentialId, artifactoryHostName, artifactoryRepo)

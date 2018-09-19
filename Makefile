@@ -1,6 +1,6 @@
 
 # Image URL to use in all building/pushing image targets
-IMG ?= varnish-controller:$(shell cat version)
+IMG ?= varnish-controller:$(shell cat version.txt)
 ROOT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 NAMESPACE := $(shell sed -n -e 's/^namespace: //p' ${ROOT_DIR}config/default/kustomization.yaml)
 NAME_PREFIX := $(shell sed -n -e 's/^namePrefix: //p' ${ROOT_DIR}config/default/kustomization.yaml)

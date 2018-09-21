@@ -51,8 +51,9 @@ varnish:
   # there should not be much reason to change any of these port values
   port: 2035
   targetPort: 2035
-  exporterPort: 2034
-  exporterTargetPort: 2034
+  exporterPort: 9131
+  # Warning: without modifying the Docker image, changing exporterTargetPort will break metrics
+  exporterTargetPort: 9131
   # there should not be much reason to change the directory VCL is written to
   vclDir: /etc/varnish
 
@@ -82,10 +83,6 @@ default:
       memory: 100Mi
   # restart policy used for Varnish containers
   varnishRestartPolicy: Always
-  # Name and path of the EmptyDir volume shared between Varnish and Varnish Exporter. There should not be a reason to change these fields
-  sharedVolume:
-    name: libvarnish
-    path: /var/lib/varnish
   # http path used to confirm liveness of the Varnish container. TODO: Not currently working
   # livenessProbe:
   #   httpPath: /liveness

@@ -7,6 +7,7 @@ import (
 	"icm-varnish-k8s-operator/pkg/compare"
 	"icm-varnish-k8s-operator/pkg/config"
 	"icm-varnish-k8s-operator/pkg/logger"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
@@ -122,11 +123,11 @@ func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcil
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-	deploymentSelector, err := r.reconcileDeployment(instance, instanceStatus, serviceAccountName, applicationPort, endpointSelector)
+	varnishSelector, err := r.reconcileDeployment(instance, instanceStatus, serviceAccountName, applicationPort, endpointSelector)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-	if err = r.reconcileCachedService(instance, instanceStatus, applicationPort, deploymentSelector); err != nil {
+	if err = r.reconcileCachedService(instance, instanceStatus, applicationPort, varnishSelector); err != nil {
 		return reconcile.Result{}, err
 	}
 
@@ -136,7 +137,7 @@ func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcil
 			return reconcile.Result{}, logger.RError(err, "could not update VarnishService Status", "name", instance.Name, "namespace", instance.Namespace)
 		}
 	} else {
-		logger.V5Info("No updates for VarnishService status")
+		logger.V(5).Info("No updates for VarnishService status")
 	}
 
 	return reconcile.Result{}, nil
@@ -148,5 +149,12 @@ func getApplicationPort(instance *icmv1alpha1.VarnishService) (*v1.ServicePort, 
 		logger.Error(err, "")
 		return nil, err
 	}
-	return &instance.Spec.Service.Ports[0], nil
+	port := instance.Spec.Service.Ports[0]
+	if port.TargetPort == (intstr.IntOrString{}) {
+		port.TargetPort = intstr.IntOrString{
+			Type:   intstr.Int,
+			IntVal: port.Port,
+		}
+	}
+	return &port, nil
 }

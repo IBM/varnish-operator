@@ -9,7 +9,20 @@ import (
 )
 
 // zapLogger is the log instance to be used in application code
-var zapLogger logr.Logger
+var zapLogger LogrWrapper
+
+type LogrWrapper struct {
+	logr.Logger
+}
+
+func (l *LogrWrapper) RError(err error, msg string, keysAndValues ...interface{}) error {
+	l.Error(err, msg, keysAndValues...)
+	return err
+}
+
+func (l *LogrWrapper) WithValues(keysAndValues ...interface{}) LogrWrapper {
+	return LogrWrapper{l.Logger.WithValues(keysAndValues...)}
+}
 
 func init() {
 	loggerConfig := zap.Config{
@@ -26,7 +39,7 @@ func init() {
 	if err != nil {
 		log.Panicf("could not initialize zap logger: %v", err)
 	}
-	zapLogger = zapr.NewLogger(z)
+	zapLogger = LogrWrapper{zapr.NewLogger(z)}
 }
 
 // Info is exactly the same as zapLogger.Info
@@ -34,8 +47,8 @@ func Info(msg string, keysAndValues ...interface{}) {
 	zapLogger.Info(msg, keysAndValues...)
 }
 
-func V5Info(msg string, keysAndValues ...interface{}) {
-	zapLogger.V(5).Info(msg, keysAndValues...)
+func V(level int) logr.InfoLogger {
+	return zapLogger.V(level)
 }
 
 // Error is exactly the same as zapLogger.Error
@@ -45,6 +58,9 @@ func Error(err error, msg string, keysAndValues ...interface{}) {
 
 // RError is the same as Error, except it also returns the error value
 func RError(err error, msg string, keysAndValues ...interface{}) error {
-	zapLogger.Error(err, msg, keysAndValues...)
-	return err
+	return zapLogger.RError(err, msg, keysAndValues...)
+}
+
+func WithValues(keysAndValues ...interface{}) LogrWrapper {
+	return zapLogger.WithValues(keysAndValues...)
 }

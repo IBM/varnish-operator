@@ -3,9 +3,8 @@ package varnishservice
 import (
 	"context"
 	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
+	"icm-varnish-k8s-operator/pkg/compare"
 	"icm-varnish-k8s-operator/pkg/logger"
-	"reflect"
-
 	rbacv1beta1 "k8s.io/api/rbac/v1beta1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,8 +15,9 @@ import (
 func (r *ReconcileVarnishService) reconcileRoleBinding(instance *icmapiv1alpha1.VarnishService, roleName, serviceAccountName string) error {
 	roleBinding := &rbacv1beta1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      instance.Name + "-rolebinding",
+			Name:      instance.Name + "-varnish-rolebinding",
 			Namespace: instance.Namespace,
+			Labels:    combinedLabels(instance, "rolebinding"),
 		},
 		Subjects: []rbacv1beta1.Subject{
 			{
@@ -33,9 +33,11 @@ func (r *ReconcileVarnishService) reconcileRoleBinding(instance *icmapiv1alpha1.
 		},
 	}
 
+	logr := logger.WithValues("name", roleBinding.Name, "namespace", roleBinding.Namespace)
+
 	// Set controller reference for roleBinding
 	if err := controllerutil.SetControllerReference(instance, roleBinding, r.scheme); err != nil {
-		return logger.RError(err, "Cannot set controller reference for service", "namespace", roleBinding.Namespace, "name", roleBinding.Name)
+		return logr.RError(err, "Cannot set controller reference for service")
 	}
 
 	found := &rbacv1beta1.RoleBinding{}
@@ -46,21 +48,22 @@ func (r *ReconcileVarnishService) reconcileRoleBinding(instance *icmapiv1alpha1.
 	// Else if the roleBinding exists, and it is different, update
 	// Else no changes, do nothing
 	if err != nil && kerrors.IsNotFound(err) {
-		logger.Info("Creating roleBinding", "name", roleBinding.Name, "namespace", roleBinding.Namespace)
+		logr.Info("Creating roleBinding", "new", roleBinding)
 		if err = r.Create(context.TODO(), roleBinding); err != nil {
-			return logger.RError(err, "Unable to create roleBinding")
+			return logr.RError(err, "Unable to create roleBinding")
 		}
 	} else if err != nil {
-		return logger.RError(err, "Could not Get roleBinding")
-	} else if !reflect.DeepEqual(found.Subjects, roleBinding.Subjects) || !reflect.DeepEqual(found.RoleRef, roleBinding.RoleRef) {
+		return logr.RError(err, "Could not Get roleBinding")
+	} else if !compare.EqualRoleBinding(found, roleBinding) {
+		logr.Info("Updating roleBinding", "diff", compare.DiffRoleBinding(found, roleBinding))
 		found.Subjects = roleBinding.Subjects
 		found.RoleRef = roleBinding.RoleRef
-		logger.Info("Updating roleBinding", "name", roleBinding.Name, "namespace", roleBinding.Namespace)
+		found.Labels = roleBinding.Labels
 		if err = r.Update(context.TODO(), found); err != nil {
-			return logger.RError(err, "Could not Update roleBinding")
+			return logr.RError(err, "Could not Update roleBinding")
 		}
 	} else {
-		logger.V5Info("no updates for rolebinding", "name", roleBinding.Name, "namespace", roleBinding.Namespace)
+		logr.V(5).Info("no updates for rolebinding")
 	}
 	return nil
 }

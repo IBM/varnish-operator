@@ -143,16 +143,6 @@ spec:
         - name: DEFAULT_VARNISH_RESTART_POLICY
           value: {{ . | title | quote }}
           {{- end }}
-          {{- with .sharedVolume }}{{- /* default.sharedVolume */}}
-            {{- with .name }}{{- /* default.sharedVolume.name */}}
-        - name: DEFAULT_SHARED_VOLUME_NAME
-          value: {{ . | quote }}
-            {{- end }}
-            {{- with .path }}{{- /* default.sharedVolume.path */}}
-        - name: DEFAULT_SHARED_VOLUME_PATH
-          value: {{ . | quote }}
-            {{- end }}
-          {{- end }}
           {{- with .livenessProbe }}{{- /* default.livenessProbe */}}
             {{- with .httpPath }}{{- /* default.livenessProbe.httpPath */}}
         - name: DEFAULT_LIVENESS_PROBE_HTTP_PATH

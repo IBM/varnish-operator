@@ -21,14 +21,17 @@ import (
 func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *icmapiv1alpha1.VarnishService, serviceAccountName string, applicationPort *v1.ServicePort, endpointSelector map[string]string) (map[string]string, error) {
 	deployConfig, err := newVarnishDeploymentConfig(r.globalConf, instance, serviceAccountName, applicationPort, endpointSelector)
 	if err != nil {
-		return nil, logger.RError(err, "could not generate deployment config")
+		return nil, logger.RError(err, "could not generate deployment config", "varnishService", instance.Name, "namespace", instance.Namespace)
 	}
+
+	logr := logger.WithValues("name", deployConfig.Name, "namespace", deployConfig.Namespace)
+
 	desired, err := newVarnishDeployment(r.globalConf, deployConfig)
 	if err != nil {
-		return nil, logger.RError(err, "could not generate deployment")
+		return nil, logr.RError(err, "could not generate deployment")
 	}
 	if err := controllerutil.SetControllerReference(instance, desired, r.scheme); err != nil {
-		return nil, logger.RError(err, "could not set controller as the OwnerReference for deployment", "name", desired.Name, "namespace", desired.Namespace)
+		return nil, logr.RError(err, "could not set controller as the OwnerReference for deployment")
 	}
 
 	found := &appsv1.Deployment{}
@@ -39,33 +42,39 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 	// Else if the deployment exists, and it is different, update
 	// Else no changes, do nothing
 	if err != nil && kerrors.IsNotFound(err) {
-		logger.Info("Creating Deployment", "config", desired)
+		logr.Info("Creating Deployment", "new", desired)
 		err = r.Create(context.TODO(), desired)
 		if err != nil {
-			return nil, logger.RError(err, "could not create deployment", "name", desired.Name, "namespace", desired.Namespace)
+			return nil, logr.RError(err, "could not create deployment")
 		}
 	} else if err != nil {
-		return nil, logger.RError(err, "could not get current state of deployment", "name", desired.Name, "namespace", desired.Namespace)
-	} else if !compare.EqualDeployment(desired, found) {
-		logger.Info("Updating Deployment", "diff", compare.DiffDeployment(desired, found))
-		found.Spec = desired.Spec
-		err = r.Update(context.TODO(), found)
-		if err != nil {
-			return nil, logger.RError(err, "could not update deployment", "name", desired.Name, "namespace", desired.Namespace)
-		}
+		return nil, logr.RError(err, "could not get current state of deployment")
 	} else {
-		logger.V5Info("No updates for Deployment")
+		// the pod selector is immutable once set, so always enforce the same as existing
+		desired.Spec.Selector = found.Spec.Selector
+		desired.Spec.Template.Labels = found.Spec.Template.Labels
+		if !compare.EqualDeployment(found, desired) {
+			logr.Info("Updating Deployment", "diff", compare.DiffDeployment(found, desired))
+			found.Spec = desired.Spec
+			found.Labels = desired.Labels
+			if err = r.Update(context.TODO(), found); err != nil {
+				return nil, logr.RError(err, "could not update deployment")
+			}
+		} else {
+			logr.V(5).Info("No updates for Deployment")
+		}
 	}
 
 	instanceStatus.Status.Deployment = found.Status
 
-	return deployConfig.Labels, nil
+	return deployConfig.PodSelector, nil
 }
 
 type varnishDeploymentConfig struct {
 	Name                 string
 	Namespace            string
 	Labels               map[string]string
+	PodSelector          map[string]string
 	EndpointSelector     map[string]string
 	VarnishRestartPolicy *v1.RestartPolicy
 	VarnishReplicas      int32
@@ -73,9 +82,6 @@ type varnishDeploymentConfig struct {
 	BackendsFile         string
 	DefaultFile          string
 	Resources            *v1.ResourceRequirements
-	ExporterResources    *v1.ResourceRequirements
-	SharedVolumeName     string
-	SharedVolumePath     string
 	LivenessProbe        *v1.Probe
 	ReadinessProbe       *v1.Probe
 	ServiceAccountName   string
@@ -94,11 +100,13 @@ func newVarnishDeploymentConfig(globalConf *config.Config, vs *icmapiv1alpha1.Va
 		Tolerations:        vs.Spec.Deployment.Tolerations,
 	}
 	// required fields
-	if vdc.Name = vs.Name + "-deployment"; vdc.Name == "-deployment" {
+	if vdc.Name = vs.Name + "-varnish-deployment"; vdc.Name == "-varnish-deployment" {
 		return &vdc, errors.New("name not defined")
 	}
 
-	vdc.Labels = map[string]string{"varnish-component": vs.Name + "-varnish"}
+	componentName := "varnishes"
+	vdc.Labels = combinedLabels(vs, componentName)
+	vdc.PodSelector = generateLabels(vs, componentName)
 
 	if vdc.VarnishReplicas = vs.Spec.Deployment.Replicas; vdc.VarnishReplicas == 0 {
 		return &vdc, errors.New("replicas not defined")
@@ -124,17 +132,8 @@ func newVarnishDeploymentConfig(globalConf *config.Config, vs *icmapiv1alpha1.Va
 	if vdc.Resources = vs.Spec.Deployment.VarnishResources; vdc.Resources == nil {
 		vdc.Resources = &globalConf.DefaultVarnishResources
 	}
-	if vdc.ExporterResources = vs.Spec.Deployment.VarnishExporterResources; vdc.ExporterResources == nil {
-		vdc.ExporterResources = &globalConf.DefaultVarnishExporterResources
-	}
 	if vdc.VarnishRestartPolicy = vs.Spec.Deployment.VarnishRestartPolicy; vdc.VarnishRestartPolicy == nil {
 		vdc.VarnishRestartPolicy = &globalConf.DefaultVarnishRestartPolicy
-	}
-	if vdc.SharedVolumeName = vs.Spec.Deployment.SharedVolume.Name; vdc.SharedVolumeName == "" {
-		vdc.SharedVolumeName = globalConf.DefaultSharedVolumeName
-	}
-	if vdc.SharedVolumePath = vs.Spec.Deployment.SharedVolume.Path; vdc.SharedVolumePath == "" {
-		vdc.SharedVolumePath = globalConf.DefaultSharedVolumePath
 	}
 	if vdc.LivenessProbe = vs.Spec.Deployment.LivenessProbe; vdc.LivenessProbe == nil {
 		vdc.LivenessProbe = globalConf.DefaultLivenessProbe
@@ -150,27 +149,19 @@ func newVarnishDeployment(globalConf *config.Config, deploymentConf *varnishDepl
 	deployment := appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      deploymentConf.Name,
-			Labels:    globalConf.VarnishCommonLabels,
+			Labels:    deploymentConf.Labels,
 			Namespace: deploymentConf.Namespace,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &deploymentConf.VarnishReplicas,
 			Selector: &metav1.LabelSelector{
-				MatchLabels: deploymentConf.Labels,
+				MatchLabels: deploymentConf.PodSelector,
 			},
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: deploymentConf.Labels,
+					Labels: deploymentConf.PodSelector,
 				},
 				Spec: v1.PodSpec{
-					Volumes: []v1.Volume{
-						{
-							Name: deploymentConf.SharedVolumeName,
-							VolumeSource: v1.VolumeSource{
-								EmptyDir: &v1.EmptyDirVolumeSource{},
-							},
-						},
-					},
 					Containers: []v1.Container{
 						{
 							Name:  "varnish",
@@ -179,43 +170,24 @@ func newVarnishDeployment(globalConf *config.Config, deploymentConf *varnishDepl
 								{
 									ContainerPort: globalConf.VarnishPort,
 								},
+								{
+									ContainerPort: globalConf.VarnishExporterTargetPort,
+								},
 							},
 							Env: []v1.EnvVar{
 								{Name: "ENDPOINT_SELECTOR_STRING", Value: labels.SelectorFromSet(deploymentConf.EndpointSelector).String()},
 								{Name: "BACKENDS_FILE", Value: deploymentConf.BackendsFile},
 								{Name: "DEFAULT_FILE", Value: deploymentConf.DefaultFile},
 								{Name: "NAMESPACE", Value: deploymentConf.Namespace},
-								{Name: "TARGET_PORT", Value: strconv.FormatInt(int64(deploymentConf.Port.Port), 10)},
+								{Name: "TARGET_PORT", Value: deploymentConf.Port.TargetPort.String()},
 								{Name: "VARNISH_PORT", Value: strconv.FormatInt(int64(globalConf.VarnishPort), 10)},
 								{Name: "VARNISH_MEMORY", Value: deploymentConf.VarnishMemory},
 								{Name: "VCL_DIR", Value: globalConf.VCLDir},
 							},
-							Resources: *deploymentConf.Resources,
-							VolumeMounts: []v1.VolumeMount{
-								{
-									Name:      deploymentConf.SharedVolumeName,
-									MountPath: deploymentConf.SharedVolumePath,
-								},
-							},
+							Resources:       *deploymentConf.Resources,
 							LivenessProbe:   deploymentConf.LivenessProbe,
 							ReadinessProbe:  deploymentConf.ReadinessProbe,
 							ImagePullPolicy: globalConf.VarnishImagePullPolicy,
-						},
-						{
-							Name:  "varnish-exporter",
-							Image: globalConf.VarnishImageFullPath,
-							Ports: []v1.ContainerPort{
-								{
-									ContainerPort: globalConf.VarnishExporterPort,
-								},
-							},
-							Resources: *deploymentConf.ExporterResources,
-							VolumeMounts: []v1.VolumeMount{
-								{
-									Name:      deploymentConf.SharedVolumeName,
-									MountPath: deploymentConf.SharedVolumePath,
-								},
-							},
 						},
 					},
 					RestartPolicy:      *deploymentConf.VarnishRestartPolicy,

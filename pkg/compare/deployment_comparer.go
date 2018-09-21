@@ -13,7 +13,7 @@ import (
 var (
 	deployIgnoreFields = cmpopts.IgnoreFields(appsv1.Deployment{}, "Spec.Template.Spec.DeprecatedServiceAccount")
 	compareQuantity    = cmp.Comparer(func(x, y resource.Quantity) bool { return x.Cmp(y) == 0 })
-	deployOpts         = []cmp.Option{cmpopts.IgnoreFields(appsv1.Deployment{}, sharedIgnoreFields...), deployIgnoreFields, compareQuantity}
+	deployOpts         = []cmp.Option{cmpopts.IgnoreFields(appsv1.Deployment{}, sharedIgnoreMetadata...), cmpopts.IgnoreFields(appsv1.Deployment{}, sharedIgnoreStatus...), deployIgnoreFields, compareQuantity}
 )
 
 var (
@@ -92,15 +92,15 @@ func withDeploymentInheritance(desired, found *appsv1.Deployment) {
 }
 
 // EqualDeployment compares 2 deployments for equality
-func EqualDeployment(desired, found *appsv1.Deployment) bool {
+func EqualDeployment(found, desired *appsv1.Deployment) bool {
 	desiredCopy := withDeploymentDefaults(desired)
 	withDeploymentInheritance(desiredCopy, found)
-	return cmp.Equal(desiredCopy, found, deployOpts...)
+	return cmp.Equal(found, desiredCopy, deployOpts...)
 }
 
 // DiffDeployment generates a patch diff between 2 deployments
-func DiffDeployment(desired, found *appsv1.Deployment) string {
+func DiffDeployment(found, desired *appsv1.Deployment) string {
 	desiredCopy := withDeploymentDefaults(desired)
 	withDeploymentInheritance(desiredCopy, found)
-	return cmp.Diff(desiredCopy, found, deployOpts...)
+	return cmp.Diff(found, desiredCopy, deployOpts...)
 }

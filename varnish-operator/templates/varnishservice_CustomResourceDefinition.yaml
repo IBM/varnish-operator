@@ -46,22 +46,10 @@ spec:
                 replicas:
                   format: int32
                   type: integer
-                sharedVolume:
-                  properties:
-                    name:
-                      type: string
-                    path:
-                      type: string
-                  required:
-                  - name
-                  - path
-                  type: object
                 tolerations:
                   items:
                     type: object
                   type: array
-                varnishExporterResources:
-                  type: object
                 varnishMemory:
                   type: string
                 varnishResources:
@@ -94,6 +82,8 @@ spec:
                       type: string
                     loadBalancer:
                       type: object
+                    name:
+                      type: string
                   type: object
                 noCached:
                   properties:
@@ -101,6 +91,8 @@ spec:
                       type: string
                     loadBalancer:
                       type: object
+                    name:
+                      type: string
                   type: object
               type: object
           type: object

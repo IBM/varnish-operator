@@ -10,4 +10,4 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: default
-  namespace: varnish-service-system
+  namespace: {{ .Values.namespace | quote }}

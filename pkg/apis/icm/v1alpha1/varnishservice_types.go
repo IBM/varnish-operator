@@ -14,26 +14,18 @@ type ServiceWrapper struct {
 	Spec v1.ServiceSpec `json:"spec"`
 }
 
-// SharedVolumeSpec is just a wrapper for settings relating to a shared volume
-type SharedVolumeSpec struct {
-	Name string `json:"name"`
-	Path string `json:"path"`
-}
-
 type VarnishDeployment struct {
-	Replicas                 int32                    `json:"replicas"`
-	VarnishMemory            string                   `json:"varnishMemory,omitempty"`
-	VarnishResources         *v1.ResourceRequirements `json:"varnishResources,omitempty"`
-	VarnishExporterResources *v1.ResourceRequirements `json:"varnishExporterResources,omitempty"`
-	LivenessProbe            *v1.Probe                `json:"livenessProbe,omitempty"`
-	ReadinessProbe           *v1.Probe                `json:"readinessProbe,omitempty"`
-	ImagePullSecretName      string                   `json:"imagePullSecretName"`
-	VarnishRestartPolicy     *v1.RestartPolicy        `json:"varnishRestartPolicy,omitempty"`
-	SharedVolume             SharedVolumeSpec         `json:"sharedVolume,omitempty"`
-	BackendsFile             string                   `json:"backendsFile,omitempty"`
-	DefaultFile              string                   `json:"defaultFile,omitempty"`
-	Affinity                 *v1.Affinity             `json:"affinity,omitempty"`
-	Tolerations              []v1.Toleration          `json:"tolerations,omitempty"`
+	Replicas             int32                    `json:"replicas"`
+	VarnishMemory        string                   `json:"varnishMemory,omitempty"`
+	VarnishResources     *v1.ResourceRequirements `json:"varnishResources,omitempty"`
+	LivenessProbe        *v1.Probe                `json:"livenessProbe,omitempty"`
+	ReadinessProbe       *v1.Probe                `json:"readinessProbe,omitempty"`
+	ImagePullSecretName  string                   `json:"imagePullSecretName"`
+	VarnishRestartPolicy *v1.RestartPolicy        `json:"varnishRestartPolicy,omitempty"`
+	BackendsFile         string                   `json:"backendsFile,omitempty"`
+	DefaultFile          string                   `json:"defaultFile,omitempty"`
+	Affinity             *v1.Affinity             `json:"affinity,omitempty"`
+	Tolerations          []v1.Toleration          `json:"tolerations,omitempty"`
 }
 
 // VarnishServiceSpec defines the desired state of VarnishService
@@ -46,6 +38,7 @@ type VarnishServiceSpec struct {
 // VarnishServiceSingleServiceStatus describes the status of one service as it exists within a VarnishService
 type VarnishServiceSingleServiceStatus struct {
 	v1.ServiceStatus `json:",inline"`
+	Name             string `json:"name,omitempty"`
 	IP               string `json:"ip,omitempty"`
 }
 

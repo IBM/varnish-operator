@@ -13,6 +13,9 @@ IFS=''
 (kustomize build "$SCRIPT_ROOT/config/default"; echo -e "---") | while read line; do
     if [[ "$line" = "---" ]]; then
         kind=$(echo -e "$yamlblock" | sed -n -e 's/^kind: //p')
+        if [[ "$kind" = "ClusterRoleBinding" ]]; then
+            yamlblock=$(echo -e "$yamlblock" | sed 's/namespace: .*/namespace: \{\{ .Values.namespace | quote \}\}/')
+        fi
         echo -e "$yamlblock" > $output_dir/varnishservice_$kind.yaml
         yamlblock=""
     elif [[ -z "$yamlblock" ]]; then

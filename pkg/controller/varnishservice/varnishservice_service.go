@@ -16,15 +16,21 @@ import (
 
 func (r *ReconcileVarnishService) reconcileNoCachedService(instance, instanceStatus *icmapiv1alpha1.VarnishService, applicationPort *v1.ServicePort) (map[string]string, error) {
 	selector := make(map[string]string, len(instance.Spec.Service.Selector))
-	labels := make(map[string]string, len(instance.Spec.Service.Selector)+1)
 	for k, v := range instance.Spec.Service.Selector {
 		selector[k] = v
+	}
+	selectorLabels := generateLabels(instance, "nocached-service")
+	inheritedLabels := inheritLabels(instance)
+	labels := make(map[string]string, len(selectorLabels)+len(inheritedLabels))
+	for k, v := range inheritedLabels {
 		labels[k] = v
 	}
-	labels["varnish-component"] = "nocached"
+	for k, v := range selectorLabels {
+		labels[k] = v
+	}
 	noCachedService := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      instance.Name + "-nocached",
+			Name:      instance.Name + "-varnish-nocached",
 			Namespace: instance.Namespace,
 			Labels:    labels,
 		},
@@ -35,19 +41,17 @@ func (r *ReconcileVarnishService) reconcileNoCachedService(instance, instanceSta
 	}
 
 	if err := r.reconcileServiceGeneric(instance, &instanceStatus.Status.Service.NoCached, noCachedService); err != nil {
-		return labels, err
+		return selectorLabels, err
 	}
-	return labels, nil
+	return selectorLabels, nil
 }
 
 func (r *ReconcileVarnishService) reconcileCachedService(instance, instanceStatus *icmapiv1alpha1.VarnishService, applicationPort *v1.ServicePort, varnishSelector map[string]string) error {
 	cachedService := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      instance.Name + "-cached",
+			Name:      instance.Name + "-varnish-cached",
 			Namespace: instance.Namespace,
-			Labels: map[string]string{
-				"varnish-component": "cached",
-			},
+			Labels:    combinedLabels(instance, "cached-service"),
 		},
 	}
 	instance.Spec.Service.DeepCopyInto(&cachedService.Spec)
@@ -58,6 +62,15 @@ func (r *ReconcileVarnishService) reconcileCachedService(instance, instanceStatu
 			Port:       applicationPort.Port,
 			Protocol:   v1.ProtocolTCP,
 			TargetPort: intstr.FromInt(r.globalConf.VarnishTargetPort),
+		},
+		{
+			Name:     "exporter",
+			Port:     r.globalConf.VarnishExporterPort,
+			Protocol: v1.ProtocolTCP,
+			TargetPort: intstr.IntOrString{
+				Type:   intstr.Int,
+				IntVal: r.globalConf.VarnishExporterTargetPort,
+			},
 		},
 	}
 
@@ -70,9 +83,11 @@ func (r *ReconcileVarnishService) reconcileCachedService(instance, instanceStatu
 }
 
 func (r *ReconcileVarnishService) reconcileServiceGeneric(instance *icmapiv1alpha1.VarnishService, instanceServiceStatus *icmapiv1alpha1.VarnishServiceSingleServiceStatus, desired *v1.Service) error {
+	logr := logger.WithValues("name", desired.Name, "namespace", desired.Namespace)
+
 	// Set controller reference for desired object
 	if err := controllerutil.SetControllerReference(instance, desired, r.scheme); err != nil {
-		return logger.RError(err, "Cannot set controller reference for desired", "namespace", desired.Namespace, "name", desired.Name)
+		return logr.RError(err, "Cannot set controller reference for desired")
 	}
 
 	found := &v1.Service{}
@@ -83,26 +98,30 @@ func (r *ReconcileVarnishService) reconcileServiceGeneric(instance *icmapiv1alph
 	// Else if the desired exists, and it is different, update
 	// Else no changes, do nothing
 	if err != nil && kerrors.IsNotFound(err) {
-		logger.Info("Creating Service", "config", desired)
+		logr.Info("Creating Service", "new", desired)
 		if err = r.Create(context.TODO(), desired); err != nil {
-			return logger.RError(err, "Unable to create service", "name", desired.Name, "namespace", desired.Namespace)
+			return logr.RError(err, "Unable to create service")
 		}
 	} else if err != nil {
-		return logger.RError(err, "Could not Get desired")
-	} else if !compare.EqualService(desired, found) {
-		logger.Info("Updating Service", "diff", compare.DiffService(desired, found), "name", desired.Name, "namespace", desired.Namespace)
-		desired.Spec.ClusterIP = found.Spec.ClusterIP
-		found.Spec = desired.Spec
-		err = r.Update(context.TODO(), found)
-		if err != nil {
-			return logger.RError(err, "Unable to update desired")
-		}
+		return logr.RError(err, "Could not Get desired")
 	} else {
-		logger.V5Info("No updates for Service", "name", desired.Name)
+		// ClusterIP is immutable once created, so always enforce the same as existing
+		desired.Spec.ClusterIP = found.Spec.ClusterIP
+		if !compare.EqualService(found, desired) {
+			logr.Info("Updating Service", "diff", compare.DiffService(found, desired))
+			found.Spec = desired.Spec
+			found.Labels = desired.Labels
+			if err = r.Update(context.TODO(), found); err != nil {
+				return logr.RError(err, "Unable to update desired")
+			}
+		} else {
+			logr.V(5).Info("No updates for Service")
+		}
 	}
 
 	*instanceServiceStatus = icmapiv1alpha1.VarnishServiceSingleServiceStatus{
 		ServiceStatus: found.Status,
+		Name:          found.Name,
 		IP:            found.Spec.ClusterIP,
 	}
 	return nil

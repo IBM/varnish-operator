@@ -10,7 +10,7 @@ import (
 
 var (
 	serviceIgnoreFields = cmpopts.IgnoreFields(v1.Service{}, "Spec.ClusterIP")
-	serviceOpts         = []cmp.Option{cmpopts.IgnoreFields(v1.Service{}, sharedIgnoreFields...), serviceIgnoreFields}
+	serviceOpts         = []cmp.Option{cmpopts.IgnoreFields(v1.Service{}, sharedIgnoreMetadata...), cmpopts.IgnoreFields(v1.Service{}, sharedIgnoreStatus...), serviceIgnoreFields}
 )
 
 var (
@@ -28,10 +28,12 @@ func withServiceDefaults(s *v1.Service) *v1.Service {
 
 	mergo.Merge(&ss, serviceDefaults)
 
-	is := intstr.IntOrString{}
 	for i := range ss.Spec.Ports {
-		if ss.Spec.Ports[i].TargetPort == is {
-			ss.Spec.Ports[i].TargetPort = intstr.IntOrString{IntVal: ss.Spec.Ports[i].Port}
+		if ss.Spec.Ports[i].TargetPort == (intstr.IntOrString{}) {
+			ss.Spec.Ports[i].TargetPort = intstr.IntOrString{
+				Type:   intstr.Int,
+				IntVal: ss.Spec.Ports[i].Port,
+			}
 		}
 	}
 
@@ -39,13 +41,13 @@ func withServiceDefaults(s *v1.Service) *v1.Service {
 }
 
 // EqualService compares 2 services for equality
-func EqualService(desired, found *v1.Service) bool {
+func EqualService(found, desired *v1.Service) bool {
 	desiredCopy := withServiceDefaults(desired)
-	return cmp.Equal(desiredCopy, found, serviceOpts...)
+	return cmp.Equal(found, desiredCopy, serviceOpts...)
 }
 
 // DiffService generates a patch diff between 2 services
-func DiffService(desired, found *v1.Service) string {
+func DiffService(found, desired *v1.Service) string {
 	desiredCopy := withServiceDefaults(desired)
-	return cmp.Diff(desiredCopy, found, serviceOpts...)
+	return cmp.Diff(found, desiredCopy, serviceOpts...)
 }

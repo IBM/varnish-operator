@@ -3,9 +3,8 @@ package varnishservice
 import (
 	"context"
 	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
+	"icm-varnish-k8s-operator/pkg/compare"
 	"icm-varnish-k8s-operator/pkg/logger"
-	"reflect"
-
 	rbacv1beta1 "k8s.io/api/rbac/v1beta1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,8 +15,9 @@ import (
 func (r *ReconcileVarnishService) reconcileRole(instance *icmapiv1alpha1.VarnishService) (string, error) {
 	role := &rbacv1beta1.Role{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      instance.Name + "-role",
+			Name:      instance.Name + "-varnish-role",
 			Namespace: instance.Namespace,
+			Labels:    combinedLabels(instance, "role"),
 		},
 		Rules: []rbacv1beta1.PolicyRule{
 			{
@@ -28,9 +28,11 @@ func (r *ReconcileVarnishService) reconcileRole(instance *icmapiv1alpha1.Varnish
 		},
 	}
 
+	logr := logger.WithValues("name", role.Name, "namespace", role.Namespace)
+
 	// Set controller reference for role
 	if err := controllerutil.SetControllerReference(instance, role, r.scheme); err != nil {
-		return "", logger.RError(err, "Cannot set controller reference for service", "namespace", role.Namespace, "name", role.Name)
+		return "", logr.RError(err, "Cannot set controller reference for service")
 	}
 
 	found := &rbacv1beta1.Role{}
@@ -41,20 +43,21 @@ func (r *ReconcileVarnishService) reconcileRole(instance *icmapiv1alpha1.Varnish
 	// Else if the role exists, and it is different, update
 	// Else no changes, do nothing
 	if err != nil && kerrors.IsNotFound(err) {
-		logger.Info("Creating role", "config", role)
+		logr.Info("Creating role", "new", role)
 		if err = r.Create(context.TODO(), role); err != nil {
-			return "", logger.RError(err, "Unable to create role")
+			return "", logr.RError(err, "Unable to create role")
 		}
 	} else if err != nil {
-		return "", logger.RError(err, "Could not Get role")
-	} else if !reflect.DeepEqual(found.Rules, role.Rules) {
+		return "", logr.RError(err, "Could not Get role")
+	} else if !compare.EqualRole(found, role) {
+		logr.Info("Updating role", "diff", compare.DiffRole(found, role))
 		found.Rules = role.Rules
-		logger.Info("Updating role", "config", found)
+		found.Labels = role.Labels
 		if err = r.Update(context.TODO(), found); err != nil {
-			return "", logger.RError(err, "Could not Update role")
+			return "", logr.RError(err, "Could not Update role")
 		}
 	} else {
-		logger.V5Info("no updates for role", "name", role.Name, "namespace", role.Namespace)
+		logr.V(5).Info("no updates for role")
 
 	}
 	return role.Name, nil

@@ -15,42 +15,34 @@ import (
 
 // Config describes constant values that will be applied to all varnish services, but may change per-cluster
 type Config struct {
-	VarnishImageHost                       string           `env:"VARNISH_IMAGE_HOST" envDefault:"registry.ng.bluemix.net"`
-	VarnishImageNamespace                  string           `env:"VARNISH_IMAGE_NAMESPACE" envDefault:"icm-varnish"`
-	VarnishImageName                       string           `env:"VARNISH_IMAGE_NAME" envDefault:"varnish"`
-	VarnishImageTag                        string           `env:"VARNISH_IMAGE_TAG,required"`
-	VarnishImagePullPolicy                 v1.PullPolicy    `env:"VARNISH_IMAGE_PULL_POLICY" envDefault:"Always"`
-	ImagePullSecret                        string           `env:"IMAGE_PULL_SECRET" envDefault:"docker-reg-secret"`
-	VarnishExporterPort                    int32            `env:"VARNISH_EXPORTER_PORT" envDefault:"9131"`
-	VarnishExporterTargetPort              int32            `env:"VARNISH_EXPORTER_TARGET_PORT" envDefault:"9131"`
-	VarnishPort                            int32            `env:"VARNISH_PORT" envDefault:"2035"`
-	VarnishTargetPort                      int              `env:"VARNISH_TARGET_PORT" envDefault:"2035"`
-	VarnishName                            string           `env:"VARNISH_NAME" envDefault:"varnish"`
-	VCLDir                                 string           `env:"VCL_DIR" envDefault:"/etc/varnish"`
-	DefaultVarnishMemory                   string           `env:"DEFAULT_VARNISH_MEMORY" envDefault:"1024M"`
-	DefaultBackendsFile                    string           `env:"DEFAULT_BACKENDS_FILE" envDefault:"backends.vcl"`
-	DefaultDefaultFile                     string           `env:"DEFAULT_DEFAULT_FILE" envDefault:"default.vcl"`
-	DefaultVarnishResourceLimitCPU         string           `env:"DEFAULT_VARNISH_RESOURCE_LIMIT_CPU" envDefault:"1"`
-	DefaultVarnishResourceLimitMem         string           `env:"DEFAULT_VARNISH_RESOURCE_LIMIT_MEM" envDefault:"2048Mi"`
-	DefaultVarnishResourceReqCPU           string           `env:"DEFAULT_VARNISH_RESOURCE_REQ_CPU" envDefault:"1"`
-	DefaultVarnishResourceReqMem           string           `env:"DEFAULT_VARNISH_RESOURCE_REQ_MEM" envDefault:"2048Mi"`
-	DefaultVarnishExporterResourceLimitCPU string           `env:"DEFAULT_VARNISH_EXPORTER_RESOURCE_LIMIT_CPU" envDefault:"0.2"`
-	DefaultVarnishExporterResourceLimitMem string           `env:"DEFAULT_VARNISH_EXPORTER_RESOURCE_LIMIT_MEM" envDefault:"200Mi"`
-	DefaultVarnishExporterResourceReqCPU   string           `env:"DEFAULT_VARNISH_EXPORTER_RESOURCE_REQ_CPU" envDefault:"0.1"`
-	DefaultVarnishExporterResourceReqMem   string           `env:"DEFAULT_VARNISH_EXPORTER_RESOURCE_REQ_MEM" envDefault:"100Mi"`
-	DefaultVarnishRestartPolicy            v1.RestartPolicy `env:"DEFAULT_VARNISH_RESTART_POLICY" envDefault:"Always"`
-	DefaultSharedVolumeName                string           `env:"DEFAULT_SHARED_VOLUME_NAME" envDefault:"libvarnish"`
-	DefaultSharedVolumePath                string           `env:"DEFAULT_SHARED_VOLUME_PATH" envDefault:"/var/lib/varnish"`
-	DefaultLivenessProbeHTTPPath           string           `env:"DEFAULT_LIVENESS_PROBE_HTTP_PATH"`
-	DefaultLivenessProbePort               int              `env:"DEFAULT_LIVENESS_PROBE_PORT"`
-	DefaultReadinessProbeCommand           []string         `env:"DEFAULT_READINESS_PROBE_COMMAND" envDefault:"/usr/bin/varnishadm,ping"`
-	VarnishImageFullPath                   string
-	VarnishExporterName                    string
-	VarnishCommonLabels                    map[string]string
-	DefaultVarnishResources                v1.ResourceRequirements
-	DefaultVarnishExporterResources        v1.ResourceRequirements
-	DefaultLivenessProbe                   *v1.Probe
-	DefaultReadinessProbe                  v1.Probe
+	VarnishImageHost               string           `env:"VARNISH_IMAGE_HOST" envDefault:"registry.ng.bluemix.net"`
+	VarnishImageNamespace          string           `env:"VARNISH_IMAGE_NAMESPACE" envDefault:"icm-varnish"`
+	VarnishImageName               string           `env:"VARNISH_IMAGE_NAME" envDefault:"varnish"`
+	VarnishImageTag                string           `env:"VARNISH_IMAGE_TAG,required"`
+	VarnishImagePullPolicy         v1.PullPolicy    `env:"VARNISH_IMAGE_PULL_POLICY" envDefault:"Always"`
+	ImagePullSecret                string           `env:"IMAGE_PULL_SECRET" envDefault:"docker-reg-secret"`
+	VarnishExporterPort            int32            `env:"VARNISH_EXPORTER_PORT" envDefault:"9131"`
+	VarnishExporterTargetPort      int32            `env:"VARNISH_EXPORTER_TARGET_PORT" envDefault:"9131"`
+	VarnishPort                    int32            `env:"VARNISH_PORT" envDefault:"2035"`
+	VarnishTargetPort              int              `env:"VARNISH_TARGET_PORT" envDefault:"2035"`
+	VarnishName                    string           `env:"VARNISH_NAME" envDefault:"varnish"`
+	VCLDir                         string           `env:"VCL_DIR" envDefault:"/etc/varnish"`
+	DefaultVarnishMemory           string           `env:"DEFAULT_VARNISH_MEMORY" envDefault:"1024M"`
+	DefaultBackendsFile            string           `env:"DEFAULT_BACKENDS_FILE" envDefault:"backends.vcl"`
+	DefaultDefaultFile             string           `env:"DEFAULT_DEFAULT_FILE" envDefault:"default.vcl"`
+	DefaultVarnishResourceLimitCPU string           `env:"DEFAULT_VARNISH_RESOURCE_LIMIT_CPU" envDefault:"1"`
+	DefaultVarnishResourceLimitMem string           `env:"DEFAULT_VARNISH_RESOURCE_LIMIT_MEM" envDefault:"2048Mi"`
+	DefaultVarnishResourceReqCPU   string           `env:"DEFAULT_VARNISH_RESOURCE_REQ_CPU" envDefault:"1"`
+	DefaultVarnishResourceReqMem   string           `env:"DEFAULT_VARNISH_RESOURCE_REQ_MEM" envDefault:"2048Mi"`
+	DefaultVarnishRestartPolicy    v1.RestartPolicy `env:"DEFAULT_VARNISH_RESTART_POLICY" envDefault:"Always"`
+	DefaultLivenessProbeHTTPPath   string           `env:"DEFAULT_LIVENESS_PROBE_HTTP_PATH"`
+	DefaultLivenessProbePort       int              `env:"DEFAULT_LIVENESS_PROBE_PORT"`
+	DefaultReadinessProbeCommand   []string         `env:"DEFAULT_READINESS_PROBE_COMMAND" envDefault:"/usr/bin/varnishadm,ping"`
+	VarnishImageFullPath           string
+	VarnishCommonLabels            map[string]string
+	DefaultVarnishResources        v1.ResourceRequirements
+	DefaultLivenessProbe           *v1.Probe
+	DefaultReadinessProbe          v1.Probe
 }
 
 // GlobalConf is config that affects the operator directly, as well as provides default values for varnish instances
@@ -110,7 +102,6 @@ func LoadConfig() (*Config, error) {
 		return &c, errors.WithStack(err)
 	}
 	c.VarnishImageFullPath = c.fullImagePath()
-	c.VarnishExporterName = fmt.Sprintf("%s-exporter", c.VarnishName)
 	c.VarnishCommonLabels = map[string]string{
 		"owner": c.VarnishName,
 	}
@@ -139,33 +130,6 @@ func LoadConfig() (*Config, error) {
 		Requests: v1.ResourceList{
 			v1.ResourceCPU:    varnishResourceReqCPU,
 			v1.ResourceMemory: varnishResourceReqMem,
-		},
-	}
-
-	varnishExporterResourceLimitCPU, err := resource.ParseQuantity(c.DefaultVarnishExporterResourceLimitCPU)
-	if err != nil {
-		return &c, errors.WithStack(err)
-	}
-	varnishExporterResourceLimitMem, err := resource.ParseQuantity(c.DefaultVarnishExporterResourceLimitMem)
-	if err != nil {
-		return &c, errors.WithStack(err)
-	}
-	varnishExporterResourceReqCPU, err := resource.ParseQuantity(c.DefaultVarnishExporterResourceReqCPU)
-	if err != nil {
-		return &c, errors.WithStack(err)
-	}
-	varnishExporterResourceReqMem, err := resource.ParseQuantity(c.DefaultVarnishExporterResourceReqMem)
-	if err != nil {
-		return &c, errors.WithStack(err)
-	}
-	c.DefaultVarnishExporterResources = v1.ResourceRequirements{
-		Limits: v1.ResourceList{
-			v1.ResourceCPU:    varnishExporterResourceLimitCPU,
-			v1.ResourceMemory: varnishExporterResourceLimitMem,
-		},
-		Requests: v1.ResourceList{
-			v1.ResourceCPU:    varnishExporterResourceReqCPU,
-			v1.ResourceMemory: varnishExporterResourceReqMem,
 		},
 	}
 

@@ -1,6 +1,8 @@
 
 # Image URL to use in all building/pushing image targets
-IMG ?= varnish-controller:$(shell cat version.txt)
+VERSION ?= $(shell cat ${ROOT_DIR}version.txt)-dev
+VARNISH_VERSION ?= $(shell cat ${ROOT_DIR}../icm-varnish-version.txt)
+IMG ?= varnish-controller:${VERSION}
 ROOT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 NAMESPACE := $(shell sed -n -e 's/^namespace: //p' ${ROOT_DIR}config/default/kustomization.yaml)
 NAME_PREFIX := $(shell sed -n -e 's/^namePrefix: //p' ${ROOT_DIR}config/default/kustomization.yaml)
@@ -21,7 +23,7 @@ manager: generate fmt vet
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet
-	VARNISH_IMAGE_TAG=$(shell cat ${ROOT_DIR}../icm-varnish/version) go run ${ROOT_DIR}cmd/manager/main.go
+	VARNISH_IMAGE_TAG=${VARNISH_VERSION} go run ${ROOT_DIR}cmd/manager/main.go
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 install: manifests
@@ -47,7 +49,7 @@ generate:
 	cd ${ROOT_DIR} && go generate ./pkg/... ./cmd/...
 
 # Prepare .yaml files for helm
-helm-prepare: manifests update-image-version
+helm-prepare: manifests
 	${ROOT_DIR}hack/create_helm_files.sh ${ROOT_DIR}varnish-operator/templates
 
 helm-upgrade: helm-prepare
@@ -59,19 +61,15 @@ helm-upgrade: helm-prepare
 		echo "trying to read \"namePrefix\" line in config/default/kustomization.yaml. Did something change?";\
 		exit 1;\
 	fi
-	helm upgrade --install --namespace ${NAMESPACE} --force varnish-operator --wait --debug --set operator.controllerImage.tag=$(shell cat ${ROOT_DIR}version) --set namespace=${NAMESPACE} --set namePrefix=${NAME_PREFIX} ${ROOT_DIR}varnish-operator
+	helm upgrade --install --namespace ${NAMESPACE} --force varnish-operator --wait --debug --set operator.controllerImage.tag=${VERSION} --set namespace=${NAMESPACE} --set namePrefix=${NAME_PREFIX} ${ROOT_DIR}varnish-operator
 
 # Build the docker image
 # docker-build: test
-docker-build: fake-test update-image-version
+docker-build: fake-test
 	docker build ${ROOT_DIR} -t ${IMG} -f Dockerfile.local
 
-docker-build-dep: fake-test update-image-version
+docker-build-dep: fake-test
     docker build ${ROOT_DIR} -t ${IMG} -f Dockerfile
-
-update-image-version:
-	@echo "updating kustomize image patch file for manager resource"
-	sed -i '' 's@image: .*@image: '"${IMG}"'@' ./config/default/manager_image_patch.yaml
 
 # Tag and push the docker image
 docker-tag-push:

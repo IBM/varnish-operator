@@ -5,7 +5,7 @@ kind: VarnishService
 metadata:
   # Add any labels you think will help
   labels:
-    middleware: varnish
+    operator: varnish
   # any name is fine
   name: varnishservice-sample
   # the namespace must have the docker registry secret used by the operator in it
@@ -43,18 +43,6 @@ spec:
       exec:
         command: [/usr/bin/varnishadm, ping]
       initialDelaySeconds: 5
-    # Resources allocated to the Varnish Exporter pod, which handles metrics for Varnish. Only change these if there is instability in the metrics
-    varnishExporterResources:
-      limits:
-        cpu: 0.2
-        memory: "200Mi"
-      requests:
-        cpu: 0.1
-        memory: "100Mi"
-    # Name and path of the EmptyDir volume shared between Varnish and Varnish Exporter. There should not be a reason to change these fields
-    sharedVolume:
-      name: libvarnish
-      path: /var/lib/varnish
     # Name of the secret for the docker registry. The secret needs to exist in the namespace before creating this resource
     imagePullSecretName: docker-reg-secret
     # Affinity to apply to the pods in the Varnish deployment. For more on affinity, see https://kubernetes.io/docs/concepts/configuration/assign-pod-node#affinity-and-anti-affinity

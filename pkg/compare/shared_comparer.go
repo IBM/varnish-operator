@@ -1,3 +1,4 @@
 package compare
 
-var sharedIgnoreFields = []string{"Generation", "SelfLink", "UID", "ResourceVersion", "CreationTimestamp", "Status"}
+var sharedIgnoreMetadata = []string{"Generation", "SelfLink", "UID", "ResourceVersion", "CreationTimestamp"}
+var sharedIgnoreStatus = []string{"Status"}

@@ -33,7 +33,7 @@ operator:
     namespace: icm-varnish
     name: varnish-controller
     # You might specify a tag version to ensure that you control the lifecycle of what version of varnish is deployed
-    tag: 0.1.0
+    tag: 0.2.0
     # pullPolicy is passed directly to the varnish deployment, that controls how the varnish image will be pulled for new containers
     pullPolicy: Always
   # specifies the pod count of the Manager. Right now, the only valid value is 1

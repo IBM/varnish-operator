@@ -54,7 +54,7 @@ By default the Helm install will assume a namespace called `varnish-service-syst
 
 ### Configuring The Operator
 
-The operator has options to customize the installation into your cluster, exposed as values in the Helm `values.yaml` file. [See the default `values.yaml` annotated with descriptions of each field](/operator/varnish-operator/values.yaml) to see what can be customized when deploying this operator.
+The operator has options to customize the installation into your cluster, exposed as values in the Helm `values.yaml` file. [See the default `values.yaml` annotated with descriptions of each field](/varnish-operator/values.yaml) to see what can be customized when deploying this operator.
 
 ### Installing The Operator
 
@@ -78,7 +78,7 @@ Since the VarnishService requires pulling images from the same private repositor
 
 ### Configuring The VarnishService Resource
 
-VarnishService has [an example yaml file annotated with descriptions of each field](/operator/controller/config/samples/icm_v1alpha1_varnishservice.yaml) To see what can be customized for the VarnishService.
+VarnishService has [an example yaml file annotated with descriptions of each field](/config/samples/icm_v1alpha1_varnishservice.yaml) To see what can be customized for the VarnishService.
 
 ### Creating a VarnishService Resource
 
@@ -114,7 +114,7 @@ The way that Kubernetes manages deployed pods on nodes is through monitoring the
 
 [Kubernetes allows decent control](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#inter-pod-affinity-and-anti-affinity-beta-feature) on where pods get deployed based on labels associated with pods and/or nodes. For instance, you can configure pods of the same deployment to repel each other, meaning new pods entering the deployment will try to avoid nodes that already have a pod of that type. That way, you if any one node goes down, it will only take a single pod with it. Likewise, you can configure pods to be attracted to each other, for colocation that could decrease latency between pods. Note that reading through the above linked documentation is valuable, as it goes into limitations to affinities, as well as deeply explains how they work and when to use them.
 
-For the purposes of this Varnish deployment, you will most likely want to configure a [pod anti-affinity](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#never-co-located-in-the-same-node)(see the deployment yaml right above this section for the example) so that each pod of the varnish deployment is on a different node. Since Varnish nodes do not need to talk to each other (at least in the free versions supported by this operator), there is no need for colocation, and so you should focus on minimizing the impact of lost nodes. An example of what that might look like is in the [example annotated yaml file](/operator/controller/config/samples/icm_v1alpha1_varnishservice.yaml) under `spec.deployment.affinity`.
+For the purposes of this Varnish deployment, you will most likely want to configure a [pod anti-affinity](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#never-co-located-in-the-same-node)(see the deployment yaml right above this section for the example) so that each pod of the varnish deployment is on a different node. Since Varnish nodes do not need to talk to each other (at least in the free versions supported by this operator), there is no need for colocation, and so you should focus on minimizing the impact of lost nodes. An example of what that might look like is in the [example annotated yaml file](/config/samples/icm_v1alpha1_varnishservice.yaml) under `spec.deployment.affinity`.
 
 ### Further Investigations
 

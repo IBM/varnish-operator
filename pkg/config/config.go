@@ -23,6 +23,7 @@ type Config struct {
 	ImagePullSecret                string           `env:"IMAGE_PULL_SECRET" envDefault:"docker-reg-secret"`
 	VarnishExporterPort            int32            `env:"VARNISH_EXPORTER_PORT" envDefault:"9131"`
 	VarnishExporterTargetPort      int32            `env:"VARNISH_EXPORTER_TARGET_PORT" envDefault:"9131"`
+	PrometheusAnnotations          bool             `env:"PROMETHEUS_ANNOTATIONS" envDefault:"true"`
 	VarnishPort                    int32            `env:"VARNISH_PORT" envDefault:"2035"`
 	VarnishTargetPort              int              `env:"VARNISH_TARGET_PORT" envDefault:"2035"`
 	VarnishName                    string           `env:"VARNISH_NAME" envDefault:"varnish"`

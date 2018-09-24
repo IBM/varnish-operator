@@ -5,6 +5,7 @@ import (
 	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/compare"
 	"icm-varnish-k8s-operator/pkg/logger"
+	"strconv"
 
 	"k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -54,6 +55,16 @@ func (r *ReconcileVarnishService) reconcileCachedService(instance, instanceStatu
 			Labels:    combinedLabels(instance, "cached-service"),
 		},
 	}
+
+	prometheusAnnotations := map[string]string{
+		"prometheus.io/scrape": "true",
+		"prometheus.io/port":   strconv.FormatInt(int64(r.globalConf.VarnishExporterPort), 10),
+	}
+
+	if r.globalConf.PrometheusAnnotations {
+		cachedService.Annotations = prometheusAnnotations
+	}
+
 	instance.Spec.Service.DeepCopyInto(&cachedService.Spec)
 
 	cachedService.Spec.Ports = []v1.ServicePort{

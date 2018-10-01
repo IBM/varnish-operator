@@ -13,18 +13,23 @@ required = [
   "sigs.k8s.io/controller-runtime/pkg/source",
   "sigs.k8s.io/testing_frameworks/integration", # for integration testing
   "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1",
+  "github.com/docker/distribution/reference",
 ]
 
 [prune]
   go-tests = true
 
 [[constraint]]
-name = "github.com/caarlos0/env"
-version = "v3.3.0"
+  name = "github.com/caarlos0/env"
+  version = "v3.3.0"
 
 [[constraint]]
-name = "github.com/google/go-cmp"
-version = "v0.2.0"
+  name = "github.com/google/go-cmp"
+  version = "v0.2.0"
+
+[[override]]
+  name = "github.com/docker/distribution"
+  revision = "edc3ab29cdff8694dd6feb85cfeb4b5f1b38ed9c"
 
 # STANZAS BELOW ARE GENERATED AND MAY BE WRITTEN - DO NOT MODIFY BELOW THIS LINE.
 
@@ -38,6 +43,6 @@ version = "v0.2.0"
 
 # For dependency below: Refer to issue https://github.com/golang/dep/issues/1799
 [[override]]
-name = "gopkg.in/fsnotify.v1"
-source = "https://github.com/fsnotify/fsnotify.git"
-version="v1.4.7"
+  name = "gopkg.in/fsnotify.v1"
+  source = "https://github.com/fsnotify/fsnotify.git"
+  version="v1.4.7"

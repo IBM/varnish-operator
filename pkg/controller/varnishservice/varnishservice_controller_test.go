@@ -5,7 +5,6 @@ import (
 	"time"
 
 	icmv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
-	"icm-varnish-k8s-operator/pkg/config"
 
 	"github.com/onsi/gomega"
 	"golang.org/x/net/context"
@@ -35,7 +34,7 @@ func TestReconcile(t *testing.T) {
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 	c = mgr.GetClient()
 
-	recFn, requests := SetupTestReconcile(newReconciler(mgr, config.GlobalConf))
+	recFn, requests := SetupTestReconcile(newReconciler(mgr))
 	g.Expect(add(mgr, recFn)).NotTo(gomega.HaveOccurred())
 	defer close(StartTestManager(mgr, g))
 

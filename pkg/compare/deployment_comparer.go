@@ -3,11 +3,8 @@ package compare
 import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/imdario/mergo"
 	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 var (
@@ -16,91 +13,26 @@ var (
 	deployOpts         = []cmp.Option{cmpopts.IgnoreFields(appsv1.Deployment{}, sharedIgnoreMetadata...), cmpopts.IgnoreFields(appsv1.Deployment{}, sharedIgnoreStatus...), deployIgnoreFields, compareQuantity}
 )
 
-var (
-	deployContainerPortDefaults = &v1.ContainerPort{
-		Protocol: v1.ProtocolTCP,
+func withDeploymentInheritance(desired, found *appsv1.Deployment) *appsv1.Deployment {
+	var desiredCopy appsv1.Deployment
+	desired.DeepCopyInto(&desiredCopy)
+	if desiredCopy.Annotations == nil {
+		desiredCopy.Annotations = make(map[string]string)
 	}
-
-	readinessProbeDefaults = v1.Probe{
-		TimeoutSeconds:   int32(1),
-		PeriodSeconds:    int32(10),
-		SuccessThreshold: int32(1),
-		FailureThreshold: int32(3),
+	if desiredCopy.Annotations["deployment.kubernetes.io/revision"] == "" {
+		desiredCopy.Annotations["deployment.kubernetes.io/revision"] = found.Annotations["deployment.kubernetes.io/revision"]
 	}
-
-	deployContainerDefaults = &v1.Container{
-		TerminationMessagePath:   v1.TerminationMessagePathDefault,
-		TerminationMessagePolicy: v1.TerminationMessageReadFile,
-		ImagePullPolicy:          v1.PullIfNotPresent,
-	}
-
-	thirty         = int64(30)
-	ten            = int32(10)
-	sixHundred     = int32(600)
-	deployDefaults = &appsv1.Deployment{
-		Spec: appsv1.DeploymentSpec{
-			Template: v1.PodTemplateSpec{
-				Spec: v1.PodSpec{
-					TerminationGracePeriodSeconds: &thirty,
-					DNSPolicy:                     v1.DNSClusterFirst,
-					SecurityContext:               &v1.PodSecurityContext{},
-					SchedulerName:                 v1.DefaultSchedulerName,
-				},
-			},
-			Strategy: appsv1.DeploymentStrategy{
-				Type: appsv1.RollingUpdateDeploymentStrategyType,
-			},
-			RevisionHistoryLimit:    &ten,
-			ProgressDeadlineSeconds: &sixHundred,
-		},
-	}
-	twentyFivePercent = intstr.FromString("25%")
-)
-
-func withDeploymentDefaults(d *appsv1.Deployment) *appsv1.Deployment {
-	var dd appsv1.Deployment
-	d.DeepCopyInto(&dd)
-
-	mergo.Merge(&dd, deployDefaults)
-	for c := range dd.Spec.Template.Spec.Containers {
-		container := &dd.Spec.Template.Spec.Containers[c]
-		mergo.Merge(container, deployContainerDefaults)
-		if container.ReadinessProbe != nil {
-			mergo.Merge(container.ReadinessProbe, readinessProbeDefaults)
-		}
-		for p := range dd.Spec.Template.Spec.Containers[c].Ports {
-			mergo.Merge(&dd.Spec.Template.Spec.Containers[c].Ports[p], deployContainerPortDefaults)
-		}
-	}
-
-	if dd.Spec.Strategy.RollingUpdate == nil && dd.Spec.Strategy.Type == appsv1.RollingUpdateDeploymentStrategyType {
-		dd.Spec.Strategy.RollingUpdate = &appsv1.RollingUpdateDeployment{
-			MaxUnavailable: &twentyFivePercent,
-			MaxSurge:       &twentyFivePercent,
-		}
-	}
-	return &dd
-}
-
-func withDeploymentInheritance(desired, found *appsv1.Deployment) {
-	if desired.Annotations == nil {
-		desired.Annotations = make(map[string]string)
-	}
-	if desired.Annotations["deployment.kubernetes.io/revision"] == "" {
-		desired.Annotations["deployment.kubernetes.io/revision"] = found.Annotations["deployment.kubernetes.io/revision"]
-	}
+	return &desiredCopy
 }
 
 // EqualDeployment compares 2 deployments for equality
 func EqualDeployment(found, desired *appsv1.Deployment) bool {
-	desiredCopy := withDeploymentDefaults(desired)
-	withDeploymentInheritance(desiredCopy, found)
+	desiredCopy := withDeploymentInheritance(desired, found)
 	return cmp.Equal(found, desiredCopy, deployOpts...)
 }
 
 // DiffDeployment generates a patch diff between 2 deployments
 func DiffDeployment(found, desired *appsv1.Deployment) string {
-	desiredCopy := withDeploymentDefaults(desired)
-	withDeploymentInheritance(desiredCopy, found)
+	desiredCopy := withDeploymentInheritance(desired, found)
 	return cmp.Diff(found, desiredCopy, deployOpts...)
 }

@@ -5,8 +5,8 @@ import (
 	"errors"
 	icmv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/compare"
-	"icm-varnish-k8s-operator/pkg/config"
 	"icm-varnish-k8s-operator/pkg/logger"
+
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -25,12 +25,12 @@ import (
 // Add creates a new VarnishService Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager) error {
-	return add(mgr, newReconciler(mgr, config.GlobalConf))
+	return add(mgr, newReconciler(mgr))
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager, globalConf *config.Config) reconcile.Reconciler {
-	return &ReconcileVarnishService{Client: mgr.GetClient(), scheme: mgr.GetScheme(), globalConf: globalConf}
+func newReconciler(mgr manager.Manager) reconcile.Reconciler {
+	return &ReconcileVarnishService{Client: mgr.GetClient(), scheme: mgr.GetScheme()}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -73,8 +73,7 @@ var _ reconcile.Reconciler = &ReconcileVarnishService{}
 // ReconcileVarnishService reconciles a VarnishService object
 type ReconcileVarnishService struct {
 	client.Client
-	scheme     *runtime.Scheme
-	globalConf *config.Config
+	scheme *runtime.Scheme
 }
 
 // Reconcile reads that state of the cluster for a VarnishService object and makes changes based on the state read

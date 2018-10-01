@@ -18,7 +18,4 @@ spec:
                 ports:
                   type: array
                   maxItems: 1
-# replace `conditions: null` and `storedVersions: null` with empty arrays
-status:
-  conditions: []
-  storedVersions: []
+

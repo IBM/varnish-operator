@@ -35,6 +35,8 @@ spec:
                   type: string
                 defaultFile:
                   type: string
+                imagePullPolicy:
+                  type: string
                 imagePullSecretName:
                   type: string
                 livenessProbe:
@@ -54,8 +56,9 @@ spec:
                   type: object
                 varnishRestartPolicy:
                   type: string
+                vclDir:
+                  type: string
               required:
-              - replicas
               - imagePullSecretName
               type: object
             service:
@@ -95,5 +98,5 @@ status:
   acceptedNames:
     kind: ""
     plural: ""
-  conditions: null
-  storedVersions: null
+  conditions: []
+  storedVersions: []

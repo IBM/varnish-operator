@@ -4,6 +4,7 @@ import (
 	"context"
 	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/compare"
+	"icm-varnish-k8s-operator/pkg/config"
 	"icm-varnish-k8s-operator/pkg/logger"
 	"strconv"
 
@@ -12,6 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	kv1 "k8s.io/kubernetes/pkg/apis/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -58,10 +60,10 @@ func (r *ReconcileVarnishService) reconcileCachedService(instance, instanceStatu
 
 	prometheusAnnotations := map[string]string{
 		"prometheus.io/scrape": "true",
-		"prometheus.io/port":   strconv.FormatInt(int64(r.globalConf.VarnishExporterPort), 10),
+		"prometheus.io/port":   strconv.FormatInt(int64(config.GlobalConf.VarnishExporterPort), 10),
 	}
 
-	if r.globalConf.PrometheusAnnotations {
+	if config.GlobalConf.PrometheusAnnotations {
 		cachedService.Annotations = prometheusAnnotations
 	}
 
@@ -72,15 +74,15 @@ func (r *ReconcileVarnishService) reconcileCachedService(instance, instanceStatu
 			Name:       "http",
 			Port:       applicationPort.Port,
 			Protocol:   v1.ProtocolTCP,
-			TargetPort: intstr.FromInt(r.globalConf.VarnishTargetPort),
+			TargetPort: intstr.FromInt(config.GlobalConf.VarnishTargetPort),
 		},
 		{
 			Name:     "exporter",
-			Port:     r.globalConf.VarnishExporterPort,
+			Port:     config.GlobalConf.VarnishExporterPort,
 			Protocol: v1.ProtocolTCP,
 			TargetPort: intstr.IntOrString{
 				Type:   intstr.Int,
-				IntVal: r.globalConf.VarnishExporterTargetPort,
+				IntVal: config.GlobalConf.VarnishExporterTargetPort,
 			},
 		},
 	}
@@ -100,6 +102,7 @@ func (r *ReconcileVarnishService) reconcileServiceGeneric(instance *icmapiv1alph
 	if err := controllerutil.SetControllerReference(instance, desired, r.scheme); err != nil {
 		return logr.RError(err, "Cannot set controller reference for desired")
 	}
+	kv1.SetObjectDefaults_Service(desired)
 
 	found := &v1.Service{}
 

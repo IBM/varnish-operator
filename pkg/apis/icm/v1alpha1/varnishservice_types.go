@@ -15,15 +15,17 @@ type ServiceWrapper struct {
 }
 
 type VarnishDeployment struct {
-	Replicas             int32                    `json:"replicas"`
+	Replicas             *int32                   `json:"replicas,omitempty"`
 	VarnishMemory        string                   `json:"varnishMemory,omitempty"`
 	VarnishResources     *v1.ResourceRequirements `json:"varnishResources,omitempty"`
 	LivenessProbe        *v1.Probe                `json:"livenessProbe,omitempty"`
 	ReadinessProbe       *v1.Probe                `json:"readinessProbe,omitempty"`
+	ImagePullPolicy      *v1.PullPolicy           `json:"imagePullPolicy,omitempty"`
 	ImagePullSecretName  string                   `json:"imagePullSecretName"`
-	VarnishRestartPolicy *v1.RestartPolicy        `json:"varnishRestartPolicy,omitempty"`
+	VarnishRestartPolicy v1.RestartPolicy         `json:"varnishRestartPolicy,omitempty"`
 	BackendsFile         string                   `json:"backendsFile,omitempty"`
 	DefaultFile          string                   `json:"defaultFile,omitempty"`
+	VCLDir               string                   `json:"vclDir,omitempty"`
 	Affinity             *v1.Affinity             `json:"affinity,omitempty"`
 	Tolerations          []v1.Toleration          `json:"tolerations,omitempty"`
 }

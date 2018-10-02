@@ -264,6 +264,59 @@ $CODEGEN_PKG/generate-groups.sh <generators> \
 
 This script basically just calls `update-codegen.sh` and compares the output with the initial code.
 
+### Defaults
+
+Kubernetes has a built-in mechanism of setting defaults for resources, which can be very useful when creating your CRD. However, documentation for it is non-existent, so here are the steps required to have defaults for incoming CRDs:
+
+1. In the same folder as your `<CRD-name>_types.go` (or `types.go` if not using Kubebuilder), create a `defaults.go` file ([here is the file in this project](pkg/apis/icm/v1alpha1/defaults.go)). In this file, create functions that will define defaults by type for your CRD. They MUST have the name template of `SetDefaults_<type>(in *<type>)`. For example:
+    ```go
+    SetDefaults_TypeWithDefaults(in *TypeWithDefaults) {
+        if (in.FieldThatNeedsDefault == "") {  
+            in.FieldThatNeedsDefault = "default"
+        }
+    }
+    ```
+1. open the `register.go` file at the same level as the `defaults.go` file, and make sure a comment
+
+    ```go
+    // +k8s:defaulter-gen=TypeMeta
+    ```
+
+   exists. This informs the code generation tool (discussed below) to create an overall default function for all types that inherit the `TypeMeta` struct. That will likely be just the CRD definition and the `<CRD-type>List` type located in the `types.go` file (for example, `MyCRD` and `MyCRDList`).
+1. In the `defaults.go` file, add a comment at the top:
+
+    ```go
+    //go:generate go run ../../../../vendor/k8s.io/code-generator/cmd/defaulter-gen/main.go -O zz_generated.defaults -i . -h ../../../../hack/boilerplate.go.txt
+    ```
+
+   The number of `../` may differ, depending on what relative path is necessary to reach the `vendor` and `hack` folder. This informs go to run the [`defaulter-gen`](https://godoc.org/k8s.io/gengo/examples/defaulter-gen) code generation script, which will look for the `+k8s:defaulter-gen` comment and any `SetDefaults_*` templated functions to create `SetObjectDefaults_*` for all types that inherit `TypeMeta` into a `zz_generated.defaults.go` file.
+1. Run the code generation by calling
+
+    ```sh
+    go generate ./pkg/...
+    ```
+
+   which will look through all source files in `pkg` for a `//go:generate` comment and execute the command there.
+1. In the (now generated) `zz_generated.defaults.go` file ([here is the file in this repo](pkg/apis/icm/v1alpha1/zz_generated.defaults.go)), there will be a `RegisterDefaults` function, which is the hook used to tell Kubernetes how to use the generated default functions. If using Kubebuilder, all you need to do is open the `addtoscheme_<group-name>_<version>.go` file inside `pkg/apis` and add the `RegisterDefaults` function to the `AddToSchemes` slice. For example:
+
+    ```go
+    AddToSchemes = append(AddToSchemes, v1alpha1.SchemeBuilder.AddToScheme, v1alpha1.RegisterDefaults)
+    ```
+
+   If you are not using Kubebuilder, you'll need to inform the `scheme.Scheme` for your controller of the defaults by running
+
+    ```go
+    RegisterDefaults(<your-scheme-here>)
+    ```
+
+After following those steps, any incoming CRD for which you have defined defaults should inherit those defaults if a value isn't explicitly set for them. If you need to add any more defaults, or modify existing ones, just edit the `defaults.go` file, and run
+
+```sh
+go generate ./pkg/...
+```
+
+again.
+
 ## Deploying Your Kubebuilder project
 
 Out of the box, Kubebuilder has an integration with [Kustomize](https://github.com/kubernetes-sigs/kustomize). It bills itself as letting you "customize raw, template-free YAML files for multiple purposes, leaving the original YAML untouched and usable as is." You can learn more about Kustomize from the link. It is a very simple tool, and all of the documentation takes just a few minutes to read through.

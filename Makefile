@@ -1,8 +1,8 @@
 # Image URL to use in all building/pushing image targets
-VERSION ?= $(shell cat ${ROOT_DIR}version.txt)-dev
-VARNISH_VERSION ?= $(shell cat ${ROOT_DIR}icm-varnish-version.txt)
-IMG ?= varnish-controller:${VERSION}
 ROOT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
+VERSION ?= $(shell cat ${ROOT_DIR}version.txt)-dev
+VARNISH_VERSION ?= $(shell cat ${ROOT_DIR}icm-varnish-version.txt)-dev
+IMG ?= varnish-controller:${VERSION}
 NAMESPACE := $(shell sed -n -e 's/^namespace: //p' ${ROOT_DIR}config/default/kustomization.yaml)
 NAME_PREFIX := $(shell sed -n -e 's/^namePrefix: //p' ${ROOT_DIR}config/default/kustomization.yaml)
 

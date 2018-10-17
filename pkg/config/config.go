@@ -32,7 +32,7 @@ type Config struct {
 	DefaultVarnishMemory           string           `env:"DEFAULT_VARNISH_MEMORY" envDefault:"1024M"`
 	DefaultBackendsFile            string           `env:"DEFAULT_BACKENDS_FILE" envDefault:"backends.vcl"`
 	DefaultDefaultFile             string           `env:"DEFAULT_DEFAULT_FILE" envDefault:"default.vcl"`
-	DefaultVCLFileConfigMapName    string           `env:"DEFAULT_VCL_FILE_CONFIGMAP_NAME" envDefault:"vcl-file"`
+	DefaultVCLConfigMapName        string           `env:"DEFAULT_VCL_CONFIGMAP_NAME" envDefault:"vcl-file"`
 	DefaultVarnishResourceLimitCPU string           `env:"DEFAULT_VARNISH_RESOURCE_LIMIT_CPU" envDefault:"1"`
 	DefaultVarnishResourceLimitMem string           `env:"DEFAULT_VARNISH_RESOURCE_LIMIT_MEM" envDefault:"2048Mi"`
 	DefaultVarnishResourceReqCPU   string           `env:"DEFAULT_VARNISH_RESOURCE_REQ_CPU" envDefault:"1"`
@@ -115,7 +115,7 @@ func LoadConfig() (*Config, error) {
 	if err := verifyImagePullPolicy(c.VarnishImagePullPolicy); err != nil {
 		return &c, errors.WithStack(err)
 	}
-	if !vclFileConfigMapNameRegex.MatchString(c.DefaultVCLFileConfigMapName) {
+	if !vclFileConfigMapNameRegex.MatchString(c.DefaultVCLConfigMapName) {
 		return &c, errors.New("VCLFileConfigMapName must be nonempty and use only lowercase letters, numbers, \"-\", or \".\"")
 	}
 	if err := verifyRestartPolicy(c.DefaultVarnishRestartPolicy); err != nil {

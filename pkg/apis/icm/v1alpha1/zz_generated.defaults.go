@@ -19,8 +19,9 @@ func RegisterDefaults(scheme *runtime.Scheme) error {
 
 func SetObjectDefaults_VarnishService(in *VarnishService) {
 	SetDefaults_VarnishService(in)
-	SetDefaults_ServiceSpec(&in.Spec.Service)
+	SetDefaults_VarnishVCLConfigMap(&in.Spec.VCLConfigMap)
 	SetDefaults_VarnishDeployment(&in.Spec.Deployment)
+	SetDefaults_ServiceSpec(&in.Spec.Service)
 }
 
 func SetObjectDefaults_VarnishServiceList(in *VarnishServiceList) {

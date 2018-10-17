@@ -14,51 +14,6 @@ type ServiceWrapper struct {
 	Spec v1.ServiceSpec `json:"spec"`
 }
 
-type VarnishDeployment struct {
-	Replicas             *int32                   `json:"replicas,omitempty"`
-	VarnishMemory        string                   `json:"varnishMemory,omitempty"`
-	VarnishResources     *v1.ResourceRequirements `json:"varnishResources,omitempty"`
-	LivenessProbe        *v1.Probe                `json:"livenessProbe,omitempty"`
-	ReadinessProbe       *v1.Probe                `json:"readinessProbe,omitempty"`
-	ImagePullPolicy      *v1.PullPolicy           `json:"imagePullPolicy,omitempty"`
-	ImagePullSecretName  string                   `json:"imagePullSecretName"`
-	VarnishRestartPolicy v1.RestartPolicy         `json:"varnishRestartPolicy,omitempty"`
-	BackendsFile         string                   `json:"backendsFile,omitempty"`
-	DefaultFile          string                   `json:"defaultFile,omitempty"`
-	VCLFileConfigMapName string                   `json:"vclFileConfigMapName,omitempty"`
-	Affinity             *v1.Affinity             `json:"affinity,omitempty"`
-	Tolerations          []v1.Toleration          `json:"tolerations,omitempty"`
-
-	BackendsTmplFile string
-}
-
-// VarnishServiceSpec defines the desired state of VarnishService
-// Important: Run "make" to regenerate code after modifying this file
-type VarnishServiceSpec struct {
-	Service    v1.ServiceSpec    `json:"service"`
-	Deployment VarnishDeployment `json:"deployment"`
-}
-
-// VarnishServiceSingleServiceStatus describes the status of one service as it exists within a VarnishService
-type VarnishServiceSingleServiceStatus struct {
-	v1.ServiceStatus `json:",inline"`
-	Name             string `json:"name,omitempty"`
-	IP               string `json:"ip,omitempty"`
-}
-
-// VarnishServiceServiceStatus defines the observed state of the Service portion of VarnishService
-type VarnishServiceServiceStatus struct {
-	Cached   VarnishServiceSingleServiceStatus `json:"cached,omitempty"`
-	NoCached VarnishServiceSingleServiceStatus `json:"noCached,omitempty"`
-}
-
-// VarnishServiceStatus defines the observed state of VarnishService
-type VarnishServiceStatus struct {
-	// Important: Run "make" to regenerate code after modifying this file
-	Deployment appsv1.DeploymentStatus     `json:"deployment,omitempty"`
-	Service    VarnishServiceServiceStatus `json:"service,omitempty"`
-}
-
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
@@ -72,6 +27,55 @@ type VarnishService struct {
 
 	Spec   VarnishServiceSpec   `json:"spec,omitempty"`
 	Status VarnishServiceStatus `json:"status,omitempty"`
+}
+
+// VarnishServiceSpec defines the desired state of VarnishService
+// Important: Run "make" to regenerate code after modifying this file
+type VarnishServiceSpec struct {
+	VCLConfigMap VarnishVCLConfigMap `json:"vclConfigMap"`
+	Deployment   VarnishDeployment   `json:"deployment"`
+	Service      v1.ServiceSpec      `json:"service"`
+}
+
+type VarnishVCLConfigMap struct {
+	Name         string `json:"name"`
+	BackendsFile string `json:"backendsFile,omitempty"`
+	DefaultFile  string `json:"defaultFile,omitempty"`
+
+	BackendsTmplFile string
+}
+
+type VarnishDeployment struct {
+	Replicas             *int32                   `json:"replicas,omitempty"`
+	VarnishMemory        string                   `json:"varnishMemory,omitempty"`
+	VarnishResources     *v1.ResourceRequirements `json:"varnishResources,omitempty"`
+	LivenessProbe        *v1.Probe                `json:"livenessProbe,omitempty"`
+	ReadinessProbe       *v1.Probe                `json:"readinessProbe,omitempty"`
+	ImagePullPolicy      *v1.PullPolicy           `json:"imagePullPolicy,omitempty"`
+	ImagePullSecretName  string                   `json:"imagePullSecretName"`
+	VarnishRestartPolicy v1.RestartPolicy         `json:"varnishRestartPolicy,omitempty"`
+	Affinity             *v1.Affinity             `json:"affinity,omitempty"`
+	Tolerations          []v1.Toleration          `json:"tolerations,omitempty"`
+}
+
+// VarnishServiceStatus defines the observed state of VarnishService
+type VarnishServiceStatus struct {
+	// Important: Run "make" to regenerate code after modifying this file
+	Deployment appsv1.DeploymentStatus     `json:"deployment,omitempty"`
+	Service    VarnishServiceServiceStatus `json:"service,omitempty"`
+}
+
+// VarnishServiceSingleServiceStatus describes the status of one service as it exists within a VarnishService
+type VarnishServiceSingleServiceStatus struct {
+	v1.ServiceStatus `json:",inline"`
+	Name             string `json:"name,omitempty"`
+	IP               string `json:"ip,omitempty"`
+}
+
+// VarnishServiceServiceStatus defines the observed state of the Service portion of VarnishService
+type VarnishServiceServiceStatus struct {
+	Cached   VarnishServiceSingleServiceStatus `json:"cached,omitempty"`
+	NoCached VarnishServiceSingleServiceStatus `json:"noCached,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

@@ -31,10 +31,6 @@ spec:
               properties:
                 affinity:
                   type: object
-                backendsFile:
-                  type: string
-                defaultFile:
-                  type: string
                 imagePullPolicy:
                   type: string
                 imagePullSecretName:
@@ -56,16 +52,26 @@ spec:
                   type: object
                 varnishRestartPolicy:
                   type: string
-                vclFileConfigMapName:
-                  type: string
               required:
               - imagePullSecretName
               type: object
             service:
               type: object
+            vclConfigMap:
+              properties:
+                backendsFile:
+                  type: string
+                defaultFile:
+                  type: string
+                name:
+                  type: string
+              required:
+              - name
+              type: object
           required:
-          - service
+          - vclConfigMap
           - deployment
+          - service
           type: object
         status:
           properties:

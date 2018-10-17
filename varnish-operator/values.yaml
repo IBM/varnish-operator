@@ -62,37 +62,32 @@ varnish:
 
 # the default section describes all of the defaults available for the VarnishService CustomResource.
 default:
-  # The amount of memory allocated to Varnish on Varnish's startup, in the form of `varnishd -F -s malloc,${varnishMemory} ...`
-  varnishMemory: 1024M
-  # the name of the file to be maintained through the Kubernetes API (by watching the pods in a deployment)
-  backendsFile: backends.vcl
-  # the name of the base VCL file with the caching logic. While this file cannot currently be changed, in the future it will possible to customize its behavior
-  defaultFile: default.vcl
-  # the name given to the configMap that contains the contents of the default.vcl. If the configMap does not exist, a basic round-robin-based VCL file will be created and used
-  # MUST use only lowercase letters, numbers, "-", or "."
-  vclFileConfigMapName: vcl-file
-  # Resources allocated to the Varnish pod through Kubernetes. `requests.memory` Should be greater than `varnishMemory` above
-  varnishResources:
-    limits:
-      cpu: 1
-      memory: 2048Mi
-    requests:
-      cpu: 1
-      memory: 2048Mi
-  # Resources allocated to the Varnish Exporter pod, which handles metrics for Varnish. Only change these if there is instability in the metrics
-  varnishExporterResources:
-    limits:
-      cpu: 0.2
-      memory: 200Mi
-    requests:
-      cpu: 0.1
-      memory: 100Mi
-  # restart policy used for Varnish containers
-  varnishRestartPolicy: Always
-  # http path used to confirm liveness of the Varnish container. TODO: Not currently working
-  # livenessProbe:
-  #   httpPath: /liveness
-  #   port: 8080
-  # command used to confirm readiness of the Varnish container. Unlikely to need to be changed
-  readinessProbe:
-    command: /usr/bin/varnishadm,ping
+  vclConfigMap:
+    # the name given to the configMap that contains the contents of the vcl. If the configMap does not exist, a basic round-robin-based VCL file will be created and used
+    # MUST use only lowercase letters, numbers, "-", or "."
+    name: vcl-file
+    # the name of the file to be maintained through the Kubernetes API (by watching the endpoints in a deployment)
+    # the VarnishService will expect to see a "<backendsFile>.tmpl" file in the ConfigMap that has the Go template for the <backendsFile>. For example, "backends.vcl.tmpl"
+    backendsFile: backends.vcl
+    # the name of the base VCL file
+    defaultFile: default.vcl
+  deployment:
+    # The amount of memory allocated to Varnish on Varnish's startup, in the form of `varnishd -F -s malloc,${varnishMemory} ...`
+    varnishMemory: 1024M
+    # Resources allocated to the Varnish pod through Kubernetes. `requests.memory` Should be greater than `varnishMemory` above
+    varnishResources:
+      limits:
+        cpu: 1
+        memory: 2048Mi
+      requests:
+        cpu: 1
+        memory: 2048Mi
+    # restart policy used for Varnish containers
+    varnishRestartPolicy: Always
+    # http path used to confirm liveness of the Varnish container. TODO: Not currently working
+    # livenessProbe:
+    #   httpPath: /liveness
+    #   port: 8080
+    # command used to confirm readiness of the Varnish container. Unlikely to need to be changed
+    readinessProbe:
+      command: /usr/bin/varnishadm,ping

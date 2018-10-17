@@ -14,14 +14,22 @@ import (
 var globalConf = config.GlobalConf
 
 func SetDefaults_VarnishService(in *VarnishService) {
-	if in.Spec.Deployment.VCLFileConfigMapName == "" {
-		in.Spec.Deployment.VCLFileConfigMapName = fmt.Sprintf("%s-%s", in.Name, globalConf.DefaultVCLFileConfigMapName)
+	if in.Spec.VCLConfigMap.Name == "" {
+		in.Spec.VCLConfigMap.Name = fmt.Sprintf("%s-%s", in.Name, globalConf.DefaultVCLConfigMapName)
 	}
 }
 
-func SetDefaults_VarnishDeployment(in *VarnishDeployment) {
+func SetDefaults_VarnishVCLConfigMap(in *VarnishVCLConfigMap) {
+	if in.BackendsFile == "" {
+		in.BackendsFile = globalConf.DefaultBackendsFile
+	}
+	if in.DefaultFile == "" {
+		in.DefaultFile = globalConf.DefaultDefaultFile
+	}
 	in.BackendsTmplFile = in.BackendsFile + ".tmpl"
+}
 
+func SetDefaults_VarnishDeployment(in *VarnishDeployment) {
 	if in.VarnishMemory == "" {
 		in.VarnishMemory = globalConf.DefaultVarnishMemory
 	}
@@ -39,12 +47,6 @@ func SetDefaults_VarnishDeployment(in *VarnishDeployment) {
 	}
 	if in.VarnishRestartPolicy == "" {
 		in.VarnishRestartPolicy = globalConf.DefaultVarnishRestartPolicy
-	}
-	if in.BackendsFile == "" {
-		in.BackendsFile = globalConf.DefaultBackendsFile
-	}
-	if in.DefaultFile == "" {
-		in.DefaultFile = globalConf.DefaultDefaultFile
 	}
 }
 

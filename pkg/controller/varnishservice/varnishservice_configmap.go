@@ -32,7 +32,7 @@ func init() {
 }
 
 func (r *ReconcileVarnishService) reconcileConfigMap(instance *icmapiv1alpha1.VarnishService) (map[string]string, error) {
-	logr := logger.With("name", instance.Spec.Deployment.VCLFileConfigMapName, "namespace", instance.Namespace)
+	logr := logger.With("name", instance.Spec.VCLConfigMap.Name, "namespace", instance.Namespace)
 
 	found := &v1.ConfigMap{}
 
@@ -46,7 +46,7 @@ func (r *ReconcileVarnishService) reconcileConfigMap(instance *icmapiv1alpha1.Va
 		labels[k] = v
 	}
 
-	err := r.Get(context.TODO(), types.NamespacedName{Name: instance.Spec.Deployment.VCLFileConfigMapName, Namespace: instance.Namespace}, found)
+	err := r.Get(context.TODO(), types.NamespacedName{Name: instance.Spec.VCLConfigMap.Name, Namespace: instance.Namespace}, found)
 	// if the ConfigMap does not exist, create it and set it with the default VCL files
 	// Else if there was a problem doing the Get, just return an error
 	// Else fill in missing values -- "OwnerReference" or Labels
@@ -54,13 +54,13 @@ func (r *ReconcileVarnishService) reconcileConfigMap(instance *icmapiv1alpha1.Va
 	if err != nil && kerrors.IsNotFound(err) {
 		desired := &v1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      instance.Spec.Deployment.VCLFileConfigMapName,
+				Name:      instance.Spec.VCLConfigMap.Name,
 				Labels:    labels,
 				Namespace: instance.Namespace,
 			},
 			Data: map[string]string{
-				instance.Spec.Deployment.DefaultFile:      defaultVCL,
-				instance.Spec.Deployment.BackendsTmplFile: backendsVCLTmpl,
+				instance.Spec.VCLConfigMap.DefaultFile:      defaultVCL,
+				instance.Spec.VCLConfigMap.BackendsTmplFile: backendsVCLTmpl,
 			},
 		}
 		if err := controllerutil.SetControllerReference(instance, desired, r.scheme); err != nil {
@@ -79,7 +79,10 @@ func (r *ReconcileVarnishService) reconcileConfigMap(instance *icmapiv1alpha1.Va
 		if err = controllerutil.SetControllerReference(instance, foundCopy, r.scheme); err != nil {
 			return selectorLabels, logr.RErrorw(err, "could not set controller as the OwnerReference for existing ConfigMap")
 		}
-		foundCopy.Labels = labels
+		// don't trample on any labels created by user
+		for l, v := range labels {
+			foundCopy.Labels[l] = v
+		}
 
 		if !compare.EqualConfigMap(found, foundCopy) {
 			logger.Infow("Updating ConfigMap with defaults", "diff", compare.DiffConfigMap(found, foundCopy))

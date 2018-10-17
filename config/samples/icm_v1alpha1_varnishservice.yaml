@@ -14,16 +14,21 @@ metadata:
 # The deployment portion has all of the details for the actual Varnish deployment
 # The service portion is literally the exact same spec as a regular Service resource
 spec:
+  vclConfigMap:
+    # the name given to the configMap that contains the contents of the vcl. If the configMap does not exist, a basic round-robin-based VCL file will be created and used
+    # MUST use only lowercase letters, numbers, "-", or "."
+    name: vcl-file
+    # the name of the file to be maintained through the Kubernetes API (by watching the endpoints in a deployment)
+    # the VarnishService will expect to see a "<backendsFile>.tmpl" file in the ConfigMap that has the Go template for the <backendsFile>. For example, "backends.vcl.tmpl"
+    backendsFile: backends.vcl
+    # the name of the base VCL file
+    defaultFile: default.vcl
   deployment:
     # The number of varnish instances to run
     replicas: 3
     # The amount of memory allocated to Varnish on Varnish's startup, in the form of `varnishd -F -s malloc,${varnishMemory} ...`
     varnishMemory: "1024M"
-    # the name of the file to be maintained through the Kubernetes API (by watching the pods in a deployment)
-    backendsFile: backends.vcl
-    # the name of the base VCL file with the caching logic. While this file cannot currently be changed, in the future it will possible to customize its behavior
-    defaultFile: default.vcl
-    # Resources allocated to the Varnish pod through Kubernetes. `requests.memory` Should be greater than `varnishMemory` above
+    # Resources allocated to the Varnish pod through Kubernetes. `requests.memory` should be greater than `varnishMemory` above
     varnishResources:
       limits:
         cpu: 1

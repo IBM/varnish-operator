@@ -5,6 +5,7 @@ import (
 	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/compare"
 	"icm-varnish-k8s-operator/pkg/logger"
+
 	rbacv1beta1 "k8s.io/api/rbac/v1beta1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,7 +38,7 @@ func (r *ReconcileVarnishService) reconcileRoleBinding(instance *icmapiv1alpha1.
 
 	// Set controller reference for roleBinding
 	if err := controllerutil.SetControllerReference(instance, roleBinding, r.scheme); err != nil {
-		return logr.RError(err, "Cannot set controller reference for service")
+		return logr.RErrorw(err, "Cannot set controller reference for service")
 	}
 
 	found := &rbacv1beta1.RoleBinding{}
@@ -48,22 +49,22 @@ func (r *ReconcileVarnishService) reconcileRoleBinding(instance *icmapiv1alpha1.
 	// Else if the roleBinding exists, and it is different, update
 	// Else no changes, do nothing
 	if err != nil && kerrors.IsNotFound(err) {
-		logr.Info("Creating roleBinding", "new", roleBinding)
+		logr.Infoc("Creating RoleBinding", "new", roleBinding)
 		if err = r.Create(context.TODO(), roleBinding); err != nil {
-			return logr.RError(err, "Unable to create roleBinding")
+			return logr.RErrorw(err, "Unable to create roleBinding")
 		}
 	} else if err != nil {
-		return logr.RError(err, "Could not Get roleBinding")
+		return logr.RErrorw(err, "Could not Get roleBinding")
 	} else if !compare.EqualRoleBinding(found, roleBinding) {
-		logr.Info("Updating roleBinding", "diff", compare.DiffRoleBinding(found, roleBinding))
+		logr.Debugw("Updating RoleBinding", "diff", compare.DiffRoleBinding(found, roleBinding))
 		found.Subjects = roleBinding.Subjects
 		found.RoleRef = roleBinding.RoleRef
 		found.Labels = roleBinding.Labels
 		if err = r.Update(context.TODO(), found); err != nil {
-			return logr.RError(err, "Could not Update roleBinding")
+			return logr.RErrorw(err, "Could not Update roleBinding")
 		}
 	} else {
-		logr.V(5).Info("no updates for rolebinding")
+		logr.Debugw("No updates for Rolebinding")
 	}
 	return nil
 }

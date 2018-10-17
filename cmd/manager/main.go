@@ -5,6 +5,7 @@ import (
 
 	"icm-varnish-k8s-operator/pkg/apis"
 	"icm-varnish-k8s-operator/pkg/controller"
+	"icm-varnish-k8s-operator/pkg/logger"
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -25,7 +26,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Printf("Registering Components.")
+	logger.Infow("Registering Components")
 
 	// Setup Scheme for all resources
 	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
@@ -37,7 +38,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Printf("Starting the Cmd.")
+	logger.Infow("Starting Varnish Operator")
 
 	// Start the Cmd
 	log.Fatal(mgr.Start(signals.SetupSignalHandler()))

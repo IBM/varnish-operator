@@ -4,6 +4,11 @@ namespace: varnish-service-system
 namePrefix: varnish-service-
 
 operator:
+  # logging level: "debug", "info", "warn", "error"
+  logLevel: info
+  # logging encoder: "json", "console"
+  logFormat: json
+
   varnishImage:
     # Use the name of the imagePullSecret created in the [Getting Access](#getting-access) section above
     imagePullSecretName: docker-reg-secret

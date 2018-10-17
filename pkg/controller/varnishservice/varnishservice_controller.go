@@ -42,6 +42,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to VarnishService
+	logger.Infow("Starting watch loop for VarnishService objects")
 	err = c.Watch(&source.Kind{Type: &icmv1alpha1.VarnishService{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err
@@ -96,8 +97,10 @@ func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcil
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
-		return reconcile.Result{}, logger.RError(err, "could not read VarnishService")
+		return reconcile.Result{}, logger.RErrorw(err, "could not read VarnishService")
 	}
+
+	logr := logger.WithValues("name", instance.Name, "namespace", instance.Namespace)
 
 	instanceStatus := &icmv1alpha1.VarnishService{}
 	instance.ObjectMeta.DeepCopyInto(&instanceStatus.ObjectMeta)
@@ -131,21 +134,23 @@ func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcil
 	}
 
 	if !compare.EqualVarnishServiceStatus(&instance.Status, &instanceStatus.Status) {
-		logger.Info("Updating VarnishService Status", "diff", compare.DiffVarnishServiceStatus(&instance.Status, &instanceStatus.Status))
+		logr.Debugw("Updating VarnishService Status", "diff", compare.DiffVarnishServiceStatus(&instance.Status, &instanceStatus.Status))
 		if err = r.Status().Update(context.TODO(), instanceStatus); err != nil {
-			return reconcile.Result{}, logger.RError(err, "could not update VarnishService Status", "name", instance.Name, "namespace", instance.Namespace)
+			return reconcile.Result{}, logger.RErrorw(err, "could not update VarnishService Status", "name", instance.Name, "namespace", instance.Namespace)
 		}
 	} else {
-		logger.V(5).Info("No updates for VarnishService status")
+		logr.Debugw("No updates for VarnishService status")
 	}
 
 	return reconcile.Result{}, nil
 }
 
 func getApplicationPort(instance *icmv1alpha1.VarnishService) (*v1.ServicePort, error) {
+	logr := logger.WithValues("name", instance.Name, "namespace", instance.Namespace)
+
 	if len(instance.Spec.Service.Ports) != 1 {
 		err := errors.New("must specify exactly one port in service spec")
-		logger.Error(err, "")
+		logr.RErrorw(err, "")
 		return nil, err
 	}
 	port := instance.Spec.Service.Ports[0]

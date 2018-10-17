@@ -100,7 +100,7 @@ func (r *ReconcileVarnishService) reconcileServiceGeneric(instance *icmapiv1alph
 
 	// Set controller reference for desired object
 	if err := controllerutil.SetControllerReference(instance, desired, r.scheme); err != nil {
-		return logr.RError(err, "Cannot set controller reference for desired")
+		return logr.RErrorw(err, "Cannot set controller reference for desired")
 	}
 	kv1.SetObjectDefaults_Service(desired)
 
@@ -112,24 +112,24 @@ func (r *ReconcileVarnishService) reconcileServiceGeneric(instance *icmapiv1alph
 	// Else if the desired exists, and it is different, update
 	// Else no changes, do nothing
 	if err != nil && kerrors.IsNotFound(err) {
-		logr.Info("Creating Service", "new", desired)
+		logr.Infoc("Creating Service", "new", desired)
 		if err = r.Create(context.TODO(), desired); err != nil {
-			return logr.RError(err, "Unable to create service")
+			return logr.RErrorw(err, "Unable to create service")
 		}
 	} else if err != nil {
-		return logr.RError(err, "Could not Get desired")
+		return logr.RErrorw(err, "Could not Get desired")
 	} else {
 		// ClusterIP is immutable once created, so always enforce the same as existing
 		desired.Spec.ClusterIP = found.Spec.ClusterIP
 		if !compare.EqualService(found, desired) {
-			logr.Info("Updating Service", "diff", compare.DiffService(found, desired))
+			logr.Debugw("Updating Service", "diff", compare.DiffService(found, desired))
 			found.Spec = desired.Spec
 			found.Labels = desired.Labels
 			if err = r.Update(context.TODO(), found); err != nil {
-				return logr.RError(err, "Unable to update desired")
+				return logr.RErrorw(err, "Unable to update desired")
 			}
 		} else {
-			logr.V(5).Info("No updates for Service")
+			logr.Debugw("No updates for Service")
 		}
 	}
 

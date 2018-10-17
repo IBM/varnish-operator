@@ -8,6 +8,7 @@ import (
 
 	"github.com/caarlos0/env"
 	"github.com/pkg/errors"
+	"go.uber.org/zap/zapcore"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -39,6 +40,8 @@ type Config struct {
 	DefaultLivenessProbeHTTPPath   string           `env:"DEFAULT_LIVENESS_PROBE_HTTP_PATH"`
 	DefaultLivenessProbePort       int              `env:"DEFAULT_LIVENESS_PROBE_PORT"`
 	DefaultReadinessProbeCommand   []string         `env:"DEFAULT_READINESS_PROBE_COMMAND" envDefault:"/usr/bin/varnishadm,ping"`
+	LogLevel                       zapcore.Level    `env:"LOG_LEVEL" envDefault:"info"`
+	LogFormat                      string           `env:"LOG_FORMAT" envDefault:"json"`
 	VarnishImageFullPath           string
 	VarnishCommonLabels            map[string]string
 	DefaultVarnishResources        v1.ResourceRequirements
@@ -83,10 +86,21 @@ func int32Parser(v string) (interface{}, error) {
 	return int32(i), nil
 }
 
+func levelParser(v string) (interface{}, error) {
+	var level zapcore.Level
+	err := (&level).UnmarshalText([]byte(v))
+	if err != nil {
+		return nil, errors.Errorf("%s is not an zapcore.Level", v)
+	}
+	return level, nil
+}
+
 var (
 	int32Type    = reflect.TypeOf(int32(0))
+	levelType    = reflect.TypeOf(zapcore.DebugLevel)
 	parseFuncMap = env.CustomParsers{
 		int32Type: int32Parser,
+		levelType: levelParser,
 	}
 )
 

@@ -82,7 +82,7 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 	logr := logger.WithValues("name", desired.Name, "namespace", desired.Namespace)
 
 	if err := controllerutil.SetControllerReference(instance, desired, r.scheme); err != nil {
-		return nil, logr.RError(err, "could not set controller as the OwnerReference for deployment")
+		return nil, logr.RErrorw(err, "could not set controller as the OwnerReference for deployment")
 	}
 	kappsv1.SetObjectDefaults_Deployment(desired)
 
@@ -94,26 +94,26 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 	// Else if the deployment exists, and it is different, update
 	// Else no changes, do nothing
 	if err != nil && kerrors.IsNotFound(err) {
-		logr.Info("Creating Deployment", "new", desired)
+		logr.Infoc("Creating Deployment", "new", desired)
 		err = r.Create(context.TODO(), desired)
 		if err != nil {
-			return nil, logr.RError(err, "could not create deployment")
+			return nil, logr.RErrorw(err, "could not create deployment")
 		}
 	} else if err != nil {
-		return nil, logr.RError(err, "could not get current state of deployment")
+		return nil, logr.RErrorw(err, "could not get current state of deployment")
 	} else {
 		// the pod selector is immutable once set, so always enforce the same as existing
 		desired.Spec.Selector = found.Spec.Selector
 		desired.Spec.Template.Labels = found.Spec.Template.Labels
 		if !compare.EqualDeployment(found, desired) {
-			logr.Info("Updating Deployment", "diff", compare.DiffDeployment(found, desired))
+			logr.Debugw("Updating Deployment", "diff", compare.DiffDeployment(found, desired))
 			found.Spec = desired.Spec
 			found.Labels = desired.Labels
 			if err = r.Update(context.TODO(), found); err != nil {
-				return nil, logr.RError(err, "could not update deployment")
+				return nil, logr.RErrorw(err, "could not update deployment")
 			}
 		} else {
-			logr.V(5).Info("No updates for Deployment")
+			logr.Debugw("No updates for Deployment")
 		}
 	}
 

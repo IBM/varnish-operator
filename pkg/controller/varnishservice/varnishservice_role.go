@@ -5,6 +5,7 @@ import (
 	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/compare"
 	"icm-varnish-k8s-operator/pkg/logger"
+
 	rbacv1beta1 "k8s.io/api/rbac/v1beta1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,7 +33,7 @@ func (r *ReconcileVarnishService) reconcileRole(instance *icmapiv1alpha1.Varnish
 
 	// Set controller reference for role
 	if err := controllerutil.SetControllerReference(instance, role, r.scheme); err != nil {
-		return "", logr.RError(err, "Cannot set controller reference for service")
+		return "", logr.RErrorw(err, "Cannot set controller reference for service")
 	}
 
 	found := &rbacv1beta1.Role{}
@@ -43,21 +44,21 @@ func (r *ReconcileVarnishService) reconcileRole(instance *icmapiv1alpha1.Varnish
 	// Else if the role exists, and it is different, update
 	// Else no changes, do nothing
 	if err != nil && kerrors.IsNotFound(err) {
-		logr.Info("Creating role", "new", role)
+		logr.Infoc("Creating Role", "new", role)
 		if err = r.Create(context.TODO(), role); err != nil {
-			return "", logr.RError(err, "Unable to create role")
+			return "", logr.RErrorw(err, "Unable to create role")
 		}
 	} else if err != nil {
-		return "", logr.RError(err, "Could not Get role")
+		return "", logr.RErrorw(err, "Could not Get role")
 	} else if !compare.EqualRole(found, role) {
-		logr.Info("Updating role", "diff", compare.DiffRole(found, role))
+		logr.Debugw("Updating Role", "diff", compare.DiffRole(found, role))
 		found.Rules = role.Rules
 		found.Labels = role.Labels
 		if err = r.Update(context.TODO(), found); err != nil {
-			return "", logr.RError(err, "Could not Update role")
+			return "", logr.RErrorw(err, "Could not Update role")
 		}
 	} else {
-		logr.V(5).Info("no updates for role")
+		logr.Debugw("No updates for Role")
 
 	}
 	return role.Name, nil

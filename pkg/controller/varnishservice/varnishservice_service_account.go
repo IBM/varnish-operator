@@ -5,6 +5,7 @@ import (
 	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/compare"
 	"icm-varnish-k8s-operator/pkg/logger"
+
 	"k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,7 +28,7 @@ func (r *ReconcileVarnishService) reconcileServiceAccount(instance *icmapiv1alph
 
 	// Set controller reference for service object
 	if err := controllerutil.SetControllerReference(instance, serviceAccount, r.scheme); err != nil {
-		return "", logr.RError(err, "Cannot set controller reference for service account")
+		return "", logr.RErrorw(err, "Cannot set controller reference for Service account")
 	}
 
 	found := &v1.ServiceAccount{}
@@ -38,21 +39,21 @@ func (r *ReconcileVarnishService) reconcileServiceAccount(instance *icmapiv1alph
 	// Else if the service exists, and it is different, update
 	// Else no changes, do nothing
 	if err != nil && kerrors.IsNotFound(err) {
-		logr.Info("Creating service account", "new", serviceAccount)
+		logr.Infoc("Creating Service sccount", "new", serviceAccount)
 		if err = r.Create(context.TODO(), serviceAccount); err != nil {
-			return "", logger.RError(err, "Unable to create service account")
+			return "", logger.RErrorw(err, "Unable to create Service account")
 		}
 	} else if err != nil {
-		return "", logr.RError(err, "Could not Get service account")
+		return "", logr.RErrorw(err, "Could not get Service account")
 	} else if !compare.EqualServiceAccount(found, serviceAccount) {
-		logr.Info("Updating service account", "diff", compare.DiffServiceAccount(found, serviceAccount))
+		logr.Debugw("Updating Service account", "diff", compare.DiffServiceAccount(found, serviceAccount))
 		found.ImagePullSecrets = serviceAccount.ImagePullSecrets
 		found.Labels = serviceAccount.Labels
 		if err = r.Update(context.TODO(), found); err != nil {
-			return "", logr.RError(err, "Unable to update service account")
+			return "", logr.RErrorw(err, "Unable to update service account")
 		}
 	} else {
-		logr.V(5).Info("No updates for service account")
+		logr.Debugw("No updates for Service account")
 	}
 	return saName, nil
 }

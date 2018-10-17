@@ -317,6 +317,21 @@ go generate ./pkg/...
 
 again.
 
+### Logging
+
+Logging implementation uses [zap](https://github.com/uber-go/zap) logging framework.
+
+Logging configuration accepts standard log levels in string format - `error`, `warn`, `info` and `debug`. Default log level is set to `info`, but can be configured by setting `LOG_LEVEL` environment variable to desired log level.
+
+To make logs produced by operator easy to parse and store in external logging systems, `json` encoder is used by default. Since it is not very human-friendly, it is possible to switch logging encoder to `console` encoder by setting `LOG_FORMAT` environment variable value to `console`. 
+
+When Varnish operator is deployed using Helm, logging configuration is handled by setting values `operator.loglevel` and `operator.logformat` in [values.yaml](./varnish-operator/values.yaml)  accordingly.
+
+During local development, `make run` command sets logging encoder to `console`. To increase logging verbosity, one can do so by setting desired log level using environment variable: 
+```bash
+LOG_LEVEL=debug make run
+```
+
 ## Deploying Your Kubebuilder project
 
 Out of the box, Kubebuilder has an integration with [Kustomize](https://github.com/kubernetes-sigs/kustomize). It bills itself as letting you "customize raw, template-free YAML files for multiple purposes, leaving the original YAML untouched and usable as is." You can learn more about Kustomize from the link. It is a very simple tool, and all of the documentation takes just a few minutes to read through.

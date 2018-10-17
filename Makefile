@@ -1,7 +1,7 @@
 
 # Image URL to use in all building/pushing image targets
 VERSION ?= $(shell cat ${ROOT_DIR}version.txt)-dev
-VARNISH_VERSION ?= $(shell cat ${ROOT_DIR}../icm-varnish-version.txt)
+VARNISH_VERSION ?= $(shell cat ${ROOT_DIR}icm-varnish-version.txt)
 IMG ?= varnish-controller:${VERSION}
 ROOT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 NAMESPACE := $(shell sed -n -e 's/^namespace: //p' ${ROOT_DIR}config/default/kustomization.yaml)
@@ -23,7 +23,7 @@ manager: generate fmt vet
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet
-	VARNISH_IMAGE_TAG=${VARNISH_VERSION} go run ${ROOT_DIR}cmd/manager/main.go
+	LOG_FORMAT=console VARNISH_IMAGE_TAG=${VARNISH_VERSION} go run ${ROOT_DIR}cmd/manager/main.go
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 install: manifests

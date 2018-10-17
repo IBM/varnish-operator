@@ -269,6 +269,7 @@ This script basically just calls `update-codegen.sh` and compares the output wit
 Kubernetes has a built-in mechanism of setting defaults for resources, which can be very useful when creating your CRD. However, documentation for it is non-existent, so here are the steps required to have defaults for incoming CRDs:
 
 1. In the same folder as your `<CRD-name>_types.go` (or `types.go` if not using Kubebuilder), create a `defaults.go` file ([here is the file in this project](pkg/apis/icm/v1alpha1/defaults.go)). In this file, create functions that will define defaults by type for your CRD. They MUST have the name template of `SetDefaults_<type>(in *<type>)`. For example:
+    
     ```go
     SetDefaults_TypeWithDefaults(in *TypeWithDefaults) {
         if (in.FieldThatNeedsDefault == "") {  
@@ -309,7 +310,15 @@ Kubernetes has a built-in mechanism of setting defaults for resources, which can
     RegisterDefaults(<your-scheme-here>)
     ```
 
-After following those steps, any incoming CRD for which you have defined defaults should inherit those defaults if a value isn't explicitly set for them. If you need to add any more defaults, or modify existing ones, just edit the `defaults.go` file, and run
+After following those steps, your scheme will be able to correctly handle defaulting defined types using the `Default` function. For instance, at the top of your reconcile function, after `Get`ting the current CRD `instance`, you may fill in defaults for that `instance` by running
+ 
+ ```go
+ scheme.Default(instance)
+```
+
+and your CRD should now inherit those defaults if a value isn't explicitly set for them.
+
+If you need to add any more defaults, or modify existing ones, just edit the `defaults.go` file, and run
 
 ```sh
 go generate ./pkg/...

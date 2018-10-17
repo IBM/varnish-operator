@@ -14,11 +14,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
-	kappsv1 "k8s.io/kubernetes/pkg/apis/apps/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *icmapiv1alpha1.VarnishService, serviceAccountName string, applicationPort *v1.ServicePort, endpointSelector map[string]string) (map[string]string, error) {
+func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *icmapiv1alpha1.VarnishService, serviceAccountName string, applicationPort *v1.ServicePort, endpointSelector, configMapSelector map[string]string) (map[string]string, error) {
 	componentName := "varnishes"
 	podSelector := generateLabels(instance, componentName)
 	desired := &appsv1.Deployment{
@@ -51,13 +50,15 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 							},
 							Env: []v1.EnvVar{
 								{Name: "ENDPOINT_SELECTOR_STRING", Value: labels.SelectorFromSet(endpointSelector).String()},
+								{Name: "CONFIGMAP_SELECTOR_STRING", Value: labels.SelectorFromSet(configMapSelector).String()},
 								{Name: "BACKENDS_FILE", Value: instance.Spec.Deployment.BackendsFile},
+								{Name: "BACKENDS_TMPL_FILE", Value: instance.Spec.Deployment.BackendsTmplFile},
 								{Name: "DEFAULT_FILE", Value: instance.Spec.Deployment.DefaultFile},
+								{Name: "VCL_FILE_CONFIGMAP_NAME", Value: instance.Spec.Deployment.VCLFileConfigMapName},
 								{Name: "NAMESPACE", Value: instance.Namespace},
 								{Name: "TARGET_PORT", Value: applicationPort.TargetPort.String()},
 								{Name: "VARNISH_PORT", Value: strconv.FormatInt(int64(config.GlobalConf.VarnishPort), 10)},
 								{Name: "VARNISH_MEMORY", Value: instance.Spec.Deployment.VarnishMemory},
-								{Name: "VCL_DIR", Value: config.GlobalConf.VCLDir},
 							},
 							Resources:       *instance.Spec.Deployment.VarnishResources,
 							LivenessProbe:   instance.Spec.Deployment.LivenessProbe,
@@ -79,12 +80,12 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 		},
 	}
 
-	logr := logger.WithValues("name", desired.Name, "namespace", desired.Namespace)
+	logr := logger.With("name", desired.Name, "namespace", desired.Namespace)
 
 	if err := controllerutil.SetControllerReference(instance, desired, r.scheme); err != nil {
 		return nil, logr.RErrorw(err, "could not set controller as the OwnerReference for deployment")
 	}
-	kappsv1.SetObjectDefaults_Deployment(desired)
+	r.scheme.Default(desired)
 
 	found := &appsv1.Deployment{}
 

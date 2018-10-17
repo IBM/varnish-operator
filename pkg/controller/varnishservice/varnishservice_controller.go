@@ -11,6 +11,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
+	rbacv1beta1 "k8s.io/api/rbac/v1beta1"
 
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -48,8 +49,22 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	// TODO(user): Modify this to be the types you create
-	// Uncomment watch a Deployment created by VarnishService - change this for objects you create
+	// Watch for changes in the below resources:
+	// ConfigMap
+	// Deployment
+	// Service
+	// Role
+	// RoleBinding
+	// ServiceAccount
+
+	err = c.Watch(&source.Kind{Type: &v1.ConfigMap{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &icmv1alpha1.VarnishService{},
+	})
+	if err != nil {
+		return err
+	}
+
 	err = c.Watch(&source.Kind{Type: &appsv1.Deployment{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &icmv1alpha1.VarnishService{},
@@ -59,6 +74,30 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	err = c.Watch(&source.Kind{Type: &v1.Service{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &icmv1alpha1.VarnishService{},
+	})
+	if err != nil {
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &rbacv1beta1.Role{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &icmv1alpha1.VarnishService{},
+	})
+	if err != nil {
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &rbacv1beta1.RoleBinding{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &icmv1alpha1.VarnishService{},
+	})
+	if err != nil {
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &v1.ServiceAccount{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &icmv1alpha1.VarnishService{},
 	})
@@ -80,9 +119,10 @@ type ReconcileVarnishService struct {
 // Reconcile reads that state of the cluster for a VarnishService object and makes changes based on the state read
 // and what is in the VarnishService.Spec
 // Automatically generate RBAC rules to allow the Controller to read and write Deployments
-// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=icm.ibm.com,resources=varnishservices,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=icm.ibm.com,resources=varnishservices/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create
+// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=services;serviceaccounts,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles;rolebindings,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=endpoints,verbs=list;watch
@@ -100,12 +140,17 @@ func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcil
 		return reconcile.Result{}, logger.RErrorw(err, "could not read VarnishService")
 	}
 
-	logr := logger.WithValues("name", instance.Name, "namespace", instance.Namespace)
+	r.scheme.Default(instance)
+	logr := logger.With("name", instance.Name, "namespace", instance.Namespace)
 
 	instanceStatus := &icmv1alpha1.VarnishService{}
 	instance.ObjectMeta.DeepCopyInto(&instanceStatus.ObjectMeta)
 	instance.Status.DeepCopyInto(&instanceStatus.Status)
 
+	configmapSelector, err := r.reconcileConfigMap(instance)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
 	serviceAccountName, err := r.reconcileServiceAccount(instance)
 	if err != nil {
 		return reconcile.Result{}, err
@@ -125,7 +170,7 @@ func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcil
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-	varnishSelector, err := r.reconcileDeployment(instance, instanceStatus, serviceAccountName, applicationPort, endpointSelector)
+	varnishSelector, err := r.reconcileDeployment(instance, instanceStatus, serviceAccountName, applicationPort, endpointSelector, configmapSelector)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -146,7 +191,7 @@ func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcil
 }
 
 func getApplicationPort(instance *icmv1alpha1.VarnishService) (*v1.ServicePort, error) {
-	logr := logger.WithValues("name", instance.Name, "namespace", instance.Namespace)
+	logr := logger.With("name", instance.Name, "namespace", instance.Namespace)
 
 	if len(instance.Spec.Service.Ports) != 1 {
 		err := errors.New("must specify exactly one port in service spec")

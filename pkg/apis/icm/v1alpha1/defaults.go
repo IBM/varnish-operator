@@ -4,14 +4,23 @@
 package v1alpha1
 
 import (
+	"fmt"
 	"icm-varnish-k8s-operator/pkg/config"
+
 	"k8s.io/api/core/v1"
 	kv1 "k8s.io/kubernetes/pkg/apis/core/v1"
 )
 
 var globalConf = config.GlobalConf
 
+func SetDefaults_VarnishService(in *VarnishService) {
+	if in.Spec.Deployment.VCLFileConfigMapName == "" {
+		in.Spec.Deployment.VCLFileConfigMapName = fmt.Sprintf("%s-%s", in.Name, globalConf.DefaultVCLFileConfigMapName)
+	}
+}
+
 func SetDefaults_VarnishDeployment(in *VarnishDeployment) {
+	in.BackendsTmplFile = in.BackendsFile + ".tmpl"
 
 	if in.VarnishMemory == "" {
 		in.VarnishMemory = globalConf.DefaultVarnishMemory
@@ -36,9 +45,6 @@ func SetDefaults_VarnishDeployment(in *VarnishDeployment) {
 	}
 	if in.DefaultFile == "" {
 		in.DefaultFile = globalConf.DefaultDefaultFile
-	}
-	if in.VCLDir == "" {
-		in.VCLDir = globalConf.VCLDir
 	}
 }
 

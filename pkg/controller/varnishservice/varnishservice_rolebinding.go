@@ -34,7 +34,7 @@ func (r *ReconcileVarnishService) reconcileRoleBinding(instance *icmapiv1alpha1.
 		},
 	}
 
-	logr := logger.WithValues("name", roleBinding.Name, "namespace", roleBinding.Namespace)
+	logr := logger.With("name", roleBinding.Name, "namespace", roleBinding.Namespace)
 
 	// Set controller reference for roleBinding
 	if err := controllerutil.SetControllerReference(instance, roleBinding, r.scheme); err != nil {

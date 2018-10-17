@@ -16,8 +16,7 @@ type InternalZapLogger struct {
 
 // RErrorw extends error logger
 func (izl *InternalZapLogger) RErrorw(err error, msg string, keysAndValues ...interface{}) error {
-	keysAndValues = append(keysAndValues, zap.Error(err))
-	izl.Errorw(msg, keysAndValues...)
+	izl.Errorw(msg, append(keysAndValues, zap.Error(err))...)
 	return err
 }
 
@@ -69,15 +68,19 @@ func Debugw(msg string, keysAndValues ...interface{}) {
 
 // Errorw is exactly the same as logger.Errorw
 func Errorw(msg string, keysAndValues ...interface{}) {
-	logger.With(keysAndValues...).Error(msg)
+	logger.Errorw(msg, keysAndValues...)
 }
 
-// RErrorw is the same as Error, except it also returns the error value
+func Panicw(msg string, keysAndValues ...interface{}) {
+	logger.Panicw(msg, keysAndValues...)
+}
+
+// RErrorw is logs an error and then returns it
 func RErrorw(err error, msg string, keysAndValues ...interface{}) error {
 	return logger.RErrorw(err, msg, keysAndValues...)
 }
 
-// WithValues wraps logger.With
-func WithValues(fields ...interface{}) *InternalZapLogger {
+// With wraps logger.With
+func With(fields ...interface{}) *InternalZapLogger {
 	return logger.With(fields...)
 }

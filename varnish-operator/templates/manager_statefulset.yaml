@@ -85,10 +85,6 @@ spec:
         - name: VARNISH_TARGET_PORT
           value: {{ . | quote }}
           {{- end }}
-          {{- with .vclDir }}{{- /* varnish.vclDir */}}
-        - name: VCL_DIR
-          value: {{ . | quote }}
-          {{- end }}
         {{- end }}
         {{- with .Values.default }}{{- /* default */}}
           {{- with .varnishMemory }}{{- /* default.varnishMemory */}}
@@ -101,6 +97,10 @@ spec:
           {{- end }}
           {{- with .defaultFile }}{{- /* default.defaultFile */}}
         - name: DEFAULT_DEFAULT_FILE
+          value: {{ . | quote }}
+          {{- end }}
+          {{- with .vclFileConfigMapName}}{{- /* default.vclFileConfigMapName */}}
+        - name: DEFAULT_VCL_FILE_CONFIGMAP_NAME
           value: {{ . | quote }}
           {{- end }}
           {{- with .varnishResources }}{{- /* default.varnishResources */}}

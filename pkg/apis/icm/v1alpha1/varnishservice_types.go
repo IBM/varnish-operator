@@ -25,9 +25,11 @@ type VarnishDeployment struct {
 	VarnishRestartPolicy v1.RestartPolicy         `json:"varnishRestartPolicy,omitempty"`
 	BackendsFile         string                   `json:"backendsFile,omitempty"`
 	DefaultFile          string                   `json:"defaultFile,omitempty"`
-	VCLDir               string                   `json:"vclDir,omitempty"`
+	VCLFileConfigMapName string                   `json:"vclFileConfigMapName,omitempty"`
 	Affinity             *v1.Affinity             `json:"affinity,omitempty"`
 	Tolerations          []v1.Toleration          `json:"tolerations,omitempty"`
+
+	BackendsTmplFile string
 }
 
 // VarnishServiceSpec defines the desired state of VarnishService

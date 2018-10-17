@@ -23,13 +23,13 @@ func (r *ReconcileVarnishService) reconcileRole(instance *icmapiv1alpha1.Varnish
 		Rules: []rbacv1beta1.PolicyRule{
 			{
 				APIGroups: []string{""},
-				Resources: []string{"endpoints"},
+				Resources: []string{"endpoints", "configmaps"},
 				Verbs:     []string{"list", "watch"},
 			},
 		},
 	}
 
-	logr := logger.WithValues("name", role.Name, "namespace", role.Namespace)
+	logr := logger.With("name", role.Name, "namespace", role.Namespace)
 
 	// Set controller reference for role
 	if err := controllerutil.SetControllerReference(instance, role, r.scheme); err != nil {

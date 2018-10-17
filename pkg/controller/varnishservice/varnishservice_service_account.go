@@ -24,7 +24,7 @@ func (r *ReconcileVarnishService) reconcileServiceAccount(instance *icmapiv1alph
 		ImagePullSecrets: []v1.LocalObjectReference{{Name: instance.Spec.Deployment.ImagePullSecretName}},
 	}
 
-	logr := logger.WithValues("name", serviceAccount.Name, "namespace", serviceAccount.Namespace)
+	logr := logger.With("name", serviceAccount.Name, "namespace", serviceAccount.Namespace)
 
 	// Set controller reference for service object
 	if err := controllerutil.SetControllerReference(instance, serviceAccount, r.scheme); err != nil {

@@ -7,14 +7,21 @@ spec:
   names:
     shortNames:
     - vs
-  # limit number of ports to 1
   validation:
     openAPIV3Schema:
       properties:
         spec:
           properties:
+            deployment:
+              properties:
+                # must be lowercase, number, "-", or "."
+                vclFileConfigMapName:
+                  type: string
+                  # MUST be ' (single-quote) AND \\ (backslash escaped)
+                  pattern: '[a-z0-9\\-.]+'
             service:
               properties:
+                # limit number of ports to 1
                 ports:
                   type: array
                   maxItems: 1

@@ -58,7 +58,8 @@ spec:
                   type: object
                 varnishRestartPolicy:
                   type: string
-                vclDir:
+                vclFileConfigMapName:
+                  pattern: '[a-z0-9\-.]+'
                   type: string
               required:
               - imagePullSecretName

@@ -13,7 +13,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	kv1 "k8s.io/kubernetes/pkg/apis/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -96,13 +95,13 @@ func (r *ReconcileVarnishService) reconcileCachedService(instance, instanceStatu
 }
 
 func (r *ReconcileVarnishService) reconcileServiceGeneric(instance *icmapiv1alpha1.VarnishService, instanceServiceStatus *icmapiv1alpha1.VarnishServiceSingleServiceStatus, desired *v1.Service) error {
-	logr := logger.WithValues("name", desired.Name, "namespace", desired.Namespace)
+	logr := logger.With("name", desired.Name, "namespace", desired.Namespace)
 
 	// Set controller reference for desired object
 	if err := controllerutil.SetControllerReference(instance, desired, r.scheme); err != nil {
 		return logr.RErrorw(err, "Cannot set controller reference for desired")
 	}
-	kv1.SetObjectDefaults_Service(desired)
+	r.scheme.Default(desired)
 
 	found := &v1.Service{}
 

@@ -1,4 +1,3 @@
-
 # Image URL to use in all building/pushing image targets
 VERSION ?= $(shell cat ${ROOT_DIR}version.txt)-dev
 VARNISH_VERSION ?= $(shell cat ${ROOT_DIR}icm-varnish-version.txt)
@@ -36,8 +35,9 @@ uninstall:
 manifests:
 	go run ${ROOT_DIR}vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go all
 
-# Run go fmt against code
+# Run goimports and go fmt against code
 fmt:
+	cd ${ROOT_DIR} && goimports -w ./pkg ./cmd
 	cd ${ROOT_DIR} && go fmt ./pkg/... ./cmd/...
 
 # Run go vet against code
@@ -69,7 +69,7 @@ docker-build: fake-test
 	docker build ${ROOT_DIR} -t ${IMG} -f Dockerfile.local
 
 docker-build-dep: fake-test
-    docker build ${ROOT_DIR} -t ${IMG} -f Dockerfile
+	docker build ${ROOT_DIR} -t ${IMG} -f Dockerfile
 
 # Tag and push the docker image
 docker-tag-push:

@@ -59,8 +59,6 @@ varnish:
   exporterPort: 9131
   # Warning: without modifying the Docker image, changing exporterTargetPort will break metrics
   exporterTargetPort: 9131
-  # there should not be much reason to change the directory VCL is written to
-  vclDir: /etc/varnish
 
 # the default section describes all of the defaults available for the VarnishService CustomResource.
 default:
@@ -70,6 +68,9 @@ default:
   backendsFile: backends.vcl
   # the name of the base VCL file with the caching logic. While this file cannot currently be changed, in the future it will possible to customize its behavior
   defaultFile: default.vcl
+  # the name given to the configMap that contains the contents of the default.vcl. If the configMap does not exist, a basic round-robin-based VCL file will be created and used
+  # MUST use only lowercase letters, numbers, "-", or "."
+  vclFileConfigMapName: vcl-file
   # Resources allocated to the Varnish pod through Kubernetes. `requests.memory` Should be greater than `varnishMemory` above
   varnishResources:
     limits:

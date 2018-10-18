@@ -341,6 +341,68 @@ During local development, `make run` command sets logging encoder to `console`. 
 LOG_LEVEL=debug make run
 ```
 
+## Publishing Kubernetes events
+
+Kubebuilder has a built it mechanism for publishing Kubernetes events.
+To use it you need to create an event recorder with help of the manager. 
+It can be done on controller creation so you can save and use it later in your reconciliation logic:
+
+ ```go
+package myservice
+
+import (
+	...
+	"k8s.io/client-go/tools/record"
+	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	...
+)
+// ReconcileMyService reconciles MyService
+type ReconcileMyService struct {
+	client.Client
+	scheme *runtime.Scheme
+	events *record.EventRecorder
+}
+
+// newReconciler returns a new reconcile.Reconciler
+func newReconciler(mgr manager.Manager) reconcile.Reconciler {
+	return &ReconcileMyService{
+		Client: mgr.GetClient(),
+		scheme: mgr.GetScheme(),
+		events: mgr.GetRecorder("my-service"),
+	}
+}
+ ``` 
+
+ then you can use it your Reconcile() function:
+ 
+ ```go
+ func (r *ReconcileMyService) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+ 	instance := &icmv1alpha1.MyService{}
+ 	r.events.Event(instance, "Normal", "ReconciliationEvent", "MyService reconciliation is started")
+ 	err := r.Get(context.TODO(), request.NamespacedName, instance)
+ 		...
+ }
+ ```
+
+* **component** will appear in the "From" field of the events and is the component that creates this events
+* **type** must be **Normal** or **Warning**
+* **reason** is the reason why the event is generated. It should be in UpperCamelCase format and be short. It will be used by automation as an identifier.
+* **message** the description of the event that happened
+
+Here's an example of the events that you will see in your `kubectl describe <your-component>` output:
+
+```
+ ...
+    Selector:
+      App:  HttPerf
+Events:
+  Type    Reason           Age                   From             Message
+  ----    ------           ----                  ----             -------
+  Warning  DeploymentError  5m7s (x32 over 4h2m)  component-name  Could not update deployment. Error: some error
+  
+```
+
 ## Deploying Your Kubebuilder project
 
 Out of the box, Kubebuilder has an integration with [Kustomize](https://github.com/kubernetes-sigs/kustomize). It bills itself as letting you "customize raw, template-free YAML files for multiple purposes, leaving the original YAML untouched and usable as is." You can learn more about Kustomize from the link. It is a very simple tool, and all of the documentation takes just a few minutes to read through.

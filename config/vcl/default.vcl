@@ -1,6 +1,7 @@
 vcl 4.0;
 
 import std;
+import var;
 include "backends.vcl";
 
 sub vcl_init {
@@ -12,6 +13,11 @@ sub vcl_recv {
 
   if (req.method == "GET" && req.url == "/heartbeat") {
     return(synth(200, "OK"));
+  }
+
+  // If backends are not configured correctly
+  if (!(var.global_get("backendsConfigured") == "true")) {
+    return(synth(503, "No backends configured"));
   }
 
   set req.backend_hint = container_rr.backend();
@@ -31,6 +37,44 @@ sub vcl_recv {
   }
 
   return (hash);
+}
+
+sub vcl_synth {
+       set resp.http.Content-Type = "text/html; charset=utf-8";
+
+       if (!(var.global_get("backendsConfigured") == "true")) { //error message if no backends configured
+          synthetic( {"<!DOCTYPE html>
+           <html>
+             <head>
+               <title>Incorrect backend configuration"</title>
+             </head>
+             <body>
+               <h1>Incorrect backend configuration</h1>
+               <p>Please check your deployment. It may not have pods running or Varnish is pointed to a non existing deployment.</p>
+               <p>XID: "} + req.xid + {"</p>
+               <hr>
+             </body>
+           </html>
+           "} );
+       } else { //default error message for the rest of the cases
+        synthetic( {"<!DOCTYPE html>
+            <html>
+              <head>
+                <title>"} + resp.status + " " + resp.reason + {"</title>
+              </head>
+              <body>
+                <h1>Error "} + resp.status + " " + resp.reason + {"</h1>
+                <p>"} + resp.reason + {"</p>
+                <h3>Guru meditation:</h3>
+                <p>XID: "} + req.xid + {"</p>
+                <hr>
+                <p>Varnish cache server</p>
+              </body>
+            </html>
+            "} );
+       }
+
+    return (deliver);
 }
 
 sub vcl_hash {

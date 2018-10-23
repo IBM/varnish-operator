@@ -19,6 +19,10 @@ backend dummy {
 {{- end }}
 
 sub init_backends {
+  // The line below is generated and creates a variable that is used to build custom logic
+  // when the user configured the backends incorrectly. E.g. return a custom error page that indicates the issue.
+  var.global_set("backendsConfigured", "{{ $.BackendsConfigured }}"); //only strings are allowed to be set globally
+
   new container_rr = directors.round_robin();
   {{- range $index, $_ := .IPs }}
   container_rr.add_backend(container{{ $index }});

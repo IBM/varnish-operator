@@ -26,6 +26,11 @@ func (r *ReconcileVarnishService) reconcileRole(instance *icmapiv1alpha1.Varnish
 				Resources: []string{"endpoints", "configmaps"},
 				Verbs:     []string{"list", "watch"},
 			},
+			{
+				APIGroups: []string{""},
+				Resources: []string{"events"},
+				Verbs:     []string{"create"},
+			},
 		},
 	}
 

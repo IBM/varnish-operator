@@ -2,13 +2,17 @@
 
 import directors;
 
-{{ if .IPs -}}
-{{ range $index, $IP := .IPs -}}
-backend container{{ $index }} {
-  .host = "{{ $IP }}";
+{{ if .Backends -}}
+{{ range .Backends }}
+backend {{ .PodName }} {
+  // backend {{ .PodName }} labels:
+  {{- range $item, $key := .NodeLabels }}
+  //   {{ $item }}: {{ $key -}}
+  {{ end }}
+  .host = "{{ .IP }}";
   .port = "{{ $.TargetPort }}";
 }
-{{- end }}
+{{ end }}
 {{- else -}}
 # Without this dummy backend, varnish will not compile the code
 # This is a dummy, and should not be used anywhere
@@ -24,7 +28,7 @@ sub init_backends {
   var.global_set("backendsConfigured", "{{ $.BackendsConfigured }}"); //only strings are allowed to be set globally
 
   new container_rr = directors.round_robin();
-  {{- range $index, $_ := .IPs }}
-  container_rr.add_backend(container{{ $index }});
+  {{- range .Backends }}
+  container_rr.add_backend({{ .PodName }});
   {{- end }}
 }

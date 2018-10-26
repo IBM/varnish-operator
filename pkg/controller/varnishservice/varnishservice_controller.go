@@ -101,6 +101,22 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
+	err = c.Watch(&source.Kind{Type: &rbacv1beta1.ClusterRole{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &icmv1alpha1.VarnishService{},
+	})
+	if err != nil {
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &rbacv1beta1.ClusterRoleBinding{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &icmv1alpha1.VarnishService{},
+	})
+	if err != nil {
+		return err
+	}
+
 	err = c.Watch(&source.Kind{Type: &v1.ServiceAccount{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &icmv1alpha1.VarnishService{},
@@ -129,7 +145,7 @@ type ReconcileVarnishService struct {
 // +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=services;serviceaccounts,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles;rolebindings,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles;rolebindings;clusterroles;clusterrolebindings,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=endpoints,verbs=list;watch
 func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the VarnishService instance
@@ -165,6 +181,13 @@ func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcil
 		return reconcile.Result{}, err
 	}
 	if err = r.reconcileRoleBinding(instance, roleName, serviceAccountName); err != nil {
+		return reconcile.Result{}, err
+	}
+	clusterRoleName, err := r.reconcileClusterRole(instance)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+	if err = r.reconcileClusterRoleBinding(instance, clusterRoleName, serviceAccountName); err != nil {
 		return reconcile.Result{}, err
 	}
 	applicationPort, err := getApplicationPort(instance)

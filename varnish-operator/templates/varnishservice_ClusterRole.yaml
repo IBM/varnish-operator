@@ -9,27 +9,22 @@ rules:
   resources:
   - varnishservices
   verbs:
-  - get
   - list
   - watch
   - create
   - update
-  - patch
   - delete
 - apiGroups:
   - icm.ibm.com
   resources:
   - varnishservices/status
   verbs:
-  - get
   - update
-  - patch
 - apiGroups:
   - ""
   resources:
   - configmaps
   verbs:
-  - get
   - list
   - watch
   - create
@@ -38,12 +33,10 @@ rules:
   resources:
   - deployments
   verbs:
-  - get
   - list
   - watch
   - create
   - update
-  - patch
   - delete
 - apiGroups:
   - ""
@@ -51,25 +44,23 @@ rules:
   - services
   - serviceaccounts
   verbs:
-  - get
   - list
   - watch
   - create
   - update
-  - patch
   - delete
 - apiGroups:
   - rbac.authorization.k8s.io
   resources:
   - roles
   - rolebindings
+  - clusterroles
+  - clusterrolebindings
   verbs:
-  - get
   - list
   - watch
   - create
   - update
-  - patch
   - delete
 - apiGroups:
   - ""

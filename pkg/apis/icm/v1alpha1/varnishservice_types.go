@@ -58,9 +58,11 @@ type VarnishDeployment struct {
 	Tolerations          []v1.Toleration          `json:"tolerations,omitempty"`
 }
 
+// TODO: add configmap data
 // VarnishServiceStatus defines the observed state of VarnishService
 type VarnishServiceStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
+	// TODO: must have name of deployment too
 	Deployment appsv1.DeploymentStatus     `json:"deployment,omitempty"`
 	Service    VarnishServiceServiceStatus `json:"service,omitempty"`
 }

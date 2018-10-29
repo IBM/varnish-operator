@@ -31,21 +31,12 @@ func init() {
 	backendsVCLTmpl = readVCL("backends.vcl.tmpl")
 }
 
-func (r *ReconcileVarnishService) reconcileConfigMap(instance *icmapiv1alpha1.VarnishService) (map[string]string, error) {
+func (r *ReconcileVarnishService) reconcileConfigMap(instance *icmapiv1alpha1.VarnishService) error {
 	logr := logger.With("name", instance.Spec.VCLConfigMap.Name, "namespace", instance.Namespace)
 
 	found := &v1.ConfigMap{}
 
-	selectorLabels := generateLabels(instance, "default-file-configmap")
-	inheritedLabels := inheritLabels(instance)
-	labels := make(map[string]string, len(selectorLabels)+len(inheritedLabels))
-	for k, v := range inheritedLabels {
-		labels[k] = v
-	}
-	for k, v := range selectorLabels {
-		labels[k] = v
-	}
-
+	labels := combinedLabels(instance, "vcl-file-configmap")
 	err := r.Get(context.TODO(), types.NamespacedName{Name: instance.Spec.VCLConfigMap.Name, Namespace: instance.Namespace}, found)
 	// if the ConfigMap does not exist, create it and set it with the default VCL files
 	// Else if there was a problem doing the Get, just return an error
@@ -64,20 +55,20 @@ func (r *ReconcileVarnishService) reconcileConfigMap(instance *icmapiv1alpha1.Va
 			},
 		}
 		if err := controllerutil.SetControllerReference(instance, desired, r.scheme); err != nil {
-			return selectorLabels, logr.RErrorw(err, "could not initialize default ConfigMap")
+			return logr.RErrorw(err, "could not initialize default ConfigMap")
 		}
 
-		logr.Info("Creating ConfigMap with default VCL files", "new", desired)
+		logr.Infoc("Creating ConfigMap with default VCL files", "new", desired)
 		if err = r.Create(context.TODO(), desired); err != nil {
-			return selectorLabels, logr.RErrorw(err, "could not create ConfigMap")
+			return logr.RErrorw(err, "could not create ConfigMap")
 		}
 	} else if err != nil {
-		return selectorLabels, logr.RErrorw(err, "could not get current state of ConfigMap")
+		return logr.RErrorw(err, "could not get current state of ConfigMap")
 	} else {
 		foundCopy := found.DeepCopy()
 		// TODO: there may be a problem if the configmap is already owned by something else. That will prevent the `Watch` fn (in varnishservice_controller.go#run) from detecting updates to the ConfigMap. It will also cause this code to throw an unhandled error that we may want to handle
 		if err = controllerutil.SetControllerReference(instance, foundCopy, r.scheme); err != nil {
-			return selectorLabels, logr.RErrorw(err, "could not set controller as the OwnerReference for existing ConfigMap")
+			return logr.RErrorw(err, "could not set controller as the OwnerReference for existing ConfigMap")
 		}
 		// don't trample on any labels created by user
 		for l, v := range labels {
@@ -87,11 +78,11 @@ func (r *ReconcileVarnishService) reconcileConfigMap(instance *icmapiv1alpha1.Va
 		if !compare.EqualConfigMap(found, foundCopy) {
 			logger.Infow("Updating ConfigMap with defaults", "diff", compare.DiffConfigMap(found, foundCopy))
 			if err = r.Update(context.TODO(), foundCopy); err != nil {
-				return selectorLabels, logger.RErrorw(err, "could not update deployment")
+				return logger.RErrorw(err, "could not update deployment")
 			}
 		} else {
 			logr.Debugw("No updates for ConfigMap")
 		}
 	}
-	return selectorLabels, nil
+	return nil
 }

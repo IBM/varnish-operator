@@ -20,6 +20,9 @@ func SetDefaults_VarnishService(in *VarnishService) {
 	if in.APIVersion == "" {
 		in.APIVersion = "icm.ibm.com/v1alpha1"
 	}
+	if in.Kind == "" {
+		in.Kind = "VarnishService"
+	}
 }
 
 func SetDefaults_VarnishVCLConfigMap(in *VarnishVCLConfigMap) {

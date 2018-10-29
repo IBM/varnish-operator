@@ -21,133 +21,133 @@ spec:
     spec:
       containers:
       - name: manager
-        {{- with .Values.operator }}{{- /* operator */}}
-          {{- with .controllerImage }}{{- /* operator.controllerImage */}}
+        {{- with .Values.operator }}{{/* operator */}}
+          {{- with .controllerImage }}{{/* operator.controllerImage */}}
         image: {{ printf "%s/%s/%s:%s" .host .namespace .name .tag | quote }}
-            {{- with .pullPolicy }}{{- /* operator.controllerImage.pullPolicy */}}
+            {{- with .pullPolicy }}{{/* operator.controllerImage.pullPolicy */}}
         imagePullPolicy: {{ . | title | quote }}
             {{- end }}
           {{- end }}
         env:
-          {{- with .varnishImage }}{{- /* operator.varnishImage */}}
-            {{- with .host }}{{- /* operator.varnishImage.host */}}
+          {{- with .varnishImage }}{{/* operator.varnishImage */}}
+            {{- with .host }}{{/* operator.varnishImage.host */}}
         - name: VARNISH_IMAGE_HOST
           value: {{ . | quote }}
             {{- end }}
-            {{- with .namespace }}{{- /* operator.varnishImage.namespace */}}
+            {{- with .namespace }}{{/* operator.varnishImage.namespace */}}
         - name: VARNISH_IMAGE_NAMESPACE
           value: {{ . | quote }}
             {{- end }}
-            {{- with .name }}{{- /* operator.varnishImage.name */}}
+            {{- with .name }}{{/* operator.varnishImage.name */}}
         - name: VARNISH_IMAGE_NAME
           value: {{ . | quote }}
             {{- end }}
-            {{- with .tag }}{{- /* operator.varnishImage.tag */}}
+            {{- with .tag }}{{/* operator.varnishImage.tag */}}
         - name: VARNISH_IMAGE_TAG
           value: {{ . | quote }}
             {{- end }}
-            {{- with .pullPolicy }}{{- /* operator.varnishImage.pullPolicy */}}
+            {{- with .pullPolicy }}{{/* operator.varnishImage.pullPolicy */}}
         - name: VARNISH_IMAGE_PULL_POLICY
           value: {{ . | title | quote }}
             {{- end }}
-            {{- with .imagePullSecretName }}{{- /* operator.varnishImage.imagePullSecretName */}}
+            {{- with .imagePullSecretName }}{{/* operator.varnishImage.imagePullSecretName */}}
         - name: IMAGE_PULL_SECRET
           value: {{ . | quote }}
             {{- end }}
           {{- end }}
-          {{- with .retryCount }}{{- /* operator.retryCount */}}
+          {{- with .retryCount }}{{/* operator.retryCount */}}
         - name: RETRY_COUNT
           value: {{ . | quote }}
           {{- end }}
-          {{- with .logLevel }}{{- /* operator.logLevel */}}
+          {{- with .logLevel }}{{/* operator.logLevel */}}
         - name: LOG_LEVEL
           value: {{ . | quote }}
           {{- end }}
-          {{- with .logFormat }}{{- /* operator.logFormat */}}
+          {{- with .logFormat }}{{/* operator.logFormat */}}
         - name: LOG_FORMAT
           value: {{ . | quote }}
           {{- end }}
         {{- end }}
-        {{- with .Values.varnish }}{{- /* varnish */}}
-          {{- with .exporterPort }}{{- /* varnish.exporterPort */}}
+        {{- with .Values.varnish }}{{/* varnish */}}
+          {{- with .exporterPort }}{{/* varnish.exporterPort */}}
         - name: VARNISH_EXPORTER_PORT
           value: {{ . | quote }}
           {{- end }}
-          {{- with .exporterTargetPort }}{{- /* varnish.exporterTargetPort */}}
+          {{- with .exporterTargetPort }}{{/* varnish.exporterTargetPort */}}
         - name: VARNISH_EXPORTER_TARGET_PORT
           value: {{ . | quote }}
           {{- end }}
-          {{- with .port }}{{- /* varnish.port */}}
+          {{- with .port }}{{/* varnish.port */}}
         - name: VARNISH_PORT
           value: {{ . | quote }}
           {{- end }}
-          {{- with .targetPort }}{{- /* varnish.targetPort */}}
+          {{- with .targetPort }}{{/* varnish.targetPort */}}
         - name: VARNISH_TARGET_PORT
           value: {{ . | quote }}
           {{- end }}
         {{- end }}
-        {{- with .Values.default }}{{- /* default */}}
-          {{- with .vclConfigMap }}{{- /* default.vclConfigMap */}}
-            {{- with .name }}{{- /* default.vclConfigMap.name */}}
+        {{- with .Values.default }}{{/* default */}}
+          {{- with .vclConfigMap }}{{/* default.vclConfigMap */}}
+            {{- with .name }}{{/* default.vclConfigMap.name */}}
         - name: DEFAULT_VCL_CONFIGMAP_NAME
           value: {{ . | quote }}
             {{- end }}
-            {{- with .backendsFile }}{{- /* default.vclConfigMap.backendsFile */}}
+            {{- with .backendsFile }}{{/* default.vclConfigMap.backendsFile */}}
         - name: DEFAULT_BACKENDS_FILE
           value: {{ . | quote }}
             {{- end }}
-            {{- with .defaultFile }}{{- /* default.defaultFile */}}
+            {{- with .defaultFile }}{{/* default.defaultFile */}}
         - name: DEFAULT_DEFAULT_FILE
           value: {{ . | quote }}
             {{- end }}
           {{- end }}
-          {{- with .deployment }}{{- /* default.deployment }}
-            {{- with .varnishMemory }}{{- /* default.deployment.varnishMemory */}}
+          {{- with .deployment }}{{/* default.deployment */}}
+            {{- with .varnishMemory }}{{/* default.deployment.varnishMemory */}}
         - name: DEFAULT_VARNISH_MEMORY
           value: {{ . | quote }}
             {{- end }}
-            {{- with .vclFileConfigMapName}}{{- /* default.deployment.vclFileConfigMapName */}}
+            {{- with .vclFileConfigMapName}}{{/* default.deployment.vclFileConfigMapName */}}
         - name: DEFAULT_VCL_FILE_CONFIGMAP_NAME
           value: {{ . | quote }}
             {{- end }}
-            {{- with .varnishResources }}{{- /* default.deployment.varnishResources */}}
-              {{- with .limits }}{{- /* default.deployment.varnishResources.limits */}}
-                {{- with .cpu }}{{- /* default.deployment.varnishResources.limits.cpu */}}
+            {{- with .varnishResources }}{{/* default.deployment.varnishResources */}}
+              {{- with .limits }}{{/* default.deployment.varnishResources.limits */}}
+                {{- with .cpu }}{{/* default.deployment.varnishResources.limits.cpu */}}
         - name: DEFAULT_VARNISH_RESOURCE_LIMIT_CPU
           value: {{ . | quote }}
                 {{- end }}
-                {{- with .memory }}{{- /* default.deployment.varnishResources.limits.memory */}}
+                {{- with .memory }}{{/* default.deployment.varnishResources.limits.memory */}}
         - name: DEFAULT_VARNISH_RESOURCE_LIMIT_MEM
           value: {{ . | quote }}
                 {{- end }}
               {{- end }}
-              {{- with .requests }}{{- /* default.deployment.varnishResources.requests */}}
-                {{- with .cpu }}{{- /* default.deployment.varnishResources.requests.cpu */}}
+              {{- with .requests }}{{/* default.deployment.varnishResources.requests */}}
+                {{- with .cpu }}{{/* default.deployment.varnishResources.requests.cpu */}}
         - name: DEFAULT_VARNISH_RESOURCE_REQ_CPU
           value: {{ . | quote }}
                 {{- end }}
-                {{- with .memory }}{{- /* default.deployment.varnishResources.requests.memory */}}
+                {{- with .memory }}{{/* default.deployment.varnishResources.requests.memory */}}
         - name: DEFAULT_VARNISH_RESOURCE_REQ_MEM
           value: {{ . | quote }}
                 {{- end }}
               {{- end }}
             {{- end }}
-            {{- with .varnishRestartPolicy }}{{- /* default.deployment.varnishRestartPolicy */}}
+            {{- with .varnishRestartPolicy }}{{/* default.deployment.varnishRestartPolicy */}}
         - name: DEFAULT_VARNISH_RESTART_POLICY
           value: {{ . | title | quote }}
             {{- end }}
-            {{- with .livenessProbe }}{{- /* default.deployment.livenessProbe */}}
-              {{- with .httpPath }}{{- /* default.deployment.livenessProbe.httpPath */}}
+            {{- with .livenessProbe }}{{/* default.deployment.livenessProbe */}}
+              {{- with .httpPath }}{{/* default.deployment.livenessProbe.httpPath */}}
         - name: DEFAULT_LIVENESS_PROBE_HTTP_PATH
           value: {{ . | quote }}
               {{- end }}
-              {{- with .port }}{{- /* default.deployment.livenessProbe.port */}}
+              {{- with .port }}{{/* default.deployment.livenessProbe.port */}}
         - name: DEFAULT_LIVENESS_PROBE_PORT
           value: {{ . | quote }}
               {{- end }}
             {{- end }}
-            {{- with .readinessProbe }}{{- /* default.deployment.readinessProbe */}}
-              {{- with .command }}{{- /* default.deployment.readinessProbe.command */}}
+            {{- with .readinessProbe }}{{/* default.deployment.readinessProbe */}}
+              {{- with .command }}{{/* default.deployment.readinessProbe.command */}}
         - name: DEFAULT_READINESS_PROBE_COMMAND
           value: {{ . | quote }}
               {{- end }}

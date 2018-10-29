@@ -140,12 +140,12 @@ type ReconcileVarnishService struct {
 // Reconcile reads that state of the cluster for a VarnishService object and makes changes based on the state read
 // and what is in the VarnishService.Spec
 // Automatically generate RBAC rules to allow the Controller to read and write Deployments
-// +kubebuilder:rbac:groups=icm.ibm.com,resources=varnishservices,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=icm.ibm.com,resources=varnishservices/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create
-// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups="",resources=services;serviceaccounts,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles;rolebindings;clusterroles;clusterrolebindings,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=icm.ibm.com,resources=varnishservices,verbs=list;watch;create;update;delete
+// +kubebuilder:rbac:groups=icm.ibm.com,resources=varnishservices/status,verbs=update
+// +kubebuilder:rbac:groups="",resources=configmaps,verbs=list;watch;create
+// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=list;watch;create;update;delete
+// +kubebuilder:rbac:groups="",resources=services;serviceaccounts,verbs=list;watch;create;update;delete
+// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles;rolebindings;clusterroles;clusterrolebindings,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups="",resources=endpoints,verbs=list;watch
 func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the VarnishService instance
@@ -168,8 +168,7 @@ func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcil
 	instance.ObjectMeta.DeepCopyInto(&instanceStatus.ObjectMeta)
 	instance.Status.DeepCopyInto(&instanceStatus.Status)
 
-	configmapSelector, err := r.reconcileConfigMap(instance)
-	if err != nil {
+	if err := r.reconcileConfigMap(instance); err != nil {
 		return reconcile.Result{}, err
 	}
 	serviceAccountName, err := r.reconcileServiceAccount(instance)
@@ -198,7 +197,7 @@ func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcil
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-	varnishSelector, err := r.reconcileDeployment(instance, instanceStatus, serviceAccountName, applicationPort, endpointSelector, configmapSelector)
+	varnishSelector, err := r.reconcileDeployment(instance, instanceStatus, serviceAccountName, applicationPort, endpointSelector)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -207,7 +206,7 @@ func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcil
 	}
 
 	if !compare.EqualVarnishServiceStatus(&instance.Status, &instanceStatus.Status) {
-		logr.Debugw("Updating VarnishService Status", "diff", compare.DiffVarnishServiceStatus(&instance.Status, &instanceStatus.Status))
+		logr.Infoc("Updating VarnishService Status", "diff", compare.DiffVarnishServiceStatus(&instance.Status, &instanceStatus.Status))
 		if err = r.Status().Update(context.TODO(), instanceStatus); err != nil {
 			return reconcile.Result{}, logger.RErrorw(err, "could not update VarnishService Status", "name", instance.Name, "namespace", instance.Namespace)
 		}

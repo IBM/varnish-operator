@@ -17,9 +17,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *icmapiv1alpha1.VarnishService, serviceAccountName string, applicationPort *v1.ServicePort, endpointSelector, configMapSelector map[string]string) (map[string]string, error) {
+func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *icmapiv1alpha1.VarnishService, serviceAccountName string, applicationPort *v1.ServicePort, endpointSelector map[string]string) (map[string]string, error) {
 	componentName := "varnishes"
 	podSelector := generateLabels(instance, componentName)
+	gvk := instance.GroupVersionKind()
 	desired := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      instance.Name + "-varnish-deployment",
@@ -50,18 +51,22 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 							},
 							Env: []v1.EnvVar{
 								{Name: "ENDPOINT_SELECTOR_STRING", Value: labels.SelectorFromSet(endpointSelector).String()},
-								{Name: "CONFIGMAP_SELECTOR_STRING", Value: labels.SelectorFromSet(configMapSelector).String()},
+								{Name: "CONFIGMAP_NAME", Value: instance.Spec.VCLConfigMap.Name},
 								{Name: "BACKENDS_FILE", Value: instance.Spec.VCLConfigMap.BackendsFile},
 								{Name: "BACKENDS_TMPL_FILE", Value: instance.Spec.VCLConfigMap.BackendsTmplFile},
 								{Name: "DEFAULT_FILE", Value: instance.Spec.VCLConfigMap.DefaultFile},
-								{Name: "VCL_FILE_CONFIGMAP_NAME", Value: instance.Spec.VCLConfigMap.Name},
 								{Name: "NAMESPACE", Value: instance.Namespace},
+								{Name: "POD_NAME", ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{FieldPath: "metadata.name"}}},
+								{Name: "VARNISH_SERVICE_NAME", Value: instance.Name},
+								{Name: "VARNISH_SERVICE_UID", Value: string(instance.UID)},
+								{Name: "VARNISH_SERVICE_GROUP", Value: gvk.Group},
+								{Name: "VARNISH_SERVICE_VERSION", Value: gvk.Version},
+								{Name: "VARNISH_SERVICE_KIND", Value: gvk.Kind},
 								{Name: "TARGET_PORT", Value: applicationPort.TargetPort.String()},
+								{Name: "LOG_FORMAT", Value: config.GlobalConf.LogFormat},
+								{Name: "LOG_LEVEL", Value: config.GlobalConf.LogLevel.String()},
 								{Name: "VARNISH_PORT", Value: strconv.FormatInt(int64(config.GlobalConf.VarnishPort), 10)},
 								{Name: "VARNISH_MEMORY", Value: instance.Spec.Deployment.VarnishMemory},
-								{Name: "NAME", Value: instance.Name},
-								{Name: "UID", Value: string(instance.UID)},
-								{Name: "API_VERSION", Value: instance.APIVersion},
 							},
 							Resources:       *instance.Spec.Deployment.VarnishResources,
 							LivenessProbe:   instance.Spec.Deployment.LivenessProbe,

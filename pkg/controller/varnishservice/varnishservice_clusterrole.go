@@ -23,7 +23,7 @@ func (r *ReconcileVarnishService) reconcileClusterRole(instance *icmapiv1alpha1.
 			{
 				APIGroups: []string{""},
 				Resources: []string{"nodes"},
-				Verbs:     []string{"get"},
+				Verbs:     []string{"list", "watch"},
 			},
 		},
 	}

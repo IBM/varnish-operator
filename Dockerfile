@@ -9,11 +9,11 @@ WORKDIR /go/src/icm-varnish-k8s-operator
 
 # Copy in the go src
 COPY Gopkg.toml Gopkg.lock ./
+# Populate the vendor folder
+RUN dep ensure -v --vendor-only
+
 COPY cmd/       cmd/
 COPY pkg/       pkg/
-
-# Populate the vendor folder
-RUN dep ensure -v
 
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager icm-varnish-k8s-operator/cmd/manager

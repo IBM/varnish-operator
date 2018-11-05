@@ -429,3 +429,30 @@ However, note that there are 2 things that still affect the manager files: a Kus
 One possible workflow, given these facts, is to first generate the CRD and RBAC yaml files through the build process, run Kustomize on them, and move the output unedited directly into a helm charts directory. Also, permanently move the Manager file to that directory. The Manager file can have any helm templating needed, which should include the correct version, a name prefix, and namespace which should all be parsed from the `kustomization.yaml` file directly at build time, to make up for the loss of Kustomize. In this way, the helm chart will have templating as part of the manager, which crucially allows input into how the controllers act at installation time, as opposed to just at compile time.
 
 **NOTE**: Make sure all resources are broken up into individual files (i.e. not all in the same file separated by `--`), since [Helm has an issue otherwise](https://github.com/helm/helm/issues/3785)).
+
+### GenerateName usage
+
+Kubernetes requires that only one object of a given kind can have a given name. If it's hard to ensure name uniqueness, it is possible to ask Kubernetes to generate unique names.
+
+To do so, instead of specifying the name of the object explicitly, you set the `generateName` field for your resource:
+
+```go
+serviceAccount := &v1.ServiceAccount{
+    ObjectMeta: metav1.ObjectMeta{
+        GenerateName: "service-account-prefix-",
+        Namespace:    instance.Namespace,
+    }
+}
+```
+
+Kubernetes will use that value as a prefix for the new name. Suffix will be a unique string. 
+
+There is a length limit on names, including prefix for generated names, so it may be possible that you will need to truncate the prefix value before assigning it to `GenerateName`. The docs describe the rules for limits as follows:
+
+>By convention, the names of Kubernetes resources should be up to maximum length of 253 characters and consist of lower case alphanumeric characters, -, and ., but certain resources have more specific restrictions.
+
+Some limits are described in more details for specific resources (e.g. Labels and Selectors) but most of them are not so be prepared to find them out only after hitting them.
+
+Also, if the concatenation of `GenerateName` value and unique suffix exceeds the limitation, Kubernetes will truncate the prefix to fit in the limit. 
+
+Downside of using `GenerateName` is that in the code you need to save the generated name somewhere if you later need to refer to that object. 

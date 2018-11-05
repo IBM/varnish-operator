@@ -10,6 +10,11 @@ spec:
   validation:
     openAPIV3Schema:
       properties:
+        metadata:
+          properties:
+            name:
+              type: string
+              maxLength: 40
         spec:
           properties:
             deployment:

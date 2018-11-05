@@ -66,9 +66,6 @@ helm-upgrade: helm-prepare
 # Build the docker image
 # docker-build: test
 docker-build: fake-test
-	docker build ${ROOT_DIR} -t ${IMG} -f Dockerfile.local
-
-docker-build-dep: fake-test
 	docker build ${ROOT_DIR} -t ${IMG} -f Dockerfile
 
 # Tag and push the docker image

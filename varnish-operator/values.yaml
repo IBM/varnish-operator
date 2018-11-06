@@ -63,7 +63,7 @@ varnish:
 # the default section describes all of the defaults available for the VarnishService CustomResource.
 default:
   vclConfigMap:
-    # the name given to the configMap that contains the contents of the vcl. If the configMap does not exist, a basic round-robin-based VCL file will be created and used
+    # the name given to the configMap that contains the contents of the vcl. If the configMap does not exist, the operator will create a configMap with example VCL for a basic round-robin-based varnish
     # MUST use only lowercase letters, numbers, "-", or "."
     name: vcl-file
     # the name of the file to be maintained through the Kubernetes API (by watching the endpoints in a deployment)

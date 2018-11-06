@@ -1,0 +1,7 @@
+./CONTRIBUTORS.md
+./Jenkinsfile
+./Makefile
+./README.md
+./bin
+./varnish-operator
+./vendor

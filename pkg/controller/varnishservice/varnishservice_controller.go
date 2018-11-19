@@ -6,6 +6,7 @@ import (
 	icmv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/compare"
 	"icm-varnish-k8s-operator/pkg/logger"
+	"icm-varnish-k8s-operator/pkg/webhooks"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -40,6 +41,8 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
+	webhooks.InstallWebhooks(mgr)
+
 	// Create a new controller
 	c, err := controller.New("varnishservice-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
@@ -147,6 +150,9 @@ type ReconcileVarnishService struct {
 // +kubebuilder:rbac:groups="",resources=services;serviceaccounts,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles;rolebindings;clusterroles;clusterrolebindings,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups="",resources=endpoints,verbs=list;watch
+// +kubebuilder:rbac:groups="",resources=events,verbs=create
+// +kubebuilder:rbac:groups="",resources=nodes,verbs=watch;list
+// +kubebuilder:rbac:groups="admissionregistration.k8s.io",resources="validatingwebhookconfigurations;mutatingwebhookconfigurations",verbs=create;list;update;watch;delete
 func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the VarnishService instance
 	instance := &icmv1alpha1.VarnishService{}
@@ -162,6 +168,16 @@ func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcil
 	}
 
 	r.scheme.Default(instance)
+
+	// For some reason, sometimes Kubernetes returns the object without apiVersion and kind
+	// Since the code below relies on that values we set them manually if they are empty
+	if instance.APIVersion == "" {
+		instance.APIVersion = "icm.ibm.com/v1alpha1"
+	}
+	if instance.Kind == "" {
+		instance.Kind = "VarnishService"
+	}
+
 	logr := logger.With("name", instance.Name, "namespace", instance.Namespace)
 
 	instanceStatus := &icmv1alpha1.VarnishService{}

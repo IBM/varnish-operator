@@ -17,12 +17,6 @@ func SetDefaults_VarnishService(in *VarnishService) {
 	if in.Spec.VCLConfigMap.Name == "" {
 		in.Spec.VCLConfigMap.Name = fmt.Sprintf("%s-%s", in.Name, globalConf.DefaultVCLConfigMapName)
 	}
-	if in.APIVersion == "" {
-		in.APIVersion = "icm.ibm.com/v1alpha1"
-	}
-	if in.Kind == "" {
-		in.Kind = "VarnishService"
-	}
 }
 
 func SetDefaults_VarnishVCLConfigMap(in *VarnishVCLConfigMap) {

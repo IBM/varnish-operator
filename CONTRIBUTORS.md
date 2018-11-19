@@ -456,3 +456,256 @@ Some limits are described in more details for specific resources (e.g. Labels an
 Also, if the concatenation of `GenerateName` value and unique suffix exceeds the limitation, Kubernetes will truncate the prefix to fit in the limit. 
 
 Downside of using `GenerateName` is that in the code you need to save the generated name somewhere if you later need to refer to that object. 
+
+### Validation and Mutating Webhooks
+
+ Validation webhooks is a way to add custom and flexible validation rules that are executed at `kubectl apply -f file.yml` stage.
+ 
+ Webhooks are consist of several parts:
+ 
+ 1. A pod that runs the webhook server on a particular port
+ 2. A service that makes the webhook server accessible by Kubernetes
+ 3. A validating/mutating webhook configuration object that tells Kubernetes which kind (Pod, Service, custom object) should be validated/mutated and 
+ where the webhook is located (namespace, service name, URL endpoint).
+ 
+ Kubebuilder allows you to create such webhooks more easily with libraries provided.
+ It will run the server, create the service and the webhook configuration.
+ The only thing that you need to know ahead is the labels by which kubebuilder will select the pods and create the service.
+ In our case we need to know the labels of our operator as the webhooks server will live there.
+ 
+  
+ To create a validating webhook you need to:
+ 
+1. Create a type that implements the handler for validation logic:
+
+    In the code below you can find methods for injecting useful objects. 
+         The injecting happens in kubebuilder libraries if the type implements the interface for that.
+         The injected **decoder** is used to extract the object being validated.
+         The **client** can be used to query objects from Kubernetes API and use them to make validation decisions.
+
+     ```go
+     import (
+        "context"
+        "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
+        "icm-varnish-k8s-operator/pkg/config"
+        "icm-varnish-k8s-operator/pkg/logger"
+        "net/http"
+    
+        admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1beta1"
+        "sigs.k8s.io/controller-runtime/pkg/client"
+        "sigs.k8s.io/controller-runtime/pkg/manager"
+        "sigs.k8s.io/controller-runtime/pkg/runtime/inject"
+        "sigs.k8s.io/controller-runtime/pkg/webhook"
+        "sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+        "sigs.k8s.io/controller-runtime/pkg/webhook/admission/builder"
+        atypes "sigs.k8s.io/controller-runtime/pkg/webhook/admission/types"
+     )
+    
+     
+     // ValidationWebhook implements validating webhook handler
+     type ValidationWebhook struct {
+        client  client.Client
+        decoder atypes.Decoder
+     }
+     
+     // podValidator implements inject.Client.
+     // A client will be automatically injected by Kubebuilder internals.
+     var _ inject.Client = &ValidationWebhook{}
+     
+     // InjectClient injects the client.
+     func (v *ValidationWebhook) InjectClient(c client.Client) error {
+        v.client = c
+        return nil
+     }
+     
+     // podValidator implements inject.Decoder.
+     // A decoder will be automatically injected by Kubebuilder internals.
+     var _ inject.Decoder = &ValidationWebhook{}
+     
+     // InjectDecoder injects the decoder.
+     func (v *ValidationWebhook) InjectDecoder(d atypes.Decoder) error {
+        v.decoder = d
+        return nil
+     }
+     
+     func (v *ValidationWebhook) Handle(ctx context.Context, req atypes.Request) atypes.Response {
+        myType := &v1alpha1.YourType{}
+        logger.Debugw("Validating webhook called.")
+    
+        err := v.decoder.Decode(req, myType)
+        if err != nil {
+            return admission.ErrorResponse(http.StatusBadRequest, err)
+        }
+    
+   	    // Validation example:
+	  	// Limit the allowed number of replicas that can be created
+        if myType.Spec.Replicas > 10 {
+            return admission.ValidationResponse(false, "Can't create more than 10 replicas")
+        }
+    
+        return admission.ValidationResponse(true, "") //valid request
+     }
+     ``` 
+     
+2. Build the webhook
+
+    ```go
+    validatingWebhook, err := builder.NewWebhookBuilder().
+            Name("validating-webhook.my-service.com"). //should be in domain name format with 3 sections
+            Validating().
+            Operations(admissionregistrationv1beta1.Create, admissionregistrationv1beta1.Update).
+            WithManager(mgr). //to let manager know about our webhook
+            ForType(&v1alpha1.YourType{}). //listen to our service. Could be also v1.Pod, v1.Service, etc.
+            Handlers(&ValidationWebhook{}). // register the webhook handler created above
+            //change to Fail for debugging. With Ignore you won't see errors if something goes wrong with the webhook server.
+            //not related to returning `ErrorResponse` in the handler. In that case the validation will still fail.
+            //it won't fail in cases when pods are not running, services pointed to wrong pods, service is not created yet, etc.
+            FailurePolicy(admissionregistrationv1beta1.Ignore). 
+            Build()
+    
+    if err != nil {
+        logger.RErrorw(err, "Can't create validating webhook")
+        return
+    }
+    ```
+
+    If the `.FailurePolicy()` is not called it uses the default value, which is `Ignore`. In that case, if the validation webhook is not working (e.g. pod is not running), it will just skip the validation step.
+    The `kubectl apply -f` command will not fail and kubernetes will apply the config in the file even if it has invalid (for you application but not for Kubernetes) values.
+    To change this behavior, set failure policy to `Fail`: `.FailurePolicy(admissionregistrationv1beta1.Fail)`.
+    
+    The name of the webhook should be in domain name format with 3 sections separated by dots (e.g. `validation.k8s.io`).
+
+3. Create an HTTP server that will handle the validation requests from Kubernetes 
+
+    ```go
+    srv, err := webhook.NewServer("validating-webhook-server", mgr, webhook.ServerOptions{
+        Port:    9244,
+        CertDir: "/tmp/webhook/certs", //generated certs will be placed here
+        BootstrapOptions: &webhook.BootstrapOptions{
+            ValidatingWebhookConfigName: "validating-webhook-config",
+            Service: &webhook.Service{
+                Namespace: "my-service-ns", //namespace where the pods with webhook server are located
+                Name:      "validating-webhook-service", //name of the service that will be created to expose the pods with webhook server
+                // Selectors should select the pods that runs this webhook server.
+                Selectors: map[string]string{
+                    "admission-controller": "my-service-validating-webhook",
+                },
+            },
+        },
+    })
+    
+    if err != nil {
+        logger.RErrorw(err, "Can't create validating webhook server")
+        return
+    }
+    ```
+
+4. Register the created webhook (in step 2) in our server
+
+    ```go
+    err = srv.Register(validatingWebhook)
+    if err != nil {
+        logger.RErrorw(err, "Can't register validating webhook in the admission server")
+        return
+    }
+    
+    logger.Infow("Admission controller is successfully registered")
+    ```
+    
+    The code above can be placed wherever the manager object is available. 
+    For example, in the controller package in `add` function that initialize the controller.
+    Assuming the code above is in a separate function:
+
+    ```go
+    // example path: /repo-path/pkg/controller/myservice/myservice_controller.go
+    
+    // add adds a new Controller to mgr with r as the reconcile.Reconciler
+    func add(mgr manager.Manager, r reconcile.Reconciler) error {
+        installValidatingWebhook(mgr)
+    ```
+
+
+After the pod is running in kubernetes, you can observe the objects the code created:
+
+1. Service:
+ 
+    ```bash
+        $ kubectl describe service -n my-service-ns validating-webhook-service 
+        Name:              validating-webhook-service
+        Namespace:         my-service-ns
+        Labels:            <none>
+        Annotations:       <none>
+        Selector:          admission-controller=my-service-validating-webhook
+        Type:              ClusterIP
+        IP:                10.99.232.59
+        Port:              <unset>  443/TCP
+        TargetPort:        9244/TCP
+        Endpoints:         <none>
+        Session Affinity:  None
+        Events:            <none>
+
+    ```
+  
+    
+2. Validating webhook config
+
+    ```bash
+       $ kubectl describe validatingwebhookconfigurations.admissionregistration.k8s.io validating-webhook-config
+       Name:         validating-webhook-config
+       Namespace:    
+       Labels:       <none>
+       Annotations:  <none>
+       API Version:  admissionregistration.k8s.io/v1beta1
+       Kind:         ValidatingWebhookConfiguration
+           ...
+       Webhooks:
+         Client Config:
+           Ca Bundle:  LS0tLS...tLS0K
+           Service:
+             Name:        validating-webhook-service
+             Namespace:   my-service-system
+             Path:        /validate-myservice
+         Failure Policy:  Ignore
+         Name:            validating-webhook.my-service.com
+         Namespace Selector:
+         Rules:
+           API Groups:
+             icm.ibm.com
+           API Versions:
+             v1alpha1
+           Operations:
+             CREATE
+             UPDATE
+           Resources:
+             varnishservices
+         Side Effects:  Unknown
+       Events:          <none>
+
+    ```
+
+After the pod is running, the webhook server still could be in not configured state. So expect a delay between pod start and having validation webhooks working.
+
+Finally you can try to apply an invalid configuration and it should fail:
+
+```bash
+$ kubectl apply -f - <<EOF
+apiVersion: mycompany/v1alpha1
+kind: MyService
+metadata:
+  name: myexampleservice
+  namespace: myservice-ns
+spec:
+  replicas: 15 #makes the validation fail
+EOF
+Error from server (Can't create more than 10 replicas.): error when creating "tmp.yaml": admission webhook "validating-webhook.my-service.com" denied the request: Can't create more than 10 replicas.
+```
+
+Mutating webhooks are created in very a similar way using the same steps with some differences.
+Example of creating a mutating webhook can be found [here](https://book.kubebuilder.io/beyond_basics/sample_webhook.html).
+
+Pros:
+ * Kubebuilder will create the service and webhooks configuration for you
+ 
+Cons:
+ * You have to have a pod running in Kubernetes to test it all. So you have to deploy the operator and can't test webhooks simply running `make run` locally.
+ * If you delete the operator, the service and webhooks configuration won't be deleted

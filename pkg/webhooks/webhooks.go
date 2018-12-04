@@ -22,14 +22,14 @@ func InstallWebhooks(mgr manager.Manager) {
 		FailurePolicy(admissionregistrationv1beta1.Ignore). //change to Fail for debugging
 		Build()
 
-	err = validatingWebhook.Validate()
 	if err != nil {
-		logger.RErrorw(err, "Invalid validating webhook")
+		logger.RErrorw(err, "Can't create validating webhook")
 		return
 	}
 
+	err = validatingWebhook.Validate()
 	if err != nil {
-		logger.RErrorw(err, "Can't create validating webhook")
+		logger.RErrorw(err, "Invalid validating webhook")
 		return
 	}
 

@@ -3,7 +3,7 @@ kind: CustomResourceDefinition
 metadata:
   creationTimestamp: null
   labels:
-    controller-tools.k8s.io: "1.0"
+    controller-tools.k8s.io: '1.0'
   name: varnishservices.icm.ibm.com
 spec:
   group: icm.ibm.com
@@ -55,7 +55,7 @@ spec:
                 varnishRestartPolicy:
                   type: string
                 vclFileConfigMapName:
-                  pattern: '[a-z0-9\-.]+'
+                  pattern: '[a-z0-9\\-.]+'
                   type: string
               required:
               - imagePullSecretName
@@ -111,7 +111,7 @@ spec:
   version: v1alpha1
 status:
   acceptedNames:
-    kind: ""
-    plural: ""
+    kind: ''
+    plural: ''
   conditions: []
   storedVersions: []

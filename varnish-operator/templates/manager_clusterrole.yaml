@@ -2,7 +2,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   creationTimestamp: null
-  name: varnish-service-manager-role
+  name: varnish-operator
 rules:
 - apiGroups:
   - icm.ibm.com
@@ -21,7 +21,7 @@ rules:
   verbs:
   - update
 - apiGroups:
-  - ""
+  - ''
   resources:
   - configmaps
   verbs:
@@ -39,7 +39,7 @@ rules:
   - update
   - delete
 - apiGroups:
-  - ""
+  - ''
   resources:
   - services
   - serviceaccounts
@@ -63,14 +63,27 @@ rules:
   - update
   - delete
 - apiGroups:
-  - ""
+  - ''
   resources:
   - endpoints
   verbs:
   - list
   - watch
 - apiGroups:
-  - "admissionregistration.k8s.io"
+  - ''
+  resources:
+  - events
+  verbs:
+  - create
+- apiGroups:
+  - ''
+  resources:
+  - nodes
+  verbs:
+  - watch
+  - list
+- apiGroups:
+  - admissionregistration.k8s.io
   resources:
   - validatingwebhookconfigurations
   - mutatingwebhookconfigurations
@@ -80,17 +93,3 @@ rules:
   - update
   - watch
   - delete
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - create
-- apiGroups:
-  - ""
-  resources:
-  - nodes
-  verbs:
-  - watch
-  - list
-

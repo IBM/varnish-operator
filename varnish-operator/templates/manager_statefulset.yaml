@@ -4,7 +4,7 @@ metadata:
   labels:
     control-plane: controller-manager
     controller-tools.k8s.io: "1.0"
-  name: {{ printf "%scontroller-manager" .Values.namePrefix | quote }}
+  name: varnish-operator
   namespace: {{ .Values.namespace | quote }}
 spec:
   selector:
@@ -30,6 +30,8 @@ spec:
             {{- end }}
           {{- end }}
         env:
+        - name: NAMESPACE
+          value: {{ .Values.namespace | quote }}
           {{- with .varnishImage }}{{/* operator.varnishImage */}}
             {{- with .host }}{{/* operator.varnishImage.host */}}
         - name: VARNISH_IMAGE_HOST

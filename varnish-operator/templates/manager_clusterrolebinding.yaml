@@ -2,11 +2,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   creationTimestamp: null
-  name: varnish-service-manager-rolebinding
+  name: varnish-operator
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: varnish-service-manager-role
+  name: varnish-operator
 subjects:
 - kind: ServiceAccount
   name: default

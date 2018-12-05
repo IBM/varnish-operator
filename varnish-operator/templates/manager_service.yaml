@@ -4,7 +4,7 @@ metadata:
   labels:
     control-plane: controller-manager
     controller-tools.k8s.io: "1.0"
-  name: {{ printf "%scontroller-manager-service" .Values.namePrefix | quote }}
+  name: varnish-operator
   namespace: {{ .Values.namespace | quote }}
 spec:
   ports:

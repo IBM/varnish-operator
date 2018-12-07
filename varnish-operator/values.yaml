@@ -38,11 +38,11 @@ operator:
     namespace: icm-varnish
     name: varnish-controller
     # You might specify a tag version to ensure that you control the lifecycle of what version of varnish is deployed
-    tag: 0.7.3
+    tag: 0.7.4
     # pullPolicy is passed directly to the varnish deployment, that controls how the varnish image will be pulled for new containers
     pullPolicy: Always
-  # specifies the pod count of the Manager. Right now, the only valid value is 1
-  replicas: 1
+  # Specifies the pod count of the Manager. Default value is 2 replicas for HA
+  replicas: 2
   # it is unlikely you will need to change the resources values of the operator
   resources:
     limits:
@@ -50,7 +50,7 @@ operator:
       memory: 30Mi
     requests:
       cpu: 100m
-      memory: 20Mi
+      memory: 30Mi
 
 varnish:
   # there should not be much reason to change any of these port values

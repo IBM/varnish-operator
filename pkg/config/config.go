@@ -43,7 +43,9 @@ type Config struct {
 	DefaultReadinessProbeCommand   []string         `env:"DEFAULT_READINESS_PROBE_COMMAND" envDefault:"/usr/bin/varnishadm,ping"`
 	LogLevel                       zapcore.Level    `env:"LOG_LEVEL" envDefault:"info"`
 	LogFormat                      string           `env:"LOG_FORMAT" envDefault:"json"`
-	Namespace                      string           `env:"NAMESPACE" envDefault:"varnish-service-operator"`
+	Namespace                      string           `env:"NAMESPACE" envDefault:"varnish-service-system"`
+	LeaderElection                 bool             `env:"LEADER_ELECTION" envDefault:"true"`
+	LeaderElectionID               string           `env:"LEADER_ELECTION_ID" envDefault:"varnish-service-lock"`
 	VarnishImageFullPath           string
 	VarnishCommonLabels            map[string]string
 	DefaultVarnishResources        v1.ResourceRequirements

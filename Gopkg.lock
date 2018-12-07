@@ -822,7 +822,7 @@
   version = "v1.11.3"
 
 [[projects]]
-  digest = "1:4c3be496e0e0977b54e265fea184b57e9928fed12a1a14687c04b5d42e044abc"
+  digest = "1:ca3f51201a90f3a23bf35938ee910d2fb3095ece453cf56c8b723e935c194ebd"
   name = "sigs.k8s.io/controller-runtime"
   packages = [
     "pkg/cache",
@@ -861,11 +861,11 @@
     "pkg/webhook/types",
   ]
   pruneopts = "T"
-  revision = "53fc44b56078cd095b11bd44cfa0288ee4cf718f"
-  version = "v0.1.4"
+  revision = "5fd1e9e9fac5261e9ad9d47c375afc014fc31d21"
+  version = "v0.1.7"
 
 [[projects]]
-  digest = "1:6dfe024674229af3c6e3791718837798eeada8ea41628e61e31f0774ffea41b3"
+  digest = "1:92290e452e328ffe6bd62f969e51d3aadd57a30a68b5fcf31ccdeda62068bb5d"
   name = "sigs.k8s.io/controller-tools"
   packages = [
     "cmd/controller-gen",
@@ -877,8 +877,8 @@
     "pkg/util",
   ]
   pruneopts = "T"
-  revision = "bfd3eefb7f22ed714b2acd38730c36992ee6af70"
-  version = "v0.1.5"
+  revision = "38b2f3f497ed6b8ea5d2844ecf00c28ac4b5c2c4"
+  version = "v0.1.6"
 
 [[projects]]
   branch = "master"
@@ -932,6 +932,7 @@
     "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil",
     "sigs.k8s.io/controller-runtime/pkg/envtest",
     "sigs.k8s.io/controller-runtime/pkg/handler",
+    "sigs.k8s.io/controller-runtime/pkg/leaderelection",
     "sigs.k8s.io/controller-runtime/pkg/manager",
     "sigs.k8s.io/controller-runtime/pkg/reconcile",
     "sigs.k8s.io/controller-runtime/pkg/runtime/inject",

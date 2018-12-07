@@ -25,9 +25,11 @@ rules:
   resources:
   - configmaps
   verbs:
+  - get
   - list
   - watch
   - create
+  - update
 - apiGroups:
   - apps
   resources:

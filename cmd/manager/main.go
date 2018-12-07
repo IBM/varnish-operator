@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"icm-varnish-k8s-operator/pkg/apis"
+	vscfg "icm-varnish-k8s-operator/pkg/config"
 	"icm-varnish-k8s-operator/pkg/controller"
 	"icm-varnish-k8s-operator/pkg/logger"
 
@@ -21,7 +22,12 @@ func main() {
 	}
 
 	// Create a new Cmd to provide shared dependencies and start components
-	mgr, err := manager.New(cfg, manager.Options{})
+	mgr, err := manager.New(cfg, manager.Options{
+		LeaderElection:          vscfg.GlobalConf.LeaderElection,
+		LeaderElectionID:        vscfg.GlobalConf.LeaderElectionID,
+		LeaderElectionNamespace: vscfg.GlobalConf.Namespace,
+	})
+
 	if err != nil {
 		log.Fatal(err)
 	}

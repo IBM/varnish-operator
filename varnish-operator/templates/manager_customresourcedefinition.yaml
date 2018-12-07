@@ -26,6 +26,10 @@ spec:
         kind:
           type: string
         metadata:
+          properties:
+            name:
+              maxLength: 40
+              type: string
           type: object
         spec:
           properties:

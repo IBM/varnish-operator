@@ -145,7 +145,7 @@ type ReconcileVarnishService struct {
 // Automatically generate RBAC rules to allow the Controller to read and write Deployments
 // +kubebuilder:rbac:groups=icm.ibm.com,resources=varnishservices,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups=icm.ibm.com,resources=varnishservices/status,verbs=update
-// +kubebuilder:rbac:groups="",resources=configmaps,verbs=list;watch;create
+// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups="",resources=services;serviceaccounts,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles;rolebindings;clusterroles;clusterrolebindings,verbs=list;watch;create;update;delete

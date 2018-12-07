@@ -16,14 +16,15 @@ This operator assumes that the `/status` and `/scale` subresources area enabled 
 
 ## Installation
 
-The VarnishService Operator is packaged as a [Helm Chart](https://helm.sh/), hosted on [Artifactory](na.artifactory.swg-devops.com). To get access to this Artifactory, you must be a user on the Weather Channel Bluemix account 1638245.
+The VarnishService Operator is packaged as a [Helm Chart](https://helm.sh/), hosted on [Artifactory](https://na.artifactory.swg-devops.com). To get access to this Artifactory, you must be a user on the Weather Channel Bluemix account 1638245.
 
 ### Getting Helm Access
 
-After you are a user on the correct Bluemix account, you must generate an API key within [Artifactory](na.artifactory.swg-devops.com) for Helm to use. You can generate an API key on your profile page, found in the upper-right of the home page. Using that generated API Key, you can log in to Helm using [these instructions](https://www.jfrog.com/confluence/display/RTF/Helm+Chart+Repositories), where the username is your email and the password is your API key. Specifically, that will look like:
+After you are a user on the correct Bluemix account, you must generate an API key within [Artifactory](https://na.artifactory.swg-devops.com) for Helm to use. You can generate an API key on your profile page, found in the upper-right of the home page. Using that generated API Key, you can log in to Helm using [these instructions](https://www.jfrog.com/confluence/display/RTF/Helm+Chart+Repositories), where the username is your email and the password is your API key. Specifically, that will look like:
 
 ```sh
-helm repo add wcp-icm-helm-virtual https://na.artifactory.swg-devops.com/artifactory/wcp-icm-helm-virtual --username=<your-email> --password=<api-key>
+helm repo add wcp-icm-helm-virtual https://na.artifactory.swg-devops.com/artifactory/wcp-icm-helm-virtual --username=<your-email> --password=<encrypted-password>
+helm repo update
 ```
 
 ### Getting Container Registry Access
@@ -31,7 +32,7 @@ helm repo add wcp-icm-helm-virtual https://na.artifactory.swg-devops.com/artifac
 As part of the helm install, you will also need access to the Container Registry in order to pull the Docker images associated with the Helm charts. This can be done using the IBMCloud CLI:
 
 ```sh
-ic cr token-add --non-expiring --description 'for Varnish operator'
+ibmcloud cr token-add --non-expiring --description 'for Varnish operator'
 ```
 
 And from the output, save the `Token` field.
@@ -41,12 +42,12 @@ And from the output, save the `Token` field.
 Once you have generated your docker registry key, you must either use an existing or create a new namespace. Add a secret with the docker registry token to that namespace:
 
 ```sh
-kubectl create secret docker-registry <name> --docker-server=registry.ng.bluemix.net --docker-username=token --docker-password=<token> --docker-email=<any-email>
+kubectl create secret docker-registry <name> --namespace <namespace> --docker-server=registry.ng.bluemix.net --docker-username=token --docker-password=<token> --docker-email=<any-email>
 ```
 
 Note that
 
-* `<name>` can be any name
+* `<name>` can be any name, e.g. `docker-reg-secret`
 * `docker-username` MUST be `token`
 * `docker-email` can be any email. For example, `a@b.c`
 
@@ -66,6 +67,7 @@ helm upgrade --install <name-of-release> wcp-icm-helm-virtual/varnish-operator -
 
 Note that
 
+* `<name-of-release>` can be any name and has the same meaning as `<name>` for `helm install --name <name>` 
 * `<namespace-with-registry-token>` must match `namespace` in the `values.yaml` file.
 
 ## Usage

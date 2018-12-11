@@ -1,8 +1,9 @@
 # Image URL to use in all building/pushing image targets
 ROOT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
-VERSION ?= $(shell cat ${ROOT_DIR}version.txt)-dev
+VERSION ?= $(shell cat ${ROOT_DIR}version.txt)
 VARNISH_VERSION ?= $(shell cat ${ROOT_DIR}icm-varnish-version.txt)-dev
-IMG ?= varnish-controller:${VERSION}
+PUBLISH_IMG ?= varnish-controller:${VERSION}
+IMG ?= ${PUBLISH_IMG}-dev
 NAMESPACE := $(shell sed -n -e 's/^namespace: //p' ${ROOT_DIR}config/default/kustomization.yaml)
 NAME_PREFIX := $(shell sed -n -e 's/^namePrefix: //p' ${ROOT_DIR}config/default/kustomization.yaml)
 
@@ -74,5 +75,10 @@ docker-tag-push:
 		echo "must set REPO_PATH variable, eg \"make docker-tag-push REPO_PATH=registry.ng.bluemix.net/icm-varnish\"";\
 		exit 1;\
 	fi
+ifeq ($(PUBLISH),)
 	docker tag ${IMG} ${REPO_PATH}/${IMG}
 	docker push ${REPO_PATH}/${IMG}
+else
+	docker tag ${IMG} ${REPO_PATH}/${PUBLISH_IMG}
+	docker push ${REPO_PATH}/${PUBLISH_IMG}
+endif

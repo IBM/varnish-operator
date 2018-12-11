@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 
 	"icm-varnish-k8s-operator/pkg/apis"
@@ -13,6 +14,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 )
+
+func init() {
+	flag.Parse()
+}
 
 func main() {
 	// Get a config to talk to the apiserver

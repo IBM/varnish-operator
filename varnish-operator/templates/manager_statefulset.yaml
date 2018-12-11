@@ -29,9 +29,11 @@ spec:
         imagePullPolicy: {{ . | title | quote }}
             {{- end }}
           {{- end }}
+        {{- end }}
         env:
         - name: NAMESPACE
           value: {{ .Values.namespace | quote }}
+        {{- with .Values.operator }}{{/* operator */}}
           {{- with .varnishImage }}{{/* operator.varnishImage */}}
             {{- with .host }}{{/* operator.varnishImage.host */}}
         - name: VARNISH_IMAGE_HOST

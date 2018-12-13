@@ -77,6 +77,15 @@ rules:
   - events
   verbs:
   - create
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - list
+  - get
+  - watch
 - apiGroups:
   - ""
   resources:

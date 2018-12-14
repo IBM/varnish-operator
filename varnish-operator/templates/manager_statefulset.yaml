@@ -30,8 +30,6 @@ spec:
             {{- end }}
           {{- end }}
         env:
-        - name: NAMESPACE
-          value: {{ .Values.namespace | quote }}
           {{- with .varnishImage }}{{/* operator.varnishImage */}}
             {{- with .host }}{{/* operator.varnishImage.host */}}
         - name: VARNISH_IMAGE_HOST

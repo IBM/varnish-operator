@@ -48,7 +48,6 @@ func (v *mutatingWebhook) Handle(ctx context.Context, req atypes.Request) atypes
 	}
 
 	mutated := original.DeepCopy()
-	v.scheme.Default(mutated)
 
 	return admission.PatchResponse(original, mutated)
 }

@@ -43,14 +43,14 @@ func InstallWebhooks(mgr manager.Manager) {
 		FailurePolicy(admissionregistrationv1beta1.Ignore). //change to Fail for debugging
 		Build()
 
-	err = mutatingWebhook.Validate()
 	if err != nil {
-		logger.RErrorw(err, "Invalid mutating webhook")
+		logger.RErrorw(err, "Can't create mutating webhook")
 		return
 	}
 
+	err = mutatingWebhook.Validate()
 	if err != nil {
-		logger.RErrorw(err, "Can't create mutating webhook")
+		logger.RErrorw(err, "Invalid mutating webhook")
 		return
 	}
 
@@ -76,11 +76,19 @@ func InstallWebhooks(mgr manager.Manager) {
 		return
 	}
 
-	err = srv.Register(validatingWebhook, mutatingWebhook)
-	if err != nil {
-		logger.RErrorw(err, "Can't register validating webhook in the admission server")
-		return
-	}
+	_ = srv.Port //make Go not complain about unused variable. Should be removed when enabling webhooks
+	// The webhooks are disabled due to a bug in kubernetes 1.11.
+	// It leaded to errors like this (shortened):
+	// Internal error occurred: jsonpatch replace operation does not apply: doc is missing key: /spec/service/ports/0/targetPort
+	// It was caused by the mutating webhook that was setting default values for the service.
+	// For now the defaults setting is happening in the reconcile loop until we decide to drop Kubernetes 1.11 support.
+	// You can use mutating webhooks for different logic and also safely use the validating webhook functions if you need.
+	// To do so, just uncomment the webhooks registering below and make sure you run the server not in Dryrun mode.
+	//err = srv.Register(validatingWebhook, mutatingWebhook)
+	//if err != nil {
+	//	logger.RErrorw(err, "Can't register validating webhook in the admission server")
+	//	return
+	//}
 
-	logger.Infow("Admission controller is successfully registered")
+	//logger.Infow("Admission controller is successfully registered")
 }

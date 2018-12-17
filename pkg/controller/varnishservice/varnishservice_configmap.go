@@ -71,6 +71,9 @@ func (r *ReconcileVarnishService) reconcileConfigMap(instance *icmapiv1alpha1.Va
 			return logr.RErrorw(err, "could not set controller as the OwnerReference for existing ConfigMap")
 		}
 		// don't trample on any labels created by user
+		if foundCopy.Labels == nil {
+			foundCopy.Labels = make(map[string]string, len(labels))
+		}
 		for l, v := range labels {
 			foundCopy.Labels[l] = v
 		}

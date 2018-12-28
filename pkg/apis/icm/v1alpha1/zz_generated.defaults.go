@@ -21,6 +21,7 @@ func SetObjectDefaults_VarnishService(in *VarnishService) {
 	SetDefaults_VarnishService(in)
 	SetDefaults_VarnishVCLConfigMap(&in.Spec.VCLConfigMap)
 	SetDefaults_VarnishDeployment(&in.Spec.Deployment)
+	SetDefaults_VarnishDeploymentImage(&in.Spec.Deployment.VarnishImage)
 	SetDefaults_ServiceSpec(&in.Spec.Service)
 }
 

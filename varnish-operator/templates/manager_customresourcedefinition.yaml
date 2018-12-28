@@ -37,10 +37,6 @@ spec:
               properties:
                 affinity:
                   type: object
-                imagePullPolicy:
-                  type: string
-                imagePullSecretName:
-                  type: string
                 livenessProbe:
                   type: object
                 readinessProbe:
@@ -52,6 +48,23 @@ spec:
                   items:
                     type: object
                   type: array
+                varnishImage:
+                  properties:
+                    host:
+                      type: string
+                    imagePullPolicy:
+                      type: string
+                    imagePullSecretName:
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                    tag:
+                      type: string
+                  required:
+                  - imagePullSecretName
+                  type: object
                 varnishMemory:
                   type: string
                 varnishResources:
@@ -61,8 +74,8 @@ spec:
                 vclFileConfigMapName:
                   pattern: '[a-z0-9\\-.]+'
                   type: string
-              required:
-              - imagePullSecretName
+              type: object
+            podDisruptionBudget:
               type: object
             service:
               properties:

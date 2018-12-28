@@ -56,7 +56,7 @@ func (r *ReconcileVarnishService) reconcileRoleBinding(instance *icmapiv1alpha1.
 	} else if err != nil {
 		return logr.RErrorw(err, "Could not Get roleBinding")
 	} else if !compare.EqualRoleBinding(found, roleBinding) {
-		logr.Debugw("Updating RoleBinding", "diff", compare.DiffRoleBinding(found, roleBinding))
+		logr.Infoc("Updating RoleBinding", "diff", compare.DiffRoleBinding(found, roleBinding))
 		found.Subjects = roleBinding.Subjects
 		found.RoleRef = roleBinding.RoleRef
 		found.Labels = roleBinding.Labels

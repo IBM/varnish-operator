@@ -42,11 +42,29 @@ func SetDefaults_VarnishDeployment(in *VarnishDeployment) {
 	if in.ReadinessProbe == nil {
 		in.ReadinessProbe = &globalConf.DefaultReadinessProbe
 	}
+	if in.VarnishRestartPolicy == "" {
+		in.VarnishRestartPolicy = globalConf.DefaultVarnishRestartPolicy
+	}
+}
+
+func SetDefaults_VarnishDeploymentImage(in *VarnishDeploymentImage) {
+	if in.Host == "" {
+		in.Host = globalConf.VarnishImageHost
+	}
+	if in.Namespace == "" {
+		in.Namespace = globalConf.VarnishImageName
+	}
+	if in.Name == "" {
+		in.Name = globalConf.VarnishImageName
+	}
+	if in.Tag == "" {
+		in.Tag = globalConf.VarnishImageTag
+	}
 	if in.ImagePullPolicy == nil {
 		in.ImagePullPolicy = &globalConf.VarnishImagePullPolicy
 	}
-	if in.VarnishRestartPolicy == "" {
-		in.VarnishRestartPolicy = globalConf.DefaultVarnishRestartPolicy
+	if in.ImagePullSecretName == "" {
+		in.ImagePullSecretName = globalConf.ImagePullSecret
 	}
 }
 

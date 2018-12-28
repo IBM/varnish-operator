@@ -25,7 +25,7 @@ spec:
         {{- with .Values.operator }}{{/* operator */}}
           {{- with .controllerImage }}{{/* operator.controllerImage */}}
         image: {{ printf "%s/%s/%s:%s" .host .namespace .name .tag | quote }}
-            {{- with .pullPolicy }}{{/* operator.controllerImage.pullPolicy */}}
+            {{- with .imagePullPolicy }}{{/* operator.controllerImage.imagePullPolicy */}}
         imagePullPolicy: {{ . | title | quote }}
             {{- end }}
           {{- end }}
@@ -47,7 +47,7 @@ spec:
         - name: VARNISH_IMAGE_TAG
           value: {{ . | quote }}
             {{- end }}
-            {{- with .pullPolicy }}{{/* operator.varnishImage.pullPolicy */}}
+            {{- with .imagePullPolicy }}{{/* operator.varnishImage.imagePullPolicy */}}
         - name: VARNISH_IMAGE_PULL_POLICY
           value: {{ . | title | quote }}
             {{- end }}

@@ -40,7 +40,7 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 					Containers: []v1.Container{
 						{
 							Name:  "varnish",
-							Image: config.GlobalConf.VarnishImageFullPath,
+							Image: instance.Spec.Deployment.VarnishImage.FullPath(),
 							Ports: []v1.ContainerPort{
 								{
 									ContainerPort: config.GlobalConf.VarnishPort,
@@ -71,14 +71,14 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 							Resources:       *instance.Spec.Deployment.VarnishResources,
 							LivenessProbe:   instance.Spec.Deployment.LivenessProbe,
 							ReadinessProbe:  instance.Spec.Deployment.ReadinessProbe,
-							ImagePullPolicy: config.GlobalConf.VarnishImagePullPolicy,
+							ImagePullPolicy: *instance.Spec.Deployment.VarnishImage.ImagePullPolicy,
 						},
 					},
 					RestartPolicy:      instance.Spec.Deployment.VarnishRestartPolicy,
 					ServiceAccountName: serviceAccountName,
 					ImagePullSecrets: []v1.LocalObjectReference{
 						{
-							Name: instance.Spec.Deployment.ImagePullSecretName,
+							Name: instance.Spec.Deployment.VarnishImage.ImagePullSecretName,
 						},
 					},
 					Affinity:    instance.Spec.Deployment.Affinity,
@@ -115,7 +115,7 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 		desired.Spec.Selector = found.Spec.Selector
 		desired.Spec.Template.Labels = found.Spec.Template.Labels
 		if !compare.EqualDeployment(found, desired) {
-			logr.Debugw("Updating Deployment", "diff", compare.DiffDeployment(found, desired))
+			logr.Infoc("Updating Deployment", "diff", compare.DiffDeployment(found, desired))
 			found.Spec = desired.Spec
 			found.Labels = desired.Labels
 			if err = r.Update(context.TODO(), found); err != nil {

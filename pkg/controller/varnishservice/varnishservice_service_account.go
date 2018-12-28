@@ -21,7 +21,7 @@ func (r *ReconcileVarnishService) reconcileServiceAccount(instance *icmapiv1alph
 			Namespace: instance.Namespace,
 			Labels:    combinedLabels(instance, "serviceaccount"),
 		},
-		ImagePullSecrets: []v1.LocalObjectReference{{Name: instance.Spec.Deployment.ImagePullSecretName}},
+		ImagePullSecrets: []v1.LocalObjectReference{{Name: instance.Spec.Deployment.VarnishImage.ImagePullSecretName}},
 	}
 
 	logr := logger.With("name", serviceAccount.Name, "namespace", serviceAccount.Namespace)
@@ -46,7 +46,7 @@ func (r *ReconcileVarnishService) reconcileServiceAccount(instance *icmapiv1alph
 	} else if err != nil {
 		return "", logr.RErrorw(err, "Could not get Service account")
 	} else if !compare.EqualServiceAccount(found, serviceAccount) {
-		logr.Debugw("Updating Service account", "diff", compare.DiffServiceAccount(found, serviceAccount))
+		logr.Infoc("Updating Service account", "diff", compare.DiffServiceAccount(found, serviceAccount))
 		found.ImagePullSecrets = serviceAccount.ImagePullSecrets
 		found.Labels = serviceAccount.Labels
 		if err = r.Update(context.TODO(), found); err != nil {

@@ -23,8 +23,8 @@ operator:
     name: varnish
     # You might specify a tag version to ensure that you control the lifecycle of what version of varnish is deployed
     tag: 2.0.5
-    # pullPolicy is passed directly to the varnish deployment, that controls how the varnish image will be pulled for new containers
-    pullPolicy: Always
+    # imagePullPolicy is passed directly to the varnish deployment, that controls how the varnish image will be pulled for new containers
+    imagePullPolicy: Always
   controllerImage:
     # Use the name of the imagePullSecret created in the [Getting Access](#getting-access) section above
     imagePullSecretName: docker-reg-secret
@@ -38,9 +38,9 @@ operator:
     namespace: icm-varnish
     name: varnish-controller
     # You might specify a tag version to ensure that you control the lifecycle of what version of varnish is deployed
-    tag: 0.7.8
-    # pullPolicy is passed directly to the varnish deployment, that controls how the varnish image will be pulled for new containers
-    pullPolicy: Always
+    tag: 0.8.0
+    # imagePullPolicy is passed directly to the varnish deployment, that controls how the varnish image will be pulled for new containers
+    imagePullPolicy: Always
   # Specifies the pod count of the Manager. Default value is 2 replicas for HA
   replicas: 2
   # it is unlikely you will need to change the resources values of the operator

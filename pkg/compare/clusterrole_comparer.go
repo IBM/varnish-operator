@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	clusterRoleOpts = []cmp.Option{cmpopts.IgnoreFields(rbacv1beta1.Role{}, sharedIgnoreMetadata...)}
+	clusterRoleOpts = []cmp.Option{cmpopts.IgnoreFields(rbacv1beta1.ClusterRole{}, sharedIgnoreMetadata...)}
 )
 
 func EqualClusterRole(found, desired *rbacv1beta1.ClusterRole) bool {

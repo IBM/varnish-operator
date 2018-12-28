@@ -146,14 +146,15 @@ type ReconcileVarnishService struct {
 // +kubebuilder:rbac:groups=icm.ibm.com,resources=varnishservices,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups=icm.ibm.com,resources=varnishservices/status,verbs=update
 // +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update
-// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups="",resources=services;serviceaccounts,verbs=list;watch;create;update;delete
-// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles;rolebindings;clusterroles;clusterrolebindings,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups="",resources=endpoints,verbs=list;watch
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 // +kubebuilder:rbac:groups="",resources=pods,verbs=list;get;watch
 // +kubebuilder:rbac:groups="",resources=nodes,verbs=watch;list
-// +kubebuilder:rbac:groups="admissionregistration.k8s.io",resources="validatingwebhookconfigurations;mutatingwebhookconfigurations",verbs=create;list;update;watch;delete
+// +kubebuilder:rbac:groups="admissionregistration.k8s.io",resources="validatingwebhookconfigurations;mutatingwebhookconfigurations",verbs=list;watch;create;update;delete
+// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=list;watch;create;update;delete
+// +kubebuilder:rbac:groups=policy,resources=poddisruptionbudgets,verbs=list;watch;create;update;delete
+// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles;rolebindings;clusterroles;clusterrolebindings,verbs=list;watch;create;update;delete
 func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the VarnishService instance
 	instance := &icmv1alpha1.VarnishService{}
@@ -218,6 +219,9 @@ func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcil
 	if err != nil {
 		return reconcile.Result{}, err
 	}
+	if err = r.reconcilePodDisruptionBudget(instance, varnishSelector); err != nil {
+		return reconcile.Result{}, err
+	}
 	if err = r.reconcileCachedService(instance, instanceStatus, applicationPort, varnishSelector); err != nil {
 		return reconcile.Result{}, err
 	}
@@ -239,8 +243,7 @@ func getApplicationPort(instance *icmv1alpha1.VarnishService) (*v1.ServicePort, 
 
 	if len(instance.Spec.Service.Ports) != 1 {
 		err := errors.New("must specify exactly one port in service spec")
-		logr.RErrorw(err, "")
-		return nil, err
+		return nil, logr.RErrorw(err, "")
 	}
 	port := instance.Spec.Service.Ports[0]
 	if port.TargetPort == (intstr.IntOrString{}) {

@@ -1,8 +1,11 @@
 package v1alpha1
 
 import (
+	"fmt"
+
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
+	policyv1beta1 "k8s.io/api/policy/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -32,9 +35,10 @@ type VarnishService struct {
 // VarnishServiceSpec defines the desired state of VarnishService
 // Important: Run "make" to regenerate code after modifying this file
 type VarnishServiceSpec struct {
-	VCLConfigMap VarnishVCLConfigMap `json:"vclConfigMap"`
-	Deployment   VarnishDeployment   `json:"deployment"`
-	Service      v1.ServiceSpec      `json:"service"`
+	VCLConfigMap        VarnishVCLConfigMap                    `json:"vclConfigMap"`
+	Deployment          VarnishDeployment                      `json:"deployment"`
+	PodDisruptionBudget *policyv1beta1.PodDisruptionBudgetSpec `json:"podDisruptionBudget,omitempty"`
+	Service             v1.ServiceSpec                         `json:"service"`
 }
 
 type VarnishVCLConfigMap struct {
@@ -47,15 +51,27 @@ type VarnishVCLConfigMap struct {
 
 type VarnishDeployment struct {
 	Replicas             *int32                   `json:"replicas,omitempty"`
+	VarnishImage         VarnishDeploymentImage   `json:"varnishImage,omitempty"`
 	VarnishMemory        string                   `json:"varnishMemory,omitempty"`
 	VarnishResources     *v1.ResourceRequirements `json:"varnishResources,omitempty"`
 	LivenessProbe        *v1.Probe                `json:"livenessProbe,omitempty"`
 	ReadinessProbe       *v1.Probe                `json:"readinessProbe,omitempty"`
-	ImagePullPolicy      *v1.PullPolicy           `json:"imagePullPolicy,omitempty"`
-	ImagePullSecretName  string                   `json:"imagePullSecretName"`
 	VarnishRestartPolicy v1.RestartPolicy         `json:"varnishRestartPolicy,omitempty"`
 	Affinity             *v1.Affinity             `json:"affinity,omitempty"`
 	Tolerations          []v1.Toleration          `json:"tolerations,omitempty"`
+}
+
+type VarnishDeploymentImage struct {
+	Host                string         `json:"host,omitempty"`
+	Namespace           string         `json:"namespace,omitempty"`
+	Name                string         `json:"name,omitempty"`
+	Tag                 string         `json:"tag,omitempty"`
+	ImagePullPolicy     *v1.PullPolicy `json:"imagePullPolicy,omitempty"`
+	ImagePullSecretName string         `json:"imagePullSecretName"`
+}
+
+func (vdi *VarnishDeploymentImage) FullPath() string {
+	return fmt.Sprintf("%s/%s/%s:%s", vdi.Host, vdi.Namespace, vdi.Name, vdi.Tag)
 }
 
 // TODO: add configmap data

@@ -50,7 +50,7 @@ func (r *ReconcileVarnishService) reconcileClusterRole(instance *icmapiv1alpha1.
 	} else if err != nil {
 		return "", logr.RErrorw(err, "Could not Get ClusterRole")
 	} else if !compare.EqualClusterRole(found, role) {
-		logr.Debugw("Updating ClusterRole", "diff", compare.DiffClusterRole(found, role))
+		logr.Infoc("Updating ClusterRole", "diff", compare.DiffClusterRole(found, role))
 		found.Rules = role.Rules
 		found.Labels = role.Labels
 		if err = r.Update(context.TODO(), found); err != nil {

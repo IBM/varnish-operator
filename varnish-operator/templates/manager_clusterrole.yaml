@@ -31,33 +31,10 @@ rules:
   - create
   - update
 - apiGroups:
-  - apps
-  resources:
-  - deployments
-  verbs:
-  - list
-  - watch
-  - create
-  - update
-  - delete
-- apiGroups:
   - ''
   resources:
   - services
   - serviceaccounts
-  verbs:
-  - list
-  - watch
-  - create
-  - update
-  - delete
-- apiGroups:
-  - rbac.authorization.k8s.io
-  resources:
-  - roles
-  - rolebindings
-  - clusterroles
-  - clusterrolebindings
   verbs:
   - list
   - watch
@@ -99,8 +76,41 @@ rules:
   - validatingwebhookconfigurations
   - mutatingwebhookconfigurations
   verbs:
-  - create
   - list
-  - update
   - watch
+  - create
+  - update
+  - delete
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - list
+  - watch
+  - create
+  - update
+  - delete
+- apiGroups:
+  - policy
+  resources:
+  - poddisruptionbudgets
+  verbs:
+  - list
+  - watch
+  - create
+  - update
+  - delete
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - roles
+  - rolebindings
+  - clusterroles
+  - clusterrolebindings
+  verbs:
+  - list
+  - watch
+  - create
+  - update
   - delete

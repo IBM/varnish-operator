@@ -55,7 +55,7 @@ func (r *ReconcileVarnishService) reconcileClusterRoleBinding(instance *icmapiv1
 	} else if err != nil {
 		return logr.RErrorw(err, "Could not Get ClusterRoleBinding")
 	} else if !compare.EqualClusterRoleBinding(found, clusterRoleBinding) {
-		logr.Debugw("Updating ClusterRoleBinding", "diff", compare.DiffClusterRoleBinding(found, clusterRoleBinding))
+		logr.Infoc("Updating ClusterRoleBinding", "diff", compare.DiffClusterRoleBinding(found, clusterRoleBinding))
 		found.Subjects = clusterRoleBinding.Subjects
 		found.RoleRef = clusterRoleBinding.RoleRef
 		found.Labels = clusterRoleBinding.Labels

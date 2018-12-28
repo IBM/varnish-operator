@@ -61,7 +61,7 @@ func (r *ReconcileVarnishService) reconcileRole(instance *icmapiv1alpha1.Varnish
 	} else if err != nil {
 		return "", logr.RErrorw(err, "Could not Get role")
 	} else if !compare.EqualRole(found, role) {
-		logr.Debugw("Updating Role", "diff", compare.DiffRole(found, role))
+		logr.Infoc("Updating Role", "diff", compare.DiffRole(found, role))
 		found.Rules = role.Rules
 		found.Labels = role.Labels
 		if err = r.Update(context.TODO(), found); err != nil {

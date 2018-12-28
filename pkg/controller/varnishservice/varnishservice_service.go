@@ -121,7 +121,7 @@ func (r *ReconcileVarnishService) reconcileServiceGeneric(instance *icmapiv1alph
 		// ClusterIP is immutable once created, so always enforce the same as existing
 		desired.Spec.ClusterIP = found.Spec.ClusterIP
 		if !compare.EqualService(found, desired) {
-			logr.Debugw("Updating Service", "diff", compare.DiffService(found, desired))
+			logr.Infoc("Updating Service", "diff", compare.DiffService(found, desired))
 			found.Spec = desired.Spec
 			found.Labels = desired.Labels
 			if err = r.Update(context.TODO(), found); err != nil {

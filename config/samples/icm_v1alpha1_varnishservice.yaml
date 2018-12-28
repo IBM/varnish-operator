@@ -26,6 +26,19 @@ spec:
   deployment:
     # The number of varnish instances to run
     replicas: 3
+    varnishImage:
+      # You might modify the host to be the nearest instance of container registry to the cluster
+      host: registry.ng.bluemix.net
+      # If you decide to host the varnish image yourself, you may need to change the image namespace or name
+      # Note, however, that you cannot use any old version of varnish -- the official image has a sidecar process that monitors the kubernetes API
+      namespace: icm-varnish
+      name: varnish
+      # You might specify a tag version to ensure that you control the lifecycle of what version of varnish is deployed
+      tag: 2.0.5-a-dev
+      # imagePullPolicy is passed directly to the varnish deployment, that controls how the varnish image will be pulled for new containers
+      imagePullPolicy: Always
+      # Name of the secret for the docker registry. The secret needs to exist in the namespace before creating this resource
+      imagePullSecretName: docker-reg-secret
     # The amount of memory allocated to Varnish on Varnish's startup, in the form of `varnishd -F -s malloc,${varnishMemory} ...`
     varnishMemory: "1024M"
     # Resources allocated to the Varnish pod through Kubernetes. `requests.memory` should be greater than `varnishMemory` above
@@ -48,8 +61,6 @@ spec:
       exec:
         command: [/usr/bin/varnishadm, ping]
       initialDelaySeconds: 5
-    # Name of the secret for the docker registry. The secret needs to exist in the namespace before creating this resource
-    imagePullSecretName: docker-reg-secret
     # Affinity to apply to the pods in the Varnish deployment. For more on affinity, see https://kubernetes.io/docs/concepts/configuration/assign-pod-node#affinity-and-anti-affinity
     # Also, see the README.md#affinites for suggested configurations
     affinity:
@@ -73,6 +84,15 @@ spec:
     # Tolerations to apply to the pods in the Varnish deployment. For more on tolerations, see https://kubernetes.io/docs/concepts/configuration/taint-and-toleration  
     # Also, see the README.md#tolerations for suggested configurations
     # tolerations:
+  # PodDisruptionBudgets allow you to tell Kubernetes how tolerant you are about pods going down due to administrative events, such node autoscaling or node upgrades.
+  # For example, with "maxUnavailable: 0", any node drain events (possible during node autoscaling and upgrading) are not possible, because the budget does not allow for any pods to become unavailable.
+  # For more information, see https://kubernetes.io/docs/concepts/workloads/pods/disruptions/ for information on what is considered a "disruption"
+  # and https://kubernetes.io/docs/tasks/run-application/configure-pdb/ for more about PodDisruptionBudgets specifically.
+  # NOTE: there should be ONLY ONE field under this spec. "selector" (part of the regular spec) is not needed here since it will automatically select the varnish pods, and "maxUnavailable" and "minAvailable" are mutually exclusive
+  podDisruptionBudget:
+    maxUnavailable: 0
+    # minAvailable: 3
+
   # This is a regular service spec. For details on a service spec, see https://kubernetes.io/docs/concepts/services-networking/service
   # In the same way as you would with a vanilla service, choose a selector that targets a deployment. The resulting VarnishService will act like a regular Service, plus have Varnish caching.
   # WARNING: this service must ONLY expose a single port. Specifying multiple ports will result in an error

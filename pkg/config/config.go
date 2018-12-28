@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"log"
 	"reflect"
 	"regexp"
@@ -46,7 +45,6 @@ type Config struct {
 	Namespace                      string           `env:"NAMESPACE" envDefault:"varnish-service-system"`
 	LeaderElection                 bool             `env:"LEADER_ELECTION" envDefault:"true"`
 	LeaderElectionID               string           `env:"LEADER_ELECTION_ID" envDefault:"varnish-service-lock"`
-	VarnishImageFullPath           string
 	VarnishCommonLabels            map[string]string
 	DefaultVarnishResources        v1.ResourceRequirements
 	DefaultLivenessProbe           *v1.Probe
@@ -124,7 +122,6 @@ func LoadConfig() (*Config, error) {
 	if err := verifyRestartPolicy(c.DefaultVarnishRestartPolicy); err != nil {
 		return &c, errors.WithStack(err)
 	}
-	c.VarnishImageFullPath = c.fullImagePath()
 	c.VarnishCommonLabels = map[string]string{
 		"owner": c.VarnishName,
 	}
@@ -176,11 +173,6 @@ func LoadConfig() (*Config, error) {
 	}
 
 	return &c, nil
-}
-
-// FullImagePath compiles the full path to the image
-func (c *Config) fullImagePath() string {
-	return fmt.Sprintf("%s/%s/%s:%s", c.VarnishImageHost, c.VarnishImageNamespace, c.VarnishImageName, c.VarnishImageTag)
 }
 
 func init() {

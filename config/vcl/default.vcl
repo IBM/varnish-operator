@@ -16,7 +16,7 @@ sub vcl_recv {
   }
 
   // If backends are not configured correctly
-  if (!(var.global_get("backendsConfigured") == "true")) {
+  if (!(var.global_get("backendsFound") == "true")) {
     return(synth(503, "No backends configured"));
   }
 
@@ -42,7 +42,7 @@ sub vcl_recv {
 sub vcl_synth {
        set resp.http.Content-Type = "text/html; charset=utf-8";
 
-       if (!(var.global_get("backendsConfigured") == "true")) { //error message if no backends configured
+       if (!(var.global_get("backendsFound") == "true")) { //error message if no backends configured
           synthetic( {"<!DOCTYPE html>
            <html>
              <head>

@@ -17,13 +17,6 @@ spec:
               maxLength: 40
         spec:
           properties:
-            deployment:
-              properties:
-                # must be lowercase, number, "-", or "."
-                vclFileConfigMapName:
-                  type: string
-                  # MUST be ' (single-quote) AND \\ (backslash escaped)
-                  pattern: '[a-z0-9\\-.]+'
             service:
               properties:
                 # limit number of ports to 1

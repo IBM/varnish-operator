@@ -67,7 +67,7 @@ helm upgrade --install <name-of-release> wcp-icm-helm-virtual/varnish-operator -
 
 Note that
 
-* `<name-of-release>` can be any name and has the same meaning as `<name>` for `helm install --name <name>` 
+* `<name-of-release>` can be any name and has the same meaning as `<name>` for `helm install --name <name>`
 * `<namespace-with-registry-token>` must match `namespace` in the `values.yaml` file.
 
 ## Usage
@@ -96,11 +96,11 @@ If a ConfigMap of name `spec.vclConfigMap.name` does not exist on VarnishService
 
 * [`<backendsFile>.tmpl`](/config/vcl/backends.vcl.tmpl): collect all backends into a single director and round-robin between them
 * [`<defaultFile>`](/config/vcl/default.vcl):
-    * respond to `GET /heartbeat` checks with a 200
-    * respond to `GET /liveness` checks with a 200 or 503, depending on healthy backends
-    * respond to all other requests normally, caching all non-404 responses
-    * hash request based on url
-    * add `X-Varnish-Cache` header to response with "HIT" or "MISS" value, based on presence in cache
+  * respond to `GET /heartbeat` checks with a 200
+  * respond to `GET /liveness` checks with a 200 or 503, depending on healthy backends
+  * respond to all other requests normally, caching all non-404 responses
+  * hash request based on url
+  * add `X-Varnish-Cache` header to response with "HIT" or "MISS" value, based on presence in cache
 
 If you would like to use the default `<backendsFile>.tmpl`, but a custom `<defaultFile>`, the easiest way is to create the VarnishService without the ConfigMap, let the operator create the ConfigMap for you, and then modify the contents of the ConfigMap after creation. Alternatively, just copy the content as linked above.
 

@@ -34,7 +34,7 @@ func (r *ReconcileVarnishService) reconcileRole(instance *icmapiv1alpha1.Varnish
 			{
 				APIGroups: []string{""},
 				Resources: []string{"pods"},
-				Verbs:     []string{"list", "get", "watch"},
+				Verbs:     []string{"list", "get", "watch", "update"},
 			},
 		},
 	}

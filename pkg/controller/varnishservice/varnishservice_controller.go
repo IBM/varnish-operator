@@ -6,7 +6,10 @@ import (
 	icmv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/compare"
 	"icm-varnish-k8s-operator/pkg/logger"
+	"icm-varnish-k8s-operator/pkg/pods"
 	"icm-varnish-k8s-operator/pkg/webhooks"
+
+	"k8s.io/apimachinery/pkg/types"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -57,12 +60,32 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes in the below resources:
+	// Pods
 	// ConfigMap
 	// Deployment
 	// Service
 	// Role
 	// RoleBinding
 	// ServiceAccount
+
+	podPredicate, err := pods.NewAnnotationsPredicate(map[string]string{labelVarnishComponent: componentNameVarnishes})
+	if err != nil {
+		return err
+	}
+	err = c.Watch(&source.Kind{Type: &v1.Pod{}}, &handler.EnqueueRequestsFromMapFunc{
+		ToRequests: handler.ToRequestsFunc(
+			func(a handler.MapObject) []reconcile.Request {
+				return []reconcile.Request{
+					{NamespacedName: types.NamespacedName{
+						Name:      a.Meta.GetLabels()[labelVarnishOwner],
+						Namespace: a.Meta.GetNamespace(),
+					}},
+				}
+			}),
+	}, podPredicate)
+	if err != nil {
+		return err
+	}
 
 	err = c.Watch(&source.Kind{Type: &v1.ConfigMap{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
@@ -186,9 +209,6 @@ func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcil
 	instance.ObjectMeta.DeepCopyInto(&instanceStatus.ObjectMeta)
 	instance.Status.DeepCopyInto(&instanceStatus.Status)
 
-	if err := r.reconcileConfigMap(instance); err != nil {
-		return reconcile.Result{}, err
-	}
 	serviceAccountName, err := r.reconcileServiceAccount(instance)
 	if err != nil {
 		return reconcile.Result{}, err
@@ -216,6 +236,10 @@ func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcil
 		return reconcile.Result{}, err
 	}
 	varnishSelector, err := r.reconcileDeployment(instance, instanceStatus, serviceAccountName, applicationPort, endpointSelector)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+	_, err = r.reconcileConfigMap(varnishSelector, instance, instanceStatus)
 	if err != nil {
 		return reconcile.Result{}, err
 	}

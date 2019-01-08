@@ -4,6 +4,12 @@ import (
 	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 )
 
+const (
+	labelVarnishOwner     = "varnish-owner"
+	labelVarnishComponent = "varnish-component"
+	labelVarnishUID       = "varnish-uid"
+)
+
 func combinedLabels(instance *icmapiv1alpha1.VarnishService, componentName string) (m map[string]string) {
 	inherited := inheritLabels(instance)
 	generated := generateLabels(instance, componentName)
@@ -28,8 +34,8 @@ func inheritLabels(instance *icmapiv1alpha1.VarnishService) (m map[string]string
 
 func generateLabels(instance *icmapiv1alpha1.VarnishService, componentName string) map[string]string {
 	return map[string]string{
-		"varnish-owner":     instance.Name,
-		"varnish-component": componentName,
-		"varnish-uid":       string(instance.UID),
+		labelVarnishOwner:     instance.Name,
+		labelVarnishComponent: componentName,
+		labelVarnishUID:       string(instance.UID),
 	}
 }

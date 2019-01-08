@@ -81,6 +81,14 @@ type VarnishServiceStatus struct {
 	// TODO: must have name of deployment too
 	Deployment appsv1.DeploymentStatus     `json:"deployment,omitempty"`
 	Service    VarnishServiceServiceStatus `json:"service,omitempty"`
+	VCL        VCLStatus                   `json:"vcl"`
+}
+
+// VCLStatus describes the VCL versions status
+type VCLStatus struct {
+	Version          *string `json:"version,omitempty"`
+	ConfigMapVersion string  `json:"configMapVersion"`
+	Availability     string  `json:"availability"`
 }
 
 // VarnishServiceSingleServiceStatus describes the status of one service as it exists within a VarnishService

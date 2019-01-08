@@ -111,6 +111,20 @@ spec:
                       type: string
                   type: object
               type: object
+            vcl:
+              properties:
+                availability:
+                  type: string
+                configMapVersion:
+                  type: string
+                version:
+                  type: string
+              required:
+              - configMapVersion
+              - availability
+              type: object
+          required:
+          - vcl
           type: object
   version: v1alpha1
 status:

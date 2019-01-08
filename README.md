@@ -104,6 +104,109 @@ If a ConfigMap of name `spec.vclConfigMap.name` does not exist on VarnishService
 
 If you would like to use the default `<backendsFile>.tmpl`, but a custom `<defaultFile>`, the easiest way is to create the VarnishService without the ConfigMap, let the operator create the ConfigMap for you, and then modify the contents of the ConfigMap after creation. Alternatively, just copy the content as linked above.
 
+### Using user defined VCL Code versions
+
+VCL related status information is available at field `vcl` in status object. 
+
+The current VCl version can be found in the `vcl.configMapVersion` status field. It matches the resource version of the config map that contains the VCL code. 
+
+For user readable versions an annotation `VCLVersion` can be used. It should be set for the config map where the VCL configuration is defined.
+
+```bash
+> kubectl -n varnish-ns get cm varnish-config -o yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  annotations:
+    VCLVersion: v1.0 # <-- set by the user
+  creationTimestamp: "2018-12-21T12:59:07Z"
+  resourceVersion: "292181"
+    ...
+data:
+    ...
+```
+
+After setting the annotation, that version can be seen in the status field `vcl.version` of the varnish service. This field is optional and not present if the version is not set in the config map annotation.
+
+```bash
+> kubectl -n varnish-ns get vs my-varnish -o yaml
+apiVersion: icm.ibm.com/v1alpha1
+kind: VarnishService
+metadata:
+    ...
+status:
+  vcl:
+    version: v1.0 # <-- reflects the `VCLVersion` annotation in the config map
+    configMapVersion: "292181" # <-- reflects the config map resource version
+  deployment:
+    affinity:
+      podAntiAffinity:
+    ...   
+```
+
+After the VCL in the config map has been changed, the status field will be immediately be updated to reflect the latest version. However that does not guarantee that Varnish pods run the latest VCL configuration. It needs time to reload and even could fail to reload if the VCL has syntax error for example.
+ 
+To give users a better observability about currently running VCL versions the status has a field `vcl.availability` which indicates how many pods have the latest version and how many of them are outdated. 
+
+```bash
+> kubectl -n varnish-ns get vs my-varnish -o yaml
+apiVersion: icm.ibm.com/v1alpha1
+kind: VarnishService
+metadata:
+  annotations:
+    ...
+status:
+  vcl:
+    configMapVersion: "292181"
+    version: v1.0
+    availability: 1 latest / 0 outdated # <-- all pods have the latest VCL version
+  deployment:
+    availableReplicas: 1
+    conditions:
+    ...
+```
+
+To check which pods has outdated versions simply check their annotations. The annotation `configMapVersion` on the Varnish pod will indicate the latest version of the config map used. If it's not the same as in the VarnishService status it's likely that there's an issue.
+
+Example of detecting a pod that failed to reload:
+
+```bash
+# get the latest version
+> kubectl get varnishservice -n varnish-ns my-varnish -o=custom-columns=NAME:.metadata.name,CONFIG_MAP_VERSION:.status.vcl.configMapVersion
+NAME        CONFIG_MAP_VERSION
+my-varnish  292181
+# figure out which pods doesn't have that latest version
+> kubectl get pods -n varnish-ns -o=custom-columns=NAME:.metadata.name,CONFIG_MAP_VERSION:.metadata.annotations.configMapVersion
+NAME                                            CONFIG_MAP_VERSION
+my-varnish-varnish-deployment-545f475b58-7xn9k  292181
+my-varnish-varnish-deployment-545f475b58-jc5vg  292181
+my-varnish-varnish-deployment-545f475b58-nqqd2  351231 #outdated VCL
+# check logs for that pod with outdated VCL
+> kubectl logs -n my-varnish my-varnish-varnish-deployment-545f475b58-nqqd2 
+2018-12-21T17:03:07.917Z	INFO	controller/controller.go:124	Rewriting file	{"path": "/etc/varnish/backends.vcl"}
+2018-12-21T17:03:17.904Z	ERROR	controller/controller.go:157	exit status 1
+/go/src/icm-varnish/k-watcher/pkg/controller/controller_varnish.go:50: Message from VCC-compiler:
+Expected one of
+	'acl', 'sub', 'backend', 'probe', 'import', 'vcl',  or 'default'
+Found: 'dsafdf' at
+('/etc/varnish/backends.vcl' Line 4 Pos 2)
+ dsafdf
+-######
+
+Running VCC-compiler failed, exited with 2
+Command failed with error code 106
+VCL compilation failed
+No VCL named v304255 known.
+Command failed with error code 106
+
+/go/src/icm-varnish/k-watcher/vendor/sigs.k8s.io/controller-runtime/pkg/internal/controller/controller.go:207: 
+icm-varnish/k-watcher/pkg/logger.WrappedError
+	/go/src/icm-varnish/k-watcher/pkg/logger/logger.go:49
+ic
+```
+
+As the logs indicate, the issue here is the invalid VCL syntax.
+
 ### Creating a VarnishService Resource
 
 Once the VarnishService resource yaml is ready, simply `kubectl apply -f <varnish-service>.yaml` to create the resource. Once complete, you should see:

@@ -17,14 +17,17 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
+const (
+	componentNameVarnishes = "varnishes"
+)
+
 func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *icmapiv1alpha1.VarnishService, serviceAccountName string, applicationPort *v1.ServicePort, endpointSelector map[string]string) (map[string]string, error) {
-	componentName := "varnishes"
-	podSelector := generateLabels(instance, componentName)
+	podSelector := generateLabels(instance, componentNameVarnishes)
 	gvk := instance.GroupVersionKind()
 	desired := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      instance.Name + "-varnish-deployment",
-			Labels:    combinedLabels(instance, componentName),
+			Labels:    combinedLabels(instance, componentNameVarnishes),
 			Namespace: instance.Namespace,
 		},
 		Spec: appsv1.DeploymentSpec{

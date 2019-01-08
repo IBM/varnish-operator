@@ -22,7 +22,7 @@ operator:
     namespace: icm-varnish
     name: varnish
     # You might specify a tag version to ensure that you control the lifecycle of what version of varnish is deployed
-    tag: 2.1.0
+    tag: 2.1.1
     # imagePullPolicy is passed directly to the varnish deployment, that controls how the varnish image will be pulled for new containers
     imagePullPolicy: Always
   controllerImage:
@@ -38,7 +38,7 @@ operator:
     namespace: icm-varnish
     name: varnish-controller
     # You might specify a tag version to ensure that you control the lifecycle of what version of varnish is deployed
-    tag: 0.8.0
+    tag: 0.8.1
     # imagePullPolicy is passed directly to the varnish deployment, that controls how the varnish image will be pulled for new containers
     imagePullPolicy: Always
   # Specifies the pod count of the Manager. Default value is 2 replicas for HA

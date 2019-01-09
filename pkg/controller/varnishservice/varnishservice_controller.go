@@ -172,7 +172,7 @@ type ReconcileVarnishService struct {
 // +kubebuilder:rbac:groups="",resources=services;serviceaccounts,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups="",resources=endpoints,verbs=list;watch
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
-// +kubebuilder:rbac:groups="",resources=pods,verbs=list;get;watch
+// +kubebuilder:rbac:groups="",resources=pods,verbs=list;get;watch;update
 // +kubebuilder:rbac:groups="",resources=nodes,verbs=watch;list
 // +kubebuilder:rbac:groups="admissionregistration.k8s.io",resources="validatingwebhookconfigurations;mutatingwebhookconfigurations",verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=list;watch;create;update;delete

@@ -34,7 +34,7 @@ spec:
       namespace: icm-varnish
       name: varnish
       # You might specify a tag version to ensure that you control the lifecycle of what version of varnish is deployed
-      tag: 2.0.5-a-dev
+      tag: 2.1.1
       # imagePullPolicy is passed directly to the varnish deployment, that controls how the varnish image will be pulled for new containers
       imagePullPolicy: Always
       # Name of the secret for the docker registry. The secret needs to exist in the namespace before creating this resource

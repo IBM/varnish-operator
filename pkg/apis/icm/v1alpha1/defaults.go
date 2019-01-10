@@ -52,7 +52,7 @@ func SetDefaults_VarnishDeploymentImage(in *VarnishDeploymentImage) {
 		in.Host = globalConf.VarnishImageHost
 	}
 	if in.Namespace == "" {
-		in.Namespace = globalConf.VarnishImageName
+		in.Namespace = globalConf.VarnishImageNamespace
 	}
 	if in.Name == "" {
 		in.Name = globalConf.VarnishImageName

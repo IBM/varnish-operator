@@ -1,0 +1,61 @@
+FROM golang:1.11.1-alpine3.8 AS builder
+
+RUN apk update && apk add curl git
+
+ENV DEP_RELEASE_TAG=v0.5.0 INSTALL_DIRECTORY=/usr/local/bin
+
+RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+
+WORKDIR /go/src/icm-varnish-k8s-operator
+
+COPY Gopkg.toml Gopkg.lock ./
+RUN dep ensure -v --vendor-only
+COPY cmd ./cmd
+COPY pkg ./pkg
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o kwatcher ./cmd/kwatcher/
+
+FROM alpine:3.8 AS varnish-modules
+
+ENV VARNISH_MODULES_VERSION="0.15.0"
+
+# Compile Varnish modules
+RUN \
+  cd /tmp && \
+  apk add --no-cache varnish-dev varnish && \
+  apk add --no-cache autoconf automake libtool make py-docutils python && \
+  wget -O varnish_modules.tar.gz https://download.varnish-software.com/varnish-modules/varnish-modules-${VARNISH_MODULES_VERSION}.tar.gz && \
+  tar -zxf varnish_modules.tar.gz && \
+  cd varnish-modules-${VARNISH_MODULES_VERSION} && ./configure && make && make install
+
+FROM alpine:3.8
+LABEL maintainer="Alex Lytvynenko <oleksandr.lytvynenko@ibm.com>"
+
+ENV PROMETHEUS_VARNISH_EXPORTER_VERSION=1.4.1\
+  VARNISH_MEMORY=2048M\
+  VARNISH_PORT=8080\
+  # This secret is for testing purposes only and should be overrided on runtime via env var
+  VARNISH_SECRET=c5m4HSNJwFz7A1Hygc0xoENSsoEFwTr
+
+RUN apk update && \
+  apk upgrade && \
+  apk add varnish curl supervisor && \
+  curl -L https://github.com/jonnenauha/prometheus_varnish_exporter/releases/download/${PROMETHEUS_VARNISH_EXPORTER_VERSION}/prometheus_varnish_exporter-${PROMETHEUS_VARNISH_EXPORTER_VERSION}.linux-amd64.tar.gz \
+  | tar --strip-components=1 -xz -C /usr/bin && \
+  chmod +x /usr/bin/prometheus_varnish_exporter && \
+  mkdir /lib64 && \
+  ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2 && \
+  apk del curl && \
+  rm -vf /var/cache/apk/*
+
+COPY config/kwatcher/supervisord.conf /etc/supervisor/supervisord.conf
+COPY config/kwatcher/vcl_reload config/kwatcher/vcl_list config/kwatcher/start_varnishd /usr/local/bin/
+COPY config/kwatcher/start_k_watcher config/kwatcher/start_varnish_exporter /usr/local/bin/
+COPY config/vcl/default.vcl config/vcl/backends.vcl /etc/varnish/
+COPY --from=builder /go/src/icm-varnish-k8s-operator/kwatcher /kwatcher
+COPY --from=varnish-modules /usr/lib/varnish/vmods/libvmod_* /usr/lib/varnish/vmods/
+
+RUN chown -R varnish /etc/varnish /etc/supervisor
+
+USER varnish
+
+CMD ["supervisord", "-c", "/etc/supervisor/supervisord.conf"]

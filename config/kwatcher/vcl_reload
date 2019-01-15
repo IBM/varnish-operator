@@ -1,0 +1,15 @@
+#!/bin/sh
+
+if [[ -z $1 ]]
+    then
+    echo "Version is not provided"
+    exit 1
+fi
+
+VERSION=$1
+
+# Load the file into memory
+varnishadm -S "/etc/varnish/secret" -T 127.0.0.1:6082 vcl.load "$VERSION" "/etc/varnish/$DEFAULT_FILE"
+
+# Activate this Varnish config
+varnishadm -S "/etc/varnish/secret" -T 127.0.0.1:6082 vcl.use "$VERSION"

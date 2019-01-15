@@ -1,14 +1,15 @@
 # Image URL to use in all building/pushing image targets
 ROOT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 VERSION ?= $(shell cat ${ROOT_DIR}version.txt)
-VARNISH_VERSION ?= $(shell cat ${ROOT_DIR}icm-varnish-version.txt)-dev
 PUBLISH_IMG ?= varnish-controller:${VERSION}
+VARNISH_PUBLISH_IMG ?= varnish:${VERSION}
+VARNISH_IMG ?= ${VARNISH_PUBLISH_IMG}-dev
 IMG ?= ${PUBLISH_IMG}-dev
 NAMESPACE := $(shell sed -n -e 's/^namespace: //p' ${ROOT_DIR}config/default/kustomization.yaml)
 NAME_PREFIX := $(shell sed -n -e 's/^namePrefix: //p' ${ROOT_DIR}config/default/kustomization.yaml)
 
 # all: test manager
-all: fake-test manager
+all: fake-test manager kwatcher
 
 # test is failing right now because kubebuilder does not know how to test slices
 fake-test: generate fmt vet manifests
@@ -23,7 +24,7 @@ manager: generate fmt vet
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet
-	LOG_FORMAT=console VARNISH_IMAGE_TAG=${VARNISH_VERSION} go run ${ROOT_DIR}cmd/manager/main.go
+	LOG_FORMAT=console VARNISH_IMAGE_TAG=${VERSION} go run ${ROOT_DIR}cmd/manager/main.go
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 install: manifests
@@ -36,10 +37,9 @@ uninstall:
 manifests:
 	go run ${ROOT_DIR}vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go all
 
-# Run goimports and go fmt against code
+# Run goimports against code
 fmt:
 	cd ${ROOT_DIR} && goimports -w ./pkg ./cmd
-	cd ${ROOT_DIR} && go fmt ./pkg/... ./cmd/...
 
 # Run go vet against code
 vet:
@@ -81,4 +81,25 @@ ifeq ($(PUBLISH),)
 else
 	docker tag ${IMG} ${REPO_PATH}/${PUBLISH_IMG}
 	docker push ${REPO_PATH}/${PUBLISH_IMG}
+endif
+
+kwatcher: fmt vet
+	go build -o ${ROOT_DIR}bin/kwatcher ${ROOT_DIR}cmd/kwatcher/
+
+# Build the docker image
+docker-build-varnish: fmt vet
+	docker build ${ROOT_DIR} -t ${VARNISH_IMG} -f Dockerfile.Varnish
+
+docker-tag-push-varnish:
+	@if [ -z "${REPO_PATH}" ]; then\
+	  echo "must set REPO_PATH variable, eg \"make docker-tag-push REPO_PATH=registry.ng.bluemix.net/icm-varnish\"";\
+	  exit 1;\
+	fi;
+
+ifeq ($(PUBLISH),)
+	docker tag ${VARNISH_IMG} ${REPO_PATH}/${VARNISH_IMG}
+	docker push ${REPO_PATH}/${VARNISH_IMG}
+else
+	docker tag ${VARNISH_IMG} ${REPO_PATH}/${VARNISH_PUBLISH_IMG}
+	docker push ${REPO_PATH}/${VARNISH_PUBLISH_IMG}
 endif

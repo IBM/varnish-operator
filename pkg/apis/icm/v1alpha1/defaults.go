@@ -5,7 +5,7 @@ package v1alpha1
 
 import (
 	"fmt"
-	"icm-varnish-k8s-operator/pkg/config"
+	"icm-varnish-k8s-operator/pkg/varnishservice/config"
 
 	"k8s.io/api/core/v1"
 	kv1 "k8s.io/kubernetes/pkg/apis/core/v1"

@@ -5,9 +5,9 @@ import (
 	"log"
 
 	"icm-varnish-k8s-operator/pkg/apis"
-	vscfg "icm-varnish-k8s-operator/pkg/config"
-	"icm-varnish-k8s-operator/pkg/controller"
-	"icm-varnish-k8s-operator/pkg/logger"
+	controller "icm-varnish-k8s-operator/pkg/varnishservice"
+	vscfg "icm-varnish-k8s-operator/pkg/varnishservice/config"
+	"icm-varnish-k8s-operator/pkg/varnishservice/logger"
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"

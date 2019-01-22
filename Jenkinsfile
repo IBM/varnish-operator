@@ -2,13 +2,19 @@
 @Library("icm-jenkins-common@0.36.1")
 import com.ibm.icm.*
 
-region = "us-south"
+// for GitInfo
 bxApiKeyId = "icm_bluemix_1638245"
-releaseBranch = "master"
+region = "us-south"
+
+// for Docker
 dockerRegistry = "registry.ng.bluemix.net"
 dockerRegistryNamespace = "icm-varnish"
-operatorDockerImageName = "varnish-controller"
 varnishDockerImageName = "varnish"
+operatorDockerImageName = "varnish-controller"
+releaseBranch = "master"
+
+// for Helm chart publish
+helmChartPath = "varnish-operator"
 artifactoryHostName = "na.artifactory.swg-devops.com/artifactory"
 artifactoryRepo = "wcp-icm-helm-local"
 artifactoryCredentialId="TAAS-Artifactory-User-Password-Global"
@@ -28,9 +34,9 @@ node("icm_slave") {
 
     if (gitInfo.branch == releaseBranch) {
         stage("Helm Chart Publish") {
-            sh "./hack/create_helm_files.sh ./varnish-operator/templates"
+            sh "./hack/create_helm_files.sh ${helmChartPath}/templates"
             icmWithArtifactoryConfig(artifactoryHostName, artifactoryRepo, artifactoryCredentialId) { config, envNames, namesToValues ->
-                icmHelmChartPackagePublish("varnish-operator", config.createHelmPublish())
+                icmHelmChartPackagePublish(helmChartPath, config.createHelmPublish())
             }
         }
     }

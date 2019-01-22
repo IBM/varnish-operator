@@ -9,7 +9,7 @@ dockerRegistry = "registry.ng.bluemix.net"
 dockerRegistryNamespace = "icm-varnish"
 operatorDockerImageName = "varnish-controller"
 varnishDockerImageName = "varnish"
-artifactoryHostName = "na.artifactory.swg-devops.com"
+artifactoryHostName = "na.artifactory.swg-devops.com/artifactory"
 artifactoryRepo = "wcp-icm-helm-local"
 artifactoryCredentialId="TAAS-Artifactory-User-Password-Global"
 

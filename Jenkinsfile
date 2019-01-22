@@ -27,9 +27,11 @@ node("icm_slave") {
     icmDockerStages(operatorDockerImageInfo)
 
     if (gitInfo.branch == releaseBranch) {
-        sh "./hack/create_helm_files.sh ./varnish-operator/templates"
-        icmWithArtifactoryConfig(artifactoryHostName, artifactoryRepo, artifactoryCredentialId) { config, envNames, namesToValues ->
-            icmHelmChartPackagePublish("varnish-operator", config.createHelmPublish())
+        stage("Helm Chart Publish") {
+            sh "./hack/create_helm_files.sh ./varnish-operator/templates"
+            icmWithArtifactoryConfig(artifactoryHostName, artifactoryRepo, artifactoryCredentialId) { config, envNames, namesToValues ->
+                icmHelmChartPackagePublish("varnish-operator", config.createHelmPublish())
+            }
         }
     }
 }

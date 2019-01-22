@@ -17,7 +17,7 @@ releaseBranch = "master"
 helmChartPath = "varnish-operator"
 artifactoryHostName = "na.artifactory.swg-devops.com/artifactory"
 artifactoryRepo = "wcp-icm-helm-local"
-artifactoryCredentialId="TAAS-Artifactory-User-Password-Global"
+artifactoryCredentialId = "TAAS-Artifactory-User-Password-Global"
 
 node("icm_slave") {
     sh "ln -s /etc/bluemix ~/.bluemix"

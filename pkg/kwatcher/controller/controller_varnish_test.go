@@ -1,16 +1,18 @@
 package controller
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestParseConfigs(t *testing.T) {
 	createStrRef := func(str string) *string { return &str }
 
 	cases := []struct {
-		input    string
-		expected []VCLConfig
+		input       string
+		expected    []VCLConfig
+		expectedErr error
 	}{
 		{
 			input: `
@@ -30,6 +32,7 @@ active      auto/warm          0 v55329
 					Temperature: VCLTemperatureWarm,
 				},
 			},
+			expectedErr: nil,
 		},
 		{
 			input: `
@@ -57,12 +60,17 @@ available  label/warm          0 lable1 -> v55329
 					ReferencedVCL: createStrRef("v55329"),
 				},
 			},
+			expectedErr: nil,
 		},
 	}
 
 	for _, c := range cases {
-		actual := parseVCLConfigsList([]byte(c.input))
-		if !reflect.DeepEqual(actual, c.expected) {
+		actual, err := parseVCLConfigsList([]byte(c.input))
+		if !cmp.Equal(err, c.expectedErr) {
+			t.Logf("Unexpected error values: %#v. Expected: %#v", err, c.expectedErr)
+			t.Fail()
+		}
+		if !cmp.Equal(actual, c.expected) {
 			t.Logf(`
 Input: 
 %s

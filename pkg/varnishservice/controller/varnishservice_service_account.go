@@ -4,7 +4,6 @@ import (
 	"context"
 	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
-	"icm-varnish-k8s-operator/pkg/varnishservice/logger"
 
 	"k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -24,7 +23,7 @@ func (r *ReconcileVarnishService) reconcileServiceAccount(instance *icmapiv1alph
 		ImagePullSecrets: []v1.LocalObjectReference{{Name: instance.Spec.Deployment.VarnishImage.ImagePullSecretName}},
 	}
 
-	logr := logger.With("name", serviceAccount.Name, "namespace", serviceAccount.Namespace)
+	logr := r.logger.With("name", serviceAccount.Name, "namespace", serviceAccount.Namespace)
 
 	// Set controller reference for service object
 	if err := controllerutil.SetControllerReference(instance, serviceAccount, r.scheme); err != nil {
@@ -41,7 +40,7 @@ func (r *ReconcileVarnishService) reconcileServiceAccount(instance *icmapiv1alph
 	if err != nil && kerrors.IsNotFound(err) {
 		logr.Infoc("Creating Service sccount", "new", serviceAccount)
 		if err = r.Create(context.TODO(), serviceAccount); err != nil {
-			return "", logger.RErrorw(err, "Unable to create Service account")
+			return "", logr.RErrorw(err, "Unable to create Service account")
 		}
 	} else if err != nil {
 		return "", logr.RErrorw(err, "Could not get Service account")

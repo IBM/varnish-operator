@@ -5,10 +5,10 @@ import (
 	"fmt"
 	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
-	"icm-varnish-k8s-operator/pkg/varnishservice/logger"
 	"io/ioutil"
 
-	"go.uber.org/zap"
+	"github.com/juju/errors"
+
 	"k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,23 +22,8 @@ const (
 	annotationVCLVersion = "VCLVersion"
 )
 
-var defaultVCL, backendsVCLTmpl string
-
-func init() {
-	readVCL := func(file string) string {
-		bs, err := ioutil.ReadFile("config/vcl/" + file)
-		if err != nil {
-			// TODO: use new logger implementation in other branch for this
-			logger.Panicw("could not find file for ConfigMap", "filename", file, zap.Error(err))
-		}
-		return string(bs)
-	}
-	defaultVCL = readVCL("default.vcl")
-	backendsVCLTmpl = readVCL("backends.vcl.tmpl")
-}
-
 func (r *ReconcileVarnishService) reconcileConfigMap(podsSelector map[string]string, instance, instanceStatus *icmapiv1alpha1.VarnishService) (*v1.ConfigMap, error) {
-	logr := logger.With("name", instance.Spec.VCLConfigMap.Name, "namespace", instance.Namespace)
+	logr := r.logger.With("name", instance.Spec.VCLConfigMap.Name, "namespace", instance.Namespace)
 
 	cm := &v1.ConfigMap{}
 	cmLabels := combinedLabels(instance, "vcl-file-configmap")
@@ -48,6 +33,11 @@ func (r *ReconcileVarnishService) reconcileConfigMap(podsSelector map[string]str
 	// Else fill in missing values -- "OwnerReference" or Labels
 	// Else do nothing
 	if err != nil && kerrors.IsNotFound(err) {
+		defaultVCL, backendsVCLTmpl, err := readRequiredVCLFiles()
+		if err != nil {
+			return nil, logr.RErrorw(err, "could not get default config map files")
+		}
+
 		cm = &v1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      instance.Spec.VCLConfigMap.Name,
@@ -84,9 +74,9 @@ func (r *ReconcileVarnishService) reconcileConfigMap(podsSelector map[string]str
 		}
 
 		if !compare.EqualConfigMap(cm, cmCopy) {
-			logger.Infow("Updating ConfigMap with defaults", "diff", compare.DiffConfigMap(cm, cmCopy))
+			logr.Infow("Updating ConfigMap with defaults", "diff", compare.DiffConfigMap(cm, cmCopy))
 			if err = r.Update(context.TODO(), cm); err != nil {
-				return nil, logger.RErrorw(err, "could not update deployment")
+				return nil, logr.RErrorw(err, "could not update deployment")
 			}
 		} else {
 			logr.Debugw("No updates for ConfigMap")
@@ -105,14 +95,14 @@ func (r *ReconcileVarnishService) reconcileConfigMap(podsSelector map[string]str
 	selector := labels.SelectorFromSet(podsSelector)
 	err = r.List(context.Background(), &client.ListOptions{LabelSelector: selector}, pods)
 	if err != nil {
-		return nil, logger.RErrorw(err, "can't get list of pods")
+		return nil, logr.RErrorw(err, "can't get list of pods")
 	}
 
 	latest, outdated := 0, 0
 	for _, item := range pods.Items {
 		//do not count pods that are not updated with VCL version. Those are pods that are just created and not fully functional
 		if item.Annotations["configMapVersion"] == "" {
-			logger.Debugw(fmt.Sprintf("ConfigMapVersion annotation is not present. Skipping the pod."))
+			logr.Debugw(fmt.Sprintf("ConfigMapVersion annotation is not present. Skipping the pod."))
 		} else if item.Annotations["configMapVersion"] == instance.Status.VCL.ConfigMapVersion {
 			latest++
 		} else {
@@ -122,4 +112,16 @@ func (r *ReconcileVarnishService) reconcileConfigMap(podsSelector map[string]str
 
 	instanceStatus.Status.VCL.Availability = fmt.Sprintf("%d latest / %d outdated", latest, outdated)
 	return cm, nil
+}
+
+func readRequiredVCLFiles() (defaultVCL, backendsVCLTmpl string, err error) {
+	var defaultVCLBytes, backendsVCLTmplBytes []byte
+	if defaultVCLBytes, err = ioutil.ReadFile("config/vcl/default.vcl"); err != nil {
+		return "", "", errors.NewNotFound(err, "could not find file default.vcl for ConfigMap")
+	}
+	if backendsVCLTmplBytes, err = ioutil.ReadFile("config/vcl/backends.vcl.tmpl"); err != nil {
+		return "", "", errors.NewNotFound(err, "could not find file backends.vcl.tmpl for ConfigMap")
+	}
+
+	return string(defaultVCLBytes), string(backendsVCLTmplBytes), nil
 }

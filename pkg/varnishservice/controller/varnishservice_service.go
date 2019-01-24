@@ -4,8 +4,6 @@ import (
 	"context"
 	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
-	"icm-varnish-k8s-operator/pkg/varnishservice/config"
-	"icm-varnish-k8s-operator/pkg/varnishservice/logger"
 	"strconv"
 
 	"k8s.io/api/core/v1"
@@ -59,10 +57,10 @@ func (r *ReconcileVarnishService) reconcileCachedService(instance, instanceStatu
 
 	prometheusAnnotations := map[string]string{
 		"prometheus.io/scrape": "true",
-		"prometheus.io/port":   strconv.FormatInt(int64(config.GlobalConf.VarnishExporterPort), 10),
+		"prometheus.io/port":   strconv.FormatInt(int64(r.config.VarnishExporterPort), 10),
 	}
 
-	if config.GlobalConf.PrometheusAnnotations {
+	if r.config.PrometheusAnnotations {
 		cachedService.Annotations = prometheusAnnotations
 	}
 
@@ -73,15 +71,15 @@ func (r *ReconcileVarnishService) reconcileCachedService(instance, instanceStatu
 			Name:       "http",
 			Port:       applicationPort.Port,
 			Protocol:   v1.ProtocolTCP,
-			TargetPort: intstr.FromInt(config.GlobalConf.VarnishTargetPort),
+			TargetPort: intstr.FromInt(r.config.VarnishTargetPort),
 		},
 		{
 			Name:     "exporter",
-			Port:     config.GlobalConf.VarnishExporterPort,
+			Port:     r.config.VarnishExporterPort,
 			Protocol: v1.ProtocolTCP,
 			TargetPort: intstr.IntOrString{
 				Type:   intstr.Int,
-				IntVal: config.GlobalConf.VarnishExporterTargetPort,
+				IntVal: r.config.VarnishExporterTargetPort,
 			},
 		},
 	}
@@ -95,7 +93,7 @@ func (r *ReconcileVarnishService) reconcileCachedService(instance, instanceStatu
 }
 
 func (r *ReconcileVarnishService) reconcileServiceGeneric(instance *icmapiv1alpha1.VarnishService, instanceServiceStatus *icmapiv1alpha1.VarnishServiceSingleServiceStatus, desired *v1.Service) error {
-	logr := logger.With("name", desired.Name, "namespace", desired.Namespace)
+	logr := r.logger.With("name", desired.Name, "namespace", desired.Namespace)
 
 	// Set controller reference for desired object
 	if err := controllerutil.SetControllerReference(instance, desired, r.scheme); err != nil {

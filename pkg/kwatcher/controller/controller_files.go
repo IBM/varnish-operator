@@ -2,7 +2,6 @@ package controller
 
 import (
 	"bytes"
-	"icm-varnish-k8s-operator/pkg/kwatcher/logger"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -29,7 +28,7 @@ func getCurrentFiles(dir string) (map[string][]byte, error) {
 	return out, nil
 }
 
-func reconcileFiles(dir string, currFiles map[string][]byte, newFiles map[string][]byte) (bool, error) {
+func (r *ReconcileVarnish) reconcileFiles(dir string, currFiles map[string][]byte, newFiles map[string][]byte) (bool, error) {
 	diffFiles := make(map[string]int, len(newFiles))
 	for k := range newFiles {
 		diffFiles[k] = 1
@@ -43,7 +42,7 @@ func reconcileFiles(dir string, currFiles map[string][]byte, newFiles map[string
 		fullpath := filepath.Join(dir, fileName)
 		if status == -1 {
 			filesTouched = true
-			logger.Infow("Removing file", "path", fullpath)
+			r.logger.Infow("Removing file", "path", fullpath)
 			if err := os.Remove(fullpath); err != nil {
 				return filesTouched, errors.Annotatef(err, "could not delete file %s", fullpath)
 			}
@@ -52,13 +51,13 @@ func reconcileFiles(dir string, currFiles map[string][]byte, newFiles map[string
 			if err := ioutil.WriteFile(fullpath, newFiles[fileName], 0644); err != nil {
 				return filesTouched, errors.Annotatef(err, "could not write file %s", fullpath)
 			}
-			logger.Infow("Rewriting file", "path", fullpath)
+			r.logger.Infow("Rewriting file", "path", fullpath)
 		} else if status == 1 {
 			filesTouched = true
 			if err := ioutil.WriteFile(fullpath, newFiles[fileName], 0644); err != nil {
 				return filesTouched, errors.Annotatef(err, "could not write file %s", fullpath)
 			}
-			logger.Infow("Writing new file", "path", fullpath)
+			r.logger.Infow("Writing new file", "path", fullpath)
 		}
 	}
 	return filesTouched, nil

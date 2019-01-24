@@ -4,7 +4,6 @@ import (
 	"context"
 	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
-	"icm-varnish-k8s-operator/pkg/varnishservice/logger"
 
 	policyv1beta1 "k8s.io/api/policy/v1beta1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -15,7 +14,7 @@ import (
 
 func (r *ReconcileVarnishService) reconcilePodDisruptionBudget(instance *icmapiv1alpha1.VarnishService, podSelector map[string]string) error {
 	namespacedName := types.NamespacedName{Namespace: instance.Namespace, Name: instance.Name + "-varnish-pdb"}
-	logr := logger.With("name", namespacedName.Name, "namespace", namespacedName.Namespace)
+	logr := r.logger.With("name", namespacedName.Name, "namespace", namespacedName.Namespace)
 
 	// if not specified, do not create one
 	if instance.Spec.PodDisruptionBudget == nil {

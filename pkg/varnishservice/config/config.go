@@ -1,7 +1,6 @@
 package config
 
 import (
-	"log"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -50,9 +49,6 @@ type Config struct {
 	DefaultLivenessProbe           *v1.Probe
 	DefaultReadinessProbe          v1.Probe
 }
-
-// GlobalConf is config that affects the operator directly, as well as provides default values for varnish instances
-var GlobalConf *Config
 
 func verifyImagePullPolicy(v v1.PullPolicy) error {
 	switch v {
@@ -173,12 +169,4 @@ func LoadConfig() (*Config, error) {
 	}
 
 	return &c, nil
-}
-
-func init() {
-	var err error
-	if GlobalConf, err = LoadConfig(); err != nil {
-		log.Fatal(err)
-	}
-
 }

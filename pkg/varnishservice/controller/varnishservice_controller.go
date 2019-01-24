@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 	icmv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
+	"icm-varnish-k8s-operator/pkg/logger"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
-	"icm-varnish-k8s-operator/pkg/varnishservice/logger"
+	"icm-varnish-k8s-operator/pkg/varnishservice/config"
 	"icm-varnish-k8s-operator/pkg/varnishservice/pods"
 	"icm-varnish-k8s-operator/pkg/varnishservice/webhooks"
 
@@ -29,22 +30,18 @@ import (
 
 // Add creates a new VarnishService Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager) error {
-	return add(mgr, newReconciler(mgr))
-}
-
-// newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileVarnishService{
+func Add(mgr manager.Manager, cfg *config.Config, logr *logger.Logger) error {
+	r := &ReconcileVarnishService{
 		Client: mgr.GetClient(),
+		config: cfg,
+		logger: logr,
 		scheme: mgr.GetScheme(),
 		events: NewEventHandler(mgr.GetRecorder(EventRecorderNameVarnishService)),
 	}
-}
 
-// add adds a new Controller to mgr with r as the reconcile.Reconciler
-func add(mgr manager.Manager, r reconcile.Reconciler) error {
-	webhooks.InstallWebhooks(mgr)
+	if err := webhooks.InstallWebhooks(mgr, cfg, logr); err != nil {
+		return err
+	}
 
 	// Create a new controller
 	c, err := controller.New("varnishservice-controller", mgr, controller.Options{Reconciler: r})
@@ -53,7 +50,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to VarnishService
-	logger.Infow("Starting watch loop for VarnishService objects")
+	logr.Infow("Starting watch loop for VarnishService objects")
 	err = c.Watch(&source.Kind{Type: &icmv1alpha1.VarnishService{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err
@@ -159,6 +156,8 @@ var _ reconcile.Reconciler = &ReconcileVarnishService{}
 // ReconcileVarnishService reconciles a VarnishService object
 type ReconcileVarnishService struct {
 	client.Client
+	config *config.Config
+	logger *logger.Logger
 	scheme *runtime.Scheme
 	events *EventHandler
 }
@@ -179,6 +178,8 @@ type ReconcileVarnishService struct {
 // +kubebuilder:rbac:groups=policy,resources=poddisruptionbudgets,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles;rolebindings;clusterroles;clusterrolebindings,verbs=list;watch;create;update;delete
 func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	logr := r.logger.With("name", request.Name, "namespace", request.Namespace)
+
 	// Fetch the VarnishService instance
 	instance := &icmv1alpha1.VarnishService{}
 	err := r.Get(context.TODO(), request.NamespacedName, instance)
@@ -189,7 +190,7 @@ func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcil
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
-		return reconcile.Result{}, logger.RErrorw(err, "could not read VarnishService")
+		return reconcile.Result{}, logr.RErrorw(err, "could not read VarnishService")
 	}
 
 	r.scheme.Default(instance)
@@ -202,8 +203,6 @@ func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcil
 	if instance.Kind == "" {
 		instance.Kind = "VarnishService"
 	}
-
-	logr := logger.With("name", instance.Name, "namespace", instance.Namespace)
 
 	instanceStatus := &icmv1alpha1.VarnishService{}
 	instance.ObjectMeta.DeepCopyInto(&instanceStatus.ObjectMeta)
@@ -227,7 +226,7 @@ func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcil
 	if err = r.reconcileClusterRoleBinding(instance, clusterRoleName, serviceAccountName); err != nil {
 		return reconcile.Result{}, err
 	}
-	applicationPort, err := getApplicationPort(instance)
+	applicationPort, err := r.getApplicationPort(instance)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -253,7 +252,7 @@ func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcil
 	if !compare.EqualVarnishServiceStatus(&instance.Status, &instanceStatus.Status) {
 		logr.Infoc("Updating VarnishService Status", "diff", compare.DiffVarnishServiceStatus(&instance.Status, &instanceStatus.Status))
 		if err = r.Status().Update(context.TODO(), instanceStatus); err != nil {
-			return reconcile.Result{}, logger.RErrorw(err, "could not update VarnishService Status", "name", instance.Name, "namespace", instance.Namespace)
+			return reconcile.Result{}, logr.RErrorw(err, "could not update VarnishService Status", "name", instance.Name, "namespace", instance.Namespace)
 		}
 	} else {
 		logr.Debugw("No updates for VarnishService status")
@@ -262,8 +261,8 @@ func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcil
 	return reconcile.Result{}, nil
 }
 
-func getApplicationPort(instance *icmv1alpha1.VarnishService) (*v1.ServicePort, error) {
-	logr := logger.With("name", instance.Name, "namespace", instance.Namespace)
+func (r *ReconcileVarnishService) getApplicationPort(instance *icmv1alpha1.VarnishService) (*v1.ServicePort, error) {
+	logr := r.logger.With("name", instance.Name, "namespace", instance.Namespace)
 
 	if len(instance.Spec.Service.Ports) != 1 {
 		err := errors.New("must specify exactly one port in service spec")

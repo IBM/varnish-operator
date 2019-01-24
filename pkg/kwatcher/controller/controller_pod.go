@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"icm-varnish-k8s-operator/pkg/kwatcher/logger"
 	"reflect"
 
 	"github.com/juju/errors"
@@ -51,9 +50,9 @@ func (r *ReconcileVarnish) reconcilePod(filesChanged bool, pod *v1.Pod, cm *v1.C
 			return errors.Annotatef(err, "failed to update pod")
 		}
 
-		logger.Infow("Pod has been successfully updated")
+		r.logger.Infow("Pod has been successfully updated")
 	} else {
-		logger.Debugw("No updates for pod")
+		r.logger.Debugw("No updates for pod")
 	}
 
 	return nil

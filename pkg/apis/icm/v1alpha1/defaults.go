@@ -11,60 +11,67 @@ import (
 	kv1 "k8s.io/kubernetes/pkg/apis/core/v1"
 )
 
-var globalConf = config.GlobalConf
+var operatorCfg *config.Config
+
+// Init is used to inject config to the package. Autogeneration requires to have functions with only one argument
+// of specific type so that makes not possible to have structs where you can inject configs or other dependencies.
+// Needs to be called before package usage.
+func Init(cfg *config.Config) {
+	operatorCfg = cfg
+}
 
 func SetDefaults_VarnishService(in *VarnishService) {
 	if in.Spec.VCLConfigMap.Name == "" {
-		in.Spec.VCLConfigMap.Name = fmt.Sprintf("%s-%s", in.Name, globalConf.DefaultVCLConfigMapName)
+		in.Spec.VCLConfigMap.Name = fmt.Sprintf("%s-%s", in.Name, operatorCfg.DefaultVCLConfigMapName)
 	}
 }
 
 func SetDefaults_VarnishVCLConfigMap(in *VarnishVCLConfigMap) {
 	if in.BackendsFile == "" {
-		in.BackendsFile = globalConf.DefaultBackendsFile
+		in.BackendsFile = operatorCfg.DefaultBackendsFile
 	}
 	if in.DefaultFile == "" {
-		in.DefaultFile = globalConf.DefaultDefaultFile
+		in.DefaultFile = operatorCfg.DefaultDefaultFile
 	}
 	in.BackendsTmplFile = in.BackendsFile + ".tmpl"
 }
 
 func SetDefaults_VarnishDeployment(in *VarnishDeployment) {
 	if in.VarnishMemory == "" {
-		in.VarnishMemory = globalConf.DefaultVarnishMemory
+		in.VarnishMemory = operatorCfg.DefaultVarnishMemory
 	}
 	if in.VarnishResources == nil {
-		in.VarnishResources = &globalConf.DefaultVarnishResources
+		in.VarnishResources = &operatorCfg.DefaultVarnishResources
 	}
 	if in.LivenessProbe == nil {
-		in.LivenessProbe = globalConf.DefaultLivenessProbe
+		in.LivenessProbe = operatorCfg.DefaultLivenessProbe
 	}
 	if in.ReadinessProbe == nil {
-		in.ReadinessProbe = &globalConf.DefaultReadinessProbe
+		in.ReadinessProbe = &operatorCfg.DefaultReadinessProbe
 	}
 	if in.VarnishRestartPolicy == "" {
-		in.VarnishRestartPolicy = globalConf.DefaultVarnishRestartPolicy
+		in.VarnishRestartPolicy = operatorCfg.DefaultVarnishRestartPolicy
 	}
 }
 
 func SetDefaults_VarnishDeploymentImage(in *VarnishDeploymentImage) {
 	if in.Host == "" {
-		in.Host = globalConf.VarnishImageHost
+		in.Host = operatorCfg.VarnishImageHost
 	}
 	if in.Namespace == "" {
-		in.Namespace = globalConf.VarnishImageNamespace
+		in.Namespace = operatorCfg.VarnishImageNamespace
 	}
 	if in.Name == "" {
-		in.Name = globalConf.VarnishImageName
+		in.Name = operatorCfg.VarnishImageName
 	}
 	if in.Tag == "" {
-		in.Tag = globalConf.VarnishImageTag
+		in.Tag = operatorCfg.VarnishImageTag
 	}
 	if in.ImagePullPolicy == nil {
-		in.ImagePullPolicy = &globalConf.VarnishImagePullPolicy
+		in.ImagePullPolicy = &operatorCfg.VarnishImagePullPolicy
 	}
 	if in.ImagePullSecretName == "" {
-		in.ImagePullSecretName = globalConf.ImagePullSecret
+		in.ImagePullSecretName = operatorCfg.ImagePullSecret
 	}
 }
 

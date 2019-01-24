@@ -2,11 +2,14 @@ package controller
 
 import (
 	"context"
+	"icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/kwatcher/config"
 	"icm-varnish-k8s-operator/pkg/kwatcher/configmaps"
 	"icm-varnish-k8s-operator/pkg/kwatcher/endpoints"
 	"icm-varnish-k8s-operator/pkg/kwatcher/events"
-	"icm-varnish-k8s-operator/pkg/kwatcher/logger"
+	"icm-varnish-k8s-operator/pkg/logger"
+
+	"go.uber.org/zap"
 
 	"github.com/juju/errors"
 	"k8s.io/api/core/v1"
@@ -22,21 +25,15 @@ import (
 
 // Add creates a new VarnishService Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager) error {
-	return add(mgr, newReconciler(mgr))
-}
-
-// newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileVarnish{
+func Add(mgr manager.Manager, cfg *config.Config, logr *logger.Logger) error {
+	r := &ReconcileVarnish{
+		config:       cfg,
+		logger:       logr,
 		Client:       mgr.GetClient(),
 		scheme:       mgr.GetScheme(),
-		eventHandler: events.NewEventHandler(mgr.GetRecorder(events.EventRecorderName)),
+		eventHandler: events.NewEventHandler(mgr.GetRecorder(events.EventRecorderName), cfg.PodName),
 	}
-}
 
-// add adds a new Controller to mgr with r as the reconcile.Reconciler
-func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Create a new controller
 	c, err := controller.New("varnishservice-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
@@ -48,17 +45,17 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 			func(a handler.MapObject) []reconcile.Request {
 				return []reconcile.Request{
 					{NamespacedName: types.NamespacedName{
-						Namespace: config.GlobalConf.Namespace,
-						Name:      config.GlobalConf.PodName,
+						Namespace: cfg.Namespace,
+						Name:      cfg.PodName,
 					}},
 				}
 			}),
-	}, configmaps.Predicate(config.GlobalConf.ConfigMapName))
+	}, configmaps.Predicate(cfg.ConfigMapName))
 	if err != nil {
 		return errors.Annotate(err, "could not watch configMap")
 	}
 
-	epPredicate, err := endpoints.Predicate(config.GlobalConf.EndpointSelectorString)
+	epPredicate, err := endpoints.Predicate(cfg.EndpointSelectorString)
 	if err != nil {
 		return errors.Annotate(err, "could not create endpoints predicate")
 	}
@@ -67,8 +64,8 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 			func(a handler.MapObject) []reconcile.Request {
 				return []reconcile.Request{
 					{NamespacedName: types.NamespacedName{
-						Namespace: config.GlobalConf.Namespace,
-						Name:      config.GlobalConf.PodName,
+						Namespace: cfg.Namespace,
+						Name:      cfg.PodName,
 					}},
 				}
 			}),
@@ -84,6 +81,8 @@ var _ reconcile.Reconciler = &ReconcileVarnish{}
 
 type ReconcileVarnish struct {
 	client.Client
+	config       *config.Config
+	logger       *logger.Logger
 	scheme       *runtime.Scheme
 	eventHandler *events.EventHandler
 }
@@ -91,19 +90,26 @@ type ReconcileVarnish struct {
 func (r *ReconcileVarnish) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	res, err := r.reconcileWithLogging(request)
 	if err != nil {
-		logger.WrappedError(err)
+		r.logger.Error(zap.Error(err))
+		return reconcile.Result{}, err
 	}
-	return res, err
+	return res, nil
 }
 
 func (r *ReconcileVarnish) reconcileWithLogging(request reconcile.Request) (reconcile.Result, error) {
-	pod := &v1.Pod{}
-	err := r.Get(context.Background(), types.NamespacedName{Namespace: request.Namespace, Name: config.GlobalConf.PodName}, pod)
+	vs := &v1alpha1.VarnishService{}
+	err := r.Get(context.Background(), types.NamespacedName{Namespace: request.Namespace, Name: r.config.VarnishServiceName}, vs)
 	if err != nil {
 		return reconcile.Result{}, errors.Trace(err)
 	}
 
-	cm, err := r.getConfigMap(config.GlobalConf.Namespace, config.GlobalConf.ConfigMapName)
+	pod := &v1.Pod{}
+	err = r.Get(context.Background(), types.NamespacedName{Namespace: request.Namespace, Name: r.config.PodName}, pod)
+	if err != nil {
+		return reconcile.Result{}, errors.Trace(err)
+	}
+
+	cm, err := r.getConfigMap(r.config.Namespace, r.config.ConfigMapName)
 	if err != nil {
 		return reconcile.Result{}, errors.Trace(err)
 	}
@@ -113,35 +119,35 @@ func (r *ReconcileVarnish) reconcileWithLogging(request reconcile.Request) (reco
 		newFiles[k] = []byte(v)
 	}
 
-	if err = verifyFilesExist(newFiles, config.GlobalConf.DefaultFile, config.GlobalConf.BackendsTmplFile); err != nil {
+	if err = verifyFilesExist(newFiles, r.config.DefaultFile, r.config.BackendsTmplFile); err != nil {
 		return reconcile.Result{}, errors.Trace(err)
 	}
 
-	bks, err := r.getBackends(config.GlobalConf.Namespace, config.GlobalConf.EndpointSelector, config.GlobalConf.TargetPort)
+	bks, err := r.getBackends(r.config.Namespace, r.config.EndpointSelector, r.config.TargetPort)
 	if err != nil {
 		return reconcile.Result{}, errors.Trace(err)
 	}
 
-	backendsFile, err := resolveTemplate(newFiles[config.GlobalConf.BackendsTmplFile], config.GlobalConf.TargetPort, bks)
+	backendsFile, err := resolveTemplate(newFiles[r.config.BackendsTmplFile], r.config.TargetPort, bks)
 	if err != nil {
 		return reconcile.Result{}, errors.Trace(err)
 	}
 
-	delete(newFiles, config.GlobalConf.BackendsTmplFile)
-	newFiles[config.GlobalConf.BackendsFile] = backendsFile
+	delete(newFiles, r.config.BackendsTmplFile)
+	newFiles[r.config.BackendsFile] = backendsFile
 
-	currFiles, err := getCurrentFiles(config.GlobalConf.VCLDir)
+	currFiles, err := getCurrentFiles(r.config.VCLDir)
 	if err != nil {
 		return reconcile.Result{}, errors.Trace(err)
 	}
 
-	filesTouched, err := reconcileFiles(config.GlobalConf.VCLDir, currFiles, newFiles)
+	filesTouched, err := r.reconcileFiles(r.config.VCLDir, currFiles, newFiles)
 	if err != nil {
 		return reconcile.Result{}, errors.Trace(err)
 	}
 
 	if filesTouched {
-		if err = r.reconcileVarnish(pod, cm); err != nil {
+		if err = r.reconcileVarnish(vs, pod, cm); err != nil {
 			return reconcile.Result{}, errors.Trace(err)
 		}
 	}

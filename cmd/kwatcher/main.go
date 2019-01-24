@@ -5,10 +5,13 @@ package main
 
 import (
 	"flag"
+	"icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/kwatcher/config"
 	"icm-varnish-k8s-operator/pkg/kwatcher/controller"
-	"icm-varnish-k8s-operator/pkg/kwatcher/logger"
+	"icm-varnish-k8s-operator/pkg/logger"
 	"log"
+
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"go.uber.org/zap"
 
@@ -22,24 +25,37 @@ func init() {
 }
 
 func main() {
-	cfg, err := kconfig.GetConfig()
+	clientConfig, err := kconfig.GetConfig()
 	if err != nil {
-		logger.Panicw("could not load config", zap.Error(err))
+		log.Fatalf("could not load rest client config. Error: %s", err)
 	}
 
-	mgr, err := manager.New(cfg, manager.Options{Namespace: config.GlobalConf.Namespace})
+	kwatcherConfig, err := config.Load()
 	if err != nil {
-		logger.Panicw("could not initialize manager", zap.Error(err))
+		log.Fatalf("could not load kwatcher config: %v", err)
 	}
 
-	logger.Infow("Registering Components")
+	logr := logger.NewLogger(kwatcherConfig.LogFormat, kwatcherConfig.LogLevel)
+
+	mgr, err := manager.New(clientConfig, manager.Options{Namespace: kwatcherConfig.Namespace})
+	if err != nil {
+		logr.Fatalf("could not initialize manager", zap.Error(err))
+	}
+
+	// Setup Scheme for all resources
+	AddToSchemes := runtime.SchemeBuilder{v1alpha1.SchemeBuilder.AddToScheme}
+	if err := AddToSchemes.AddToScheme(mgr.GetScheme()); err != nil {
+		logr.Fatal(err)
+	}
+
+	logr.Infow("Registering Components")
 
 	// Setup controller
-	if err = controller.Add(mgr); err != nil {
-		logger.Panicw("could not setup controller", zap.Error(err))
+	if err = controller.Add(mgr, kwatcherConfig, logr); err != nil {
+		logr.Fatalw("could not setup controller", zap.Error(err))
 	}
 
-	logger.Infow("Starting Varnish Watcher")
+	logr.Infow("Starting Varnish Watcher")
 
-	log.Fatal(mgr.Start(signals.SetupSignalHandler()))
+	logr.Fatal(mgr.Start(signals.SetupSignalHandler()))
 }

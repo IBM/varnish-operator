@@ -4,7 +4,6 @@ import (
 	"context"
 	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
-	"icm-varnish-k8s-operator/pkg/varnishservice/logger"
 
 	rbacv1beta1 "k8s.io/api/rbac/v1beta1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -34,7 +33,7 @@ func (r *ReconcileVarnishService) reconcileRoleBinding(instance *icmapiv1alpha1.
 		},
 	}
 
-	logr := logger.With("name", roleBinding.Name, "namespace", roleBinding.Namespace)
+	logr := r.logger.With("name", roleBinding.Name, "namespace", roleBinding.Namespace)
 
 	// Set controller reference for roleBinding
 	if err := controllerutil.SetControllerReference(instance, roleBinding, r.scheme); err != nil {

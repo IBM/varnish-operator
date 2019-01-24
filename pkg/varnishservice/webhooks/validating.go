@@ -3,7 +3,7 @@ package webhooks
 import (
 	"context"
 	"icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
-	"icm-varnish-k8s-operator/pkg/varnishservice/logger"
+	"icm-varnish-k8s-operator/pkg/logger"
 	"net/http"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -13,6 +13,7 @@ import (
 )
 
 type validationWebhook struct {
+	logger  *logger.Logger
 	client  client.Client
 	decoder atypes.Decoder
 }
@@ -21,8 +22,8 @@ type validationWebhook struct {
 // A client will be automatically injected by Kubebuilder internals.
 var _ inject.Client = &validationWebhook{}
 
-func (v *validationWebhook) InjectClient(c client.Client) error {
-	v.client = c
+func (w *validationWebhook) InjectClient(c client.Client) error {
+	w.client = c
 	return nil
 }
 
@@ -30,17 +31,17 @@ func (v *validationWebhook) InjectClient(c client.Client) error {
 // A decoder will be automatically injected by Kubebuilder internals.
 var _ inject.Decoder = &validationWebhook{}
 
-func (v *validationWebhook) InjectDecoder(d atypes.Decoder) error {
-	v.decoder = d
+func (w *validationWebhook) InjectDecoder(d atypes.Decoder) error {
+	w.decoder = d
 	return nil
 }
 
 // Handle implements admission webhook interface
-func (v *validationWebhook) Handle(ctx context.Context, req atypes.Request) atypes.Response {
+func (w *validationWebhook) Handle(ctx context.Context, req atypes.Request) atypes.Response {
 	vs := &v1alpha1.VarnishService{}
-	logger.Debugw("Validating webhook called.")
+	w.logger.Debugw("Validating webhook called.")
 
-	err := v.decoder.Decode(req, vs)
+	err := w.decoder.Decode(req, vs)
 	if err != nil {
 		return admission.ErrorResponse(http.StatusBadRequest, err)
 	}

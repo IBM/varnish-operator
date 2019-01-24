@@ -4,8 +4,6 @@ import (
 	"context"
 	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
-	"icm-varnish-k8s-operator/pkg/varnishservice/config"
-	"icm-varnish-k8s-operator/pkg/varnishservice/logger"
 	"strconv"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -46,10 +44,10 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 							Image: instance.Spec.Deployment.VarnishImage.FullPath(),
 							Ports: []v1.ContainerPort{
 								{
-									ContainerPort: config.GlobalConf.VarnishPort,
+									ContainerPort: r.config.VarnishPort,
 								},
 								{
-									ContainerPort: config.GlobalConf.VarnishExporterTargetPort,
+									ContainerPort: r.config.VarnishExporterTargetPort,
 								},
 							},
 							Env: []v1.EnvVar{
@@ -66,9 +64,9 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 								{Name: "VARNISH_SERVICE_VERSION", Value: gvk.Version},
 								{Name: "VARNISH_SERVICE_KIND", Value: gvk.Kind},
 								{Name: "TARGET_PORT", Value: applicationPort.TargetPort.String()},
-								{Name: "LOG_FORMAT", Value: config.GlobalConf.LogFormat},
-								{Name: "LOG_LEVEL", Value: config.GlobalConf.LogLevel.String()},
-								{Name: "VARNISH_PORT", Value: strconv.FormatInt(int64(config.GlobalConf.VarnishPort), 10)},
+								{Name: "LOG_FORMAT", Value: r.config.LogFormat},
+								{Name: "LOG_LEVEL", Value: r.config.LogLevel.String()},
+								{Name: "VARNISH_PORT", Value: strconv.FormatInt(int64(r.config.VarnishPort), 10)},
 								{Name: "VARNISH_MEMORY", Value: instance.Spec.Deployment.VarnishMemory},
 							},
 							Resources:       *instance.Spec.Deployment.VarnishResources,
@@ -91,7 +89,7 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 		},
 	}
 
-	logr := logger.With("name", desired.Name, "namespace", desired.Namespace)
+	logr := r.logger.With("name", desired.Name, "namespace", desired.Namespace)
 
 	if err := controllerutil.SetControllerReference(instance, desired, r.scheme); err != nil {
 		return nil, logr.RErrorw(err, "could not set controller as the OwnerReference for deployment")

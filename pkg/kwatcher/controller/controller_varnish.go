@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/kwatcher/events"
-	"icm-varnish-k8s-operator/pkg/kwatcher/logger"
 	"os/exec"
 	"strings"
 	"time"
@@ -36,19 +36,19 @@ type VCLConfig struct {
 	ReferencedVCL *string //nil if Label == false
 }
 
-func (r *ReconcileVarnish) reconcileVarnish(pod *v1.Pod, cm *v1.ConfigMap) error {
+func (r *ReconcileVarnish) reconcileVarnish(vs *v1alpha1.VarnishService, pod *v1.Pod, cm *v1.ConfigMap) error {
 	out, err := exec.Command("vcl_reload", createVCLConfigName(cm.GetResourceVersion())).CombinedOutput()
 	if err != nil {
 		if isVCLCompilationError(err) {
 			vsEventMsg := "VCL compilation failed for pod " + pod.Name + ". See pod logs for details"
 			podEventMsg := "VCL compilation failed. See logs for details"
 			r.eventHandler.Warning(pod, events.EventReasonVCLCompilationError, podEventMsg)
-			r.eventHandler.Warning(events.VSObject, events.EventReasonVCLCompilationError, vsEventMsg)
+			r.eventHandler.Warning(vs, events.EventReasonVCLCompilationError, vsEventMsg)
 		} else {
 			podEventMsg := "Varnish reload failed for pod " + pod.Name + ". See pod logs for details"
 			vsEventMsg := "Varnish reload failed. See logs for details"
 			r.eventHandler.Warning(pod, events.EventReasonReloadError, podEventMsg)
-			r.eventHandler.Warning(events.VSObject, events.EventReasonReloadError, vsEventMsg)
+			r.eventHandler.Warning(vs, events.EventReasonReloadError, vsEventMsg)
 		}
 		return errors.Annotate(err, string(out))
 	}
@@ -83,11 +83,14 @@ func getVCLConfigsList() ([]VCLConfig, error) {
 		return nil, errors.Annotate(err, string(out))
 	}
 
-	configs := parseVCLConfigsList(out)
+	configs, err := parseVCLConfigsList(out)
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
 	return configs, nil
 }
 
-func parseVCLConfigsList(commandOutput []byte) []VCLConfig {
+func parseVCLConfigsList(commandOutput []byte) ([]VCLConfig, error) {
 	var configs []VCLConfig
 	lines := bufio.NewScanner(bytes.NewReader(commandOutput))
 	for lines.Scan() {
@@ -99,20 +102,19 @@ func parseVCLConfigsList(commandOutput []byte) []VCLConfig {
 			temp := strings.Split(columns[1], "/")
 			configs = append(configs, VCLConfig{Status: columns[0], Name: columns[3], Label: false, Temperature: temp[1]})
 		case 6: //labeled config or a label itself
-			var refVCL string
+			var refVCL *string
 			temp := strings.Split(columns[1], "/")
 			isLabel := temp[0] == "label"
 			if isLabel {
-				refVCL = columns[5]
+				refVCL = &columns[5]
 			}
-			config := VCLConfig{Status: columns[0], Name: columns[3], Label: isLabel, Temperature: temp[1], ReferencedVCL: &refVCL}
+			config := VCLConfig{Status: columns[0], Name: columns[3], Label: isLabel, Temperature: temp[1], ReferencedVCL: refVCL}
 			configs = append(configs, config)
 		default:
-			logger.WrappedError(errors.New("unknown VCL config format"))
-			continue
+			return nil, errors.New("unknown VCL config format")
 		}
 	}
-	return configs
+	return configs, nil
 }
 
 func isVCLCompilationError(err error) bool {

@@ -1,9 +1,6 @@
 package config
 
 import (
-	"icm-varnish-k8s-operator/pkg/kwatcher/events"
-	"icm-varnish-k8s-operator/pkg/kwatcher/varnishservice"
-	"log"
 	"reflect"
 	"strconv"
 
@@ -37,8 +34,6 @@ type Config struct {
 	VCLDir                 string
 	EndpointSelector       labels.Selector
 }
-
-var GlobalConf *Config
 
 // Load uses the caarlos0/env library to read in environment variables into a struct
 func Load() (*Config, error) {
@@ -78,14 +73,4 @@ func Load() (*Config, error) {
 	}
 
 	return &c, nil
-}
-
-func init() {
-	var err error
-	GlobalConf, err = Load()
-	if err != nil {
-		log.Panicf("could not initialize config: %v", err)
-	}
-	varnishservice.Init(GlobalConf.VarnishServiceGroup, GlobalConf.VarnishServiceVersion, GlobalConf.VarnishServiceKind)
-	events.Init(GlobalConf.PodName, varnishservice.GetKind(), GlobalConf.Namespace, GlobalConf.VarnishServiceName, varnishservice.GetAPIVersion(), GlobalConf.VarnishServiceUID)
 }

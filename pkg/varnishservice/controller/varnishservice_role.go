@@ -4,7 +4,6 @@ import (
 	"context"
 	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
-	"icm-varnish-k8s-operator/pkg/varnishservice/logger"
 
 	rbacv1beta1 "k8s.io/api/rbac/v1beta1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -27,6 +26,11 @@ func (r *ReconcileVarnishService) reconcileRole(instance *icmapiv1alpha1.Varnish
 				Verbs:     []string{"list", "watch"},
 			},
 			{
+				APIGroups: []string{"icm.ibm.com"},
+				Resources: []string{"varnishservices"},
+				Verbs:     []string{"list", "watch"},
+			},
+			{
 				APIGroups: []string{""},
 				Resources: []string{"events"},
 				Verbs:     []string{"create", "patch"},
@@ -39,7 +43,7 @@ func (r *ReconcileVarnishService) reconcileRole(instance *icmapiv1alpha1.Varnish
 		},
 	}
 
-	logr := logger.With("name", role.Name, "namespace", role.Namespace)
+	logr := r.logger.With("name", role.Name, "namespace", role.Namespace)
 
 	// Set controller reference for role
 	if err := controllerutil.SetControllerReference(instance, role, r.scheme); err != nil {

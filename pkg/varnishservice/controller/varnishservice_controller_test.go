@@ -1,8 +1,12 @@
 package controller
 
 import (
+	"icm-varnish-k8s-operator/pkg/logger"
+	"icm-varnish-k8s-operator/pkg/varnishservice/config"
 	"testing"
 	"time"
+
+	"go.uber.org/zap"
 
 	icmv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 
@@ -34,8 +38,19 @@ func TestReconcile(t *testing.T) {
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 	c = mgr.GetClient()
 
-	recFn, requests := SetupTestReconcile(newReconciler(mgr))
-	g.Expect(add(mgr, recFn)).NotTo(gomega.HaveOccurred())
+	testCfg := &config.Config{}
+	testLogger := &logger.Logger{
+		SugaredLogger: zap.NewNop().Sugar(),
+	}
+
+	r := &ReconcileVarnishService{
+		Client: mgr.GetClient(),
+		config: testCfg,
+		logger: testLogger,
+	}
+	icmv1alpha1.Init(testCfg)
+	_, requests := SetupTestReconcile(r)
+	g.Expect(Add(mgr, testCfg, testLogger)).NotTo(gomega.HaveOccurred())
 	defer close(StartTestManager(mgr, g))
 
 	// Create the VarnishService object and expect the Reconcile and Deployment to be created

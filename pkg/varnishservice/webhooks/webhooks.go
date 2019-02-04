@@ -50,15 +50,15 @@ func InstallWebhooks(mgr manager.Manager, cfg *config.Config, logr *logger.Logge
 		return logr.RErrorw(err, "Invalid mutating webhook")
 	}
 
-	srv, err := webhook.NewServer(cfg.VarnishName+"-webhook-server", mgr, webhook.ServerOptions{
+	srv, err := webhook.NewServer("varnish-operator-webhook-server", mgr, webhook.ServerOptions{
 		Port:    9244,
 		CertDir: "/tmp/varnish-operator/webhook/certs",
 		BootstrapOptions: &webhook.BootstrapOptions{
-			ValidatingWebhookConfigName: cfg.VarnishName + "-validating-webhook-config",
-			MutatingWebhookConfigName:   cfg.VarnishName + "-mutating-webhook-config",
+			ValidatingWebhookConfigName: "varnish-operator-validating-webhook-config",
+			//MutatingWebhookConfigName:   "varnish-operator-mutating-webhook-config",
 			Service: &webhook.Service{
 				Namespace: cfg.Namespace,
-				Name:      cfg.VarnishName + "-webhook-service",
+				Name:      "varnish-operator-webhook-service",
 				// Selectors should select the pods that runs this webhook server.
 				Selectors: map[string]string{
 					"admission-controller": "varnish-service-admission-controller",
@@ -71,8 +71,7 @@ func InstallWebhooks(mgr manager.Manager, cfg *config.Config, logr *logger.Logge
 		return logr.RErrorw(err, "Can't create validating webhook server")
 	}
 
-	_ = srv.Port //make Go not complain about unused variable. Should be removed when enabling webhooks
-	// The webhooks are disabled due to a bug in kubernetes 1.11.
+	// The mutating webhook is disabled due to a bug in kubernetes 1.11.
 	// It leaded to errors like this (shortened):
 	// Internal error occurred: jsonpatch replace operation does not apply: doc is missing key: /spec/service/ports/0/targetPort
 	// It was caused by the mutating webhook that was setting default values for the service.
@@ -80,10 +79,10 @@ func InstallWebhooks(mgr manager.Manager, cfg *config.Config, logr *logger.Logge
 	// You can use mutating webhooks for different logic and also safely use the validating webhook functions if you need.
 	// To do so, just uncomment the webhooks registering below and make sure you run the server not in Dryrun mode.
 	//err = srv.Register(validatingWebhook, mutatingWebhook)
-	//if err != nil {
-	//	logger.RErrorw(err, "Can't register validating webhook in the admission server")
-	//	return err
-	//}
+	err = srv.Register(validatingWebhook)
+	if err != nil {
+		return logr.RErrorw(err, "Can't register validating webhook in the admission server")
+	}
 
 	return nil
 }

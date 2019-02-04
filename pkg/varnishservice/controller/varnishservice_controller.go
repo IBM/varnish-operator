@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"errors"
 	icmv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/logger"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
@@ -11,8 +10,6 @@ import (
 	"icm-varnish-k8s-operator/pkg/varnishservice/webhooks"
 
 	"k8s.io/apimachinery/pkg/types"
-
-	"k8s.io/apimachinery/pkg/util/intstr"
 
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
@@ -33,7 +30,6 @@ import (
 func Add(mgr manager.Manager, cfg *config.Config, logr *logger.Logger) error {
 	r := &ReconcileVarnishService{
 		Client: mgr.GetClient(),
-		config: cfg,
 		logger: logr,
 		scheme: mgr.GetScheme(),
 		events: NewEventHandler(mgr.GetRecorder(EventRecorderNameVarnishService)),
@@ -156,7 +152,6 @@ var _ reconcile.Reconciler = &ReconcileVarnishService{}
 // ReconcileVarnishService reconciles a VarnishService object
 type ReconcileVarnishService struct {
 	client.Client
-	config *config.Config
 	logger *logger.Logger
 	scheme *runtime.Scheme
 	events *EventHandler
@@ -226,15 +221,11 @@ func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcil
 	if err = r.reconcileClusterRoleBinding(instance, clusterRoleName, serviceAccountName); err != nil {
 		return reconcile.Result{}, err
 	}
-	applicationPort, err := r.getApplicationPort(instance)
+	endpointSelector, err := r.reconcileNoCachedService(instance, instanceStatus)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-	endpointSelector, err := r.reconcileNoCachedService(instance, instanceStatus, applicationPort)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-	varnishSelector, err := r.reconcileDeployment(instance, instanceStatus, serviceAccountName, applicationPort, endpointSelector)
+	varnishSelector, err := r.reconcileDeployment(instance, instanceStatus, serviceAccountName, endpointSelector)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -245,7 +236,7 @@ func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcil
 	if err = r.reconcilePodDisruptionBudget(instance, varnishSelector); err != nil {
 		return reconcile.Result{}, err
 	}
-	if err = r.reconcileCachedService(instance, instanceStatus, applicationPort, varnishSelector); err != nil {
+	if err = r.reconcileCachedService(instance, instanceStatus, varnishSelector); err != nil {
 		return reconcile.Result{}, err
 	}
 
@@ -259,21 +250,4 @@ func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcil
 	}
 
 	return reconcile.Result{}, nil
-}
-
-func (r *ReconcileVarnishService) getApplicationPort(instance *icmv1alpha1.VarnishService) (*v1.ServicePort, error) {
-	logr := r.logger.With("name", instance.Name, "namespace", instance.Namespace)
-
-	if len(instance.Spec.Service.Ports) != 1 {
-		err := errors.New("must specify exactly one port in service spec")
-		return nil, logr.RErrorw(err, "")
-	}
-	port := instance.Spec.Service.Ports[0]
-	if port.TargetPort == (intstr.IntOrString{}) {
-		port.TargetPort = intstr.IntOrString{
-			Type:   intstr.Int,
-			IntVal: port.Port,
-		}
-	}
-	return &port, nil
 }

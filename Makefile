@@ -24,7 +24,7 @@ manager: generate fmt vet
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet
-	LOG_FORMAT=console VARNISH_IMAGE_TAG=${VERSION} go run ${ROOT_DIR}cmd/manager/main.go
+	DEPLOYMENT_CONTAINER_IMAGE=registry.ng.bluemix.net/icm-varnish/${VARNISH_IMG} go run ${ROOT_DIR}cmd/manager/main.go
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 install: manifests

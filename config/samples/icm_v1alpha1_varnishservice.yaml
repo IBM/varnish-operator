@@ -17,7 +17,7 @@ spec:
   vclConfigMap:
     # the name given to the configMap that contains the contents of the vcl. If the configMap does not exist, a basic round-robin-based VCL file will be created and used
     # MUST use only lowercase letters, numbers, "-", or "."
-    name: vcl-file
+    name: vcl-files
     # the name of the file to be maintained through the Kubernetes API (by watching the endpoints in a deployment)
     # the VarnishService will expect to see a "<backendsFile>.tmpl" file in the ConfigMap that has the Go template for the <backendsFile>. For example, "backends.vcl.tmpl"
     backendsFile: backends.vcl
@@ -25,42 +25,54 @@ spec:
     defaultFile: default.vcl
   deployment:
     # The number of varnish instances to run
-    replicas: 3
-    varnishImage:
-      # You might modify the host to be the nearest instance of container registry to the cluster
-      host: registry.ng.bluemix.net
-      # If you decide to host the varnish image yourself, you may need to change the image namespace or name
-      # Note, however, that you cannot use any old version of varnish -- the official image has a sidecar process that monitors the kubernetes API
-      namespace: icm-varnish
-      name: varnish
-      # You might specify a tag version to ensure that you control the lifecycle of what version of varnish is deployed
-      tag: 0.9.2
+    replicas: 2
+    container:
+      # path to image + tag
+      image: registry.ng.bluemix.net/icm-varnish/varnish:0.9.2
       # imagePullPolicy is passed directly to the varnish deployment, that controls how the varnish image will be pulled for new containers
       imagePullPolicy: Always
-      # Name of the secret for the docker registry. The secret needs to exist in the namespace before creating this resource
-      imagePullSecretName: docker-reg-secret
-    # The amount of memory allocated to Varnish on Varnish's startup, in the form of `varnishd -F -s malloc,${varnishMemory} ...`
-    varnishMemory: "1024M"
-    # Resources allocated to the Varnish pod through Kubernetes. `requests.memory` should be greater than `varnishMemory` above
-    varnishResources:
-      limits:
-        cpu: 1
-        memory: "2048Mi"
-      requests:
-        cpu: 1
-        memory: "2048Mi"
-    # the restart policy for the varnish containers
-    varnishRestartPolicy: Always
-    # probe to determine liveness of the Varnish container. TODO: Not currently working
-    # livenessProbe:
-    #   httpGet:
-    #     path: /liveness
-    #     port: 8080
-    # probe used to confirm readiness of the Varnish container. Unlikely to need to be changed, but can be either a command or an HTTP request
-    readinessProbe:
-      exec:
-        command: [/usr/bin/varnishadm, ping]
-      initialDelaySeconds: 5
+      # restart policy used for Varnish containers
+      restartPolicy: Always
+      # Resources allocated to the Varnish pod through Kubernetes
+      resources:
+        limits:
+          cpu: 1
+          memory: 2048Mi
+        requests:
+          cpu: 1
+          memory: 2048Mi
+      # http path used to confirm liveness of the Varnish container. TODO: Not currently working
+      # livenessProbe:
+      #   httpPath: /liveness
+      #   port: 8080
+      # command used to confirm readiness of the Varnish container. Unlikely to need to be changed
+      readinessProbe:
+        exec:
+          command: [/usr/bin/varnishadm, ping]
+      # Use the name of the imagePullSecret created in the [Getting Access](#getting-access) section above
+      imagePullSecret: docker-reg-secret
+      # args that will be passed to the varnishd command line. For more information, run `varnishd "-?"`
+      # Some args are disallowed, and other values have defaults if not provided
+      #
+      # Disallowed args:
+      # -a -f -F -n -S
+      #
+      # Default args:
+      # -s -p -T
+      #
+      # If no varnishArgs are specified, then, `varnishd` will start with:
+      # varnishd \
+      # -a 0.0.0.0:<.spec.service.varnishPort.port> \
+      # -f /etc/varnish/<.spec.vclConfigMap.defaultFile> \
+      # -F \
+      # -S /etc/varnish/secret \
+      # -p default_ttl=3600 \
+      # -p default_grace=3600 \
+      # -s malloc,<.spec.deployment.container.resources.limits.memory * .9>M \
+      # -T 127.0.0.1:6082
+      #
+      # If -p is provided, then it will overwrite both default values above. Meaning, if you only include ["-p", "default_ttl=4800"], then you will NOT see "-p default_grace=3600" in the args
+      varnishArgs: ["-p", "default_ttl=3600", "-p", "default_grace=3600"]
     # Affinity to apply to the pods in the Varnish deployment. For more on affinity, see https://kubernetes.io/docs/concepts/configuration/assign-pod-node#affinity-and-anti-affinity
     # Also, see the README.md#affinites for suggested configurations
     affinity:
@@ -81,7 +93,7 @@ spec:
           # Read https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#an-example-of-a-pod-that-uses-pod-affinity for a good explanation of topologyKey.
           topologyKey: "kubernetes.io/hostname"
 
-    # Tolerations to apply to the pods in the Varnish deployment. For more on tolerations, see https://kubernetes.io/docs/concepts/configuration/taint-and-toleration  
+    # Tolerations to apply to the pods in the Varnish deployment. For more on tolerations, see https://kubernetes.io/docs/concepts/configuration/taint-and-toleration
     # Also, see the README.md#tolerations for suggested configurations
     # tolerations:
   # PodDisruptionBudgets allow you to tell Kubernetes how tolerant you are about pods going down due to administrative events, such node autoscaling or node upgrades.
@@ -91,14 +103,26 @@ spec:
   # NOTE: there should be ONLY ONE field under this spec. "selector" (part of the regular spec) is not needed here since it will automatically select the varnish pods, and "maxUnavailable" and "minAvailable" are mutually exclusive
   podDisruptionBudget:
     maxUnavailable: 0
-    # minAvailable: 3
-
-  # This is a regular service spec. For details on a service spec, see https://kubernetes.io/docs/concepts/services-networking/service
-  # In the same way as you would with a vanilla service, choose a selector that targets a deployment. The resulting VarnishService will act like a regular Service, plus have Varnish caching.
-  # WARNING: this service must ONLY expose a single port. Specifying multiple ports will result in an error
+    # minAvailable: 2
+  # service is largely a regular service spec, except for changes around the ports, and an extra field
+  # therefore, you can add any details that are part of a regular service spec, as seen here: https://kubernetes.io/docs/concepts/services-networking/service
+  # In the same way as you would with a vanilla service, choose a selector that targets a deployment. The resulting VarnishService will act like a regular Service, with the added benefit of Varnish caching.
   service:
     selector:
       app: HttPerf
+    # the "varnishPort" and "varnishExporterPort" fields are specially configured ports on the service for the varnish and varnish-exporter. As such, do not try to configure these through the .ports field, where they will be ignored
+    varnishPort:
+      name: varnish
+      port: 2035
+      targetPort: 8080
+    varnishExporterPort:
+      name: varnishexporter
+      port: 9131
+    # .varnishPort and .varnishExporterPort do not preclude you from exposing other ports. But do not specify the same ports in both places, or else the entries in .ports will get thrown out.
+    # Only applications exposed through the .varnishPort will benefit from Varnish caching.
     ports:
-    - port: 8080
-      protocol: TCP
+    - name: something-else
+      port: 8080
+    # this will add appropriate annotations to inform a standard prometheus (ie, not installed as operator) where to scrape metrics
+    # It does not affect anything to have the annotations without a prometheus looking for them
+    prometheusAnnotations: true

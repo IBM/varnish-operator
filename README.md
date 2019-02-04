@@ -53,7 +53,7 @@ Note that
 * `docker-username` MUST be `token`
 * `docker-email` can be any email. For example, `a@b.c`
 
-By default the Helm install will assume a namespace called `varnish-service-system` exists.
+By default the Helm install will assume a namespace called `varnish-operator-system` exists.
 
 ### Configuring The Operator
 

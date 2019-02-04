@@ -1,93 +1,74 @@
 # namespace should match the Namespace created in the Getting Access section of the README.md
-namespace: varnish-service-system
+namespace: varnish-operator-system
 # this field should not be changed
 namePrefix: varnish-service-
 
 operator:
+  # Specifies the pod count of the Manager. Default value is 2 replicas for HA
+  replicas: 2
+  # Run multiple instances of the operator, and if one goes down, have another seamlessly replace it
+  leaderElection:
+    enabled: true
+    id: varnish-operator-lock
+  container:
+    # path to image + tag
+    image: registry.ng.bluemix.net/icm-varnish/varnish-controller:0.9.2
+    # Use the name of the imagePullSecret created in the [Getting Access](#getting-access) section above
+    imagePullSecret: docker-reg-secret
+    # imagePullPolicy is passed directly to the varnish deployment, that controls how the varnish image will be pulled for new containers
+    imagePullPolicy: Always
+    # restart policy used for Varnish containers
+    restartPolicy: Always
+    # it is unlikely you will need to change the resources values of the operator
+    resources:
+      limits:
+        cpu: 500m
+        memory: 200Mi
+      requests:
+        cpu: 500m
+        memory: 200Mi
+
   # logging level: "debug", "info", "warn", "error"
   logLevel: info
   # logging encoder: "json", "console"
   logFormat: json
 
-  varnishImage:
-    # Use the name of the imagePullSecret created in the [Getting Access](#getting-access) section above
-    imagePullSecretName: docker-reg-secret
-
-    # The host, namespace, name, and tag make up the path used to pull the varnish image, with the form "$host/$namespace/$name:$tag"
-
-    # You might modify the host to be the nearest instance of container registry to the cluster
-    host: registry.ng.bluemix.net
-    # If you decide to host the varnish image yourself, you may need to change the image namespace or name
-    # Note, however, that you cannot use any old version of varnish -- the official image has a sidecar process that monitors the kubernetes API
-    namespace: icm-varnish
-    name: varnish
-    # You might specify a tag version to ensure that you control the lifecycle of what version of varnish is deployed
-    tag: 0.9.2
-    # imagePullPolicy is passed directly to the varnish deployment, that controls how the varnish image will be pulled for new containers
-    imagePullPolicy: Always
-  controllerImage:
-    # Use the name of the imagePullSecret created in the [Getting Access](#getting-access) section above
-    imagePullSecretName: docker-reg-secret
-
-    # The host, namespace, name, and tag make up the path used to pull the varnish image, with the form "$host/$namespace/$name:$tag"
-
-    # You might modify the host to be the nearest instance of container registry to the cluster
-    host: registry.ng.bluemix.net
-    # If you decide to host the varnish image yourself, you may need to change the image namespace or name
-    # Note, however, that you cannot use any old version of varnish -- the official image has a sidecar process that monitors the kubernetes API
-    namespace: icm-varnish
-    name: varnish-controller
-    # You might specify a tag version to ensure that you control the lifecycle of what version of varnish is deployed
-    tag: 0.9.2
-    # imagePullPolicy is passed directly to the varnish deployment, that controls how the varnish image will be pulled for new containers
-    imagePullPolicy: Always
-  # Specifies the pod count of the Manager. Default value is 2 replicas for HA
-  replicas: 2
-  # it is unlikely you will need to change the resources values of the operator
-  resources:
-    limits:
-      cpu: 100m
-      memory: 30Mi
-    requests:
-      cpu: 100m
-      memory: 30Mi
-
-varnish:
-  # there should not be much reason to change any of these port values
-  port: 2035
-  targetPort: 2035
-  exporterPort: 9131
-  # Warning: without modifying the Docker image, changing exporterTargetPort will break metrics
-  exporterTargetPort: 9131
-
-# the default section describes all of the defaults available for the VarnishService CustomResource.
-default:
+# If any of the below spec values are not set on a VarnishService, they will default to the given values
+defaults:
   vclConfigMap:
-    # the name given to the configMap that contains the contents of the vcl. If the configMap does not exist, the operator will create a configMap with example VCL for a basic round-robin-based varnish
-    # MUST use only lowercase letters, numbers, "-", or "."
-    name: vcl-file
     # the name of the file to be maintained through the Kubernetes API (by watching the endpoints in a deployment)
     # the VarnishService will expect to see a "<backendsFile>.tmpl" file in the ConfigMap that has the Go template for the <backendsFile>. For example, "backends.vcl.tmpl"
     backendsFile: backends.vcl
     # the name of the base VCL file
     defaultFile: default.vcl
   deployment:
-    # The amount of memory allocated to Varnish on Varnish's startup, in the form of `varnishd -F -s malloc,${varnishMemory} ...`
-    varnishMemory: 1024M
-    # Resources allocated to the Varnish pod through Kubernetes. `requests.memory` Should be greater than `varnishMemory` above
-    varnishResources:
-      limits:
-        cpu: 1
-        memory: 2048Mi
-      requests:
-        cpu: 1
-        memory: 2048Mi
-    # restart policy used for Varnish containers
-    varnishRestartPolicy: Always
-    # http path used to confirm liveness of the Varnish container. TODO: Not currently working
-    # livenessProbe:
-    #   httpPath: /liveness
-    #   port: 8080
-    # command used to confirm readiness of the Varnish container. Unlikely to need to be changed
-    readinessProbe:
-      command: /usr/bin/varnishadm,ping
+    # The number of varnish instances to run
+    replicas: 2
+    container:
+      # path to image + tag
+      image: registry.ng.bluemix.net/icm-varnish/varnish:0.9.2
+      # imagePullPolicy is passed directly to the varnish deployment, that controls how the varnish image will be pulled for new containers
+      imagePullPolicy: Always
+      # restart policy used for Varnish containers
+      restartPolicy: Always
+      # Resources allocated to the Varnish pod through Kubernetes
+      resources:
+        limits:
+          cpu: 1
+          memory: 2048Mi
+        requests:
+          cpu: 1
+          memory: 2048Mi
+      # http path used to confirm liveness of the Varnish container. TODO: Not currently working
+      # livenessProbe:
+      #   httpGet:
+      #     httpPath: /liveness
+      #     port: 8080
+      # command used to confirm readiness of the Varnish container. Unlikely to need to be changed
+      readinessProbe:
+        exec:
+          command: [/usr/bin/varnishadm, ping]
+      # Use the name of the imagePullSecret created in the [Getting Access](#getting-access) section above
+      imagePullSecret: docker-reg-secret
+  service:
+    prometheusAnnotations: true

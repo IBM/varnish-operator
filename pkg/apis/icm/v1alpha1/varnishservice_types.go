@@ -1,8 +1,6 @@
 package v1alpha1
 
 import (
-	"fmt"
-
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
 	policyv1beta1 "k8s.io/api/policy/v1beta1"
@@ -11,11 +9,6 @@ import (
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
-// ServiceWrapper is just a way to generate a path "service.spec"
-type ServiceWrapper struct {
-	Spec v1.ServiceSpec `json:"spec"`
-}
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -38,7 +31,9 @@ type VarnishServiceSpec struct {
 	VCLConfigMap        VarnishVCLConfigMap                    `json:"vclConfigMap"`
 	Deployment          VarnishDeployment                      `json:"deployment"`
 	PodDisruptionBudget *policyv1beta1.PodDisruptionBudgetSpec `json:"podDisruptionBudget,omitempty"`
-	Service             v1.ServiceSpec                         `json:"service"`
+	Service             VarnishServiceService                  `json:"service"`
+	LogLevel            string                                 `json:"logLevel,omitempty"`
+	LogFormat           string                                 `json:"logFormat,omitempty"`
 }
 
 type VarnishVCLConfigMap struct {
@@ -50,28 +45,28 @@ type VarnishVCLConfigMap struct {
 }
 
 type VarnishDeployment struct {
-	Replicas             *int32                   `json:"replicas,omitempty"`
-	VarnishImage         VarnishDeploymentImage   `json:"varnishImage,omitempty"`
-	VarnishMemory        string                   `json:"varnishMemory,omitempty"`
-	VarnishResources     *v1.ResourceRequirements `json:"varnishResources,omitempty"`
-	LivenessProbe        *v1.Probe                `json:"livenessProbe,omitempty"`
-	ReadinessProbe       *v1.Probe                `json:"readinessProbe,omitempty"`
-	VarnishRestartPolicy v1.RestartPolicy         `json:"varnishRestartPolicy,omitempty"`
-	Affinity             *v1.Affinity             `json:"affinity,omitempty"`
-	Tolerations          []v1.Toleration          `json:"tolerations,omitempty"`
+	Replicas    *int32           `json:"replicas,omitempty"`
+	Container   VarnishContainer `json:"container,omitempty"`
+	Affinity    *v1.Affinity     `json:"affinity,omitempty"`
+	Tolerations []v1.Toleration  `json:"tolerations,omitempty"`
 }
 
-type VarnishDeploymentImage struct {
-	Host                string         `json:"host,omitempty"`
-	Namespace           string         `json:"namespace,omitempty"`
-	Name                string         `json:"name,omitempty"`
-	Tag                 string         `json:"tag,omitempty"`
-	ImagePullPolicy     *v1.PullPolicy `json:"imagePullPolicy,omitempty"`
-	ImagePullSecretName string         `json:"imagePullSecretName"`
+type VarnishContainer struct {
+	Image           string                   `json:"image,omitempty"`
+	ImagePullPolicy *v1.PullPolicy           `json:"imagePullPolicy,omitempty"`
+	RestartPolicy   v1.RestartPolicy         `json:"restartPolicy,omitempty"`
+	Resources       *v1.ResourceRequirements `json:"resources,omitempty"`
+	LivenessProbe   *v1.Probe                `json:"livenessProbe,omitempty"`
+	ReadinessProbe  *v1.Probe                `json:"readinessProbe,omitempty"`
+	ImagePullSecret *string                  `json:"imagePullSecret,omitempty"`
+	VarnishArgs     []string                 `json:"varnishArgs,omitempty"`
 }
 
-func (vdi *VarnishDeploymentImage) FullPath() string {
-	return fmt.Sprintf("%s/%s/%s:%s", vdi.Host, vdi.Namespace, vdi.Name, vdi.Tag)
+type VarnishServiceService struct {
+	v1.ServiceSpec
+	VarnishPort           *v1.ServicePort `json:"varnishPort,omitempty"`
+	VarnishExporterPort   *v1.ServicePort `json:"varnishExporterPort,omitempty"`
+	PrometheusAnnotations *bool           `json:"prometheusAnnotations,omitempty"`
 }
 
 // TODO: add configmap data

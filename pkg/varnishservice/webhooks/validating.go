@@ -2,9 +2,12 @@ package webhooks
 
 import (
 	"context"
+	"fmt"
 	"icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/logger"
 	"net/http"
+	"regexp"
+	"strings"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/inject"
@@ -21,6 +24,28 @@ type validationWebhook struct {
 // podValidator implements inject.Client.
 // A client will be automatically injected by Kubebuilder internals.
 var _ inject.Client = &validationWebhook{}
+
+var (
+	varnishArgsKeyRegexp  = regexp.MustCompile("-\\w")
+	disallowedVarnishArgs = map[string]bool{
+		"-a": true,
+		"-f": true,
+		"-F": true,
+		"-n": true,
+		"-S": true,
+	}
+	disallowedVarnishArgsAsString string
+)
+
+func init() {
+	disallowedVarnishArgsAsArr := make([]string, len(disallowedVarnishArgs))
+	i := 0
+	for k := range disallowedVarnishArgs {
+		disallowedVarnishArgsAsArr[i] = k
+		i++
+	}
+	disallowedVarnishArgsAsString = fmt.Sprintf(`"%s"`, strings.Join(disallowedVarnishArgsAsArr, `", "`))
+}
 
 func (w *validationWebhook) InjectClient(c client.Client) error {
 	w.client = c
@@ -46,11 +71,25 @@ func (w *validationWebhook) Handle(ctx context.Context, req atypes.Request) atyp
 		return admission.ErrorResponse(http.StatusBadRequest, err)
 	}
 
-	// TODO validation logic goes here
-	// example: check if number of replicas are less than 100
-	//if vs.Spec.Deployment.Replicas != nil && *vs.Spec.Deployment.Replicas > 100 {
-	//	return admission.ValidationResponse(false, "Should be less than 100 replicas")
-	//}
+	if resp := validVarnishArgs(vs.Spec.Deployment.Container.VarnishArgs, w.logger); !resp.Response.Allowed {
+		return resp
+	}
 
+	return admission.ValidationResponse(true, "")
+}
+
+func validVarnishArgs(args []string, logr *logger.Logger) atypes.Response {
+	for i := 0; i < len(args); {
+		if !varnishArgsKeyRegexp.MatchString(args[i]) {
+			return admission.ValidationResponse(false, `varnish args must follow pattern: ["key"[, "value"][,"key"[, "value"]]...] where key follows regexp "-\\w" and value is optional. eg ["-s", "malloc,1024M", "-p", "default_ttl=3600", "-T", "127.0.0.1:6082"]`)
+		}
+		if _, found := disallowedVarnishArgs[args[i]]; found {
+			return admission.ValidationResponse(false, fmt.Sprintf("cannot include args %s", disallowedVarnishArgsAsString))
+		}
+		i++
+		if i < len(args) && !varnishArgsKeyRegexp.MatchString(args[i]) {
+			i++
+		}
+	}
 	return admission.ValidationResponse(true, "")
 }

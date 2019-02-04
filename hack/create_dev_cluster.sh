@@ -4,7 +4,7 @@
 
 set -ex
 
-varnish_namespace="varnish-service-system"
+varnish_namespace="varnish-operator-system"
 pull_secret="docker-reg-secret"
 
 if ! docker info; then

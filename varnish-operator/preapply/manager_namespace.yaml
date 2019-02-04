@@ -3,4 +3,4 @@ kind: Namespace
 metadata:
   labels:
     controller-tools.k8s.io: "1.0"
-  name: varnish-service-system
+  name: varnish-operator-system

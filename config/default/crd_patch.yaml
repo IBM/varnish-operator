@@ -7,20 +7,98 @@ spec:
   names:
     shortNames:
     - vs
+  additionalPrinterColumns:
+    - name: Desired
+      type: integer
+      description: desired number of varnish pods
+      JSONPath: .status.deployment.replicas
+      priority: 0
+    - name: Current
+      type: integer
+      description: current number of varnish pods
+      JSONPath: .status.deployment.readyReplicas
+      priority: 0
+    - name: Up-To-Date
+      type: integer
+      description: number of varnish pods that are up to date
+      JSONPath: .status.deployment.updatedReplicas
+      priority: 0
+    - name: Cached-Service-IP
+      type: string
+      description: IP Address of the cached service
+      JSONPath: .status.service.cached.ip
+      priority: 0
+    - name: Nocached-Service-IP
+      type: string
+      description: IP Address of the nocached service
+      JSONPath: .status.service.nocached.ip
+      priority: 0
+    - name: VCL-Version
+      type: string
+      description: version of the ConfigMap containing the VCL
+      JSONPath: .status.vcl.configMapVersion
+      priority: 0
   validation:
     openAPIV3Schema:
       properties:
         metadata:
           properties:
             name:
+              # limit name to 40 chars due to k8s length limits
               type: string
               maxLength: 40
         spec:
           properties:
+            deployment:
+              properties:
+                container:
+                  properties:
+                    # enforce that .exec.command is a string array
+                    livenessProbe:
+                      properties:
+                        exec:
+                          properties:
+                            command:
+                              type: array
+                              items:
+                                type: string
+                    # enforce that .exec.command is a string array
+                    readinessProbe:
+                      properties:
+                        exec:
+                          properties:
+                            command:
+                              type: array
+                              items:
+                                type: string
+            # ideally, this would go through validating webhook, but that does not work right now
+            # so this is a decent workaround
+            logLevel:
+              type: string
+              enum:
+              - debug
+              - info
+              - warn
+              - error
+              - dpanic
+              - panic
+              - fatal
+            logFormat:
+              type: string
+              enum:
+              - json
+              - console
             service:
               properties:
-                # limit number of ports to 1
-                ports:
-                  type: array
-                  maxItems: 1
-
+                varnishPort:
+                  properties:
+                    # ports have max 15 char names
+                    name:
+                      type: string
+                      maxLength: 15
+                varnishExporterPort:
+                  properties:
+                    # ports have max 15 char names
+                    name:
+                      type: string
+                      maxLength: 15

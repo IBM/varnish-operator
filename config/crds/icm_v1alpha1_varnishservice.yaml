@@ -31,9 +31,26 @@ spec:
               properties:
                 affinity:
                   type: object
-                livenessProbe:
-                  type: object
-                readinessProbe:
+                container:
+                  properties:
+                    image:
+                      type: string
+                    imagePullPolicy:
+                      type: string
+                    imagePullSecret:
+                      type: string
+                    livenessProbe:
+                      type: object
+                    readinessProbe:
+                      type: object
+                    resources:
+                      type: object
+                    restartPolicy:
+                      type: string
+                    varnishArgs:
+                      items:
+                        type: string
+                      type: array
                   type: object
                 replicas:
                   format: int32
@@ -42,33 +59,21 @@ spec:
                   items:
                     type: object
                   type: array
-                varnishImage:
-                  properties:
-                    host:
-                      type: string
-                    imagePullPolicy:
-                      type: string
-                    imagePullSecretName:
-                      type: string
-                    name:
-                      type: string
-                    namespace:
-                      type: string
-                    tag:
-                      type: string
-                  required:
-                  - imagePullSecretName
-                  type: object
-                varnishMemory:
-                  type: string
-                varnishResources:
-                  type: object
-                varnishRestartPolicy:
-                  type: string
               type: object
+            logFormat:
+              type: string
+            logLevel:
+              type: string
             podDisruptionBudget:
               type: object
             service:
+              properties:
+                prometheusAnnotations:
+                  type: boolean
+                varnishExporterPort:
+                  type: object
+                varnishPort:
+                  type: object
               type: object
             vclConfigMap:
               properties:

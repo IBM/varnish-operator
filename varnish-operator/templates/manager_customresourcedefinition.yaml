@@ -6,6 +6,37 @@ metadata:
     controller-tools.k8s.io: '1.0'
   name: varnishservices.icm.ibm.com
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.deployment.replicas
+    description: desired number of varnish pods
+    name: Desired
+    priority: 0
+    type: integer
+  - JSONPath: .status.deployment.readyReplicas
+    description: current number of varnish pods
+    name: Current
+    priority: 0
+    type: integer
+  - JSONPath: .status.deployment.updatedReplicas
+    description: number of varnish pods that are up to date
+    name: Up-To-Date
+    priority: 0
+    type: integer
+  - JSONPath: .status.service.cached.ip
+    description: IP Address of the cached service
+    name: Cached-Service-IP
+    priority: 0
+    type: string
+  - JSONPath: .status.service.nocached.ip
+    description: IP Address of the nocached service
+    name: Nocached-Service-IP
+    priority: 0
+    type: string
+  - JSONPath: .status.vcl.configMapVersion
+    description: version of the ConfigMap containing the VCL
+    name: VCL-Version
+    priority: 0
+    type: string
   group: icm.ibm.com
   names:
     kind: VarnishService
@@ -37,9 +68,40 @@ spec:
               properties:
                 affinity:
                   type: object
-                livenessProbe:
-                  type: object
-                readinessProbe:
+                container:
+                  properties:
+                    image:
+                      type: string
+                    imagePullPolicy:
+                      type: string
+                    imagePullSecret:
+                      type: string
+                    livenessProbe:
+                      properties:
+                        exec:
+                          properties:
+                            command:
+                              items:
+                                type: string
+                              type: array
+                      type: object
+                    readinessProbe:
+                      properties:
+                        exec:
+                          properties:
+                            command:
+                              items:
+                                type: string
+                              type: array
+                      type: object
+                    resources:
+                      type: object
+                    restartPolicy:
+                      type: string
+                    varnishArgs:
+                      items:
+                        type: string
+                      type: array
                   type: object
                 replicas:
                   format: int32
@@ -48,37 +110,40 @@ spec:
                   items:
                     type: object
                   type: array
-                varnishImage:
-                  properties:
-                    host:
-                      type: string
-                    imagePullPolicy:
-                      type: string
-                    imagePullSecretName:
-                      type: string
-                    name:
-                      type: string
-                    namespace:
-                      type: string
-                    tag:
-                      type: string
-                  required:
-                  - imagePullSecretName
-                  type: object
-                varnishMemory:
-                  type: string
-                varnishResources:
-                  type: object
-                varnishRestartPolicy:
-                  type: string
               type: object
+            logFormat:
+              enum:
+              - json
+              - console
+              type: string
+            logLevel:
+              enum:
+              - debug
+              - info
+              - warn
+              - error
+              - dpanic
+              - panic
+              - fatal
+              type: string
             podDisruptionBudget:
               type: object
             service:
               properties:
-                ports:
-                  maxItems: 1
-                  type: array
+                prometheusAnnotations:
+                  type: boolean
+                varnishExporterPort:
+                  properties:
+                    name:
+                      maxLength: 15
+                      type: string
+                  type: object
+                varnishPort:
+                  properties:
+                    name:
+                      maxLength: 15
+                      type: string
+                  type: object
               type: object
             vclConfigMap:
               properties:

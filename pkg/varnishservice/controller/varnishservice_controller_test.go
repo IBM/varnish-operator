@@ -45,7 +45,6 @@ func TestReconcile(t *testing.T) {
 
 	r := &ReconcileVarnishService{
 		Client: mgr.GetClient(),
-		config: testCfg,
 		logger: testLogger,
 	}
 	icmv1alpha1.Init(testCfg)

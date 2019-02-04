@@ -20,7 +20,7 @@ func (r *ReconcileVarnishService) reconcileServiceAccount(instance *icmapiv1alph
 			Namespace: instance.Namespace,
 			Labels:    combinedLabels(instance, "serviceaccount"),
 		},
-		ImagePullSecrets: []v1.LocalObjectReference{{Name: instance.Spec.Deployment.VarnishImage.ImagePullSecretName}},
+		ImagePullSecrets: []v1.LocalObjectReference{{Name: *instance.Spec.Deployment.Container.ImagePullSecret}},
 	}
 
 	logr := r.logger.With("name", serviceAccount.Name, "namespace", serviceAccount.Namespace)

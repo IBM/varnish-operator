@@ -31,8 +31,6 @@ FROM alpine:3.8
 LABEL maintainer="Alex Lytvynenko <oleksandr.lytvynenko@ibm.com>"
 
 ENV PROMETHEUS_VARNISH_EXPORTER_VERSION=1.4.1\
-  VARNISH_MEMORY=2048M\
-  VARNISH_PORT=8080\
   # This secret is for testing purposes only and should be overrided on runtime via env var
   VARNISH_SECRET=c5m4HSNJwFz7A1Hygc0xoENSsoEFwTr
 

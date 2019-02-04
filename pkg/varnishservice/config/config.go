@@ -2,7 +2,6 @@ package config
 
 import (
 	"reflect"
-	"regexp"
 	"strconv"
 
 	"github.com/caarlos0/env"
@@ -15,39 +14,30 @@ import (
 
 // Config describes constant values that will be applied to all varnish services, but may change per-cluster
 type Config struct {
-	VarnishImageHost               string           `env:"VARNISH_IMAGE_HOST" envDefault:"registry.ng.bluemix.net"`
-	VarnishImageNamespace          string           `env:"VARNISH_IMAGE_NAMESPACE" envDefault:"icm-varnish"`
-	VarnishImageName               string           `env:"VARNISH_IMAGE_NAME" envDefault:"varnish"`
-	VarnishImageTag                string           `env:"VARNISH_IMAGE_TAG,required"`
-	VarnishImagePullPolicy         v1.PullPolicy    `env:"VARNISH_IMAGE_PULL_POLICY" envDefault:"Always"`
-	ImagePullSecret                string           `env:"IMAGE_PULL_SECRET" envDefault:"docker-reg-secret"`
-	VarnishExporterPort            int32            `env:"VARNISH_EXPORTER_PORT" envDefault:"9131"`
-	VarnishExporterTargetPort      int32            `env:"VARNISH_EXPORTER_TARGET_PORT" envDefault:"9131"`
-	PrometheusAnnotations          bool             `env:"PROMETHEUS_ANNOTATIONS" envDefault:"true"`
-	VarnishPort                    int32            `env:"VARNISH_PORT" envDefault:"2035"`
-	VarnishTargetPort              int              `env:"VARNISH_TARGET_PORT" envDefault:"2035"`
-	VarnishName                    string           `env:"VARNISH_NAME" envDefault:"varnish"`
-	DefaultVarnishMemory           string           `env:"DEFAULT_VARNISH_MEMORY" envDefault:"1024M"`
-	DefaultBackendsFile            string           `env:"DEFAULT_BACKENDS_FILE" envDefault:"backends.vcl"`
-	DefaultDefaultFile             string           `env:"DEFAULT_DEFAULT_FILE" envDefault:"default.vcl"`
-	DefaultVCLConfigMapName        string           `env:"DEFAULT_VCL_CONFIGMAP_NAME" envDefault:"vcl-file"`
-	DefaultVarnishResourceLimitCPU string           `env:"DEFAULT_VARNISH_RESOURCE_LIMIT_CPU" envDefault:"1"`
-	DefaultVarnishResourceLimitMem string           `env:"DEFAULT_VARNISH_RESOURCE_LIMIT_MEM" envDefault:"2048Mi"`
-	DefaultVarnishResourceReqCPU   string           `env:"DEFAULT_VARNISH_RESOURCE_REQ_CPU" envDefault:"1"`
-	DefaultVarnishResourceReqMem   string           `env:"DEFAULT_VARNISH_RESOURCE_REQ_MEM" envDefault:"2048Mi"`
-	DefaultVarnishRestartPolicy    v1.RestartPolicy `env:"DEFAULT_VARNISH_RESTART_POLICY" envDefault:"Always"`
-	DefaultLivenessProbeHTTPPath   string           `env:"DEFAULT_LIVENESS_PROBE_HTTP_PATH"`
-	DefaultLivenessProbePort       int              `env:"DEFAULT_LIVENESS_PROBE_PORT"`
-	DefaultReadinessProbeCommand   []string         `env:"DEFAULT_READINESS_PROBE_COMMAND" envDefault:"/usr/bin/varnishadm,ping"`
-	LogLevel                       zapcore.Level    `env:"LOG_LEVEL" envDefault:"info"`
-	LogFormat                      string           `env:"LOG_FORMAT" envDefault:"json"`
-	Namespace                      string           `env:"NAMESPACE" envDefault:"varnish-service-system"`
-	LeaderElection                 bool             `env:"LEADER_ELECTION" envDefault:"true"`
-	LeaderElectionID               string           `env:"LEADER_ELECTION_ID" envDefault:"varnish-service-lock"`
-	VarnishCommonLabels            map[string]string
-	DefaultVarnishResources        v1.ResourceRequirements
-	DefaultLivenessProbe           *v1.Probe
-	DefaultReadinessProbe          v1.Probe
+	Namespace                                       string           `env:"NAMESPACE" envDefault:"varnish-operator-system"`
+	OperatorLeaderElectionEnabled                   bool             `env:"OPERATOR_LEADERELECTION_ENABLED" envDefault:"true"`
+	OperatorLeaderElectionID                        string           `env:"OPERATOR_LEADERELECTION_ID" envDefault:"varnish-operator-lock"`
+	OperatorLogLevel                                zapcore.Level    `env:"OPERATOR_LOGLEVEL" envDefault:"info"`
+	OperatorLogFormat                               string           `env:"OPERATOR_LOGFORMAT" envDefault:"console"`
+	VclConfigMapBackendsFile                        string           `env:"VCLCONFIGMAP_BACKENDSFILE" envDefault:"backends.vcl"`
+	VclConfigMapDefaultFile                         string           `env:"VCLCONFIGMAP_DEFAULTFILE" envDefault:"default.vcl"`
+	DeploymentReplicas                              int32            `env:"DEPLOYMENT_REPLICAS" envDefault:"2"`
+	DeploymentContainerImage                        string           `env:"DEPLOYMENT_CONTAINER_IMAGE,required"`
+	DeploymentContainerImagePullPolicy              v1.PullPolicy    `env:"DEPLOYMENT_CONTAINER_IMAGEPULLPOLICY" envDefault:"Always"`
+	DeploymentContainerRestartPolicy                v1.RestartPolicy `env:"DEPLOYMENT_CONTAINER_RESTARTPOLICY" envDefault:"Always"`
+	DeploymentContainerResourcesLimitsCpu           string           `env:"DEPLOYMENT_CONTAINER_RESOURCES_LIMITS_CPU" envDefault:"1"`
+	DeploymentContainerResourcesLimitsMemory        string           `env:"DEPLOYMENT_CONTAINER_RESOURCES_LIMITS_MEMORY" envDefault:"2048Mi"`
+	DeploymentContainerResourcesRequestsCpu         string           `env:"DEPLOYMENT_CONTAINER_RESOURCES_REQUESTS_CPU" envDefault:"1"`
+	DeploymentContainerResourcesRequestsMemory      string           `env:"DEPLOYMENT_CONTAINER_RESOURCES_REQUESTS_MEMORY" envDefault:"2048Mi"`
+	DeploymentContainerLivenessProbeHTTPGetHTTPPath string           `env:"DEPLOYMENT_CONTAINER_LIVENESSPROBE_HTTPGET_HTTPPATH"`
+	DeploymentContainerLivenessProbeHTTPGetPort     int              `env:"DEPLOYMENT_CONTAINER_LIVENESSPROBE_HTTPGET_PORT"`
+	DeploymentContainerReadinessProbeExecCommand    []string         `env:"DEPLOYMENT_CONTAINER_READINESSPROBE_EXEC_COMMAND" envDefault:"/usr/bin/varnishadm,ping"`
+	DeploymentContainerImagePullSecret              string           `env:"DEPLOYMENT_CONTAINER_IMAGEPULLSECRET" envDefault:"docker-reg-secret"`
+	ServicePrometheusAnnotations                    bool             `env:"SERVICE_PROMETHEUSANNOTATIONS" envDefault:"true"`
+
+	DeploymentContainerResources      v1.ResourceRequirements
+	DeploymentContainerLivenessProbe  *v1.Probe
+	DeploymentContainerReadinessProbe *v1.Probe
 }
 
 func verifyImagePullPolicy(v v1.PullPolicy) error {
@@ -100,7 +90,6 @@ var (
 		int32Type: int32Parser,
 		levelType: levelParser,
 	}
-	vclFileConfigMapNameRegex = regexp.MustCompile("[a-z0-9\\-.]+")
 )
 
 // LoadConfig uses the env library to read in environment variables and return an instance of Config
@@ -109,36 +98,30 @@ func LoadConfig() (*Config, error) {
 	if err := env.ParseWithFuncs(&c, parseFuncMap); err != nil {
 		return &c, errors.WithStack(err)
 	}
-	if err := verifyImagePullPolicy(c.VarnishImagePullPolicy); err != nil {
+	if err := verifyImagePullPolicy(c.DeploymentContainerImagePullPolicy); err != nil {
 		return &c, errors.WithStack(err)
 	}
-	if !vclFileConfigMapNameRegex.MatchString(c.DefaultVCLConfigMapName) {
-		return &c, errors.New("VCLFileConfigMapName must be nonempty and use only lowercase letters, numbers, \"-\", or \".\"")
-	}
-	if err := verifyRestartPolicy(c.DefaultVarnishRestartPolicy); err != nil {
+	if err := verifyRestartPolicy(c.DeploymentContainerRestartPolicy); err != nil {
 		return &c, errors.WithStack(err)
-	}
-	c.VarnishCommonLabels = map[string]string{
-		"owner": c.VarnishName,
 	}
 
-	varnishResourceLimitCPU, err := resource.ParseQuantity(c.DefaultVarnishResourceLimitCPU)
+	varnishResourceLimitCPU, err := resource.ParseQuantity(c.DeploymentContainerResourcesLimitsCpu)
 	if err != nil {
 		return &c, errors.WithStack(err)
 	}
-	varnishResourceLimitMem, err := resource.ParseQuantity(c.DefaultVarnishResourceLimitMem)
+	varnishResourceLimitMem, err := resource.ParseQuantity(c.DeploymentContainerResourcesLimitsMemory)
 	if err != nil {
 		return &c, errors.WithStack(err)
 	}
-	varnishResourceReqCPU, err := resource.ParseQuantity(c.DefaultVarnishResourceReqCPU)
+	varnishResourceReqCPU, err := resource.ParseQuantity(c.DeploymentContainerResourcesRequestsCpu)
 	if err != nil {
 		return &c, errors.WithStack(err)
 	}
-	varnishResourceReqMem, err := resource.ParseQuantity(c.DefaultVarnishResourceReqMem)
+	varnishResourceReqMem, err := resource.ParseQuantity(c.DeploymentContainerResourcesRequestsMemory)
 	if err != nil {
 		return &c, errors.WithStack(err)
 	}
-	c.DefaultVarnishResources = v1.ResourceRequirements{
+	c.DeploymentContainerResources = v1.ResourceRequirements{
 		Limits: v1.ResourceList{
 			v1.ResourceCPU:    varnishResourceLimitCPU,
 			v1.ResourceMemory: varnishResourceLimitMem,
@@ -149,23 +132,25 @@ func LoadConfig() (*Config, error) {
 		},
 	}
 
-	if c.DefaultLivenessProbeHTTPPath != "" && c.DefaultLivenessProbePort != 0 {
-		c.DefaultLivenessProbe = &v1.Probe{
+	if c.DeploymentContainerLivenessProbeHTTPGetHTTPPath != "" && c.DeploymentContainerLivenessProbeHTTPGetPort != 0 {
+		c.DeploymentContainerLivenessProbe = &v1.Probe{
 			Handler: v1.Handler{
 				HTTPGet: &v1.HTTPGetAction{
-					Path: c.DefaultLivenessProbeHTTPPath,
-					Port: intstr.FromInt(c.DefaultLivenessProbePort),
+					Path: c.DeploymentContainerLivenessProbeHTTPGetHTTPPath,
+					Port: intstr.FromInt(c.DeploymentContainerLivenessProbeHTTPGetPort),
 				},
 			},
 		}
 	}
 
-	c.DefaultReadinessProbe = v1.Probe{
-		Handler: v1.Handler{
-			Exec: &v1.ExecAction{
-				Command: c.DefaultReadinessProbeCommand,
+	if len(c.DeploymentContainerReadinessProbeExecCommand) > 0 {
+		c.DeploymentContainerReadinessProbe = &v1.Probe{
+			Handler: v1.Handler{
+				Exec: &v1.ExecAction{
+					Command: c.DeploymentContainerReadinessProbeExecCommand,
+				},
 			},
-		},
+		}
 	}
 
 	return &c, nil

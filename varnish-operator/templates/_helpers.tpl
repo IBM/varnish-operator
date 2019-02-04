@@ -1,7 +1,5 @@
 {{/* vim: set filetype=mustache: */}}
-{{/*
-Expand the name of the chart.
-*/}}
+{{/* Expand the name of the chart. */}}
 {{- define "varnish-operator.name" -}}
   {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
@@ -24,16 +22,19 @@ If release name contains chart name it will be used as a full name.
   {{- end -}}
 {{- end -}}
 
-{{/*
-Create chart name and version as used by the chart label.
-*/}}
+{{/* Create chart name and version as used by the chart label. */}}
 {{- define "varnish-operator.chart" -}}
   {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{/*
-use a release name that has a unique name per namespace
-*/}}
+{{/* use a release name that has a unique name per namespace */}}
 {{- define "varnish-operator.releaseName" -}}
   {{- printf "%s-%s" .Release.Name .Values.namespace -}}
+{{- end -}}
+
+{{/* converts an array into a comma separated list */}}
+{{- define "commaSeparatedList" -}}
+  {{- range $index, $cmd := . -}}
+    {{- if $index -}},{{- end -}}{{- $cmd -}}
+  {{- end -}}
 {{- end -}}

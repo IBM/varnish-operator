@@ -32,12 +32,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	logr := logger.NewLogger(operatorConfig.LogFormat, operatorConfig.LogLevel)
+	logr := logger.NewLogger(operatorConfig.OperatorLogFormat, operatorConfig.OperatorLogLevel)
 
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(clientConfig, manager.Options{
-		LeaderElection:          operatorConfig.LeaderElection,
-		LeaderElectionID:        operatorConfig.LeaderElectionID,
+		LeaderElection:          operatorConfig.OperatorLeaderElectionEnabled,
+		LeaderElectionID:        operatorConfig.OperatorLeaderElectionID,
 		LeaderElectionNamespace: operatorConfig.Namespace,
 	})
 	if err != nil {

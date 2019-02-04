@@ -4,7 +4,7 @@ import (
 	"context"
 	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
-	"strconv"
+	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
@@ -19,7 +19,7 @@ const (
 	componentNameVarnishes = "varnishes"
 )
 
-func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *icmapiv1alpha1.VarnishService, serviceAccountName string, applicationPort *v1.ServicePort, endpointSelector map[string]string) (map[string]string, error) {
+func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *icmapiv1alpha1.VarnishService, serviceAccountName string, endpointSelector map[string]string) (map[string]string, error) {
 	podSelector := generateLabels(instance, componentNameVarnishes)
 	gvk := instance.GroupVersionKind()
 	desired := &appsv1.Deployment{
@@ -41,13 +41,17 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 					Containers: []v1.Container{
 						{
 							Name:  "varnish",
-							Image: instance.Spec.Deployment.VarnishImage.FullPath(),
+							Image: instance.Spec.Deployment.Container.Image,
 							Ports: []v1.ContainerPort{
 								{
-									ContainerPort: r.config.VarnishPort,
+									Name:          instance.Spec.Service.VarnishPort.Name,
+									HostPort:      instance.Spec.Service.VarnishPort.Port,
+									ContainerPort: instance.Spec.Service.VarnishPort.Port,
 								},
 								{
-									ContainerPort: r.config.VarnishExporterTargetPort,
+									Name:          instance.Spec.Service.VarnishExporterPort.Name,
+									HostPort:      instance.Spec.Service.VarnishExporterPort.Port,
+									ContainerPort: instance.Spec.Service.VarnishExporterPort.Port,
 								},
 							},
 							Env: []v1.EnvVar{
@@ -63,23 +67,22 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 								{Name: "VARNISH_SERVICE_GROUP", Value: gvk.Group},
 								{Name: "VARNISH_SERVICE_VERSION", Value: gvk.Version},
 								{Name: "VARNISH_SERVICE_KIND", Value: gvk.Kind},
-								{Name: "TARGET_PORT", Value: applicationPort.TargetPort.String()},
-								{Name: "LOG_FORMAT", Value: r.config.LogFormat},
-								{Name: "LOG_LEVEL", Value: r.config.LogLevel.String()},
-								{Name: "VARNISH_PORT", Value: strconv.FormatInt(int64(r.config.VarnishPort), 10)},
-								{Name: "VARNISH_MEMORY", Value: instance.Spec.Deployment.VarnishMemory},
+								{Name: "TARGET_PORT", Value: instance.Spec.Service.VarnishPort.TargetPort.String()},
+								{Name: "LOG_FORMAT", Value: instance.Spec.LogFormat},
+								{Name: "LOG_LEVEL", Value: instance.Spec.LogLevel},
+								{Name: "VARNISH_ARGS", Value: strings.Join(instance.Spec.Deployment.Container.VarnishArgs, " ")},
 							},
-							Resources:       *instance.Spec.Deployment.VarnishResources,
-							LivenessProbe:   instance.Spec.Deployment.LivenessProbe,
-							ReadinessProbe:  instance.Spec.Deployment.ReadinessProbe,
-							ImagePullPolicy: *instance.Spec.Deployment.VarnishImage.ImagePullPolicy,
+							Resources:       *instance.Spec.Deployment.Container.Resources,
+							LivenessProbe:   instance.Spec.Deployment.Container.LivenessProbe,
+							ReadinessProbe:  instance.Spec.Deployment.Container.ReadinessProbe,
+							ImagePullPolicy: *instance.Spec.Deployment.Container.ImagePullPolicy,
 						},
 					},
-					RestartPolicy:      instance.Spec.Deployment.VarnishRestartPolicy,
+					RestartPolicy:      instance.Spec.Deployment.Container.RestartPolicy,
 					ServiceAccountName: serviceAccountName,
 					ImagePullSecrets: []v1.LocalObjectReference{
 						{
-							Name: instance.Spec.Deployment.VarnishImage.ImagePullSecretName,
+							Name: *instance.Spec.Deployment.Container.ImagePullSecret,
 						},
 					},
 					Affinity:    instance.Spec.Deployment.Affinity,

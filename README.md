@@ -8,13 +8,13 @@ By default, deploying a Varnish directly as a Deployment into Kubernetes is not 
 
 Instead, the VarnishService operator manages the deployment of your Varnish, filling in the IP addresses of the pods for you, and manages the required infrastructure. The operator itself is made up of 2 components:
 
-**CustomResourceDefinition**: the actual "VarnishService", that acts in the same way that a Service resource does, except with an added Varnish layer between the Service and the Deployment it backs. You would define a resource of Kind "VarnishService", and specify all the regular specs for a Service, plus some new fields that control how man Varnish instances you want, how much memory/cpu they get, and other relevant information for the Varnish cluster.
+**CustomResourceDefinition**: the actual "VarnishService", that acts in the same way that a Service resource does, except with an added Varnish layer between the Service and the Deployment it backs. You would define a resource of Kind "VarnishService", and specify all the regular specs for a Service, plus some new fields that control how many Varnish instances you want, how much memory/cpu they get, and other relevant information for the Varnish cluster.
 
 **Controller**: The controller is an application deployed into your cluster that knows how to react to the VarnishService CustomResource. Meaning, this application watches for new or changed VarnishServices and handles the actual underlying infrastructure. That means it must be running at all times in the cluster, although it lives in its own namespace away from your application.
 
 ## Kubernetes Version Requirement
 
-This operator assumes that the `/status` and `/scale` subresources area enabled for Custom Resources, which means that you must have enabled this alpha feature for Kubernetes v1.10 (impossible on IBM Kubernetes Service) or are using at least v1.11, where it is enabled by default.
+This operator assumes that the `/status` and `/scale` subresources are enabled for Custom Resources, which means that you must have enabled this alpha feature for Kubernetes v1.10 (impossible on IBM Kubernetes Service) or are using at least v1.11, where it is enabled by default.
 
 ## Installation
 
@@ -146,7 +146,7 @@ status:
     ...   
 ```
 
-After the VCL in the config map has been changed, the status field will be immediately be updated to reflect the latest version. However that does not guarantee that Varnish pods run the latest VCL configuration. It needs time to reload and even could fail to reload if the VCL has syntax error for example.
+After the VCL in the config map has been changed, the status field will be immediately updated to reflect the latest version. However that does not guarantee that Varnish pods run the latest VCL configuration. It needs time to reload and even could fail to reload if the VCL has syntax error for example.
  
 To give users a better observability about currently running VCL versions the status has a field `vcl.availability` which indicates how many pods have the latest version and how many of them are outdated. 
 
@@ -168,7 +168,7 @@ status:
     ...
 ```
 
-To check which pods has outdated versions simply check their annotations. The annotation `configMapVersion` on the Varnish pod will indicate the latest version of the config map used. If it's not the same as in the VarnishService status it's likely that there's an issue.
+To check which pods have outdated versions, simply check their annotations. The annotation `configMapVersion` on the Varnish pod will indicate the latest version of the config map used. If it's not the same as in the VarnishService status it's likely that there's an issue.
 
 Example of detecting a pod that failed to reload:
 

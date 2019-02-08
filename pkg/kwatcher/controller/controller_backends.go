@@ -2,7 +2,7 @@ package controller
 
 import (
 	"context"
-	"icm-varnish-k8s-operator/pkg/kwatcher/backends"
+	"sort"
 
 	"github.com/juju/errors"
 	"k8s.io/api/core/v1"
@@ -10,7 +10,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (r *ReconcileVarnish) getBackends(namespace string, labels labels.Selector, targetPort int32) ([]backends.Backend, error) {
+func (r *ReconcileVarnish) getBackends(namespace string, labels labels.Selector, targetPort int32) ([]Backend, error) {
 	found := &v1.EndpointsList{}
 
 	opts := &client.ListOptions{
@@ -26,18 +26,18 @@ func (r *ReconcileVarnish) getBackends(namespace string, labels labels.Selector,
 		return nil, errors.NotFoundf("no endpoints from namespace %s matching labels %s", namespace, labels.String())
 	}
 
-	var backendList []backends.Backend
+	var backendList []Backend
 
 	for _, endpoints := range found.Items {
 		for _, endpoint := range endpoints.Subsets {
-			for _, address := range endpoint.Addresses {
+			for _, address := range append(endpoint.Addresses, endpoint.NotReadyAddresses...) {
 				for _, port := range endpoint.Ports {
 					if port.Port == targetPort {
 						nodeLabels, err := r.getNodeLabels(*address.NodeName)
 						if err != nil {
 							return nil, errors.Trace(err)
 						}
-						b := backends.Backend{IP: address.IP, NodeLabels: nodeLabels, PodName: address.TargetRef.Name}
+						b := Backend{IP: address.IP, NodeLabels: nodeLabels, PodName: address.TargetRef.Name}
 						backendList = append(backendList, b)
 						break
 					}
@@ -45,5 +45,11 @@ func (r *ReconcileVarnish) getBackends(namespace string, labels labels.Selector,
 			}
 		}
 	}
+
+	// sort slices so they also look the same for the code using it
+	// prevents cases when generated VCL files change only because of order changes in the slice
+	sort.SliceStable(backendList, func(i, j int) bool {
+		return backendList[i].IP < backendList[j].IP
+	})
 	return backendList, nil
 }

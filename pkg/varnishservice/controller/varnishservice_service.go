@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
+	"icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
 	"strconv"
 
@@ -20,20 +21,20 @@ func (r *ReconcileVarnishService) reconcileNoCachedService(instance, instanceSta
 	for k, v := range instance.Spec.Service.Selector {
 		selector[k] = v
 	}
-	selectorLabels := generateLabels(instance, "nocached-service")
-	inheritedLabels := inheritLabels(instance)
-	labels := make(map[string]string, len(selectorLabels)+len(inheritedLabels))
+	selectorLabels := labels.ComponentLabels(instance, icmapiv1alpha1.VarnishComponentNoCachedService)
+	inheritedLabels := labels.InheritLabels(instance)
+	svcLabels := make(map[string]string, len(selectorLabels)+len(inheritedLabels))
 	for k, v := range inheritedLabels {
-		labels[k] = v
+		svcLabels[k] = v
 	}
 	for k, v := range selectorLabels {
-		labels[k] = v
+		svcLabels[k] = v
 	}
 	noCachedService := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      instance.Name + "-varnish-nocached",
 			Namespace: instance.Namespace,
-			Labels:    labels,
+			Labels:    svcLabels,
 		},
 		Spec: v1.ServiceSpec{
 			Selector: selector,
@@ -52,7 +53,7 @@ func (r *ReconcileVarnishService) reconcileCachedService(instance, instanceStatu
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      instance.Name + "-varnish-cached",
 			Namespace: instance.Namespace,
-			Labels:    combinedLabels(instance, "cached-service"),
+			Labels:    labels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentCachedService),
 		},
 	}
 

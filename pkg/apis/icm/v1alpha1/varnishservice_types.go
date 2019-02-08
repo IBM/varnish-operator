@@ -10,6 +10,23 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+const (
+	LabelVarnishOwner     = "varnish-owner"
+	LabelVarnishComponent = "varnish-component"
+	LabelVarnishUID       = "varnish-uid"
+
+	VarnishComponentVarnishes           = "varnishes"
+	VarnishComponentCachedService       = "cached-service"
+	VarnishComponentNoCachedService     = "nocached-service"
+	VarnishComponentClusterRole         = "clusterrole"
+	VarnishComponentClusterRoleBinding  = "clusterrolebinding"
+	VarnishComponentRole                = "role"
+	VarnishComponentRoleBinding         = "rolebinding"
+	VarnishComponentVCLFileConfigMap    = "vcl-file-configmap"
+	VarnishComponentPodDisruptionBudget = "pdb"
+	VarnishComponentServiceAccount      = "serviceaccount"
+)
+
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 

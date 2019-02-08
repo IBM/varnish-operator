@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
+	"icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
 
 	"k8s.io/api/core/v1"
@@ -18,7 +19,7 @@ func (r *ReconcileVarnishService) reconcileServiceAccount(instance *icmapiv1alph
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      saName,
 			Namespace: instance.Namespace,
-			Labels:    combinedLabels(instance, "serviceaccount"),
+			Labels:    labels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentServiceAccount),
 		},
 		ImagePullSecrets: []v1.LocalObjectReference{{Name: *instance.Spec.Deployment.Container.ImagePullSecret}},
 	}

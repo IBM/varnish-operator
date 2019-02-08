@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
+	vslabels "icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
 	"io/ioutil"
 
@@ -26,7 +27,7 @@ func (r *ReconcileVarnishService) reconcileConfigMap(podsSelector map[string]str
 	logr := r.logger.With("name", instance.Spec.VCLConfigMap.Name, "namespace", instance.Namespace)
 
 	cm := &v1.ConfigMap{}
-	cmLabels := combinedLabels(instance, "vcl-file-configmap")
+	cmLabels := vslabels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentVCLFileConfigMap)
 	err := r.Get(context.TODO(), types.NamespacedName{Name: instance.Spec.VCLConfigMap.Name, Namespace: instance.Namespace}, cm)
 	// if the ConfigMap does not exist, create it and set it with the default VCL files
 	// Else if there was a problem doing the Get, just return an error

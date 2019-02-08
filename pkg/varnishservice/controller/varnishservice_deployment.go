@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
+	vslabels "icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
 	"strings"
 
@@ -15,27 +16,23 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-const (
-	componentNameVarnishes = "varnishes"
-)
-
 func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *icmapiv1alpha1.VarnishService, serviceAccountName string, endpointSelector map[string]string) (map[string]string, error) {
-	podSelector := generateLabels(instance, componentNameVarnishes)
+	varnishLabels := vslabels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentVarnishes)
 	gvk := instance.GroupVersionKind()
 	desired := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      instance.Name + "-varnish-deployment",
-			Labels:    combinedLabels(instance, componentNameVarnishes),
+			Labels:    varnishLabels,
 			Namespace: instance.Namespace,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: instance.Spec.Deployment.Replicas,
 			Selector: &metav1.LabelSelector{
-				MatchLabels: podSelector,
+				MatchLabels: varnishLabels,
 			},
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: podSelector,
+					Labels: varnishLabels,
 				},
 				Spec: v1.PodSpec{
 					Containers: []v1.Container{
@@ -45,12 +42,10 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 							Ports: []v1.ContainerPort{
 								{
 									Name:          instance.Spec.Service.VarnishPort.Name,
-									HostPort:      instance.Spec.Service.VarnishPort.Port,
 									ContainerPort: instance.Spec.Service.VarnishPort.Port,
 								},
 								{
 									Name:          instance.Spec.Service.VarnishExporterPort.Name,
-									HostPort:      instance.Spec.Service.VarnishExporterPort.Port,
 									ContainerPort: instance.Spec.Service.VarnishExporterPort.Port,
 								},
 							},
@@ -132,5 +127,5 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 
 	instanceStatus.Status.Deployment = found.Status
 
-	return podSelector, nil
+	return varnishLabels, nil
 }

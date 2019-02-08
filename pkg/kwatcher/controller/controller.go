@@ -9,10 +9,14 @@ import (
 	"icm-varnish-k8s-operator/pkg/kwatcher/events"
 	"icm-varnish-k8s-operator/pkg/logger"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"go.uber.org/zap"
 
 	"github.com/juju/errors"
 	"k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -22,6 +26,20 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
+
+// VarnishNode represents a Varnish pod
+type VarnishNode struct {
+	IP      string
+	Port    int32
+	PodName string
+}
+
+// Backend represents pods that are cached by Varnish
+type Backend struct {
+	IP         string
+	NodeLabels map[string]string
+	PodName    string
+}
 
 // Add creates a new VarnishService Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -55,7 +73,7 @@ func Add(mgr manager.Manager, cfg *config.Config, logr *logger.Logger) error {
 		return errors.Annotate(err, "could not watch configMap")
 	}
 
-	epPredicate, err := endpoints.Predicate(cfg.EndpointSelectorString)
+	backendEpPredicate, err := endpoints.NewPredicate(cfg.EndpointSelectorString, logr)
 	if err != nil {
 		return errors.Annotate(err, "could not create endpoints predicate")
 	}
@@ -69,7 +87,31 @@ func Add(mgr manager.Manager, cfg *config.Config, logr *logger.Logger) error {
 					}},
 				}
 			}),
-	}, epPredicate)
+	}, backendEpPredicate)
+	if err != nil {
+		return errors.Annotate(err, "could not watch endpoints")
+	}
+
+	varnishPodsSelector := labels.SelectorFromSet(labels.Set{
+		v1alpha1.LabelVarnishOwner:     cfg.VarnishServiceName,
+		v1alpha1.LabelVarnishComponent: v1alpha1.VarnishComponentCachedService,
+		v1alpha1.LabelVarnishUID:       string(cfg.VarnishServiceUID),
+	})
+	varnishEpPredicate, err := endpoints.NewPredicate(varnishPodsSelector.String(), logr)
+	if err != nil {
+		return errors.Annotate(err, "could not create endpoints predicate")
+	}
+	err = c.Watch(&source.Kind{Type: &v1.Endpoints{}}, &handler.EnqueueRequestsFromMapFunc{
+		ToRequests: handler.ToRequestsFunc(
+			func(a handler.MapObject) []reconcile.Request {
+				return []reconcile.Request{
+					{NamespacedName: types.NamespacedName{
+						Namespace: cfg.Namespace,
+						Name:      cfg.PodName,
+					}},
+				}
+			}),
+	}, varnishEpPredicate)
 	if err != nil {
 		return errors.Annotate(err, "could not watch endpoints")
 	}
@@ -88,8 +130,14 @@ type ReconcileVarnish struct {
 }
 
 func (r *ReconcileVarnish) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	r.logger.Debugw("Reconciling...")
 	res, err := r.reconcileWithLogging(request)
 	if err != nil {
+		if statusErr, ok := errors.Cause(err).(*apierrors.StatusError); ok && statusErr.ErrStatus.Reason == metav1.StatusReasonConflict {
+			r.logger.Info("Conflict occurred. Retrying...", zap.Error(err))
+			return reconcile.Result{Requeue: true}, nil //retry but do not treat conflicts as errors
+		}
+
 		r.logger.Error(zap.Error(err))
 		return reconcile.Result{}, err
 	}
@@ -128,7 +176,12 @@ func (r *ReconcileVarnish) reconcileWithLogging(request reconcile.Request) (reco
 		return reconcile.Result{}, errors.Trace(err)
 	}
 
-	backendsFile, err := resolveTemplate(newFiles[r.config.BackendsTmplFile], r.config.TargetPort, bks)
+	var varnishNodes []VarnishNode
+	if varnishNodes, err = r.getVarnishNodes(vs); err != nil {
+		return reconcile.Result{}, err
+	}
+
+	backendsFile, err := r.resolveTemplate(newFiles[r.config.BackendsTmplFile], r.config.TargetPort, bks, varnishNodes)
 	if err != nil {
 		return reconcile.Result{}, errors.Trace(err)
 	}

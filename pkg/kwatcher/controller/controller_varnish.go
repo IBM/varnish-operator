@@ -37,6 +37,8 @@ type VCLConfig struct {
 }
 
 func (r *ReconcileVarnish) reconcileVarnish(vs *v1alpha1.VarnishService, pod *v1.Pod, cm *v1.ConfigMap) error {
+	r.logger.Debugw("Starting varnish reload...")
+	start := time.Now()
 	out, err := exec.Command("vcl_reload", createVCLConfigName(cm.GetResourceVersion())).CombinedOutput()
 	if err != nil {
 		if isVCLCompilationError(err) {
@@ -52,6 +54,7 @@ func (r *ReconcileVarnish) reconcileVarnish(vs *v1alpha1.VarnishService, pod *v1
 		}
 		return errors.Annotate(err, string(out))
 	}
+	r.logger.Debugf("Varnish successfully reloaded in %f seconds", time.Since(start).Seconds())
 	return nil
 }
 

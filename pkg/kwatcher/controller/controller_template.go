@@ -2,13 +2,12 @@ package controller
 
 import (
 	"bytes"
-	"icm-varnish-k8s-operator/pkg/kwatcher/backends"
 	"text/template"
 
 	"github.com/juju/errors"
 )
 
-func resolveTemplate(tmplBytes []byte, targetPort int32, backends []backends.Backend) ([]byte, error) {
+func (r *ReconcileVarnish) resolveTemplate(tmplBytes []byte, targetPort int32, backends []Backend, varnishNodes []VarnishNode) ([]byte, error) {
 	tmplName := "backends"
 	tmpl, err := template.New(tmplName).Option("missingkey=error").Parse(string(tmplBytes))
 	if err != nil {
@@ -16,8 +15,9 @@ func resolveTemplate(tmplBytes []byte, targetPort int32, backends []backends.Bac
 	}
 
 	data := map[string]interface{}{
-		"Backends":   backends,
-		"TargetPort": targetPort,
+		"Backends":     backends,
+		"TargetPort":   targetPort,
+		"VarnishNodes": varnishNodes,
 	}
 
 	var b bytes.Buffer

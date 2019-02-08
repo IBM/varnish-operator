@@ -61,7 +61,7 @@ func Add(mgr manager.Manager, cfg *config.Config, logr *logger.Logger) error {
 	// RoleBinding
 	// ServiceAccount
 
-	podPredicate, err := pods.NewAnnotationsPredicate(map[string]string{labelVarnishComponent: componentNameVarnishes})
+	podPredicate, err := pods.NewAnnotationsPredicate(map[string]string{icmv1alpha1.LabelVarnishComponent: icmv1alpha1.VarnishComponentVarnishes})
 	if err != nil {
 		return err
 	}
@@ -70,7 +70,7 @@ func Add(mgr manager.Manager, cfg *config.Config, logr *logger.Logger) error {
 			func(a handler.MapObject) []reconcile.Request {
 				return []reconcile.Request{
 					{NamespacedName: types.NamespacedName{
-						Name:      a.Meta.GetLabels()[labelVarnishOwner],
+						Name:      a.Meta.GetLabels()[icmv1alpha1.LabelVarnishOwner],
 						Namespace: a.Meta.GetNamespace(),
 					}},
 				}

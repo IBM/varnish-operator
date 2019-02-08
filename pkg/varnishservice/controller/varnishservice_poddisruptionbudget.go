@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
+	"icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
 
 	policyv1beta1 "k8s.io/api/policy/v1beta1"
@@ -31,7 +32,7 @@ func (r *ReconcileVarnishService) reconcilePodDisruptionBudget(instance *icmapiv
 	desired := &policyv1beta1.PodDisruptionBudget{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      namespacedName.Name,
-			Labels:    combinedLabels(instance, "pdb"),
+			Labels:    labels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentPodDisruptionBudget),
 			Namespace: namespacedName.Namespace,
 		},
 		Spec: pdbs,

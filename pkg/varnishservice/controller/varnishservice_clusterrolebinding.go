@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
+	"icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
 
 	rbacv1beta1 "k8s.io/api/rbac/v1beta1"
@@ -16,7 +17,7 @@ func (r *ReconcileVarnishService) reconcileClusterRoleBinding(instance *icmapiv1
 	clusterRoleBinding := &rbacv1beta1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   instance.Name + "-varnish-clusterrolebinding-" + instance.Namespace,
-			Labels: combinedLabels(instance, "clusterrolebinding"),
+			Labels: labels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentClusterRoleBinding),
 		},
 		Subjects: []rbacv1beta1.Subject{
 			{

@@ -10,7 +10,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (r *ReconcileVarnish) getBackends(namespace string, labels labels.Selector, targetPort int32) ([]Backend, error) {
+func (r *ReconcileVarnish) getPodInfo(namespace string, labels labels.Selector, validPort int32) ([]PodInfo, error) {
 	found := &v1.EndpointsList{}
 
 	opts := &client.ListOptions{
@@ -26,18 +26,18 @@ func (r *ReconcileVarnish) getBackends(namespace string, labels labels.Selector,
 		return nil, errors.NotFoundf("no endpoints from namespace %s matching labels %s", namespace, labels.String())
 	}
 
-	var backendList []Backend
+	var backendList []PodInfo
 
 	for _, endpoints := range found.Items {
 		for _, endpoint := range endpoints.Subsets {
 			for _, address := range append(endpoint.Addresses, endpoint.NotReadyAddresses...) {
 				for _, port := range endpoint.Ports {
-					if port.Port == targetPort {
+					if port.Port == validPort {
 						nodeLabels, err := r.getNodeLabels(*address.NodeName)
 						if err != nil {
 							return nil, errors.Trace(err)
 						}
-						b := Backend{IP: address.IP, NodeLabels: nodeLabels, PodName: address.TargetRef.Name}
+						b := PodInfo{IP: address.IP, NodeLabels: nodeLabels, PodName: address.TargetRef.Name}
 						backendList = append(backendList, b)
 						break
 					}

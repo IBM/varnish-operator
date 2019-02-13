@@ -7,15 +7,14 @@ import (
 	"icm-varnish-k8s-operator/pkg/kwatcher/configmaps"
 	"icm-varnish-k8s-operator/pkg/kwatcher/endpoints"
 	"icm-varnish-k8s-operator/pkg/kwatcher/events"
+	vslabels "icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/logger"
 
+	"github.com/juju/errors"
+	"go.uber.org/zap"
+	"k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"go.uber.org/zap"
-
-	"github.com/juju/errors"
-	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -27,15 +26,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-// VarnishNode represents a Varnish pod
-type VarnishNode struct {
-	IP      string
-	Port    int32
-	PodName string
-}
-
-// Backend represents pods that are cached by Varnish
-type Backend struct {
+// PodInfo represents the relevant information of a pod for VCL code
+type PodInfo struct {
 	IP         string
 	NodeLabels map[string]string
 	PodName    string
@@ -151,6 +143,14 @@ func (r *ReconcileVarnish) reconcileWithLogging(request reconcile.Request) (reco
 		return reconcile.Result{}, errors.Trace(err)
 	}
 
+	r.scheme.Default(vs)
+
+	varnishPort := vs.Spec.Service.VarnishPort.Port
+	targetPort := int32(vs.Spec.Service.VarnishPort.TargetPort.IntValue())
+	defaultFile := vs.Spec.VCLConfigMap.DefaultFile
+	backendsFile := vs.Spec.VCLConfigMap.BackendsFile
+	backendsTmplFile := vs.Spec.VCLConfigMap.BackendsTmplFile
+
 	pod := &v1.Pod{}
 	err = r.Get(context.Background(), types.NamespacedName{Namespace: request.Namespace, Name: r.config.PodName}, pod)
 	if err != nil {
@@ -167,27 +167,25 @@ func (r *ReconcileVarnish) reconcileWithLogging(request reconcile.Request) (reco
 		newFiles[k] = []byte(v)
 	}
 
-	if err = verifyFilesExist(newFiles, r.config.DefaultFile, r.config.BackendsTmplFile); err != nil {
+	if err = verifyFilesExist(newFiles, defaultFile, backendsTmplFile); err != nil {
 		return reconcile.Result{}, errors.Trace(err)
 	}
 
-	bks, err := r.getBackends(r.config.Namespace, r.config.EndpointSelector, r.config.TargetPort)
+	bks, err := r.getPodInfo(r.config.Namespace, r.config.EndpointSelector, targetPort)
 	if err != nil {
 		return reconcile.Result{}, errors.Trace(err)
 	}
 
-	var varnishNodes []VarnishNode
-	if varnishNodes, err = r.getVarnishNodes(vs); err != nil {
-		return reconcile.Result{}, err
-	}
+	varnishLabels := labels.SelectorFromSet(vslabels.CombinedComponentLabels(vs, v1alpha1.VarnishComponentCachedService))
+	varnishNodes, err := r.getPodInfo(r.config.Namespace, varnishLabels, varnishPort)
 
-	backendsFile, err := r.resolveTemplate(newFiles[r.config.BackendsTmplFile], r.config.TargetPort, bks, varnishNodes)
+	templatizedBackendsFile, err := r.resolveTemplate(newFiles[backendsTmplFile], targetPort, varnishPort, bks, varnishNodes)
 	if err != nil {
 		return reconcile.Result{}, errors.Trace(err)
 	}
 
-	delete(newFiles, r.config.BackendsTmplFile)
-	newFiles[r.config.BackendsFile] = backendsFile
+	delete(newFiles, backendsTmplFile)
+	newFiles[backendsFile] = templatizedBackendsFile
 
 	currFiles, err := getCurrentFiles(r.config.VCLDir)
 	if err != nil {

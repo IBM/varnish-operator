@@ -106,6 +106,36 @@ If a ConfigMap of name `spec.vclConfigMap.name` does not exist on VarnishService
 
 If you would like to use the default `<backendsFile>.tmpl`, but a custom `<defaultFile>`, the easiest way is to create the VarnishService without the ConfigMap, let the operator create the ConfigMap for you, and then modify the contents of the ConfigMap after creation. Alternatively, just copy the content as linked above.
 
+### Writing the <backendsFile>.tmpl
+
+The template file is a regular vcl file, with the addition of [Go templates](https://golang.org/pkg/text/template). This is because there is no way to know at startup what the IP addresses of the backends will be, so they must be injected at runtime. Not to mention, they can change over time if the backends get rescheduled by Kubernetes. These are the available fields in the template:
+
+* .Backends - `[]PodInfo`: array of backends
+  * .IP - `string`: ip address of a backend
+  * .NodeLabels - `map[string]string`: labels of the node on which the backend is deployed. This is primarily for configuration of multi-zone clusters
+  * .PodName - `string`: name of pod representing a backend
+* .TargetPort - `int`: port that is exposed on the backends
+* .VarnishNodes - `[]PodInfo`: array of varnish nodes, for configuration of shard director (if using round robin director, you can ignore)
+  * .IP - `string`: ip address of a varnish node
+  * .NodeLabels - `map[string]string`: labels of the k8s node on which a varnish node is deployed. This is primarily for configuration of multi-zone clusters
+  * .PodName - `string`: name of pod representing a varnish node
+* .VarnishPort - `int`: port that is exposed on the varnish nodes (if using round robin director, you can ignore)
+
+For example, to loop over the backends and create vcl `backend`s for each:
+
+```vcl
+{{ range .Backends }}
+backend {{ .PodName }} {
+  .host = "{{ .IP }}";
+  .port = "{{ $.TargetPort }}";
+}
+{{ end }}
+```
+
+This loops over `.Backends`, names each backend `.PodName`, sets `.host` to `.IP`, and then sets port to the universal `$.TargetPort`.
+
+For the full example of using the templates, see the [`backends.vcl.tmpl` file](/config/vcl/backends.vcl.tmpl).
+
 ### Using user defined VCL Code versions
 
 VCL related status information is available at field `vcl` in status object. 
@@ -230,6 +260,22 @@ Simply calling `kubectl delete` on the VarnishResource will recursively delete a
 
 The VarnishService keeps track of its current status as events occur in the system. This can be seen through the `Status` field, visible from `kubectl describe vs <your-varnishservice>`.
 
+### Prove that Varnish is Working
+
+In order to show that Varnish is properly configured, it is common to add a header to the response indicating whether Varnish responded from cache or from origin. In the `default.vcl` provided out of the box, that header is `X-Varnish-Cache: HIT` and `X-Varnish-Cache: MISS`. With such a header prepared, make a request against the `cached` service (ie, service called `<varnish-service-name>-cached`) and look at its headers for the varnish-added header.
+
+To make such a request, you can either
+
+* expose that service through ingress, so that it is accessible to the outside world
+* exec onto a pod specifically to make a curl request against the service. For instance, running
+
+    ```sh
+    kubectl run curlbox --image=radial/busyboxplus:curl --restart=Never -it -- sh
+    ```
+
+    will log you into a pod in the cluster that has curl and can access the service by name
+  * After exiting from the `curlbox` container, run `kubectl delete pod curlbox` to clean it up 
+
 ## Keeping Varnish Stable
 
 Kubernetes is built on the premise that its runnable environments are ephemeral, meaning they can be created or deleted at will, with little to no effect on the overall system. In the case of Varnish, which is purely an in-memory caching layer, deleting and creating instances all the time would cause the cache to perform very poorly. Thus, there is a need to keep Varnish stable, ie tell Kubernetes that these particular runnable environments should _not_ be treated as ephemeral.
@@ -245,12 +291,6 @@ The way that Kubernetes manages deployed pods on nodes is through monitoring the
 [Kubernetes allows decent control](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#inter-pod-affinity-and-anti-affinity-beta-feature) on where pods get deployed based on labels associated with pods and/or nodes. For instance, you can configure pods of the same deployment to repel each other, meaning new pods entering the deployment will try to avoid nodes that already have a pod of that type. That way, you if any one node goes down, it will only take a single pod with it. Likewise, you can configure pods to be attracted to each other, for colocation that could decrease latency between pods. Note that reading through the above linked documentation is valuable, as it goes into limitations to affinities, as well as deeply explains how they work and when to use them.
 
 For the purposes of this Varnish deployment, you will most likely want to configure a [pod anti-affinity](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#never-co-located-in-the-same-node) (see the deployment yaml right above this section for the example) so that each pod of the varnish deployment is on a different node. Since Varnish nodes do not need to talk to each other (at least in the free versions supported by this operator), there is no need for colocation, and so you should focus on minimizing the impact of lost nodes. An example of what that might look like is in the [example annotated yaml file](/config/samples/icm_v1alpha1_varnishservice.yaml) under `spec.deployment.affinity`.
-
-### Further Investigations
-
-#### Taints/Tolerations
-
-Kubernetes has a mechanism to repel pods away from a node (taints) unless the pods are specifically allowed on that node (tolerations). I am still evaluating if this could be useful in keeping Varnish stable, since it is conceivably possible that Kubernetes will sometimes just move pods around nodes to better fit things, especially in a node auto-scaling environment, even with a guaranteed resource configuration. It is unclear how often that might happen, so some testing will need to be done before further exploring taints/tolerations. At any rate, it is possible to add a toleration to the Varnish pod, in case it is needed.
 
 ### Running Varnish pods on separate IKS worker pools
 

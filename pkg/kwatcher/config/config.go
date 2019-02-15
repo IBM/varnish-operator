@@ -18,6 +18,9 @@ import (
 type Config struct {
 	EndpointSelectorString string        `env:"ENDPOINT_SELECTOR_STRING,required"`
 	ConfigMapName          string        `env:"CONFIGMAP_NAME,required"`
+	BackendsFile           string        `env:"BACKENDS_FILE,required"`
+	BackendsTmplFile       string        `env:"BACKENDS_TMPL_FILE,required"`
+	DefaultFile            string        `env:"DEFAULT_FILE,required"`
 	Namespace              string        `env:"NAMESPACE,required"`
 	PodName                string        `env:"POD_NAME,required"`
 	VarnishServiceName     string        `env:"VARNISH_SERVICE_NAME,required"`
@@ -25,6 +28,7 @@ type Config struct {
 	VarnishServiceGroup    string        `env:"VARNISH_SERVICE_GROUP,required"`
 	VarnishServiceVersion  string        `env:"VARNISH_SERVICE_VERSION,required"`
 	VarnishServiceKind     string        `env:"VARNISH_SERVICE_KIND,required"`
+	TargetPort             int32         `env:"TARGET_PORT,required"`
 	LogFormat              string        `env:"LOG_FORMAT,required"`
 	LogLevel               zapcore.Level `env:"LOG_LEVEL,required"`
 	VCLDir                 string

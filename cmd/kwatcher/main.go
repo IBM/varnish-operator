@@ -5,14 +5,14 @@ package main
 
 import (
 	"flag"
-	"icm-varnish-k8s-operator/pkg/apis"
+	"icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/kwatcher/config"
 	"icm-varnish-k8s-operator/pkg/kwatcher/controller"
 	"icm-varnish-k8s-operator/pkg/logger"
 	"log"
 
 	"go.uber.org/zap"
-
+	"k8s.io/apimachinery/pkg/runtime"
 	kconfig "sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
@@ -41,7 +41,8 @@ func main() {
 	}
 
 	// Setup Scheme for all resources
-	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
+	AddToSchemes := runtime.SchemeBuilder{v1alpha1.SchemeBuilder.AddToScheme}
+	if err := AddToSchemes.AddToScheme(mgr.GetScheme()); err != nil {
 		logr.Fatal(err)
 	}
 

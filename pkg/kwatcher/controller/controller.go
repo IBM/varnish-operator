@@ -143,13 +143,11 @@ func (r *ReconcileVarnish) reconcileWithLogging(request reconcile.Request) (reco
 		return reconcile.Result{}, errors.Trace(err)
 	}
 
-	r.scheme.Default(vs)
-
 	varnishPort := vs.Spec.Service.VarnishPort.Port
 	targetPort := int32(vs.Spec.Service.VarnishPort.TargetPort.IntValue())
-	defaultFile := vs.Spec.VCLConfigMap.DefaultFile
-	backendsFile := vs.Spec.VCLConfigMap.BackendsFile
-	backendsTmplFile := vs.Spec.VCLConfigMap.BackendsTmplFile
+	defaultFile := r.config.DefaultFile
+	backendsFile := r.config.BackendsFile
+	backendsTmplFile := r.config.BackendsTmplFile
 
 	pod := &v1.Pod{}
 	err = r.Get(context.Background(), types.NamespacedName{Namespace: request.Namespace, Name: r.config.PodName}, pod)

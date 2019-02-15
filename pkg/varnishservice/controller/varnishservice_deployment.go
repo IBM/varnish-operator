@@ -52,6 +52,9 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 							Env: []v1.EnvVar{
 								{Name: "ENDPOINT_SELECTOR_STRING", Value: labels.SelectorFromSet(endpointSelector).String()},
 								{Name: "CONFIGMAP_NAME", Value: instance.Spec.VCLConfigMap.Name},
+								{Name: "BACKENDS_FILE", Value: instance.Spec.VCLConfigMap.BackendsFile},
+								{Name: "BACKENDS_TMPL_FILE", Value: instance.Spec.VCLConfigMap.BackendsTmplFile},
+								{Name: "DEFAULT_FILE", Value: instance.Spec.VCLConfigMap.DefaultFile},
 								{Name: "NAMESPACE", Value: instance.Namespace},
 								{Name: "POD_NAME", ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{FieldPath: "metadata.name"}}},
 								{Name: "VARNISH_SERVICE_NAME", Value: instance.Name},
@@ -59,6 +62,7 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 								{Name: "VARNISH_SERVICE_GROUP", Value: gvk.Group},
 								{Name: "VARNISH_SERVICE_VERSION", Value: gvk.Version},
 								{Name: "VARNISH_SERVICE_KIND", Value: gvk.Kind},
+								{Name: "TARGET_PORT", Value: instance.Spec.Service.VarnishPort.TargetPort.String()},
 								{Name: "LOG_FORMAT", Value: instance.Spec.LogFormat},
 								{Name: "LOG_LEVEL", Value: instance.Spec.LogLevel},
 								{Name: "VARNISH_ARGS", Value: strings.Join(instance.Spec.Deployment.Container.VarnishArgs, " ")},

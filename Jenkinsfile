@@ -7,7 +7,7 @@ bxApiKeyId = "icm_bluemix_1638245"
 region = "us-south"
 
 // for Docker
-dockerRegistry = "registry.ng.bluemix.net"
+dockerRegistry = "us.icr.io"
 dockerRegistryNamespace = "icm-varnish"
 varnishDockerImageName = "varnish"
 operatorDockerImageName = "varnish-controller"

@@ -28,7 +28,7 @@
     ```
 1. Add token to that namespace:
     ```sh
-    kubectl create secret docker-registry docker-reg-secret --namespace <namespace> --docker-server=registry.ng.bluemix.net --docker-username=token --docker-password=<token> --docker-email=dummy@ignore.me
+    kubectl create secret docker-registry docker-reg-secret --namespace <namespace> --docker-server=us.icr.io --docker-username=token --docker-password=<token> --docker-email=dummy@ignore.me
     ```
    (`docker-reg-secret` used here as name of secret, but any name can be used)
 
@@ -49,7 +49,7 @@
 
 1. Add same IBM Container Registry token as above to target namespace where deployment that needs Varnish exists:
     ```sh
-    kubectl create secret docker-registry docker-reg-secret --namespace <target-namespace> --docker-server=registry.ng.bluemix.net --docker-username=token --docker-password=<token> --docker-email=dummy@ignore.me
+    kubectl create secret docker-registry docker-reg-secret --namespace <target-namespace> --docker-server=us.icr.io --docker-username=token --docker-password=<token> --docker-email=dummy@ignore.me
     ```
     (`docker-reg-secret` used here as name of secret, but any name can be used)
 1. Create VarnishService yaml for spec of Varnishes:

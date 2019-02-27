@@ -24,7 +24,7 @@ manager: generate fmt vet
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet
-	DEPLOYMENT_CONTAINER_IMAGE=registry.ng.bluemix.net/icm-varnish/${VARNISH_IMG} go run ${ROOT_DIR}cmd/manager/main.go
+	DEPLOYMENT_CONTAINER_IMAGE=us.icr.io/icm-varnish/${VARNISH_IMG} go run ${ROOT_DIR}cmd/manager/main.go
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 install: manifests
@@ -72,7 +72,7 @@ docker-build: fake-test
 # Tag and push the docker image
 docker-tag-push:
 	@if [ -z "${REPO_PATH}" ]; then\
-		echo "must set REPO_PATH variable, eg \"make docker-tag-push REPO_PATH=registry.ng.bluemix.net/icm-varnish\"";\
+		echo "must set REPO_PATH variable, eg \"make docker-tag-push REPO_PATH=us.icr.io/icm-varnish\"";\
 		exit 1;\
 	fi
 ifeq ($(PUBLISH),)
@@ -92,7 +92,7 @@ docker-build-varnish: fmt vet
 
 docker-tag-push-varnish:
 	@if [ -z "${REPO_PATH}" ]; then\
-	  echo "must set REPO_PATH variable, eg \"make docker-tag-push REPO_PATH=registry.ng.bluemix.net/icm-varnish\"";\
+	  echo "must set REPO_PATH variable, eg \"make docker-tag-push REPO_PATH=us.icr.io/icm-varnish\"";\
 	  exit 1;\
 	fi;
 

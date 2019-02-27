@@ -44,7 +44,7 @@ And from the output, save the `Token` field.
 Once you have generated your docker registry key, you must either use an existing or create a new namespace. Add a secret with the docker registry token to that namespace:
 
 ```sh
-kubectl create secret docker-registry <name> --namespace <namespace> --docker-server=registry.ng.bluemix.net --docker-username=token --docker-password=<token> --docker-email=<any-email>
+kubectl create secret docker-registry <name> --namespace <namespace> --docker-server=us.icr.io --docker-username=token --docker-password=<token> --docker-email=<any-email>
 ```
 
 Note that

@@ -49,10 +49,10 @@ kubectl create ns $varnish_namespace
 token=$(bx cr token-get -q $(bx cr tokens | grep "for Varnish operator" | awk '{print $1}'))
 
 kubectl create secret -n default \
-  docker-registry $pull_secret --docker-server=registry.ng.bluemix.net --docker-username=token --docker-password=$token --docker-email=a@b.com
+  docker-registry $pull_secret --docker-server=us.icr.io --docker-username=token --docker-password=$token --docker-email=a@b.com
 
 kubectl create secret -n $varnish_namespace \
-  docker-registry $pull_secret --docker-server=registry.ng.bluemix.net --docker-username=token --docker-password=$token --docker-email=a@b.com
+  docker-registry $pull_secret --docker-server=us.icr.io --docker-username=token --docker-password=$token --docker-email=a@b.com
 
 helm install --name=icm-varnish varnish-operator --wait
 

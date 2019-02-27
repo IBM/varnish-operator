@@ -12,7 +12,7 @@ operator:
     id: varnish-operator-lock
   container:
     # path to image + tag
-    image: registry.ng.bluemix.net/icm-varnish/varnish-controller:0.11.0
+    image: us.icr.io/icm-varnish/varnish-controller:0.11.0
     # Use the name of the imagePullSecret created in the [Getting Access](#getting-access) section above
     imagePullSecret: docker-reg-secret
     # imagePullPolicy is passed directly to the varnish deployment, that controls how the varnish image will be pulled for new containers
@@ -46,7 +46,7 @@ defaults:
     replicas: 2
     container:
       # path to image + tag
-      image: registry.ng.bluemix.net/icm-varnish/varnish:0.11.0
+      image: us.icr.io/icm-varnish/varnish:0.11.0
       # imagePullPolicy is passed directly to the varnish deployment, that controls how the varnish image will be pulled for new containers
       imagePullPolicy: Always
       # restart policy used for Varnish containers

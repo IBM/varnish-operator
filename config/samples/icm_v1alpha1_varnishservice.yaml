@@ -18,17 +18,14 @@ spec:
     # the name given to the configMap that contains the contents of the vcl. If the configMap does not exist, a basic round-robin-based VCL file will be created and used
     # MUST use only lowercase letters, numbers, "-", or "."
     name: vcl-files
-    # the name of the file to be maintained through the Kubernetes API (by watching the endpoints in a deployment)
-    # the VarnishService will expect to see a "<backendsFile>.tmpl" file in the ConfigMap that has the Go template for the <backendsFile>. For example, "backends.vcl.tmpl"
-    backendsFile: backends.vcl
     # the name of the base VCL file
-    defaultFile: default.vcl
+    entrypointFile: default.vcl
   deployment:
     # The number of varnish instances to run
     replicas: 2
     container:
       # path to image + tag
-      image: us.icr.io/icm-varnish/varnish:0.11.0
+      image: us.icr.io/icm-varnish/varnish:0.12.0
       # imagePullPolicy is passed directly to the varnish deployment, that controls how the varnish image will be pulled for new containers
       imagePullPolicy: Always
       # restart policy used for Varnish containers
@@ -63,15 +60,17 @@ spec:
       # If no varnishArgs are specified, then, `varnishd` will start with:
       # varnishd \
       # -a 0.0.0.0:<.spec.service.varnishPort.port> \
-      # -f /etc/varnish/<.spec.vclConfigMap.defaultFile> \
+      # -f /etc/varnish/<.spec.vclConfigMap.entrypointFile> \
       # -F \
       # -S /etc/varnish/secret \
       # -p default_ttl=3600 \
       # -p default_grace=3600 \
-      # -s malloc,<.spec.deployment.container.resources.limits.memory * .9>M \
+      # -s malloc[,<.spec.deployment.container.resources.limits.memory * .9>M] \
       # -T 127.0.0.1:6082
       #
       # If -p is provided, then it will overwrite both default values above. Meaning, if you only include ["-p", "default_ttl=4800"], then you will NOT see "-p default_grace=3600" in the args
+      #
+      # If you do not include a memory resource limit, -s will just be set to "malloc" without the memory set. See https://varnish-cache.org/docs/trunk/users-guide/storage-backends.html#malloc for behavior of malloc
       varnishArgs: ["-p", "default_ttl=3600", "-p", "default_grace=3600"]
     # Affinity to apply to the pods in the Varnish deployment. For more on affinity, see https://kubernetes.io/docs/concepts/configuration/assign-pod-node#affinity-and-anti-affinity
     # Also, see the README.md#affinites for suggested configurations

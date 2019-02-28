@@ -46,8 +46,8 @@ func (r *ReconcileVarnishService) reconcileConfigMap(podsSelector map[string]str
 				Namespace: instance.Namespace,
 			},
 			Data: map[string]string{
-				instance.Spec.VCLConfigMap.DefaultFile:      defaultVCL,
-				instance.Spec.VCLConfigMap.BackendsTmplFile: backendsVCLTmpl,
+				instance.Spec.VCLConfigMap.EntrypointFile: defaultVCL,
+				"backends.vcl.tmpl":                       backendsVCLTmpl,
 			},
 		}
 		if err := controllerutil.SetControllerReference(instance, cm, r.scheme); err != nil {

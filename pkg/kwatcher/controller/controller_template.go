@@ -2,16 +2,17 @@ package controller
 
 import (
 	"bytes"
+	"strings"
 	"text/template"
 
 	"github.com/juju/errors"
 )
 
-func (r *ReconcileVarnish) resolveTemplate(tmplBytes []byte, targetPort, varnishPort int32, backends, varnishNodes []PodInfo) ([]byte, error) {
+func (r *ReconcileVarnish) resolveTemplate(tmplStr string, targetPort, varnishPort int32, backends, varnishNodes []PodInfo) (string, error) {
 	tmplName := "backends"
-	tmpl, err := template.New(tmplName).Option("missingkey=error").Parse(string(tmplBytes))
+	tmpl, err := template.New(tmplName).Option("missingkey=error").Parse(tmplStr)
 	if err != nil {
-		return nil, errors.Annotate(err, "could not parse template")
+		return "", errors.Annotate(err, "could not parse template")
 	}
 
 	data := map[string]interface{}{
@@ -24,7 +25,33 @@ func (r *ReconcileVarnish) resolveTemplate(tmplBytes []byte, targetPort, varnish
 	var b bytes.Buffer
 	b.WriteString("// This file is generated. Do not edit manually, as changes will be destroyed\n\n")
 	if err = tmpl.ExecuteTemplate(&b, tmplName, data); err != nil {
-		return nil, errors.Annotatef(err, "problem resolving template")
+		return "", errors.Annotatef(err, "problem resolving template")
 	}
-	return b.Bytes(), nil
+	return b.String(), nil
+}
+
+func (r *ReconcileVarnish) resolveTemplates(tmplStrs map[string]string, targetPort, varnishPort int32, backends, varnishNodes []PodInfo) (map[string]string, error) {
+	data := map[string]interface{}{
+		"Backends":     backends,
+		"TargetPort":   targetPort,
+		"VarnishNodes": varnishNodes,
+		"VarnishPort":  varnishPort,
+	}
+
+	out := make(map[string]string, len(tmplStrs))
+	for tmplFileName, tmplStr := range tmplStrs {
+		tmpl, err := template.New(tmplFileName).Option("missingkey=error").Parse(tmplStr)
+		if err != nil {
+			return nil, errors.Annotatef(err, "could not parse template %s", tmplFileName)
+		}
+
+		var b bytes.Buffer
+		b.WriteString("// This file is generated. Do not edit manually, as changes will be destroyed\n\n")
+		if err = tmpl.ExecuteTemplate(&b, tmplFileName, data); err != nil {
+			return nil, errors.Annotatef(err, "problem resolving template %s", tmplFileName)
+		}
+		fileName := strings.TrimSuffix(tmplFileName, ".tmpl")
+		out[fileName] = b.String()
+	}
+	return out, nil
 }

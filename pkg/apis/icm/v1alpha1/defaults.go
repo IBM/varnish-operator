@@ -5,7 +5,6 @@ package v1alpha1
 
 import (
 	"fmt"
-	"icm-varnish-k8s-operator/pkg/varnishservice/config"
 	"math"
 	"regexp"
 	"sort"
@@ -16,16 +15,7 @@ import (
 	kv1 "k8s.io/kubernetes/pkg/apis/core/v1"
 )
 
-var operatorCfg *config.Config
-
 var varnishArgsKeyRegexp = regexp.MustCompile("-\\w")
-
-// Init is used to inject config to the package. Autogeneration requires to have functions with only one argument
-// of specific type so that makes not possible to have structs where you can inject configs or other dependencies.
-// Needs to be called before package usage.
-func Init(cfg *config.Config) {
-	operatorCfg = cfg
-}
 
 // SetDefaults_VarnishService sets defaults for everything inside VarnishService.
 // Normally, this would be handled by the generator code, but in this case, the order that things are defaulted matters,
@@ -35,8 +25,6 @@ func Init(cfg *config.Config) {
 // +k8s:defaulter-gen=covers
 func SetDefaults_VarnishService(in *VarnishService) {
 	SetDefaults_VarnishServiceSpec(&in.Spec)
-	SetDefaults_VarnishVCLConfigMap(&in.Spec.VCLConfigMap)
-	SetDefaults_VarnishDeployment(&in.Spec.Deployment)
 	SetDefaults_VarnishContainer(&in.Spec.Deployment.Container)
 	SetDefaults_VarnishServiceService(&in.Spec.Service)
 
@@ -47,50 +35,28 @@ func SetDefaults_VarnishService(in *VarnishService) {
 
 func SetDefaults_VarnishServiceSpec(in *VarnishServiceSpec) {
 	if in.LogLevel == "" {
-		in.LogLevel = operatorCfg.OperatorLogLevel.String()
+		in.LogLevel = "info"
 	}
 	if in.LogFormat == "" {
-		in.LogFormat = operatorCfg.OperatorLogFormat
-	}
-}
-
-func SetDefaults_VarnishVCLConfigMap(in *VarnishVCLConfigMap) {
-	if in.BackendsFile == "" {
-		in.BackendsFile = operatorCfg.VclConfigMapBackendsFile
-	}
-	if in.DefaultFile == "" {
-		in.DefaultFile = operatorCfg.VclConfigMapDefaultFile
-	}
-	in.BackendsTmplFile = in.BackendsFile + ".tmpl"
-}
-
-func SetDefaults_VarnishDeployment(in *VarnishDeployment) {
-	if in.Replicas == nil {
-		in.Replicas = &operatorCfg.DeploymentReplicas
+		in.LogFormat = "json"
 	}
 }
 
 func SetDefaults_VarnishContainer(in *VarnishContainer) {
-	if in.Image == "" {
-		in.Image = operatorCfg.DeploymentContainerImage
-	}
-	if in.ImagePullPolicy == nil {
-		in.ImagePullPolicy = &operatorCfg.DeploymentContainerImagePullPolicy
+	if in.ImagePullPolicy == "" {
+		in.ImagePullPolicy = v1.PullAlways
 	}
 	if in.RestartPolicy == "" {
-		in.RestartPolicy = operatorCfg.DeploymentContainerRestartPolicy
+		in.RestartPolicy = v1.RestartPolicyAlways
 	}
-	if in.Resources == nil {
-		operatorCfg.DeploymentContainerResources.DeepCopyInto(in.Resources)
-	}
-	if in.ImagePullSecret == nil {
-		in.ImagePullSecret = &operatorCfg.DeploymentContainerImagePullSecret
-	}
-	if in.LivenessProbe == nil && operatorCfg.DeploymentContainerLivenessProbe != nil {
-		operatorCfg.DeploymentContainerLivenessProbe.DeepCopyInto(in.LivenessProbe)
-	}
-	if in.ReadinessProbe == nil && operatorCfg.DeploymentContainerReadinessProbe != nil {
-		operatorCfg.DeploymentContainerReadinessProbe.DeepCopyInto(in.ReadinessProbe)
+	if in.ReadinessProbe == nil {
+		in.ReadinessProbe = &v1.Probe{
+			Handler: v1.Handler{
+				Exec: &v1.ExecAction{
+					Command: []string{"/usr/bin/varnishadm", "ping"},
+				},
+			},
+		}
 	}
 }
 
@@ -132,10 +98,6 @@ func SetDefaults_VarnishServiceService(in *VarnishServiceService) {
 	}
 
 	in.Ports = append(in.Ports, *in.VarnishPort, *in.VarnishExporterPort)
-
-	if in.PrometheusAnnotations == nil {
-		in.PrometheusAnnotations = &operatorCfg.ServicePrometheusAnnotations
-	}
 }
 
 // due to validating webhook, we can assume args are properly formed (in key/value pairs, with optional value) and there are no override args present in the list
@@ -144,13 +106,18 @@ func setVarnishArgs(in *VarnishServiceSpec) {
 		"-F",
 		"-a", fmt.Sprintf("0.0.0.0:%d", in.Service.VarnishPort.Port),
 		"-S", "/etc/varnish/secret",
-		"-f", "/etc/varnish/" + in.VCLConfigMap.DefaultFile,
+		"-f", "/etc/varnish/" + in.VCLConfigMap.EntrypointFile,
 	}
-	varnishArgsDefaults := map[string][]string{
-		"-s": {"-s", fmt.Sprintf("malloc,%dM", (int64)((float64)(in.Deployment.Container.Resources.Limits.Memory().Value())*.9/math.Pow(2, 20)))},
-		"-p": {"-p", "default_ttl=3600", "-p", "default_grace=3600"},
-		"-T": {"-T", "127.0.0.1:6082"},
+
+	varnishArgsDefaults := make(map[string][]string, 3)
+	varnishArgsDefaults["-p"] = []string{"-p", "default_ttl=3600", "-p", "default_grace=3600"}
+	varnishArgsDefaults["-T"] = []string{"-T", "127.0.0.1:6082"}
+	if in.Deployment.Container.Resources.Limits.Memory().IsZero() {
+		varnishArgsDefaults["-s"] = []string{"-s", "malloc"}
+	} else {
+		varnishArgsDefaults["-s"] = []string{"-s", fmt.Sprintf("malloc,%dM", int64(float64(in.Deployment.Container.Resources.Limits.Memory().Value())*.9/math.Pow(2, 20)))}
 	}
+
 	sortedDefaults := func() []string {
 		var unsorted [][]string
 		for _, args := range varnishArgsDefaults {

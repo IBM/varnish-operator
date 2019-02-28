@@ -12,7 +12,7 @@ spec:
       control-plane: controller-manager
       controller-tools.k8s.io: "1.0"
   serviceName: varnish-service-controller-manager-service
-  replicas: {{ .Values.operator.replicas }}
+  replicas: {{ .Values.replicas }}
   template:
     metadata:
       labels:
@@ -22,55 +22,23 @@ spec:
     spec:
       containers:
       - name: manager
-        image: {{ .Values.operator.container.image | quote }}
-        imagePullPolicy: {{ .Values.operator.container.imagePullPolicy | title | quote }}
+        image: {{ .Values.container.image | quote }}
+        imagePullPolicy: {{ .Values.container.imagePullPolicy | title | quote }}
         env:
         - name: NAMESPACE
           value: {{ .Values.namespace | quote }}
-        - name: OPERATOR_LEADERELECTION_ENABLED
-          value: {{ .Values.operator.leaderElection.enabled | quote }}
-        - name: OPERATOR_LEADERELECTION_ID
-          value: {{ .Values.operator.leaderElection.id | quote }}
-        - name: OPERATOR_LOGLEVEL
-          value: {{ .Values.operator.logLevel | quote }}
-        - name: OPERATOR_LOGFORMAT
-          value: {{ .Values.operator.logFormat | quote }}
-        {{- with .Values.defaults }}
-        - name: VCLCONFIGMAP_BACKENDSFILE
-          value: {{ .vclConfigMap.backendsFile | quote }}
-        - name: VCLCONFIGMAP_DEFAULTFILE
-          value: {{ .vclConfigMap.defaultFile | quote }}
-        - name: DEPLOYMENT_REPLICAS
-          value: {{ .deployment.replicas | quote }}
-        - name: DEPLOYMENT_CONTAINER_IMAGE
-          value: {{ .deployment.container.image | quote }}
-        - name: DEPLOYMENT_CONTAINER_IMAGEPULLPOLICY
-          value: {{ .deployment.container.imagePullPolicy | quote }}
-        - name: DEPLOYMENT_CONTAINER_RESTARTPOLICY
-          value: {{ .deployment.container.restartPolicy | quote }}
-        - name: DEPLOYMENT_CONTAINER_RESOURCES_LIMITS_CPU
-          value: {{ .deployment.container.resources.limits.cpu | quote }}
-        - name: DEPLOYMENT_CONTAINER_RESOURCES_LIMITS_MEMORY
-          value: {{ .deployment.container.resources.limits.memory | quote }}
-        - name: DEPLOYMENT_CONTAINER_RESOURCES_REQUESTS_CPU
-          value: {{ .deployment.container.resources.requests.cpu | quote }}
-        - name: DEPLOYMENT_CONTAINER_RESOURCES_REQUESTS_MEMORY
-          value: {{ .deployment.container.resources.requests.memory | quote }}
-          {{- with .deployment.container.livenessProbe }}{{/* TODO: liveness probe currently not working */}}
-        - name: DEPLOYMENT_CONTAINER_LIVENESSPROBE_HTTPGET_HTTPPATH
-          value: {{ .httpGet.httpPath | quote }}
-        - name: DEPLOYMENT_CONTAINER_LIVENESSPROBE_HTTPGET_PORT
-          value: {{ .httpGet.port | quote }}
-          {{- end }}
-        - name: DEPLOYMENT_CONTAINER_READINESSPROBE_EXEC_COMMAND
-          value: {{ include "commaSeparatedList" .deployment.container.readinessProbe.exec.command | quote }}
-        - name: DEPLOYMENT_CONTAINER_IMAGEPULLSECRET
-          value: {{ .deployment.container.imagePullSecret | quote }}
-        - name: SERVICE_PROMETHEUSANNOTATIONS
-          value: {{ .service.prometheusAnnotations | quote }}
-        {{- end }}
-        resources: {{ toYaml .Values.operator.container.resources | nindent 10 -}}
-      restartPolicy: {{ .Values.operator.container.restartPolicy | quote }}
+        - name: LEADERELECTION_ENABLED
+          value: {{ .Values.leaderElection.enabled | quote }}
+        - name: LEADERELECTION_ID
+          value: {{ .Values.leaderElection.id | quote }}
+        - name: CONTAINER_IMAGE
+          value: {{ .Values.container.image | quote }}
+        - name: LOGLEVEL
+          value: {{ .Values.logLevel | quote }}
+        - name: LOGFORMAT
+          value: {{ .Values.logFormat | quote }}
+        resources: {{ toYaml .Values.container.resources | nindent 10 -}}
+      restartPolicy: {{ .Values.container.restartPolicy | quote }}
       imagePullSecrets:
-      - name: {{ .Values.operator.container.imagePullSecret | quote }}
+      - name: {{ .Values.container.imagePullSecret | quote }}
       terminationGracePeriodSeconds: 10

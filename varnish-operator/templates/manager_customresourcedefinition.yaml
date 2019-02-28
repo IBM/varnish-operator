@@ -102,6 +102,9 @@ spec:
                       items:
                         type: string
                       type: array
+                  required:
+                  - image
+                  - imagePullSecret
                   type: object
                 replicas:
                   format: int32
@@ -147,14 +150,13 @@ spec:
               type: object
             vclConfigMap:
               properties:
-                backendsFile:
-                  type: string
-                defaultFile:
+                entrypointFile:
                   type: string
                 name:
                   type: string
               required:
               - name
+              - entrypointFile
               type: object
           required:
           - vclConfigMap

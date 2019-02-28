@@ -54,11 +54,8 @@ type VarnishServiceSpec struct {
 }
 
 type VarnishVCLConfigMap struct {
-	Name         string `json:"name"`
-	BackendsFile string `json:"backendsFile,omitempty"`
-	DefaultFile  string `json:"defaultFile,omitempty"`
-
-	BackendsTmplFile string
+	Name           string `json:"name"`
+	EntrypointFile string `json:"entrypointFile"`
 }
 
 type VarnishDeployment struct {
@@ -69,21 +66,21 @@ type VarnishDeployment struct {
 }
 
 type VarnishContainer struct {
-	Image           string                   `json:"image,omitempty"`
-	ImagePullPolicy *v1.PullPolicy           `json:"imagePullPolicy,omitempty"`
-	RestartPolicy   v1.RestartPolicy         `json:"restartPolicy,omitempty"`
-	Resources       *v1.ResourceRequirements `json:"resources,omitempty"`
-	LivenessProbe   *v1.Probe                `json:"livenessProbe,omitempty"`
-	ReadinessProbe  *v1.Probe                `json:"readinessProbe,omitempty"`
-	ImagePullSecret *string                  `json:"imagePullSecret,omitempty"`
-	VarnishArgs     []string                 `json:"varnishArgs,omitempty"`
+	Image           string                  `json:"image"`
+	ImagePullPolicy v1.PullPolicy           `json:"imagePullPolicy,omitempty"`
+	RestartPolicy   v1.RestartPolicy        `json:"restartPolicy,omitempty"`
+	Resources       v1.ResourceRequirements `json:"resources,omitempty"`
+	LivenessProbe   *v1.Probe               `json:"livenessProbe,omitempty"`
+	ReadinessProbe  *v1.Probe               `json:"readinessProbe,omitempty"`
+	ImagePullSecret string                  `json:"imagePullSecret"`
+	VarnishArgs     []string                `json:"varnishArgs,omitempty"`
 }
 
 type VarnishServiceService struct {
 	v1.ServiceSpec
 	VarnishPort           *v1.ServicePort `json:"varnishPort,omitempty"`
 	VarnishExporterPort   *v1.ServicePort `json:"varnishExporterPort,omitempty"`
-	PrometheusAnnotations *bool           `json:"prometheusAnnotations,omitempty"`
+	PrometheusAnnotations bool            `json:"prometheusAnnotations,omitempty"`
 }
 
 // TODO: add configmap data

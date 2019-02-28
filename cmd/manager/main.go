@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 	"log"
 
 	"icm-varnish-k8s-operator/pkg/apis"
@@ -32,12 +31,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	logr := logger.NewLogger(operatorConfig.OperatorLogFormat, operatorConfig.OperatorLogLevel)
+	logr := logger.NewLogger(operatorConfig.LogFormat, operatorConfig.LogLevel)
 
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(clientConfig, manager.Options{
-		LeaderElection:          operatorConfig.OperatorLeaderElectionEnabled,
-		LeaderElectionID:        operatorConfig.OperatorLeaderElectionID,
+		LeaderElection:          operatorConfig.LeaderElectionEnabled,
+		LeaderElectionID:        operatorConfig.LeaderElectionID,
 		LeaderElectionNamespace: operatorConfig.Namespace,
 	})
 	if err != nil {
@@ -47,7 +46,6 @@ func main() {
 	logr.Infow("Registering Components")
 
 	// Setup Scheme for all resources
-	v1alpha1.Init(operatorConfig)
 	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
 		logr.Fatal(err)
 	}

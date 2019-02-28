@@ -31,6 +31,7 @@ func Add(mgr manager.Manager, cfg *config.Config, logr *logger.Logger) error {
 	r := &ReconcileVarnishService{
 		Client: mgr.GetClient(),
 		logger: logr,
+		config: cfg,
 		scheme: mgr.GetScheme(),
 		events: NewEventHandler(mgr.GetRecorder(EventRecorderNameVarnishService)),
 	}
@@ -153,6 +154,7 @@ var _ reconcile.Reconciler = &ReconcileVarnishService{}
 type ReconcileVarnishService struct {
 	client.Client
 	logger *logger.Logger
+	config *config.Config
 	scheme *runtime.Scheme
 	events *EventHandler
 }

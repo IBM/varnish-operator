@@ -9,6 +9,7 @@ import (
 	"icm-varnish-k8s-operator/pkg/kwatcher/events"
 	vslabels "icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/logger"
+	"strings"
 
 	"github.com/juju/errors"
 	"go.uber.org/zap"
@@ -143,11 +144,12 @@ func (r *ReconcileVarnish) reconcileWithLogging(request reconcile.Request) (reco
 		return reconcile.Result{}, errors.Trace(err)
 	}
 
+	r.scheme.Default(vs)
+
+	// ideally, I would pull these from the VarnishService since they could change with an update. For now, I am not doing that since I cannot default the values
 	varnishPort := vs.Spec.Service.VarnishPort.Port
 	targetPort := int32(vs.Spec.Service.VarnishPort.TargetPort.IntValue())
-	defaultFile := r.config.DefaultFile
-	backendsFile := r.config.BackendsFile
-	backendsTmplFile := r.config.BackendsTmplFile
+	entrypointFile := vs.Spec.VCLConfigMap.EntrypointFile
 
 	pod := &v1.Pod{}
 	err = r.Get(context.Background(), types.NamespacedName{Namespace: request.Namespace, Name: r.config.PodName}, pod)
@@ -160,12 +162,9 @@ func (r *ReconcileVarnish) reconcileWithLogging(request reconcile.Request) (reco
 		return reconcile.Result{}, errors.Trace(err)
 	}
 
-	newFiles := make(map[string][]byte, len(cm.Data))
-	for k, v := range cm.Data {
-		newFiles[k] = []byte(v)
-	}
+	newFiles, newTemplates := r.filesAndTemplates(cm.Data)
 
-	if err = verifyFilesExist(newFiles, defaultFile, backendsTmplFile); err != nil {
+	if err = r.verifyEntrypointExists(newFiles, newTemplates, entrypointFile); err != nil {
 		return reconcile.Result{}, errors.Trace(err)
 	}
 
@@ -177,13 +176,17 @@ func (r *ReconcileVarnish) reconcileWithLogging(request reconcile.Request) (reco
 	varnishLabels := labels.SelectorFromSet(vslabels.CombinedComponentLabels(vs, v1alpha1.VarnishComponentCachedService))
 	varnishNodes, err := r.getPodInfo(r.config.Namespace, varnishLabels, varnishPort)
 
-	templatizedBackendsFile, err := r.resolveTemplate(newFiles[backendsTmplFile], targetPort, varnishPort, bks, varnishNodes)
+	templatizedFiles, err := r.resolveTemplates(newTemplates, targetPort, varnishPort, bks, varnishNodes)
 	if err != nil {
 		return reconcile.Result{}, errors.Trace(err)
 	}
 
-	delete(newFiles, backendsTmplFile)
-	newFiles[backendsFile] = templatizedBackendsFile
+	for fileName, contents := range templatizedFiles {
+		if _, found := newFiles[fileName]; found {
+			return reconcile.Result{}, errors.AlreadyExistsf("ConfigMap has %s and %s.tmpl entries. Cannot include file and template with same name", fileName, fileName)
+		}
+		newFiles[fileName] = contents
+	}
 
 	currFiles, err := getCurrentFiles(r.config.VCLDir)
 	if err != nil {
@@ -208,7 +211,29 @@ func (r *ReconcileVarnish) reconcileWithLogging(request reconcile.Request) (reco
 	return reconcile.Result{}, nil
 }
 
-func verifyFilesExist(configMapFiles map[string][]byte, files ...string) error {
+func (r *ReconcileVarnish) filesAndTemplates(data map[string]string) (files, templates map[string]string) {
+	files = make(map[string]string, len(data))
+	templates = make(map[string]string)
+	for fileName, contents := range data {
+		if strings.HasSuffix(fileName, ".tmpl") {
+			templates[fileName] = contents
+		} else {
+			files[fileName] = contents
+		}
+	}
+	return
+}
+
+func (r *ReconcileVarnish) verifyEntrypointExists(files, templates map[string]string, entrypoint string) error {
+	_, fileFound := files[entrypoint]
+	_, templateFound := templates[entrypoint+".tmpl"]
+	if !fileFound && !templateFound {
+		return errors.NotFoundf("%s must exist in configmap, but not found", entrypoint)
+	}
+	return nil
+}
+
+func verifyFilesExist(configMapFiles map[string]string, files ...string) error {
 	verify := func(filename string) error {
 		if _, found := configMapFiles[filename]; !found {
 			return errors.NotFoundf("%s must exist in configmap, but not found", filename)

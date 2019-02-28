@@ -47,7 +47,6 @@ func TestReconcile(t *testing.T) {
 		Client: mgr.GetClient(),
 		logger: testLogger,
 	}
-	icmv1alpha1.Init(testCfg)
 	_, requests := SetupTestReconcile(r)
 	g.Expect(Add(mgr, testCfg, testLogger)).NotTo(gomega.HaveOccurred())
 	defer close(StartTestManager(mgr, g))

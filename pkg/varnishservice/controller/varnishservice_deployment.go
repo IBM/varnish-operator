@@ -19,6 +19,13 @@ import (
 func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *icmapiv1alpha1.VarnishService, serviceAccountName string, endpointSelector map[string]string) (map[string]string, error) {
 	varnishLabels := vslabels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentVarnishes)
 	gvk := instance.GroupVersionKind()
+	// TODO: this can eventually be moved into the mutating webhook, whenever that starts working
+	var varnishImage string
+	if instance.Spec.Deployment.Container.Image == "" {
+		varnishImage = r.config.CoupledVarnishImage
+	} else {
+		varnishImage = instance.Spec.Deployment.Container.Image
+	}
 	desired := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      instance.Name + "-varnish-deployment",
@@ -38,7 +45,7 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 					Containers: []v1.Container{
 						{
 							Name:  "varnish",
-							Image: instance.Spec.Deployment.Container.Image,
+							Image: varnishImage,
 							Ports: []v1.ContainerPort{
 								{
 									Name:          instance.Spec.Service.VarnishPort.Name,
@@ -52,9 +59,6 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 							Env: []v1.EnvVar{
 								{Name: "ENDPOINT_SELECTOR_STRING", Value: labels.SelectorFromSet(endpointSelector).String()},
 								{Name: "CONFIGMAP_NAME", Value: instance.Spec.VCLConfigMap.Name},
-								{Name: "BACKENDS_FILE", Value: instance.Spec.VCLConfigMap.BackendsFile},
-								{Name: "BACKENDS_TMPL_FILE", Value: instance.Spec.VCLConfigMap.BackendsTmplFile},
-								{Name: "DEFAULT_FILE", Value: instance.Spec.VCLConfigMap.DefaultFile},
 								{Name: "NAMESPACE", Value: instance.Namespace},
 								{Name: "POD_NAME", ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{FieldPath: "metadata.name"}}},
 								{Name: "VARNISH_SERVICE_NAME", Value: instance.Name},
@@ -62,22 +66,21 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 								{Name: "VARNISH_SERVICE_GROUP", Value: gvk.Group},
 								{Name: "VARNISH_SERVICE_VERSION", Value: gvk.Version},
 								{Name: "VARNISH_SERVICE_KIND", Value: gvk.Kind},
-								{Name: "TARGET_PORT", Value: instance.Spec.Service.VarnishPort.TargetPort.String()},
 								{Name: "LOG_FORMAT", Value: instance.Spec.LogFormat},
 								{Name: "LOG_LEVEL", Value: instance.Spec.LogLevel},
 								{Name: "VARNISH_ARGS", Value: strings.Join(instance.Spec.Deployment.Container.VarnishArgs, " ")},
 							},
-							Resources:       *instance.Spec.Deployment.Container.Resources,
+							Resources:       instance.Spec.Deployment.Container.Resources,
 							LivenessProbe:   instance.Spec.Deployment.Container.LivenessProbe,
 							ReadinessProbe:  instance.Spec.Deployment.Container.ReadinessProbe,
-							ImagePullPolicy: *instance.Spec.Deployment.Container.ImagePullPolicy,
+							ImagePullPolicy: instance.Spec.Deployment.Container.ImagePullPolicy,
 						},
 					},
 					RestartPolicy:      instance.Spec.Deployment.Container.RestartPolicy,
 					ServiceAccountName: serviceAccountName,
 					ImagePullSecrets: []v1.LocalObjectReference{
 						{
-							Name: *instance.Spec.Deployment.Container.ImagePullSecret,
+							Name: instance.Spec.Deployment.Container.ImagePullSecret,
 						},
 					},
 					Affinity:    instance.Spec.Deployment.Affinity,

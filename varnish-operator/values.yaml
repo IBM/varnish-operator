@@ -3,72 +3,31 @@ namespace: varnish-operator-system
 # this field should not be changed
 namePrefix: varnish-service-
 
-operator:
-  # Specifies the pod count of the Manager. Default value is 2 replicas for HA
-  replicas: 2
-  # Run multiple instances of the operator, and if one goes down, have another seamlessly replace it
-  leaderElection:
-    enabled: true
-    id: varnish-operator-lock
-  container:
-    # path to image + tag
-    image: us.icr.io/icm-varnish/varnish-controller:0.11.0
-    # Use the name of the imagePullSecret created in the [Getting Access](#getting-access) section above
-    imagePullSecret: docker-reg-secret
-    # imagePullPolicy is passed directly to the varnish deployment, that controls how the varnish image will be pulled for new containers
-    imagePullPolicy: Always
-    # restart policy used for Varnish containers
-    restartPolicy: Always
-    # it is unlikely you will need to change the resources values of the operator
-    resources:
-      limits:
-        cpu: 500m
-        memory: 200Mi
-      requests:
-        cpu: 500m
-        memory: 200Mi
+# Specifies the pod count of the Manager. Default value is 2 replicas for HA
+replicas: 2
+# Run multiple instances of the operator, and if one goes down, have another seamlessly replace it
+leaderElection:
+  enabled: true
+  id: varnish-operator-lock
+container:
+  # path to image + tag
+  image: us.icr.io/icm-varnish/varnish-controller:0.12.0
+  # Use the name of the imagePullSecret created in the [Getting Access](#getting-access) section above
+  imagePullSecret: docker-reg-secret
+  # imagePullPolicy is passed directly to the varnish deployment, that controls how the varnish image will be pulled for new containers
+  imagePullPolicy: Always
+  # restart policy used for Varnish containers
+  restartPolicy: Always
+  # it is unlikely you will need to change the resources values of the operator
+  resources:
+    limits:
+      cpu: 500m
+      memory: 200Mi
+    requests:
+      cpu: 500m
+      memory: 200Mi
 
-  # logging level: "debug", "info", "warn", "error"
-  logLevel: info
-  # logging encoder: "json", "console"
-  logFormat: json
-
-# If any of the below spec values are not set on a VarnishService, they will default to the given values
-defaults:
-  vclConfigMap:
-    # the name of the file to be maintained through the Kubernetes API (by watching the endpoints in a deployment)
-    # the VarnishService will expect to see a "<backendsFile>.tmpl" file in the ConfigMap that has the Go template for the <backendsFile>. For example, "backends.vcl.tmpl"
-    backendsFile: backends.vcl
-    # the name of the base VCL file
-    defaultFile: default.vcl
-  deployment:
-    # The number of varnish instances to run
-    replicas: 2
-    container:
-      # path to image + tag
-      image: us.icr.io/icm-varnish/varnish:0.11.0
-      # imagePullPolicy is passed directly to the varnish deployment, that controls how the varnish image will be pulled for new containers
-      imagePullPolicy: Always
-      # restart policy used for Varnish containers
-      restartPolicy: Always
-      # Resources allocated to the Varnish pod through Kubernetes
-      resources:
-        limits:
-          cpu: 1
-          memory: 2048Mi
-        requests:
-          cpu: 1
-          memory: 2048Mi
-      # http path used to confirm liveness of the Varnish container. TODO: Not currently working
-      # livenessProbe:
-      #   httpGet:
-      #     httpPath: /liveness
-      #     port: 8080
-      # command used to confirm readiness of the Varnish container. Unlikely to need to be changed
-      readinessProbe:
-        exec:
-          command: [/usr/bin/varnishadm, ping]
-      # Use the name of the imagePullSecret created in the [Getting Access](#getting-access) section above
-      imagePullSecret: docker-reg-secret
-  service:
-    prometheusAnnotations: true
+# logging level: "debug", "info", "warn", "error"
+logLevel: info
+# logging encoder: "json", "console"
+logFormat: json

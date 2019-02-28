@@ -62,7 +62,7 @@ func (r *ReconcileVarnishService) reconcileCachedService(instance, instanceStatu
 		"prometheus.io/port":   strconv.FormatInt(int64(instance.Spec.Service.VarnishExporterPort.Port), 10),
 	}
 
-	if *instance.Spec.Service.PrometheusAnnotations {
+	if instance.Spec.Service.PrometheusAnnotations {
 		cachedService.Annotations = prometheusAnnotations
 	}
 

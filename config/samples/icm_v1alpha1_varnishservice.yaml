@@ -25,7 +25,7 @@ spec:
     replicas: 2
     container:
       # path to image + tag
-      image: us.icr.io/icm-varnish/varnish:0.12.0
+      image: us.icr.io/icm-varnish/varnish:0.13.1
       # imagePullPolicy is passed directly to the varnish deployment, that controls how the varnish image will be pulled for new containers
       imagePullPolicy: Always
       # restart policy used for Varnish containers
@@ -109,7 +109,7 @@ spec:
   service:
     selector:
       app: HttPerf
-    # the "varnishPort" and "varnishExporterPort" fields are specially configured ports on the service for the varnish and varnish-exporter. As such, do not try to configure these through the .ports field, where they will be ignored
+    # the "varnishPort" and "varnishExporterPort" fields are specially configured ports on the service for the varnish and varnish-exporter. As such, do not try to configure these through the .ports field, where they will be rejected
     varnishPort:
       name: varnish
       port: 2035

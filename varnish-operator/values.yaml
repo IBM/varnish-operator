@@ -11,7 +11,7 @@ leaderElection:
   id: varnish-operator-lock
 container:
   # path to image + tag
-  image: us.icr.io/icm-varnish/varnish-controller:0.12.0
+  image: us.icr.io/icm-varnish/varnish-controller:0.13.1
   # Use the name of the imagePullSecret created in the [Getting Access](#getting-access) section above
   imagePullSecret: docker-reg-secret
   # imagePullPolicy is passed directly to the varnish deployment, that controls how the varnish image will be pulled for new containers
@@ -26,6 +26,10 @@ container:
     requests:
       cpu: 500m
       memory: 200Mi
+  # port on which to expose operator metrics
+  metricsPort: 8080
+  # port on which to expose webhook
+  webhookPort: 9244
 
 # logging level: "debug", "info", "warn", "error"
 logLevel: info

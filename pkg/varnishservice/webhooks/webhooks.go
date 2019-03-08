@@ -11,6 +11,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission/builder"
 )
 
+// InstallWebhooks creates webhooks to be used with the VarnishService CRD
+// +kubebuilder:rbac:groups=admissionregistration.k8s.io,resources=mutatingwebhookconfigurations;validatingwebhookconfigurations,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
 func InstallWebhooks(mgr manager.Manager, cfg *config.Config, logr *logger.Logger) error {
 	validatingWebhook, err := builder.NewWebhookBuilder().
 		Name("validating-webhook.varnish-operator.icm.ibm.com").
@@ -51,7 +55,7 @@ func InstallWebhooks(mgr manager.Manager, cfg *config.Config, logr *logger.Logge
 	}
 
 	srv, err := webhook.NewServer("varnish-operator-webhook-server", mgr, webhook.ServerOptions{
-		Port:    9244,
+		Port:    cfg.ContainerWebhookPort,
 		CertDir: "/tmp/varnish-operator/webhook/certs",
 		BootstrapOptions: &webhook.BootstrapOptions{
 			ValidatingWebhookConfigName: "varnish-operator-validating-webhook-config",

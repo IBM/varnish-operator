@@ -19,6 +19,8 @@ type Config struct {
 	ContainerImage        string        `env:"CONTAINER_IMAGE,required"`
 	LogLevel              zapcore.Level `env:"LOGLEVEL" envDefault:"info"`
 	LogFormat             string        `env:"LOGFORMAT" envDefault:"json"`
+	ContainerMetricsPort  int32         `env:"CONTAINER_METRICSPORT" envDefault:"8080"`
+	ContainerWebhookPort  int32         `env:"CONTAINER_WEBHOOKPORT" envDefault:"9244"`
 
 	CoupledVarnishImage string
 }

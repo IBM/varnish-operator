@@ -39,7 +39,7 @@ type VCLConfig struct {
 func (r *ReconcileVarnish) reconcileVarnish(vs *v1alpha1.VarnishService, pod *v1.Pod, cm *v1.ConfigMap) error {
 	r.logger.Debugw("Starting varnish reload...")
 	start := time.Now()
-	out, err := exec.Command("vcl_reload", createVCLConfigName(cm.GetResourceVersion())).CombinedOutput()
+	out, err := exec.Command("vcl_reload", createVCLConfigName(cm.GetResourceVersion()), vs.Spec.VCLConfigMap.EntrypointFile).CombinedOutput()
 	if err != nil {
 		if isVCLCompilationError(err) {
 			vsEventMsg := "VCL compilation failed for pod " + pod.Name + ". See pod logs for details"

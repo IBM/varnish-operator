@@ -32,6 +32,12 @@ const (
 
 // VarnishService is the Schema for the varnishservices API
 // +k8s:openapi-gen=true
+// +kubebuilder:printcolumn:name="Desired",type="integer",JSONPath=".status.deployment.replicas",description="desired number of varnish pods",format="int32",priority="0"
+// +kubebuilder:printcolumn:name="Current",type="integer",JSONPath=".status.deployment.readyReplicas",description="current number of varnish pods",format="int32",priority="0"
+// +kubebuilder:printcolumn:name="Up-To-Date",type="integer",JSONPath=".status.deployment.updatedReplicas",description="number of varnish pods that are up to date",format="int32",priority="0"
+// +kubebuilder:printcolumn:name="VCL-Version",type="string",JSONPath=".status.vcl.configMapVersion",description="version of the ConfigMap containing the VCL",priority="0"
+// +kubebuilder:printcolumn:name="Cached-Service-IP",type="string",JSONPath=".status.service.cached.ip",description="IP Address of the cached service",priority="0"
+// +kubebuilder:printcolumn:name="Nocached-Service-IP",type="string",JSONPath=".status.service.nocached.ip",description="IP Address of the nocached service",priority="0"
 // +kubebuilder:subresource:status
 // +kubebuilder:subresource:scale:specpath=.spec.deployment.replicas,statuspath=.status.deployment.replicas,selectorpath=
 type VarnishService struct {
@@ -72,15 +78,15 @@ type VarnishContainer struct {
 	Resources       v1.ResourceRequirements `json:"resources,omitempty"`
 	LivenessProbe   *v1.Probe               `json:"livenessProbe,omitempty"`
 	ReadinessProbe  *v1.Probe               `json:"readinessProbe,omitempty"`
-	ImagePullSecret string                  `json:"imagePullSecret"`
+	ImagePullSecret *string                 `json:"imagePullSecret,omitempty"`
 	VarnishArgs     []string                `json:"varnishArgs,omitempty"`
 }
 
 type VarnishServiceService struct {
 	v1.ServiceSpec
-	VarnishPort           *v1.ServicePort `json:"varnishPort,omitempty"`
-	VarnishExporterPort   *v1.ServicePort `json:"varnishExporterPort,omitempty"`
-	PrometheusAnnotations bool            `json:"prometheusAnnotations,omitempty"`
+	VarnishPort           v1.ServicePort `json:"varnishPort"`
+	VarnishExporterPort   v1.ServicePort `json:"varnishExporterPort"`
+	PrometheusAnnotations bool           `json:"prometheusAnnotations,omitempty"`
 }
 
 // TODO: add configmap data

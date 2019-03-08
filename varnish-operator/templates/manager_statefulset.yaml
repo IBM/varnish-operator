@@ -37,8 +37,19 @@ spec:
           value: {{ .Values.logLevel | quote }}
         - name: LOGFORMAT
           value: {{ .Values.logFormat | quote }}
+        - name: CONTAINER_METRICSPORT
+          value: {{ .Values.container.metricsPort | quote }}
+        - name: CONTAINER_WEBHOOKPORT
+          value: {{ .Values.container.webhookPort | quote }}
         resources: {{ toYaml .Values.container.resources | nindent 10 -}}
+        ports:
+          - containerPort: {{ .Values.container.metricsPort }}
+            name: metrics
+          - containerPort: {{ .Values.container.webhookPort }}
+            name: webhook
       restartPolicy: {{ .Values.container.restartPolicy | quote }}
+      {{- with .Values.container.imagePullSecret }}
       imagePullSecrets:
-      - name: {{ .Values.container.imagePullSecret | quote }}
+      - name: {{ . | quote }}
+      {{- end }}
       terminationGracePeriodSeconds: 10

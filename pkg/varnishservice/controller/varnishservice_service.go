@@ -38,7 +38,7 @@ func (r *ReconcileVarnishService) reconcileNoCachedService(instance, instanceSta
 		},
 		Spec: v1.ServiceSpec{
 			Selector: selector,
-			Ports:    []v1.ServicePort{*instance.Spec.Service.VarnishPort},
+			Ports:    []v1.ServicePort{instance.Spec.Service.VarnishPort},
 		},
 	}
 

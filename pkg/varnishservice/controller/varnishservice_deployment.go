@@ -78,13 +78,8 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 					},
 					RestartPolicy:      instance.Spec.Deployment.Container.RestartPolicy,
 					ServiceAccountName: serviceAccountName,
-					ImagePullSecrets: []v1.LocalObjectReference{
-						{
-							Name: instance.Spec.Deployment.Container.ImagePullSecret,
-						},
-					},
-					Affinity:    instance.Spec.Deployment.Affinity,
-					Tolerations: instance.Spec.Deployment.Tolerations,
+					Affinity:           instance.Spec.Deployment.Affinity,
+					Tolerations:        instance.Spec.Deployment.Tolerations,
 				},
 			},
 		},

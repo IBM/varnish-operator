@@ -32,7 +32,9 @@ node("icm_slave") {
             releaseBranch, gitInfo)
     icmDockerStages(operatorDockerImageInfo)
 
-    if (gitInfo.branch == releaseBranch) {
+    List<String> tags = icmGetTagsOnCommit()
+    String repoVersion = readFile('version.txt')
+    if (tags && tags.contains(repoVersion)) {
         stage("Helm Chart Publish") {
             sh "./hack/create_helm_files.sh ${helmChartPath}/templates"
             icmWithArtifactoryConfig(artifactoryHostName, artifactoryRepo, artifactoryCredentialId) { config, envNames, namesToValues ->

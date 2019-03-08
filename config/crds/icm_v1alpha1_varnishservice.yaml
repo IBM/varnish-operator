@@ -6,6 +6,34 @@ metadata:
     controller-tools.k8s.io: "1.0"
   name: varnishservices.icm.ibm.com
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.deployment.replicas
+    description: desired number of varnish pods
+    format: int32
+    name: Desired
+    type: integer
+  - JSONPath: .status.deployment.readyReplicas
+    description: current number of varnish pods
+    format: int32
+    name: Current
+    type: integer
+  - JSONPath: .status.deployment.updatedReplicas
+    description: number of varnish pods that are up to date
+    format: int32
+    name: Up-To-Date
+    type: integer
+  - JSONPath: .status.vcl.configMapVersion
+    description: version of the ConfigMap containing the VCL
+    name: VCL-Version
+    type: string
+  - JSONPath: .status.service.cached.ip
+    description: IP Address of the cached service
+    name: Cached-Service-IP
+    type: string
+  - JSONPath: .status.service.nocached.ip
+    description: IP Address of the nocached service
+    name: Nocached-Service-IP
+    type: string
   group: icm.ibm.com
   names:
     kind: VarnishService
@@ -20,8 +48,14 @@ spec:
     openAPIV3Schema:
       properties:
         apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
           type: string
         kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
           type: string
         metadata:
           type: object
@@ -53,7 +87,6 @@ spec:
                       type: array
                   required:
                   - image
-                  - imagePullSecret
                   type: object
                 replicas:
                   format: int32
@@ -77,6 +110,9 @@ spec:
                   type: object
                 varnishPort:
                   type: object
+              required:
+              - varnishPort
+              - varnishExporterPort
               type: object
             vclConfigMap:
               properties:
@@ -96,6 +132,8 @@ spec:
         status:
           properties:
             deployment:
+              description: 'Important: Run "make" to regenerate code after modifying
+                this file TODO: must have name of deployment too'
               type: object
             service:
               properties:
@@ -104,6 +142,8 @@ spec:
                     ip:
                       type: string
                     loadBalancer:
+                      description: LoadBalancer contains the current status of the
+                        load-balancer, if one is present.
                       type: object
                     name:
                       type: string
@@ -113,6 +153,8 @@ spec:
                     ip:
                       type: string
                     loadBalancer:
+                      description: LoadBalancer contains the current status of the
+                        load-balancer, if one is present.
                       type: object
                     name:
                       type: string

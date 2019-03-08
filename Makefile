@@ -54,14 +54,12 @@ helm-prepare: manifests
 	${ROOT_DIR}hack/create_helm_files.sh ${ROOT_DIR}varnish-operator/templates
 
 helm-upgrade: helm-prepare
-	@if [ -z "${NAMESPACE}" ]; then\
-		echo "trying to read \"namespace:\" line in config/default/kustomization.yaml. Did something change?";\
-		exit 1;\
-	fi
-	@if [ -z "${NAME_PREFIX}" ]; then\
-		echo "trying to read \"namePrefix\" line in config/default/kustomization.yaml. Did something change?";\
-		exit 1;\
-	fi
+ifndef NAMESPACE
+	$(error trying to read "namespace:" line in config/default/kustomization.yaml. Did something change?)
+endif
+ifndef NAME_PREFIX
+	$(error trying to read "namePrefix" line in config/default/kustomization.yaml. Did something change?)
+endif
 	helm upgrade --install --namespace ${NAMESPACE} --force varnish-operator --wait --debug --set operator.controllerImage.tag=${VERSION} --set namespace=${NAMESPACE} --set namePrefix=${NAME_PREFIX} ${ROOT_DIR}varnish-operator
 
 # Build the docker image
@@ -71,11 +69,10 @@ docker-build: fake-test
 
 # Tag and push the docker image
 docker-tag-push:
-	@if [ -z "${REPO_PATH}" ]; then\
-		echo "must set REPO_PATH variable, eg \"make docker-tag-push REPO_PATH=us.icr.io/icm-varnish\"";\
-		exit 1;\
-	fi
-ifeq ($(PUBLISH),)
+ifndef REPO_PATH
+	$(error must set REPO_PATH, eg "make docker-tag-push REPO_PATH=us.icr.io/icm-varnish")
+endif
+ifndef PUBLISH
 	docker tag ${IMG} ${REPO_PATH}/${IMG}
 	docker push ${REPO_PATH}/${IMG}
 else
@@ -91,12 +88,10 @@ docker-build-varnish: fmt vet
 	docker build ${ROOT_DIR} -t ${VARNISH_IMG} -f Dockerfile.Varnish
 
 docker-tag-push-varnish:
-	@if [ -z "${REPO_PATH}" ]; then\
-	  echo "must set REPO_PATH variable, eg \"make docker-tag-push REPO_PATH=us.icr.io/icm-varnish\"";\
-	  exit 1;\
-	fi;
-
-ifeq ($(PUBLISH),)
+ifndef REPO_PATH
+	$(error must set REPO_PATH, eg "make docker-tag-push REPO_PATH=us.icr.io/icm-varnish")
+endif
+ifndef PUBLISH
 	docker tag ${VARNISH_IMG} ${REPO_PATH}/${VARNISH_IMG}
 	docker push ${REPO_PATH}/${VARNISH_IMG}
 else

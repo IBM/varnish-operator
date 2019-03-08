@@ -7,7 +7,6 @@ import (
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
 	"icm-varnish-k8s-operator/pkg/varnishservice/config"
 	"icm-varnish-k8s-operator/pkg/varnishservice/pods"
-	"icm-varnish-k8s-operator/pkg/varnishservice/webhooks"
 
 	"k8s.io/apimachinery/pkg/types"
 
@@ -34,10 +33,6 @@ func Add(mgr manager.Manager, cfg *config.Config, logr *logger.Logger) error {
 		config: cfg,
 		scheme: mgr.GetScheme(),
 		events: NewEventHandler(mgr.GetRecorder(EventRecorderNameVarnishService)),
-	}
-
-	if err := webhooks.InstallWebhooks(mgr, cfg, logr); err != nil {
-		return err
 	}
 
 	// Create a new controller

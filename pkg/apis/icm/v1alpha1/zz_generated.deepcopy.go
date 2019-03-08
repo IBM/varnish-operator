@@ -45,6 +45,11 @@ func (in *VarnishContainer) DeepCopyInto(out *VarnishContainer) {
 		*out = new(v1.Probe)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.ImagePullSecret != nil {
+		in, out := &in.ImagePullSecret, &out.ImagePullSecret
+		*out = new(string)
+		**out = **in
+	}
 	if in.VarnishArgs != nil {
 		in, out := &in.VarnishArgs, &out.VarnishArgs
 		*out = make([]string, len(*in))
@@ -162,16 +167,8 @@ func (in *VarnishServiceList) DeepCopyObject() runtime.Object {
 func (in *VarnishServiceService) DeepCopyInto(out *VarnishServiceService) {
 	*out = *in
 	in.ServiceSpec.DeepCopyInto(&out.ServiceSpec)
-	if in.VarnishPort != nil {
-		in, out := &in.VarnishPort, &out.VarnishPort
-		*out = new(v1.ServicePort)
-		**out = **in
-	}
-	if in.VarnishExporterPort != nil {
-		in, out := &in.VarnishExporterPort, &out.VarnishExporterPort
-		*out = new(v1.ServicePort)
-		**out = **in
-	}
+	out.VarnishPort = in.VarnishPort
+	out.VarnishExporterPort = in.VarnishExporterPort
 	return
 }
 

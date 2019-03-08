@@ -83,21 +83,9 @@ func SetDefaults_VarnishServiceService(in *VarnishServiceService) {
 			IntVal: in.VarnishExporterPort.Port,
 		}
 	}
-	// if the user tried to stick the named ports in the .ports array, remove them
-	for idx, port := range in.Ports {
-		if port.Name == in.VarnishPort.Name ||
-			port.Port == in.VarnishPort.Port ||
-			port.TargetPort == in.VarnishPort.TargetPort ||
-			port.Name == in.VarnishExporterPort.Name ||
-			port.Port == in.VarnishExporterPort.Port ||
-			port.TargetPort == in.VarnishExporterPort.TargetPort {
 
-			in.Ports[idx] = in.Ports[len(in.Ports)-1]
-			in.Ports = in.Ports[:len(in.Ports)-1]
-		}
-	}
-
-	in.Ports = append(in.Ports, *in.VarnishPort, *in.VarnishExporterPort)
+	// TODO: when moving to mutating webhook, this logic will need to change (thanks to validating webhook logic
+	in.Ports = append(in.Ports, in.VarnishPort, in.VarnishExporterPort)
 }
 
 // due to validating webhook, we can assume args are properly formed (in key/value pairs, with optional value) and there are no override args present in the list

@@ -74,6 +74,9 @@ func (w *validationWebhook) Handle(ctx context.Context, req atypes.Request) atyp
 	if resp := validVarnishArgs(vs.Spec.Deployment.Container.VarnishArgs, w.logger); !resp.Response.Allowed {
 		return resp
 	}
+	if resp := validPorts(vs.Spec.Service); !resp.Response.Allowed {
+		return resp
+	}
 
 	return admission.ValidationResponse(true, "")
 }
@@ -89,6 +92,27 @@ func validVarnishArgs(args []string, logr *logger.Logger) atypes.Response {
 		i++
 		if i < len(args) && !varnishArgsKeyRegexp.MatchString(args[i]) {
 			i++
+		}
+	}
+	return admission.ValidationResponse(true, "")
+}
+
+func validPorts(service v1alpha1.VarnishServiceService) atypes.Response {
+	varnishPortName, varnishExporterPortName := "varnish", "varnishexporter"
+	if service.VarnishPort.Name != "" {
+		varnishPortName = service.VarnishPort.Name
+	}
+
+	if service.VarnishExporterPort.Name != "" {
+		varnishExporterPortName = service.VarnishExporterPort.Name
+	}
+
+	for idx, port := range service.Ports {
+		if port.Name == varnishPortName {
+			return admission.ValidationResponse(false, fmt.Sprintf("cannot name port %s in .spec.service.ports[%d] (duplicate of varnishPort)", varnishPortName, idx))
+		}
+		if port.Name == varnishExporterPortName {
+			return admission.ValidationResponse(false, fmt.Sprintf("cannot name port %s in .spec.service.ports[%d] (duplicate of varnishExporterPort)", varnishExporterPortName, idx))
 		}
 	}
 	return admission.ValidationResponse(true, "")

@@ -5,6 +5,8 @@ import (
 	"icm-varnish-k8s-operator/pkg/logger"
 	"icm-varnish-k8s-operator/pkg/varnishservice/config"
 
+	"github.com/pkg/errors"
+
 	admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -27,12 +29,12 @@ func InstallWebhooks(mgr manager.Manager, cfg *config.Config, logr *logger.Logge
 		Build()
 
 	if err != nil {
-		return logr.RErrorw(err, "Can't create validating webhook")
+		return errors.Wrap(err, "Can't create validating webhook")
 	}
 
 	err = validatingWebhook.Validate()
 	if err != nil {
-		return logr.RErrorw(err, "Invalid validating webhook")
+		return errors.Wrap(err, "Invalid validating webhook")
 	}
 
 	mutatingWebhook, err := builder.NewWebhookBuilder().
@@ -46,12 +48,12 @@ func InstallWebhooks(mgr manager.Manager, cfg *config.Config, logr *logger.Logge
 		Build()
 
 	if err != nil {
-		return logr.RErrorw(err, "Can't create mutating webhook")
+		return errors.Wrap(err, "Can't create mutating webhook")
 	}
 
 	err = mutatingWebhook.Validate()
 	if err != nil {
-		return logr.RErrorw(err, "Invalid mutating webhook")
+		return errors.Wrap(err, "Invalid mutating webhook")
 	}
 
 	srv, err := webhook.NewServer("varnish-operator-webhook-server", mgr, webhook.ServerOptions{
@@ -72,7 +74,7 @@ func InstallWebhooks(mgr manager.Manager, cfg *config.Config, logr *logger.Logge
 	})
 
 	if err != nil {
-		return logr.RErrorw(err, "Can't create validating webhook server")
+		return errors.Wrap(err, "Can't create validating webhook server")
 	}
 
 	// The mutating webhook is disabled due to a bug in kubernetes 1.11.
@@ -85,7 +87,7 @@ func InstallWebhooks(mgr manager.Manager, cfg *config.Config, logr *logger.Logge
 	//err = srv.Register(validatingWebhook, mutatingWebhook)
 	err = srv.Register(validatingWebhook)
 	if err != nil {
-		return logr.RErrorw(err, "Can't register validating webhook in the admission server")
+		return errors.Wrap(err, "Can't register validating webhook in the admission server")
 	}
 
 	return nil

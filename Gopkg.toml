@@ -28,8 +28,8 @@ required = [
   version = "v0.2.0"
 
 [[constraint]]
-  name="github.com/juju/errors"
-  branch="master"
+  name="github.com/pkg/errors"
+  version="v0.8.1"
 
 
 # STANZAS BELOW ARE GENERATED AND MAY BE WRITTEN - DO NOT MODIFY BELOW THIS LINE.

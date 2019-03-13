@@ -10,9 +10,14 @@ import (
 
 	"k8s.io/apimachinery/pkg/types"
 
+	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
 	rbacv1beta1 "k8s.io/api/rbac/v1beta1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"go.uber.org/zap"
 
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -170,6 +175,21 @@ type ReconcileVarnishService struct {
 // +kubebuilder:rbac:groups=policy,resources=poddisruptionbudgets,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles;rolebindings;clusterroles;clusterrolebindings,verbs=list;watch;create;update;delete
 func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	r.logger.Debugw("Reconciling...")
+	res, err := r.wrappedReconcile(request)
+	if err != nil {
+		if statusErr, ok := errors.Cause(err).(*apierrors.StatusError); ok && statusErr.ErrStatus.Reason == metav1.StatusReasonConflict {
+			r.logger.Info("Conflict occurred. Retrying...", zap.Error(err))
+			return reconcile.Result{Requeue: true}, nil //retry but do not treat conflicts as errors
+		}
+
+		r.logger.Errorf("%+v", err)
+		return reconcile.Result{}, err
+	}
+	return res, nil
+}
+
+func (r *ReconcileVarnishService) wrappedReconcile(request reconcile.Request) (reconcile.Result, error) {
 	logr := r.logger.With("name", request.Name, "namespace", request.Namespace)
 
 	// Fetch the VarnishService instance
@@ -182,7 +202,7 @@ func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcil
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
-		return reconcile.Result{}, logr.RErrorw(err, "could not read VarnishService")
+		return reconcile.Result{}, errors.Wrap(err, "could not read VarnishService")
 	}
 
 	r.scheme.Default(instance)
@@ -240,7 +260,7 @@ func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcil
 	if !compare.EqualVarnishServiceStatus(&instance.Status, &instanceStatus.Status) {
 		logr.Infoc("Updating VarnishService Status", "diff", compare.DiffVarnishServiceStatus(&instance.Status, &instanceStatus.Status))
 		if err = r.Status().Update(context.TODO(), instanceStatus); err != nil {
-			return reconcile.Result{}, logr.RErrorw(err, "could not update VarnishService Status", "name", instance.Name, "namespace", instance.Namespace)
+			return reconcile.Result{}, errors.Wrapf(err, "could not update VarnishService Status %s:%s, %s:%s", "name", instance.Name, "namespace", instance.Namespace)
 		}
 	} else {
 		logr.Debugw("No updates for VarnishService status")

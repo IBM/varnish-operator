@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/caarlos0/env"
-	"github.com/juju/errors"
+	"github.com/pkg/errors"
 )
 
 // Config that reads in env variables
@@ -47,7 +47,7 @@ func Load() (*Config, error) {
 	zapcoreLevelParse := env.ParserFunc(func(v string) (interface{}, error) {
 		var l zapcore.Level
 		err := l.UnmarshalText([]byte(v))
-		return l, errors.Annotatef(err, "%s is not a zap level", v)
+		return l, errors.Wrapf(err, "%s is not a zap level", v)
 	})
 
 	parsers := env.CustomParsers{
@@ -57,7 +57,7 @@ func Load() (*Config, error) {
 
 	var err error
 	if err = env.ParseWithFuncs(&c, parsers); err != nil {
-		return &c, errors.Trace(err)
+		return &c, errors.WithStack(err)
 	}
 
 	// hard-coded here for convenience
@@ -65,7 +65,7 @@ func Load() (*Config, error) {
 
 	c.EndpointSelector, err = labels.Parse(c.EndpointSelectorString)
 	if err != nil {
-		return &c, errors.Annotatef(err, "could not parse endpoint selector: %s", c.EndpointSelectorString)
+		return &c, errors.Wrapf(err, "could not parse endpoint selector: %s", c.EndpointSelectorString)
 	}
 
 	return &c, nil

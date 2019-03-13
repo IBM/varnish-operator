@@ -6,6 +6,8 @@ import (
 	"icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
 
+	"github.com/pkg/errors"
+
 	rbacv1beta1 "k8s.io/api/rbac/v1beta1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,7 +34,7 @@ func (r *ReconcileVarnishService) reconcileClusterRole(instance *icmapiv1alpha1.
 
 	// Set controller reference for role
 	if err := controllerutil.SetControllerReference(instance, role, r.scheme); err != nil {
-		return "", logr.RErrorw(err, "Cannot set controller reference for ClusterRole")
+		return "", errors.Wrap(err, "Cannot set controller reference for ClusterRole")
 	}
 
 	found := &rbacv1beta1.ClusterRole{}
@@ -45,16 +47,16 @@ func (r *ReconcileVarnishService) reconcileClusterRole(instance *icmapiv1alpha1.
 	if err != nil && kerrors.IsNotFound(err) {
 		logr.Infoc("Creating ClusterRole", "new", role)
 		if err = r.Create(context.TODO(), role); err != nil {
-			return "", logr.RErrorw(err, "Unable to create ClusterRole")
+			return "", errors.Wrap(err, "Unable to create ClusterRole")
 		}
 	} else if err != nil {
-		return "", logr.RErrorw(err, "Could not Get ClusterRole")
+		return "", errors.Wrap(err, "Could not Get ClusterRole")
 	} else if !compare.EqualClusterRole(found, role) {
 		logr.Infoc("Updating ClusterRole", "diff", compare.DiffClusterRole(found, role))
 		found.Rules = role.Rules
 		found.Labels = role.Labels
 		if err = r.Update(context.TODO(), found); err != nil {
-			return "", logr.RErrorw(err, "Could not Update ClusterRole")
+			return "", errors.Wrap(err, "Could not Update ClusterRole")
 		}
 	} else {
 		logr.Debugw("No updates for ClusterRole")

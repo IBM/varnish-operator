@@ -8,7 +8,7 @@ import (
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
 	"io/ioutil"
 
-	"github.com/juju/errors"
+	"github.com/pkg/errors"
 
 	"k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -36,7 +36,7 @@ func (r *ReconcileVarnishService) reconcileConfigMap(podsSelector map[string]str
 	if err != nil && kerrors.IsNotFound(err) {
 		defaultVCL, backendsVCLTmpl, err := readRequiredVCLFiles()
 		if err != nil {
-			return nil, logr.RErrorw(err, "could not get default config map files")
+			return nil, errors.Wrap(err, "could not get default config map files")
 		}
 
 		cm = &v1.ConfigMap{
@@ -51,20 +51,20 @@ func (r *ReconcileVarnishService) reconcileConfigMap(podsSelector map[string]str
 			},
 		}
 		if err := controllerutil.SetControllerReference(instance, cm, r.scheme); err != nil {
-			return nil, logr.RErrorw(err, "could not initialize default ConfigMap")
+			return nil, errors.Wrap(err, "could not initialize default ConfigMap")
 		}
 
 		logr.Infoc("Creating ConfigMap with default VCL files", "new", cm)
 		if err = r.Create(context.TODO(), cm); err != nil {
-			return nil, logr.RErrorw(err, "could not create ConfigMap")
+			return nil, errors.Wrap(err, "could not create ConfigMap")
 		}
 	} else if err != nil {
-		return nil, logr.RErrorw(err, "could not get current state of ConfigMap")
+		return nil, errors.Wrap(err, "could not get current state of ConfigMap")
 	} else {
 		cmCopy := cm.DeepCopy() //create a copy to check later if the config map changed and needs to be updated
 		// TODO: there may be a problem if the configmap is already owned by something else. That will prevent the `Watch` fn (in varnishservice_controller.go#run) from detecting updates to the ConfigMap. It will also cause this code to throw an unhandled error that we may want to handle
 		if err = controllerutil.SetControllerReference(instance, cm, r.scheme); err != nil {
-			return nil, logr.RErrorw(err, "could not set controller as the OwnerReference for existing ConfigMap")
+			return nil, errors.Wrap(err, "could not set controller as the OwnerReference for existing ConfigMap")
 		}
 		// don't trample on any labels created by user
 		if cm.Labels == nil {
@@ -77,7 +77,7 @@ func (r *ReconcileVarnishService) reconcileConfigMap(podsSelector map[string]str
 		if !compare.EqualConfigMap(cm, cmCopy) {
 			logr.Infow("Updating ConfigMap with defaults", "diff", compare.DiffConfigMap(cm, cmCopy))
 			if err = r.Update(context.TODO(), cm); err != nil {
-				return nil, logr.RErrorw(err, "could not update deployment")
+				return nil, errors.Wrap(err, "could not update deployment")
 			}
 		} else {
 			logr.Debugw("No updates for ConfigMap")
@@ -96,7 +96,7 @@ func (r *ReconcileVarnishService) reconcileConfigMap(podsSelector map[string]str
 	selector := labels.SelectorFromSet(podsSelector)
 	err = r.List(context.Background(), &client.ListOptions{LabelSelector: selector}, pods)
 	if err != nil {
-		return nil, logr.RErrorw(err, "can't get list of pods")
+		return nil, errors.Wrap(err, "can't get list of pods")
 	}
 
 	latest, outdated := 0, 0
@@ -118,10 +118,10 @@ func (r *ReconcileVarnishService) reconcileConfigMap(podsSelector map[string]str
 func readRequiredVCLFiles() (defaultVCL, backendsVCLTmpl string, err error) {
 	var defaultVCLBytes, backendsVCLTmplBytes []byte
 	if defaultVCLBytes, err = ioutil.ReadFile("config/vcl/default.vcl"); err != nil {
-		return "", "", errors.NewNotFound(err, "could not find file default.vcl for ConfigMap")
+		return "", "", errors.Wrap(err, "could not find file default.vcl for ConfigMap")
 	}
 	if backendsVCLTmplBytes, err = ioutil.ReadFile("config/vcl/backends.vcl.tmpl"); err != nil {
-		return "", "", errors.NewNotFound(err, "could not find file backends.vcl.tmpl for ConfigMap")
+		return "", "", errors.Wrap(err, "could not find file backends.vcl.tmpl for ConfigMap")
 	}
 
 	return string(defaultVCLBytes), string(backendsVCLTmplBytes), nil

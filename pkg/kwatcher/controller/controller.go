@@ -11,7 +11,8 @@ import (
 	"icm-varnish-k8s-operator/pkg/logger"
 	"strings"
 
-	"github.com/juju/errors"
+	"github.com/pkg/errors"
+
 	"go.uber.org/zap"
 	"k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -48,7 +49,7 @@ func Add(mgr manager.Manager, cfg *config.Config, logr *logger.Logger) error {
 	// Create a new controller
 	c, err := controller.New("varnishservice-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
-		return errors.Annotate(err, "could not initialize controller")
+		return errors.Wrap(err, "could not initialize controller")
 	}
 
 	err = c.Watch(&source.Kind{Type: &v1.ConfigMap{}}, &handler.EnqueueRequestsFromMapFunc{
@@ -63,12 +64,12 @@ func Add(mgr manager.Manager, cfg *config.Config, logr *logger.Logger) error {
 			}),
 	}, configmaps.Predicate(cfg.ConfigMapName))
 	if err != nil {
-		return errors.Annotate(err, "could not watch configMap")
+		return errors.Wrap(err, "could not watch configMap")
 	}
 
 	backendEpPredicate, err := endpoints.NewPredicate(cfg.EndpointSelectorString, logr)
 	if err != nil {
-		return errors.Annotate(err, "could not create endpoints predicate")
+		return errors.Wrap(err, "could not create endpoints predicate")
 	}
 	err = c.Watch(&source.Kind{Type: &v1.Endpoints{}}, &handler.EnqueueRequestsFromMapFunc{
 		ToRequests: handler.ToRequestsFunc(
@@ -82,7 +83,7 @@ func Add(mgr manager.Manager, cfg *config.Config, logr *logger.Logger) error {
 			}),
 	}, backendEpPredicate)
 	if err != nil {
-		return errors.Annotate(err, "could not watch endpoints")
+		return errors.Wrap(err, "could not watch endpoints")
 	}
 
 	varnishPodsSelector := labels.SelectorFromSet(labels.Set{
@@ -92,7 +93,7 @@ func Add(mgr manager.Manager, cfg *config.Config, logr *logger.Logger) error {
 	})
 	varnishEpPredicate, err := endpoints.NewPredicate(varnishPodsSelector.String(), logr)
 	if err != nil {
-		return errors.Annotate(err, "could not create endpoints predicate")
+		return errors.Wrap(err, "could not create endpoints predicate")
 	}
 	err = c.Watch(&source.Kind{Type: &v1.Endpoints{}}, &handler.EnqueueRequestsFromMapFunc{
 		ToRequests: handler.ToRequestsFunc(
@@ -106,7 +107,7 @@ func Add(mgr manager.Manager, cfg *config.Config, logr *logger.Logger) error {
 			}),
 	}, varnishEpPredicate)
 	if err != nil {
-		return errors.Annotate(err, "could not watch endpoints")
+		return errors.Wrap(err, "could not watch endpoints")
 	}
 
 	return nil
@@ -131,7 +132,7 @@ func (r *ReconcileVarnish) Reconcile(request reconcile.Request) (reconcile.Resul
 			return reconcile.Result{Requeue: true}, nil //retry but do not treat conflicts as errors
 		}
 
-		r.logger.Error(zap.Error(err))
+		r.logger.Errorf("%+v", err)
 		return reconcile.Result{}, err
 	}
 	return res, nil
@@ -141,7 +142,7 @@ func (r *ReconcileVarnish) reconcileWithLogging(request reconcile.Request) (reco
 	vs := &v1alpha1.VarnishService{}
 	err := r.Get(context.Background(), types.NamespacedName{Namespace: request.Namespace, Name: r.config.VarnishServiceName}, vs)
 	if err != nil {
-		return reconcile.Result{}, errors.Trace(err)
+		return reconcile.Result{}, errors.WithStack(err)
 	}
 
 	r.scheme.Default(vs)
@@ -154,23 +155,23 @@ func (r *ReconcileVarnish) reconcileWithLogging(request reconcile.Request) (reco
 	pod := &v1.Pod{}
 	err = r.Get(context.Background(), types.NamespacedName{Namespace: request.Namespace, Name: r.config.PodName}, pod)
 	if err != nil {
-		return reconcile.Result{}, errors.Trace(err)
+		return reconcile.Result{}, errors.WithStack(err)
 	}
 
 	cm, err := r.getConfigMap(r.config.Namespace, r.config.ConfigMapName)
 	if err != nil {
-		return reconcile.Result{}, errors.Trace(err)
+		return reconcile.Result{}, errors.WithStack(err)
 	}
 
 	newFiles, newTemplates := r.filesAndTemplates(cm.Data)
 
 	if err = r.verifyEntrypointExists(newFiles, newTemplates, entrypointFile); err != nil {
-		return reconcile.Result{}, errors.Trace(err)
+		return reconcile.Result{}, errors.WithStack(err)
 	}
 
 	bks, err := r.getPodInfo(r.config.Namespace, r.config.EndpointSelector, targetPort)
 	if err != nil {
-		return reconcile.Result{}, errors.Trace(err)
+		return reconcile.Result{}, errors.WithStack(err)
 	}
 
 	varnishLabels := labels.SelectorFromSet(vslabels.CombinedComponentLabels(vs, v1alpha1.VarnishComponentCachedService))
@@ -178,34 +179,34 @@ func (r *ReconcileVarnish) reconcileWithLogging(request reconcile.Request) (reco
 
 	templatizedFiles, err := r.resolveTemplates(newTemplates, targetPort, varnishPort, bks, varnishNodes)
 	if err != nil {
-		return reconcile.Result{}, errors.Trace(err)
+		return reconcile.Result{}, errors.WithStack(err)
 	}
 
 	for fileName, contents := range templatizedFiles {
 		if _, found := newFiles[fileName]; found {
-			return reconcile.Result{}, errors.AlreadyExistsf("ConfigMap has %s and %s.tmpl entries. Cannot include file and template with same name", fileName, fileName)
+			return reconcile.Result{}, errors.Errorf("ConfigMap has %s and %s.tmpl entries. Cannot include file and template with same name", fileName, fileName)
 		}
 		newFiles[fileName] = contents
 	}
 
 	currFiles, err := getCurrentFiles(r.config.VCLDir)
 	if err != nil {
-		return reconcile.Result{}, errors.Trace(err)
+		return reconcile.Result{}, errors.WithStack(err)
 	}
 
 	filesTouched, err := r.reconcileFiles(r.config.VCLDir, currFiles, newFiles)
 	if err != nil {
-		return reconcile.Result{}, errors.Trace(err)
+		return reconcile.Result{}, errors.WithStack(err)
 	}
 
 	if filesTouched {
 		if err = r.reconcileVarnish(vs, pod, cm); err != nil {
-			return reconcile.Result{}, errors.Trace(err)
+			return reconcile.Result{}, errors.WithStack(err)
 		}
 	}
 
 	if err := r.reconcilePod(filesTouched, pod, cm); err != nil {
-		return reconcile.Result{}, errors.Trace(err)
+		return reconcile.Result{}, errors.WithStack(err)
 	}
 
 	return reconcile.Result{}, nil
@@ -228,7 +229,7 @@ func (r *ReconcileVarnish) verifyEntrypointExists(files, templates map[string]st
 	_, fileFound := files[entrypoint]
 	_, templateFound := templates[entrypoint+".tmpl"]
 	if !fileFound && !templateFound {
-		return errors.NotFoundf("%s must exist in configmap, but not found", entrypoint)
+		return errors.Errorf("%s must exist in configmap, but not found", entrypoint)
 	}
 	return nil
 }
@@ -236,7 +237,7 @@ func (r *ReconcileVarnish) verifyEntrypointExists(files, templates map[string]st
 func verifyFilesExist(configMapFiles map[string]string, files ...string) error {
 	verify := func(filename string) error {
 		if _, found := configMapFiles[filename]; !found {
-			return errors.NotFoundf("%s must exist in configmap, but not found", filename)
+			return errors.Errorf("%s must exist in configmap, but not found", filename)
 		}
 		return nil
 	}

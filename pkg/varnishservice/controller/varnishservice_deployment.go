@@ -7,6 +7,8 @@ import (
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -88,7 +90,7 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 	logr := r.logger.With("name", desired.Name, "namespace", desired.Namespace)
 
 	if err := controllerutil.SetControllerReference(instance, desired, r.scheme); err != nil {
-		return nil, logr.RErrorw(err, "could not set controller as the OwnerReference for deployment")
+		return nil, errors.Wrap(err, "could not set controller as the OwnerReference for deployment")
 	}
 	r.scheme.Default(desired)
 
@@ -103,10 +105,10 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 		logr.Infoc("Creating Deployment", "new", desired)
 		err = r.Create(context.TODO(), desired)
 		if err != nil {
-			return nil, logr.RErrorw(err, "could not create deployment")
+			return nil, errors.Wrap(err, "could not create deployment")
 		}
 	} else if err != nil {
-		return nil, logr.RErrorw(err, "could not get current state of deployment")
+		return nil, errors.Wrap(err, "could not get current state of deployment")
 	} else {
 		// the pod selector is immutable once set, so always enforce the same as existing
 		desired.Spec.Selector = found.Spec.Selector
@@ -116,7 +118,7 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 			found.Spec = desired.Spec
 			found.Labels = desired.Labels
 			if err = r.Update(context.TODO(), found); err != nil {
-				return nil, logr.RErrorw(err, "could not update deployment")
+				return nil, errors.Wrap(err, "could not update deployment")
 			}
 		} else {
 			logr.Debugw("No updates for Deployment")

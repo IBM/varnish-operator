@@ -5,14 +5,14 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/juju/errors"
+	"github.com/pkg/errors"
 )
 
 func (r *ReconcileVarnish) resolveTemplate(tmplStr string, targetPort, varnishPort int32, backends, varnishNodes []PodInfo) (string, error) {
 	tmplName := "backends"
 	tmpl, err := template.New(tmplName).Option("missingkey=error").Parse(tmplStr)
 	if err != nil {
-		return "", errors.Annotate(err, "could not parse template")
+		return "", errors.Wrap(err, "could not parse template")
 	}
 
 	data := map[string]interface{}{
@@ -25,7 +25,7 @@ func (r *ReconcileVarnish) resolveTemplate(tmplStr string, targetPort, varnishPo
 	var b bytes.Buffer
 	b.WriteString("// This file is generated. Do not edit manually, as changes will be destroyed\n\n")
 	if err = tmpl.ExecuteTemplate(&b, tmplName, data); err != nil {
-		return "", errors.Annotatef(err, "problem resolving template")
+		return "", errors.Wrapf(err, "problem resolving template")
 	}
 	return b.String(), nil
 }
@@ -42,13 +42,13 @@ func (r *ReconcileVarnish) resolveTemplates(tmplStrs map[string]string, targetPo
 	for tmplFileName, tmplStr := range tmplStrs {
 		tmpl, err := template.New(tmplFileName).Option("missingkey=error").Parse(tmplStr)
 		if err != nil {
-			return nil, errors.Annotatef(err, "could not parse template %s", tmplFileName)
+			return nil, errors.Wrapf(err, "could not parse template %s", tmplFileName)
 		}
 
 		var b bytes.Buffer
 		b.WriteString("// This file is generated. Do not edit manually, as changes will be destroyed\n\n")
 		if err = tmpl.ExecuteTemplate(&b, tmplFileName, data); err != nil {
-			return nil, errors.Annotatef(err, "problem resolving template %s", tmplFileName)
+			return nil, errors.Wrapf(err, "problem resolving template %s", tmplFileName)
 		}
 		fileName := strings.TrimSuffix(tmplFileName, ".tmpl")
 		out[fileName] = b.String()

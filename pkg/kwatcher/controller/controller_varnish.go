@@ -12,7 +12,7 @@ import (
 
 	"k8s.io/api/core/v1"
 
-	"github.com/juju/errors"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -52,7 +52,7 @@ func (r *ReconcileVarnish) reconcileVarnish(vs *v1alpha1.VarnishService, pod *v1
 			r.eventHandler.Warning(pod, events.EventReasonReloadError, podEventMsg)
 			r.eventHandler.Warning(vs, events.EventReasonReloadError, vsEventMsg)
 		}
-		return errors.Annotate(err, string(out))
+		return errors.Wrap(err, string(out))
 	}
 	r.logger.Debugf("Varnish successfully reloaded in %f seconds", time.Since(start).Seconds())
 	return nil
@@ -74,7 +74,7 @@ func getActiveVCLConfig() (*VCLConfig, error) {
 
 	if activeVersion == nil {
 		// That means that Varnish is in not started/invalid state. Return an error to trigger an another reconcile event
-		return nil, errors.NotFoundf("No active VCL configuration found")
+		return nil, errors.Errorf("No active VCL configuration found")
 	}
 
 	return activeVersion, nil
@@ -83,12 +83,12 @@ func getActiveVCLConfig() (*VCLConfig, error) {
 func getVCLConfigsList() ([]VCLConfig, error) {
 	out, err := exec.Command("vcl_list").CombinedOutput()
 	if err != nil {
-		return nil, errors.Annotate(err, string(out))
+		return nil, errors.Wrap(err, string(out))
 	}
 
 	configs, err := parseVCLConfigsList(out)
 	if err != nil {
-		return nil, errors.Trace(err)
+		return nil, errors.WithStack(err)
 	}
 	return configs, nil
 }

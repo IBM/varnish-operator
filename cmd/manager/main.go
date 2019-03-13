@@ -27,13 +27,13 @@ func main() {
 		log.Fatalf("unable to read env vars: %v", err)
 	}
 
+	logr := logger.NewLogger(operatorConfig.LogFormat, operatorConfig.LogLevel)
+
 	// Get a config to talk to the apiserver
 	clientConfig, err := config.GetConfig()
 	if err != nil {
-		log.Fatalf("unable to set up client config: %v", err)
+		logr.Fatalf("unable to set up client config: %v", err)
 	}
-
-	logr := logger.NewLogger(operatorConfig.LogFormat, operatorConfig.LogLevel)
 
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(clientConfig, manager.Options{

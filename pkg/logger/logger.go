@@ -3,8 +3,6 @@ package logger
 import (
 	"log"
 
-	"github.com/juju/errors"
-
 	"go.uber.org/zap/zapcore"
 
 	"go.uber.org/zap"
@@ -19,11 +17,10 @@ func NewLogger(format string, level zapcore.Level) *Logger {
 
 	if format == "json" {
 		loggerConfig = zap.NewProductionConfig()
-		loggerConfig.DisableCaller = true
 	} else {
 		loggerConfig = zap.NewDevelopmentConfig()
 	}
-
+	loggerConfig.DisableStacktrace = true //stack traces are shown by github.com/pkg/errors package
 	loggerConfig.Level = zap.NewAtomicLevelAt(level)
 
 	zaplog, err := loggerConfig.Build()
@@ -33,20 +30,6 @@ func NewLogger(format string, level zapcore.Level) *Logger {
 	logger := zaplog.Sugar()
 
 	return &Logger{SugaredLogger: logger}
-}
-
-func (l *Logger) RErrorw(err error, msg string, keysAndValues ...interface{}) error {
-	var wrapped *errors.Err
-	switch e := err.(type) {
-	case *errors.Err:
-		wrapped = e
-	default:
-		errWithCause := errors.NewErrWithCause(e, msg)
-		wrapped = &errWithCause
-	}
-	wrapped.SetLocation(2)
-	l.Desugar().WithOptions(zap.AddCallerSkip(1)).Sugar().Errorw(msg, "stacktrace", errors.ErrorStack(wrapped))
-	return err
 }
 
 // Infoc provides conditional logging based on provided loglevel

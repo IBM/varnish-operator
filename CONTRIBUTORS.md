@@ -564,8 +564,7 @@ Downside of using `GenerateName` is that in the code you need to save the genera
             Build()
     
     if err != nil {
-        logger.RErrorw(err, "Can't create validating webhook")
-        return
+        return errors.Wrap(err, "Can't create validating webhook")
     }
     ```
 
@@ -595,8 +594,7 @@ Downside of using `GenerateName` is that in the code you need to save the genera
     })
     
     if err != nil {
-        logger.RErrorw(err, "Can't create validating webhook server")
-        return
+        return errors.Wrap(err, "Can't create validating webhook server")
     }
     ```
 
@@ -605,8 +603,7 @@ Downside of using `GenerateName` is that in the code you need to save the genera
     ```go
     err = srv.Register(validatingWebhook)
     if err != nil {
-        logger.RErrorw(err, "Can't register validating webhook in the admission server")
-        return
+        return errors.Wrap(err, "Can't register validating webhook in the admission server")
     }
     
     logger.Infow("Admission controller is successfully registered")

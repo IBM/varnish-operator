@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"github.com/juju/errors"
+	"github.com/pkg/errors"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -25,7 +25,7 @@ type EndpointPredicate struct {
 func NewPredicate(selectorString string, logr *logger.Logger) (predicate.Predicate, error) {
 	ls, err := labels.ConvertSelectorToLabelsMap(selectorString)
 	if err != nil {
-		return nil, errors.Annotate(err, "could not parse selector string")
+		return nil, errors.Wrap(err, "could not parse selector string")
 	}
 	ep := &EndpointPredicate{
 		labels: ls,

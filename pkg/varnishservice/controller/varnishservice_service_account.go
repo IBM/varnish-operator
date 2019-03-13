@@ -6,6 +6,8 @@ import (
 	"icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
 
+	"github.com/pkg/errors"
+
 	"k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,7 +32,7 @@ func (r *ReconcileVarnishService) reconcileServiceAccount(instance *icmapiv1alph
 
 	// Set controller reference for service object
 	if err := controllerutil.SetControllerReference(instance, serviceAccount, r.scheme); err != nil {
-		return "", logr.RErrorw(err, "Cannot set controller reference for Service account")
+		return "", errors.Wrap(err, "Cannot set controller reference for Service account")
 	}
 
 	found := &v1.ServiceAccount{}
@@ -43,16 +45,16 @@ func (r *ReconcileVarnishService) reconcileServiceAccount(instance *icmapiv1alph
 	if err != nil && kerrors.IsNotFound(err) {
 		logr.Infoc("Creating Service sccount", "new", serviceAccount)
 		if err = r.Create(context.TODO(), serviceAccount); err != nil {
-			return "", logr.RErrorw(err, "Unable to create Service account")
+			return "", errors.Wrap(err, "Unable to create Service account")
 		}
 	} else if err != nil {
-		return "", logr.RErrorw(err, "Could not get Service account")
+		return "", errors.Wrap(err, "Could not get Service account")
 	} else if !compare.EqualServiceAccount(found, serviceAccount) {
 		logr.Infoc("Updating Service account", "diff", compare.DiffServiceAccount(found, serviceAccount))
 		found.ImagePullSecrets = serviceAccount.ImagePullSecrets
 		found.Labels = serviceAccount.Labels
 		if err = r.Update(context.TODO(), found); err != nil {
-			return "", logr.RErrorw(err, "Unable to update service account")
+			return "", errors.Wrap(err, "Unable to update service account")
 		}
 	} else {
 		logr.Debugw("No updates for Service account")

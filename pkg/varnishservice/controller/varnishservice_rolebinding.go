@@ -6,6 +6,8 @@ import (
 	vslabels "icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
 
+	"github.com/pkg/errors"
+
 	rbacv1beta1 "k8s.io/api/rbac/v1beta1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,7 +40,7 @@ func (r *ReconcileVarnishService) reconcileRoleBinding(instance *icmapiv1alpha1.
 
 	// Set controller reference for roleBinding
 	if err := controllerutil.SetControllerReference(instance, roleBinding, r.scheme); err != nil {
-		return logr.RErrorw(err, "Cannot set controller reference for service")
+		return errors.Wrap(err, "Cannot set controller reference for service")
 	}
 
 	found := &rbacv1beta1.RoleBinding{}
@@ -51,17 +53,17 @@ func (r *ReconcileVarnishService) reconcileRoleBinding(instance *icmapiv1alpha1.
 	if err != nil && kerrors.IsNotFound(err) {
 		logr.Infoc("Creating RoleBinding", "new", roleBinding)
 		if err = r.Create(context.TODO(), roleBinding); err != nil {
-			return logr.RErrorw(err, "Unable to create roleBinding")
+			return errors.Wrap(err, "Unable to create roleBinding")
 		}
 	} else if err != nil {
-		return logr.RErrorw(err, "Could not Get roleBinding")
+		return errors.Wrap(err, "Could not Get roleBinding")
 	} else if !compare.EqualRoleBinding(found, roleBinding) {
 		logr.Infoc("Updating RoleBinding", "diff", compare.DiffRoleBinding(found, roleBinding))
 		found.Subjects = roleBinding.Subjects
 		found.RoleRef = roleBinding.RoleRef
 		found.Labels = roleBinding.Labels
 		if err = r.Update(context.TODO(), found); err != nil {
-			return logr.RErrorw(err, "Could not Update roleBinding")
+			return errors.Wrap(err, "Could not Update roleBinding")
 		}
 	} else {
 		logr.Debugw("No updates for Rolebinding")

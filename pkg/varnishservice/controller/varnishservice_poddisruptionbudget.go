@@ -6,6 +6,8 @@ import (
 	"icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
 
+	"github.com/pkg/errors"
+
 	policyv1beta1 "k8s.io/api/policy/v1beta1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,7 +41,7 @@ func (r *ReconcileVarnishService) reconcilePodDisruptionBudget(instance *icmapiv
 	}
 
 	if err := controllerutil.SetControllerReference(instance, desired, r.scheme); err != nil {
-		return logr.RErrorw(err, "could not set controller as the OwnerReference for poddisruptionbudget")
+		return errors.Wrap(err, "could not set controller as the OwnerReference for poddisruptionbudget")
 	}
 
 	found := &policyv1beta1.PodDisruptionBudget{}
@@ -52,14 +54,14 @@ func (r *ReconcileVarnishService) reconcilePodDisruptionBudget(instance *icmapiv
 	if err != nil && kerrors.IsNotFound(err) {
 		logr.Infoc("Creating PodDisruptionBudget", "new", desired)
 		if err = r.Create(context.TODO(), desired); err != nil {
-			return logr.RErrorw(err, "could not create poddisruptionbudget")
+			return errors.Wrap(err, "could not create poddisruptionbudget")
 		}
 	} else if err != nil {
-		return logr.RErrorw(err, "could not get current state of poddisruptionbudget")
+		return errors.Wrap(err, "could not get current state of poddisruptionbudget")
 	} else if !compare.EqualPodDisruptionBudget(found, desired) {
 		logr.Infoc("Updating PodDisruptionBudget", "diff", compare.DiffPodDisruptionBudget(found, desired))
 		if err = r.Update(context.TODO(), found); err != nil {
-			return logr.RErrorw(err, "could not update poddisruptionbudget")
+			return errors.Wrap(err, "could not update poddisruptionbudget")
 		}
 	} else {
 		logr.Debugw("No updates for poddisruptionbudget")

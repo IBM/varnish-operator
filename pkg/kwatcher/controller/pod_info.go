@@ -4,7 +4,7 @@ import (
 	"context"
 	"sort"
 
-	"github.com/juju/errors"
+	"github.com/pkg/errors"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -19,11 +19,11 @@ func (r *ReconcileVarnish) getPodInfo(namespace string, labels labels.Selector, 
 	}
 	err := r.List(context.TODO(), opts, found)
 	if err != nil {
-		return nil, errors.Annotatef(err, "could not retrieve backends from namespace %s with labels %s", namespace, labels.String())
+		return nil, errors.Wrapf(err, "could not retrieve backends from namespace %s with labels %s", namespace, labels.String())
 	}
 
 	if len(found.Items) == 0 {
-		return nil, errors.NotFoundf("no endpoints from namespace %s matching labels %s", namespace, labels.String())
+		return nil, errors.Errorf("no endpoints from namespace %s matching labels %s", namespace, labels.String())
 	}
 
 	var backendList []PodInfo
@@ -35,7 +35,7 @@ func (r *ReconcileVarnish) getPodInfo(namespace string, labels labels.Selector, 
 					if port.Port == validPort {
 						nodeLabels, err := r.getNodeLabels(*address.NodeName)
 						if err != nil {
-							return nil, errors.Trace(err)
+							return nil, errors.WithStack(err)
 						}
 						b := PodInfo{IP: address.IP, NodeLabels: nodeLabels, PodName: address.TargetRef.Name}
 						backendList = append(backendList, b)

@@ -4,7 +4,7 @@ import (
 	"context"
 	"reflect"
 
-	"github.com/juju/errors"
+	"github.com/pkg/errors"
 
 	"k8s.io/api/core/v1"
 )
@@ -47,7 +47,7 @@ func (r *ReconcileVarnish) reconcilePod(filesChanged bool, pod *v1.Pod, cm *v1.C
 	podCopy.Annotations[annotationActiveVCLConfigName] = activeVCL.Name
 	if !reflect.DeepEqual(pod.Annotations, podCopy.Annotations) {
 		if err = r.Update(context.Background(), podCopy); err != nil {
-			return errors.Annotatef(err, "failed to update pod")
+			return errors.Wrapf(err, "failed to update pod")
 		}
 
 		r.logger.Infow("Pod has been successfully updated")

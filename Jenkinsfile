@@ -33,7 +33,7 @@ node("icm_slave") {
     icmDockerStages(operatorDockerImageInfo)
 
     List<String> tags = icmGetTagsOnCommit()
-    String repoVersion = readFile('version.txt')
+    String repoVersion = new VersionUtils(this).getAppVersion()
     if (tags && tags.contains(repoVersion)) {
         stage("Helm Chart Publish") {
             sh "./hack/create_helm_files.sh ${helmChartPath}/templates"

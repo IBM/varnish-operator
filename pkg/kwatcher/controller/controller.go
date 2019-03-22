@@ -45,7 +45,6 @@ func Add(mgr manager.Manager, cfg *config.Config, logr *logger.Logger) error {
 		scheme:       mgr.GetScheme(),
 		eventHandler: events.NewEventHandler(mgr.GetRecorder(events.EventRecorderName), cfg.PodName),
 	}
-
 	// Create a new controller
 	c, err := controller.New("varnishservice-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
@@ -88,7 +87,7 @@ func Add(mgr manager.Manager, cfg *config.Config, logr *logger.Logger) error {
 
 	varnishPodsSelector := labels.SelectorFromSet(labels.Set{
 		v1alpha1.LabelVarnishOwner:     cfg.VarnishServiceName,
-		v1alpha1.LabelVarnishComponent: v1alpha1.VarnishComponentCachedService,
+		v1alpha1.LabelVarnishComponent: v1alpha1.VarnishComponentCacheService,
 		v1alpha1.LabelVarnishUID:       string(cfg.VarnishServiceUID),
 	})
 	varnishEpPredicate, err := endpoints.NewPredicate(varnishPodsSelector.String(), logr)
@@ -174,7 +173,7 @@ func (r *ReconcileVarnish) reconcileWithLogging(request reconcile.Request) (reco
 		return reconcile.Result{}, errors.WithStack(err)
 	}
 
-	varnishLabels := labels.SelectorFromSet(vslabels.CombinedComponentLabels(vs, v1alpha1.VarnishComponentCachedService))
+	varnishLabels := labels.SelectorFromSet(vslabels.CombinedComponentLabels(vs, v1alpha1.VarnishComponentCacheService))
 	varnishNodes, err := r.getPodInfo(r.config.Namespace, varnishLabels, varnishPort)
 
 	templatizedFiles, err := r.resolveTemplates(newTemplates, targetPort, varnishPort, bks, varnishNodes)
@@ -184,6 +183,7 @@ func (r *ReconcileVarnish) reconcileWithLogging(request reconcile.Request) (reco
 
 	for fileName, contents := range templatizedFiles {
 		if _, found := newFiles[fileName]; found {
+			// TODO: probably want to create event for this
 			return reconcile.Result{}, errors.Errorf("ConfigMap has %s and %s.tmpl entries. Cannot include file and template with same name", fileName, fileName)
 		}
 		newFiles[fileName] = contents

@@ -49,15 +49,6 @@ func SetDefaults_VarnishContainer(in *VarnishContainer) {
 	if in.RestartPolicy == "" {
 		in.RestartPolicy = v1.RestartPolicyAlways
 	}
-	if in.ReadinessProbe == nil {
-		in.ReadinessProbe = &v1.Probe{
-			Handler: v1.Handler{
-				Exec: &v1.ExecAction{
-					Command: []string{"/usr/bin/varnishadm", "ping"},
-				},
-			},
-		}
-	}
 }
 
 func SetDefaults_VarnishServiceService(in *VarnishServiceService) {
@@ -83,9 +74,6 @@ func SetDefaults_VarnishServiceService(in *VarnishServiceService) {
 			IntVal: in.VarnishExporterPort.Port,
 		}
 	}
-
-	// TODO: when moving to mutating webhook, this logic will need to change (thanks to validating webhook logic
-	in.Ports = append(in.Ports, in.VarnishPort, in.VarnishExporterPort)
 }
 
 // due to validating webhook, we can assume args are properly formed (in key/value pairs, with optional value) and there are no override args present in the list

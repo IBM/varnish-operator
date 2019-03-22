@@ -26,13 +26,13 @@ spec:
     description: version of the ConfigMap containing the VCL
     name: VCL-Version
     type: string
-  - JSONPath: .status.service.cached.ip
-    description: IP Address of the cached service
-    name: Cached-Service-IP
+  - JSONPath: .status.service.ip
+    description: IP Address of the service backed by Varnish
+    name: Service-IP
     type: string
-  - JSONPath: .status.service.nocached.ip
-    description: IP Address of the nocached service
-    name: Nocached-Service-IP
+  - JSONPath: .status.serviceNoCache.ip
+    description: IP Address of the service without any caching
+    name: ServiceNoCache-IP
     type: string
   group: icm.ibm.com
   names:
@@ -87,7 +87,6 @@ spec:
                               items:
                                 type: string
                               type: array
-                      type: object
                     readinessProbe:
                       properties:
                         exec:
@@ -96,7 +95,6 @@ spec:
                               items:
                                 type: string
                               type: array
-                      type: object
                     resources:
                       type: object
                     restartPolicy:
@@ -156,6 +154,7 @@ spec:
             vclConfigMap:
               properties:
                 entrypointFile:
+                  pattern: ^.+\.vcl$
                   type: string
                 name:
                   type: string
@@ -176,28 +175,25 @@ spec:
               type: object
             service:
               properties:
-                cached:
-                  properties:
-                    ip:
-                      type: string
-                    loadBalancer:
-                      description: LoadBalancer contains the current status of the
-                        load-balancer, if one is present.
-                      type: object
-                    name:
-                      type: string
+                ip:
+                  type: string
+                loadBalancer:
+                  description: LoadBalancer contains the current status of the load-balancer,
+                    if one is present.
                   type: object
-                noCached:
-                  properties:
-                    ip:
-                      type: string
-                    loadBalancer:
-                      description: LoadBalancer contains the current status of the
-                        load-balancer, if one is present.
-                      type: object
-                    name:
-                      type: string
+                name:
+                  type: string
+              type: object
+            serviceNoCache:
+              properties:
+                ip:
+                  type: string
+                loadBalancer:
+                  description: LoadBalancer contains the current status of the load-balancer,
+                    if one is present.
                   type: object
+                name:
+                  type: string
               type: object
             vcl:
               properties:

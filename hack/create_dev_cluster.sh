@@ -98,7 +98,7 @@ varnish=$(kubectl get po -l varnish-component=varnishes -o jsonpath='{.items[*].
 
 sleep 10; kubectl logs $varnish
 kubectl exec -it $varnish cat /etc/varnish/backends.vcl
-kubectl port-forward service/$(kubectl get svc -l varnish-component=cached-service -o jsonpath='{.items[*].metadata.name}') 8080:80 &
+kubectl port-forward service/$(kubectl get svc -l varnish-component=cache-service -o jsonpath='{.items[*].metadata.name}') 8080:80 &
 
 sleep 10
 curl --head http://127.0.0.1:8080/

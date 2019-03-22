@@ -2,12 +2,12 @@
 
 
 [[projects]]
-  digest = "1:9f3bc9b251182aa0a26ac45e39a226c0f91e8f59dd91d8cab7d56b301684ee6a"
+  digest = "1:06ee5984f47203058e820cab98a1b286ec785cdcc2d4014e04bf7228f8a56049"
   name = "cloud.google.com/go"
   packages = ["compute/metadata"]
   pruneopts = "T"
-  revision = "c9474f2f8deb81759839474b6bd1726bbfe1c1c4"
-  version = "v0.36.0"
+  revision = "2fa99f4c25c422525316dcb1fd3d5b94e1944cfd"
+  version = "v0.37.1"
 
 [[projects]]
   digest = "1:464aef731a5f82ded547c62e249a2e9ec59fbbc9ddab53cda7b9857852630a61"
@@ -115,7 +115,7 @@
   revision = "5b532d6fd5efaf7fa130d4e859a2fde0fc3a9e1b"
 
 [[projects]]
-  digest = "1:c795e0cc7758dd26ce30bdeb2e32348f50260f6134619ed054379df82d3b2e2e"
+  digest = "1:c06028bbc52478d997bbc08facb0c315aabc2295094d7bf8833756aa9aa25504"
   name = "github.com/golang/protobuf"
   packages = [
     "proto",
@@ -125,8 +125,8 @@
     "ptypes/timestamp",
   ]
   pruneopts = "T"
-  revision = "c823c79ea1570fb5ff454033735a8e68575d1d0f"
-  version = "v1.3.0"
+  revision = "b5d812f8a3706043e23a9cd5babf2e5423744d30"
+  version = "v1.3.1"
 
 [[projects]]
   branch = "master"
@@ -239,20 +239,12 @@
   version = "v1.3.0"
 
 [[projects]]
-  digest = "1:5d713dbcad44f3358fec51fd5573d4f733c02cac5a40dcb177787ad5ffe9272f"
+  digest = "1:e4f630893d2bbf8c268eba14e7cc92ef8844ee259a45e21ea77cf7656544cb7e"
   name = "github.com/json-iterator/go"
   packages = ["."]
   pruneopts = "T"
-  revision = "1624edc4454b8682399def8740d46db5e4362ba4"
-  version = "v1.1.5"
-
-[[projects]]
-  branch = "master"
-  digest = "1:60835a4fa946b3c4b595438a07d447305ed4fc9ce95a7a5d0c06ffeea490d5a9"
-  name = "github.com/juju/errors"
-  packages = ["."]
-  pruneopts = "T"
-  revision = "e65537c515d77e35697c471d6c2755375cb3adc4"
+  revision = "0ff49de124c6f76f8494e194af75bde0f1a49a29"
+  version = "v1.1.6"
 
 [[projects]]
   digest = "1:3804a3a02964db8e6db3e5e7960ac1c1a9b12835642dd4f4ac4e56c749ec73eb"
@@ -314,7 +306,7 @@
   version = "v1.8.0"
 
 [[projects]]
-  digest = "1:4f40f5e1925c58d5f9b6a953d1b02f475a6be704e9b5f1a21df6c62c434bde13"
+  digest = "1:bcb151c314e2bfa85e5398ad24e86f60bc6b85db87293d4e8f6e83a62090ee68"
   name = "github.com/onsi/gomega"
   packages = [
     ".",
@@ -333,8 +325,8 @@
     "types",
   ]
   pruneopts = "T"
-  revision = "65fb64232476ad9046e57c26cd0bff3d3a8dc6cd"
-  version = "v1.4.3"
+  revision = "90e289841c1ed79b7a598a7cd9959750cb5e89e2"
+  version = "v1.5.0"
 
 [[projects]]
   digest = "1:ee4d4af67d93cc7644157882329023ce9a7bcfce956a079069a9405521c7cc8d"
@@ -410,7 +402,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:5a049e01c071422ad6c759a777dbefbe164bc9472fdfe45016efd145b1aa0e3a"
+  digest = "1:577ebb47b3ee64f10e33b1534c96a140c8b8bc8921ec74b1e30904689450aefd"
   name = "github.com/prometheus/procfs"
   packages = [
     ".",
@@ -420,7 +412,7 @@
     "xfs",
   ]
   pruneopts = "T"
-  revision = "d0f344d83b0c80a1bc03b547a2374a9ec6711144"
+  revision = "40f3c57fb1983891f95378042bd0bfd590f52384"
 
 [[projects]]
   digest = "1:03f9ad9d20d5d7ba2aa68c63f90138f1ab8872ad41a67d77abf6cf329dc644e3"
@@ -498,11 +490,11 @@
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   pruneopts = "T"
-  revision = "c2843e01d9a2bc60bb26ad24e09734fdc2d9ec58"
+  revision = "a1f597ede03a7bef967a422b5b3a5bd08805a01e"
 
 [[projects]]
   branch = "master"
-  digest = "1:fa062c5d9eed4b2884fa06310d171f62cd6c90508ed8e1f70de180339b70d843"
+  digest = "1:e5e3e04beb1a46f1f7978f21187dc6038eae0c5f888d3738eceaab77c76472f2"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -516,7 +508,7 @@
     "idna",
   ]
   pruneopts = "T"
-  revision = "56fb01167e7d1e1d17dd87993d34c963f4356e87"
+  revision = "d196dffd7c2beec1957382065df08bcc353b9706"
 
 [[projects]]
   branch = "master"
@@ -534,14 +526,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:2c6f3d323cfd879ca8f4a3db4393ca9777dc029a1c759ea3d91599c1e5bd76a4"
+  digest = "1:d05370bdec80b8b10345b2c6efb578f040ef973fa21423f19d5506fa47ce8717"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "T"
-  revision = "10058d7d4faa7dd5ef860cbd31af00903076e7b8"
+  revision = "6c81ef8f67ca3f42fc9cd71dfbd5f35b0c4b5771"
 
 [[projects]]
   digest = "1:6164911cb5e94e8d8d5131d646613ff82c14f5a8ce869de2f6d80d9889df8c5a"
@@ -588,7 +580,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a7d3be1d35c2e8e700bfc2834e64e2ac782ab93add493f43975cf01bce87bda0"
+  digest = "1:46d5171f052cd99e486d1752a0f3dc82cade1c2b82a66ec613a7b79e85764601"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
@@ -605,7 +597,7 @@
     "internal/semver",
   ]
   pruneopts = "T"
-  revision = "00c44ba9c14f88ffdd4fb5bfae57fe8dd6d6afb1"
+  revision = "bb1270c20edf080f9f069ea11a1fe5c2b0ebd62c"
 
 [[projects]]
   digest = "1:1469235a5a8e192cfe6a99c4804b883a02f0ff96a693cd1660515a3a3b94d5ac"
@@ -1026,7 +1018,6 @@
     "github.com/emicklei/go-restful",
     "github.com/google/go-cmp/cmp",
     "github.com/google/go-cmp/cmp/cmpopts",
-    "github.com/juju/errors",
     "github.com/onsi/ginkgo",
     "github.com/onsi/gomega",
     "github.com/pkg/errors",

@@ -18,6 +18,14 @@ spec:
               maxLength: 40
         spec:
           properties:
+            vclConfigMap:
+              properties:
+                # enforce that entrypointFile ends with ".vcl".
+                # It is still possible for the file to exist as a template file (ending in `.tmpl`).
+                # `entrypointFile` does not reflect that
+                entrypointFile:
+                  type: string
+                  pattern: '^.+\.vcl$'
             deployment:
               properties:
                 container:

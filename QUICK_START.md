@@ -80,8 +80,8 @@
 After running `kubectl apply`, you should see:
 
 * Deployment called `<varnish-service-name>-deployment`
-* Service called `<varnish-service-name>-cached` which uses Varnish for caching
-* Service called `<varnish-service-name>-nocached` which bypasses Varnish
+* Service called `<varnish-service-name>` which uses Varnish for caching
+* Service called `<varnish-service-name>-no-cache` which bypasses Varnish
 * ConfigMap called `vcl-file` (or whatever name specified in VarnishService config) containing VCL files that Varnish is using
 * Role/Rolebinding/ClusterRole/ClusterRoleBinding/ServiceAccount combination for permissions
 

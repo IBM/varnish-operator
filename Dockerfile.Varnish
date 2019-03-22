@@ -1,8 +1,9 @@
-FROM golang:1.11.1-alpine3.8 AS builder
+# Cannot use > alpine 3.8 yet (and as a result, > 1.11.5 golang), since Varnish 6.1 does NOT yet support vmods. See https://github.com/varnish/varnish-modules/pull/119. If this PR has been merged, you should be able to use > alpine 3.8
+FROM golang:1.11.5-alpine3.8 AS builder
 
 RUN apk update && apk add curl git
 
-ENV DEP_RELEASE_TAG=v0.5.0 INSTALL_DIRECTORY=/usr/local/bin
+ENV DEP_RELEASE_TAG=v0.5.1 INSTALL_DIRECTORY=/usr/local/bin
 
 RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 
@@ -19,13 +20,13 @@ FROM alpine:3.8 AS varnish-modules
 ENV VARNISH_MODULES_VERSION="0.15.0"
 
 # Compile Varnish modules
+RUN apk add --no-cache varnish-dev varnish && \
+    apk add --no-cache autoconf automake libtool make py-docutils python
 RUN \
   cd /tmp && \
-  apk add --no-cache varnish-dev varnish && \
-  apk add --no-cache autoconf automake libtool make py-docutils python && \
   wget -O varnish_modules.tar.gz https://download.varnish-software.com/varnish-modules/varnish-modules-${VARNISH_MODULES_VERSION}.tar.gz && \
-  tar -zxf varnish_modules.tar.gz && \
-  cd varnish-modules-${VARNISH_MODULES_VERSION} && ./configure && make && make install
+  tar -zxf varnish_modules.tar.gz
+RUN cd /tmp/varnish-modules-${VARNISH_MODULES_VERSION} && ./configure && make && make install
 
 FROM alpine:3.8
 LABEL maintainer="Alex Lytvynenko <oleksandr.lytvynenko@ibm.com>"

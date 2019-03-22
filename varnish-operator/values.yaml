@@ -1,19 +1,21 @@
 # namespace should match the Namespace created in the Getting Access section of the README.md
-namespace: varnish-operator-system
+namespace: kube-system
 # this field should not be changed
 namePrefix: varnish-service-
 
-# Specifies the pod count of the Manager. Default value is 2 replicas for HA
-replicas: 2
 # Run multiple instances of the operator, and if one goes down, have another seamlessly replace it
 leaderElection:
+  # if set to false, only 1 pod will be created
   enabled: true
+  # name of the ConfigMap used to determine leader
   id: varnish-operator-lock
+  # Number of pods running operator, if .leaderElection.enabled == true.
+  replicas: 2
 container:
   # path to image + tag
-  image: us.icr.io/icm-varnish/varnish-controller:0.13.4
-  # Use the name of the imagePullSecret created in the [Getting Access](#getting-access) section above
-  imagePullSecret: docker-reg-secret
+  image: us.icr.io/icm-varnish/varnish-controller:0.14.0
+  # If secret is needed, use the name of the imagePullSecret created in the Getting Access section of the README.md
+# imagePullSecret: docker-reg-secret
   # imagePullPolicy is passed directly to the varnish deployment, that controls how the varnish image will be pulled for new containers
   imagePullPolicy: Always
   # restart policy used for Varnish containers
@@ -28,7 +30,7 @@ container:
       memory: 200Mi
   # port on which to expose operator metrics
   metricsPort: 8080
-  # port on which to expose webhook
+  # port on which to expose webhook. Unlikely to need to change this
   webhookPort: 9244
 
 # logging level: "debug", "info", "warn", "error"

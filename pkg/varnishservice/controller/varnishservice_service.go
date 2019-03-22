@@ -12,15 +12,16 @@ import (
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func (r *ReconcileVarnishService) reconcileNoCachedService(instance, instanceStatus *icmapiv1alpha1.VarnishService) (map[string]string, error) {
+func (r *ReconcileVarnishService) reconcileServiceNoCache(instance, instanceStatus *icmapiv1alpha1.VarnishService) (map[string]string, error) {
 	selector := make(map[string]string, len(instance.Spec.Service.Selector))
 	for k, v := range instance.Spec.Service.Selector {
 		selector[k] = v
 	}
-	selectorLabels := labels.ComponentLabels(instance, icmapiv1alpha1.VarnishComponentNoCachedService)
+	selectorLabels := labels.ComponentLabels(instance, icmapiv1alpha1.VarnishComponentNoCacheService)
 	inheritedLabels := labels.InheritLabels(instance)
 	svcLabels := make(map[string]string, len(selectorLabels)+len(inheritedLabels))
 	for k, v := range inheritedLabels {
@@ -29,36 +30,40 @@ func (r *ReconcileVarnishService) reconcileNoCachedService(instance, instanceSta
 	for k, v := range selectorLabels {
 		svcLabels[k] = v
 	}
-	noCachedService := &v1.Service{
+
+	ports := make([]v1.ServicePort, len(instance.Spec.Service.Ports)+1)
+	copy(ports, instance.Spec.Service.Ports)
+	ports[len(ports)-1] = v1.ServicePort{
+		Name:       instance.Spec.Service.VarnishPort.Name,
+		Port:       instance.Spec.Service.VarnishPort.Port,
+		TargetPort: instance.Spec.Service.VarnishPort.TargetPort,
+	}
+
+	serviceNoCache := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      instance.Name + "-varnish-nocached",
+			Name:      instance.Name + "-no-cache",
 			Namespace: instance.Namespace,
 			Labels:    svcLabels,
 		},
 		Spec: v1.ServiceSpec{
 			Selector: selector,
-			Ports: []v1.ServicePort{
-				{
-					Name:       instance.Spec.Service.VarnishPort.Name,
-					Port:       instance.Spec.Service.VarnishPort.Port,
-					TargetPort: instance.Spec.Service.VarnishPort.TargetPort,
-				},
-			},
+			Ports:    ports,
 		},
 	}
 
-	if err := r.reconcileServiceGeneric(instance, &instanceStatus.Status.Service.NoCached, noCachedService); err != nil {
+	if err := r.reconcileServiceGeneric(instance, &instanceStatus.Status.ServiceNoCache, serviceNoCache); err != nil {
 		return selectorLabels, err
 	}
 	return selectorLabels, nil
 }
 
-func (r *ReconcileVarnishService) reconcileCachedService(instance, instanceStatus *icmapiv1alpha1.VarnishService, varnishSelector map[string]string) error {
-	cachedService := &v1.Service{
+func (r *ReconcileVarnishService) reconcileService(instance, instanceStatus *icmapiv1alpha1.VarnishService, varnishSelector map[string]string) error {
+	service := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      instance.Name + "-varnish-cached",
+			// TODO: change name to just `instance.name`, since VarnishService is supposed to replace Service.
+			Name:      instance.Name,
 			Namespace: instance.Namespace,
-			Labels:    labels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentCachedService),
+			Labels:    labels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentCacheService),
 		},
 	}
 
@@ -68,19 +73,39 @@ func (r *ReconcileVarnishService) reconcileCachedService(instance, instanceStatu
 	}
 
 	if instance.Spec.Service.PrometheusAnnotations {
-		cachedService.Annotations = prometheusAnnotations
+		service.Annotations = prometheusAnnotations
 	}
 
-	instance.Spec.Service.ServiceSpec.DeepCopyInto(&cachedService.Spec)
-	cachedService.Spec.Selector = varnishSelector
+	instance.Spec.Service.ServiceSpec.DeepCopyInto(&service.Spec)
 
-	if err := r.reconcileServiceGeneric(instance, &instanceStatus.Status.Service.Cached, cachedService); err != nil {
+	service.Spec.Ports = []v1.ServicePort{
+		{
+			Name: instance.Spec.Service.VarnishPort.Name,
+			Port: instance.Spec.Service.VarnishPort.Port,
+			TargetPort: intstr.IntOrString{
+				Type:   intstr.Int,
+				IntVal: instance.Spec.Service.VarnishPort.Port,
+			},
+		},
+		{
+			Name: instance.Spec.Service.VarnishExporterPort.Name,
+			Port: instance.Spec.Service.VarnishExporterPort.Port,
+			TargetPort: intstr.IntOrString{
+				Type:   intstr.Int,
+				IntVal: instance.Spec.Service.VarnishExporterPort.Port,
+			},
+		},
+	}
+
+	service.Spec.Selector = varnishSelector
+
+	if err := r.reconcileServiceGeneric(instance, &instanceStatus.Status.Service, service); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *ReconcileVarnishService) reconcileServiceGeneric(instance *icmapiv1alpha1.VarnishService, instanceServiceStatus *icmapiv1alpha1.VarnishServiceSingleServiceStatus, desired *v1.Service) error {
+func (r *ReconcileVarnishService) reconcileServiceGeneric(instance *icmapiv1alpha1.VarnishService, instanceServiceStatus *icmapiv1alpha1.VarnishServiceServiceStatus, desired *v1.Service) error {
 	logr := r.logger.With("name", desired.Name, "namespace", desired.Namespace)
 
 	// Set controller reference for desired object
@@ -125,7 +150,7 @@ func (r *ReconcileVarnishService) reconcileServiceGeneric(instance *icmapiv1alph
 		}
 	}
 
-	*instanceServiceStatus = icmapiv1alpha1.VarnishServiceSingleServiceStatus{
+	*instanceServiceStatus = icmapiv1alpha1.VarnishServiceServiceStatus{
 		ServiceStatus: found.Status,
 		Name:          found.Name,
 		IP:            found.Spec.ClusterIP,

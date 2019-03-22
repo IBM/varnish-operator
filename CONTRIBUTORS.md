@@ -2,11 +2,13 @@
 
 I'll try to chronicle all the things I am learning as I go so that others may not have to hit as many dead ends as I have.
 
+## Kubebuilder Did It Better
+
+Kubebuilder [covers similar topics](https://book.kubebuilder.io) to much of this documentation. It is highly recommended that you read through all of Kubebuilder's docs, and then return here and only visit sections missed, or are specific to this repo 
+
 ## Getting Started With Development
 
-1. Have a Go environment [set up](http://sourabhbajaj.com/mac-setup/Go/README.html)
-    * This primarily involves installing Go and setting a GOPATH
-1. Install [`dep`](https://github.com/golang/dep)
+Follow along with [Kubebuilder's Quick Start Guide](https://book.kubebuilder.io/quick_start.html)
 
 ## What is an Operator
 
@@ -14,9 +16,11 @@ An operator is the combination of 2 kubernetes concepts that are at the heart of
 
 ### Resource Definitions
 
-Literally the yaml file that describes how you want your resource to look. For instance, a yaml file specifying a deployment, and a service that should front the deployment. For the purpose of the operator, kubernetes has the concept of a CustomResourceDefinition, which allows user-defined resources to live right alongside native ones (such as service or deployment).
+Literally the yaml file that describes how you want your resource to look. For instance, a yaml file specifying a deployment, and a service that should front the deployment. For the purpose of the operator, kubernetes has the concept of a CustomResourceDefinition, which allows user-defined resources to live right alongside native ones.
 
 [here](https://kubernetes.io/docs/tasks/access-kubernetes-api/extend-api-custom-resource-definitions/) is some pretty good documentation on CustomResourceDefinitions. However, technically, the CustomResourceDefinition isn't strictly needed for some operators if they simply extend the functionality of an existing resource. For instance, if you want to manipulate Nodes, you could apply annotations onto nodes, and just watch for those annotations instead of a CustomResourceDefinition.
+
+Also see [Kubebuilder docs around Resources](https://book.kubebuilder.io/basics/what_is_a_resource.html)
 
 ### Controller
 
@@ -24,9 +28,9 @@ When you tell Kubernetes about a resource you want (e.g. in the form of a Resour
 
 Most custom controllers will take advantage of other kubernetes primitives (eg, not-custom resources like Service, Deployment, Role/Rolebinding, etc) as their primary means of control over the system.
 
-The controller has a more nebulous definition, primarily because it can be whatever you need it to be. It's really just an application you run in the cluster that is triggered on changes to the resource it is monitoring, and reacts in some custom way. It can be written in any language where a kubernetes client sdk exists, but it is most commonly written in Go, and I will be writing the rest of this with the assumption that you are writing it in Go too.
+The controller has a more nebulous definition, primarily because it can be whatever you need it to be. It's really just an application you run in the cluster that is triggered on changes to the resource it is monitoring, and reacts in some custom way. It can be written in any language since kubernetes has an HTTP API, but it is most commonly written in Go, and I will be writing the rest of this with the assumption that you are writing it in Go too.
 
-It is highly suggested that the controller takes advantage of other kubernetes primitives (eg, not-custom resources like Service, Deployment, RBAC, etc) as much as possible, since that improves understandability. It will do that by utilizing a kubernetes client sdk, and specifically for this guide [client-go](https://github.com/kubernetes/client-go). Note that releases are versioned based on the kubernetes release, so for instance you can ask for 1.10.2, 1.9.8, etc.
+See [Kubebuilder's take on controllers as well](https://book.kubebuilder.io/basics/what_is_a_controller.html)
 
 ### Summarize
 
@@ -39,9 +43,15 @@ You may want to write an operator when some or all of the below are true:
 
 Operators are a quickly evolving concept, so it's hard to find good documentation on the topic that is up-to-date. However, [the talk given by the developers of the design pattern](https://www.youtube.com/watch?v=U2Bm-Fs3b7Q) remains relevant because they discuss the concepts and motivation behind the operator.
 
-## SDKs
+Also [Kubebuilder has built some very good docs around its approach to operators](https://book.kubebuilder.io)
 
-While controllers are not inherently tied to any programming language, it is safe to say that Go is the predominant language used for all things related to Kubernetes, of course including Kubernetes itself. The rest of this documentation assumes that your code will be written in Go, and all SDKs discussed hereafter are for the Go language.
+## Kubebuilder
+
+This project uses [Kubebuilder](https://book.kubebuilder.io/), and it is highly recommended that you read through all of their documentation.
+
+This guide will NOT cover how to use Kubebuilder, since its documentation is very good. It will, however, discuss other frameworks, and lower-level details.
+
+## Other SDKs
 
 ### client-go
 
@@ -125,79 +135,15 @@ Despite that, I would not watch resources without this feature.
 
 ### operator-sdk
 
-There is a "pre-alpha" tool called [operator-sdk](https://github.com/operator-framework/operator-sdk) that, in theory, makes it much easier to develop an operator. It may never leave pre-alpha, and suffice to say, at time of writing it is too half-baked to use. At the very least, be on the lookout for leaving a "pre-alpha" state.
-
-### Kubebuilder
-
-As of writing, [Kubebuilder](https://book.kubebuilder.io/) just hit `1.0.0`. This is the tool everyone should use. It simplifies so much of the operator writing process. It is a bit finicky to set up, but once set up it is exactly the abstraction you need to build an operator with the least amount of fuss (which is still a lot of fuss).
-
-The remainder of this guide will discuss 2 things: How to use Kubebuider, and then at the end, some underlying implementation details from Kubebuilder that will hopefully not be relevant to users of Kubebuilder.
-
-## Using Kubebuilder To Write An Operator
-
-### Installation
-
-First, follow [the installation instructions carefully](https://book.kubebuilder.io/getting_started/installation_and_setup.html). Deviating from the instructions will likely cause Kubebuilder to break at a later step, so be warned.
-
-Do yourself a favor and don't install from master...
-
-### The Kubebuilder Concepts
-
-Follow [the quite good gitbook](https://book.kubebuilder.io/quick_start.html) on getting started. In fact, read through the entire gitbook. It is pretty good documentation (which is unfortunately rare in this area).
-
-Here is a quick rundown, describing more the concepts of what's happening instead of step-by-step instructions.
-
-#### Managers
-
-Kubebuilder works at the top level by creating a `Manager`. The `Manager`, well, manages the lifecycle of the controller(s) that are part of the operator. You can have an arbitrary number of controllers associated with a `Manager`, although it is likely you will only have one controller for your operator.
-
-#### (Kubebuilder's) Controller
-
-Underneath a `Manager` are an arbitrary number of `Controller`s. `Controller`s are the same concept [as described above](#controller), meaning they watch a resource and enact a reconciliation loop on changes to that resource.
-
-#### `kubebuilder init`
-
-`kubebuilder init` is one of 2 commands used for project creation. You can think of this step as creating the `Manager`. It is run once per operator.
-
-**PRO TIP**: Kubebuilder checks for the existence of a file, `hack/boilerplate.go.txt`, and it will prepend its contents to all generated Go files. If that file does not exist, it decides on a default file of
-
-```go
-/*
-.
-*/
-```
-
-which is incredibly annoying. You can either set the `boilerplate.go.txt` file to whatever prefix you'd like (be it authors, copyright, etc), or just create an empty file with that name to forgo any prefix.
-
-#### `kubebuilder create api`
-
-`kubebuilder create api` is the other of 2 commands used for project creation. You can think of this step as creating a `Controller` that will be managed by the `Manager`. It is run once for every controller your operator will have.
-
-### What Is Generated, What Do You Write
-
-Kubebuilder generates quite a bit for you, as well as handle much of the reconciliation loop in libraries.
-
-Out of the box, you get scaffolding and code generation for:
-
-* Skeleton of your custom resource definition. It uses code generation to generate the yaml file for the resource as well.
-* Infrastructure for the manager/controller relationship. When you run `kubebuilder init`, the `Manager` is automatically started in the `main` function, and when you run `kubebuilder create api`, it automatically registers the `Controller` with the `Manager`.
-* Convenient `Makefile` that combines many of the commands you will execute frequently, even including relevant `docker` commands. It is possibly you may need to modify the `Makefile` lightly to either customize a bit of the functionality or add new functionality (such as integration with `helm`).
-* yaml generation of `Manager` StatefulSet and all RBAC for the operator. In addition, it is backed by [Kustomize](https://github.com/kubernetes-sigs/kustomize) as part of the build pipeline. See the [Kustomize](#kustomize) section for more on this tool.
-* Preconfigured [code-generator](https://github.com/kubernetes/code-generator) for convenient typed clients for your CustomResourceDefinition. See the [code-generator](#code-generator) section for more on this tool, although you hopefully will never need to know more detail about it.
-
-You will still need to fill in:
-
-* The CustomResource definition, meaning what fields the CustomResourceDefinition should have.
-* Which resources a given controller should watch for changes on (the CustomResource is already put in).
-* The logic of the reconciliation loop. This is arguably the most important piece of code in the entire controller. It describes how the controller should react to changes in a watched resource.
-* Good logging (by default, no logging is done on error during the reconciliation loop, which can make things hard to debug)
-* External state to the operator. Meaning, if any of the state needs to be injected at installation time, that will need to be configured.
-
-## Background Information
+**NOTE**: After taking a look again at operator-sdk, it appears to have been completely overhauled to use the same underlying Go library as Kubebuilder. They also seem to have added real documentation. This is worth looking into.
+ 
+## Lower-Level Information
 
 Kubebuilder handles much of the work under the hood, but sometimes it might be worth knowing what's going on under there. What follows is an incomplete list of concepts that Kubebuilder is covering
 
 ### Package Managers
+
+**NOTE**: this section is no longer true. Seems like the community is now shifting to `vgo` aka the package manager integrated with the `go` binary. As of writing, Kubebuilder still uses `dep`, but may one day switch to `go`.
 
 Unfortunately, Go has the distiction of having about 10 different package managers. You may find trying to navigate that really confusing. Fortunately, the community has finally convened on one package manager. But unforunately, that does not mean that all libraries play nicely with this manager. But fortunately, it's only a decision between 2 different managers. Those managers are:
 
@@ -328,6 +274,8 @@ again.
 
 ### Logging
 
+**NOTE**: Kubebuilder is now providing a wrapper around `zap` that should probably be investigated and used, in lieu of `zap`.
+
 Logging implementation uses [zap](https://github.com/uber-go/zap) logging framework.
 
 Logging configuration accepts standard log levels in string format - `error`, `warn`, `info` and `debug`. Default log level is set to `info`, but can be configured by setting `LOG_LEVEL` environment variable to desired log level.
@@ -336,16 +284,15 @@ To make logs produced by operator easy to parse and store in external logging sy
 
 When Varnish operator is deployed using Helm, logging configuration is handled by setting values `operator.loglevel` and `operator.logformat` in [values.yaml](./varnish-operator/values.yaml)  accordingly.
 
-During local development, `make run` command sets logging encoder to `console`. To increase logging verbosity, one can do so by setting desired log level using environment variable: 
+During local development, `make run` command sets logging encoder to `console`. To increase logging verbosity, one can do so by setting desired log level using environment variable:
+
 ```bash
 LOG_LEVEL=debug make run
 ```
 
 ## Publishing Kubernetes events
 
-Kubebuilder has a built it mechanism for publishing Kubernetes events.
-To use it you need to create an event recorder with help of the manager. 
-It can be done on controller creation so you can save and use it later in your reconciliation logic:
+Kubebuilder has a built in mechanism for publishing Kubernetes events. To use it you need to create an event recorder with help of the manager. It can be done on controller creation so you can save and use it later in your reconciliation logic:
 
  ```go
 package myservice
@@ -405,13 +352,15 @@ Events:
 
 ## Deploying Your Kubebuilder project
 
+**NOTE**: Kustomize is now part of the `kubectl` command line tool, meaning it is apparently becoming a standard part of kubernetes deployments. We should investigate how much and where to use Kustomize generally
+
 Out of the box, Kubebuilder has an integration with [Kustomize](https://github.com/kubernetes-sigs/kustomize). It bills itself as letting you "customize raw, template-free YAML files for multiple purposes, leaving the original YAML untouched and usable as is." You can learn more about Kustomize from the link. It is a very simple tool, and all of the documentation takes just a few minutes to read through.
 
-Kustomize fills a similar space to [Helm](https://helm.sh), which is very much a templating engine, as well as various other things, like a deployment platform.
+Kustomize fills a similar space to [Helm's templating engine](https://helm.sh).
 
 The ICM team has standardized on Helm, so you will need to make Kustomize and Helm work together.
 
-### Kubebuilder + Helm
+### Kustomize + Helm
 
 When trying to get these 2 tools to work together, you will quickly find that Kustomize actually parses the yaml files in order to generate its final result, while Helm introduces non-yaml syntax in the form of go templates. Thus, if you try to use Kustomize on a yaml file that has Helm template elements in it, Kustomize will blow up. This is the main limitation you will need to work around to get these 2 tools to work together. It is actually quite straightforward to work in the opposite direction -- meaning you can generate valid yaml files by running Helm, and then pipe those files to Kustomize, which can do its own replacements.
 
@@ -458,6 +407,8 @@ Also, if the concatenation of `GenerateName` value and unique suffix exceeds the
 Downside of using `GenerateName` is that in the code you need to save the generated name somewhere if you later need to refer to that object. 
 
 ### Validation and Mutating Webhooks
+
+**NOTE**: Also see [Kubebuilder's good documentation on this](https://book.kubebuilder.io/beyond_basics/what_is_a_webhook.html) 
 
  Validation webhooks is a way to add custom and flexible validation rules that are executed at `kubectl apply -f file.yml` stage.
  

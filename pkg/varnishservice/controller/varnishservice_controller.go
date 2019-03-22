@@ -238,7 +238,7 @@ func (r *ReconcileVarnishService) wrappedReconcile(request reconcile.Request) (r
 	if err = r.reconcileClusterRoleBinding(instance, clusterRoleName, serviceAccountName); err != nil {
 		return reconcile.Result{}, err
 	}
-	endpointSelector, err := r.reconcileNoCachedService(instance, instanceStatus)
+	endpointSelector, err := r.reconcileServiceNoCache(instance, instanceStatus)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -246,6 +246,7 @@ func (r *ReconcileVarnishService) wrappedReconcile(request reconcile.Request) (r
 	if err != nil {
 		return reconcile.Result{}, err
 	}
+	// TODO: remove extra return var
 	_, err = r.reconcileConfigMap(varnishSelector, instance, instanceStatus)
 	if err != nil {
 		return reconcile.Result{}, err
@@ -253,7 +254,7 @@ func (r *ReconcileVarnishService) wrappedReconcile(request reconcile.Request) (r
 	if err = r.reconcilePodDisruptionBudget(instance, varnishSelector); err != nil {
 		return reconcile.Result{}, err
 	}
-	if err = r.reconcileCachedService(instance, instanceStatus, varnishSelector); err != nil {
+	if err = r.reconcileService(instance, instanceStatus, varnishSelector); err != nil {
 		return reconcile.Result{}, err
 	}
 

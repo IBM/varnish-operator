@@ -1,8 +1,8 @@
-FROM golang:1.11.1-alpine3.8 AS builder
+FROM golang:1.11.5-alpine3.8 AS builder
 
 RUN apk update && apk add curl git
 
-ENV DEP_RELEASE_TAG=v0.5.0 INSTALL_DIRECTORY=/usr/local/bin
+ENV DEP_RELEASE_TAG=v0.5.1 INSTALL_DIRECTORY=/usr/local/bin
 RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 
 WORKDIR /go/src/icm-varnish-k8s-operator

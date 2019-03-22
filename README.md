@@ -6,11 +6,15 @@ VarnishService fills a space currently missing within Kubernetes on IBM Cloud: V
 
 By default, deploying a Varnish directly as a Deployment into Kubernetes is not immediately useful because the VCL must have IP addresses for its backends. The only obvious way to get an IP address is via a Kubernetes Service, but that Service already acts as a load balancer to the Deployment it backs, which means undefined behavior from the Varnish perspective, and adds an extra network hop. Thus, trying to use Varnish in a regular deployment is unproductive.
 
-Instead, the VarnishService operator manages the deployment of your Varnish, filling in the IP addresses of the pods for you, and manages the required infrastructure. The operator itself is made up of 2 components:
+Instead, the VarnishService operator manages the required infrastructure of your varnish, including the deployment, filling in the IP addresses of the pods for you. The operator is made up of 4 components:
 
-**CustomResourceDefinition**: the actual "VarnishService", that acts in the same way that a Service resource does, except with an added Varnish layer between the Service and the Deployment it backs. You would define a resource of Kind "VarnishService", and specify all the regular specs for a Service, plus some new fields that control how many Varnish instances you want, how much memory/cpu they get, and other relevant information for the Varnish cluster.
+**CustomResourceDefinition**: the actual "VarnishService" resource, that acts in the same way that a Service resource does, except with an added Varnish layer between the Service and the Deployment it backs. You would define a resource of Kind "VarnishService", and specify all the regular specs for a Service, plus some new fields that control how many Varnish instances you want, how much memory/cpu they get, and other relevant information for the Varnish cluster.
 
 **Controller**: The controller is an application deployed into your cluster that knows how to react to the VarnishService CustomResource. Meaning, this application watches for new or changed VarnishServices and handles the actual underlying infrastructure. That means it must be running at all times in the cluster, although it lives in its own namespace away from your application.
+
+**Varnish**: Of course, there will be a cluster of Varnishes. Currently, only Varnish version 6.1.1 is supported, but more versions will be supported in the future.
+
+**K-Watcher**: K-watcher is a sidecar to every Varnish node that monitors the backends and updates the Varnish VCL whenever it notices a change to the pod IP addresses.
 
 ## Kubernetes Version Requirement
 
@@ -18,46 +22,30 @@ This operator assumes that the `/status` and `/scale` subresources are enabled f
 
 ## Installation
 
-The VarnishService Operator is packaged as a [Helm Chart](https://helm.sh/), hosted on [Artifactory](https://na.artifactory.swg-devops.com). To get access to this Artifactory, you must be a user on the Weather Channel Bluemix account 1638245.
+The VarnishService Operator is packaged as a [Helm Chart](https://helm.sh/), hosted on [Artifactory](https://na.artifactory.swg-devops.com). To get access to this Artifactory, you must be a user on the ICM Core Engineering Bluemix account 1638245, and specifically a Blue Group that has access to the Artifactory resources. 
 
 ### Getting Helm Access
 
-After you are a user on the correct Bluemix account, you must generate an API key within [Artifactory](https://na.artifactory.swg-devops.com) for Helm to use. You can generate an API key on your profile page, found in the upper-right of the home page. Using that generated API Key, you can log in to Helm using [these instructions](https://www.jfrog.com/confluence/display/RTF/Helm+Chart+Repositories), where the username is your email and the password is your API key. Specifically, that will look like:
+After you are a user on the correct Blue Group, you must generate an API key within [Artifactory](https://na.artifactory.swg-devops.com) for Helm to use. You can generate an API key on your profile page, found in the upper-right of the home page. Using that generated API Key, you can log in to Helm using [these instructions](https://www.jfrog.com/confluence/display/RTF/Helm+Chart+Repositories), where the username is your email and the password is your API key. Specifically, that will look like:
 
 ```sh
 helm repo add wcp-icm-helm-virtual https://na.artifactory.swg-devops.com/artifactory/wcp-icm-helm-virtual --username=<your-email> --password=<encrypted-password>
 helm repo update
 ```
 
+#### Remote Repo
+
+Alternatively, you can configure the ICM Core Engineering Artifactory repo as a remote repo on your Artifactory repo. This has the advantage that members of the team will only need to configure access to a single repo (your team's). In order to configure a remote repo, you will need to talk directly to the TaaS team to have them set this up.
+
 ### Getting Container Registry Access
 
-As part of the helm install, you will also need access to the Container Registry in order to pull the Docker images associated with the Helm charts. This can be done using the IBMCloud CLI:
+As part of the install, you will also need access to the Container Registry in order to pull the Docker images associated with the Helm charts. Instructions for this can be found in [the icm-docs](https://pages.github.ibm.com/TheWeatherCompany/icm-docs/managed-kubernetes/container-registry.html#pulling-an-image-in-kubernetes)
 
-```sh
-ibmcloud cr token-add --non-expiring --description 'for Varnish operator'
-```
-
-And from the output, save the `Token` field.
-
-### Adding The Key To The Namespace
-
-Once you have generated your docker registry key, you must either use an existing or create a new namespace. Add a secret with the docker registry token to that namespace:
-
-```sh
-kubectl create secret docker-registry <name> --namespace <namespace> --docker-server=us.icr.io --docker-username=token --docker-password=<token> --docker-email=<any-email>
-```
-
-Note that
-
-* `<name>` can be any name, e.g. `docker-reg-secret`
-* `docker-username` MUST be `token`
-* `docker-email` can be any email. For example, `a@b.c`
-
-By default the Helm install will assume a namespace called `varnish-operator-system` exists.
+When installing, the Helm charts will create the operator (and thus look for the container-registry secret) in the `varnish-operator-system` namespace by default, although this can be overridden in a `values.yaml`.
 
 ### Configuring The Operator
 
-The operator has options to customize the installation into your cluster, exposed as values in the Helm `values.yaml` file. [See the default `values.yaml` annotated with descriptions of each field](/varnish-operator/values.yaml) to see what can be customized when deploying this operator.
+The operator has options to customize the installation into your cluster, exposed as values in the Helm `values.yaml` file. [See the default `values.yaml` annotated with descriptions of each field](/varnish-operator/values.yaml) to see what can be customized when deploying this operator. You only need to specify values that are different from those contained in the `values.yaml`.
 
 ### Installing The Operator
 
@@ -69,7 +57,7 @@ helm upgrade --install <name-of-release> wcp-icm-helm-virtual/varnish-operator -
 
 Note that
 
-* `<name-of-release>` can be any name and has the same meaning as `<name>` for `helm install --name <name>`
+* `<name-of-release>` can be any name and has the same meaning as `<name>` for `helm install --name <name>`. For consistency, you might consider using `varnish-operator`
 * `<namespace-with-registry-token>` must match `namespace` in the `values.yaml` file.
 
 ## Usage
@@ -82,31 +70,29 @@ Since the VarnishService requires pulling images from the same private repositor
 
 ### Configuring The VarnishService Resource
 
-VarnishService has [an example yaml file annotated with descriptions of each field](/config/samples/icm_v1alpha1_varnishservice.yaml) To see what can be customized for the VarnishService.
+VarnishService has [an example yaml file annotated with descriptions of each field](/config/samples/icm_v1alpha1_varnishservice.yaml) To see what can be customized for the VarnishService. Copy this file and customize it to your needs.
 
 ### Preparing VCL Code
 
-There are 3 fields relevant to configuring the VarnishService for VCL code, in `spec.vclConfigMap`:
+There are 2 fields relevant to configuring the VarnishService for VCL code, in `.spec.vclConfigMap`:
 
 * **name**: This is a REQUIRED field, and tells the VarnishService the name of the ConfigMap that contains/will contain the VCL files
-* **backendsFile**: The name of the file that will contain VCL regarding backends. To be exact, the VarnishService will expect to see a `<backendsFile>.tmpl` file in the ConfigMap that contains the Go template to be used to generate the `<backendsFile>`. For example, if `backendsFile=backends.vcl`, there should be a `backends.vcl.tmpl` file in the ConfigMap
-* **defaultFile**: The name of the file that acts as the entrypoint for Varnish. This is the name of the file that will be passed to the Varnish executable
+* **entrypointFile**: The name of the file that acts as the entrypoint for Varnish. This is the name of the file that will be passed to the Varnish executable.
+  * If `entrypointFile` is templated (ends in `.tmpl`), exclude the `.tmpl` extension. eg: if ConfigMap has file `mytemplatedfile.vcl.tmpl`, set `entrypointFile: mytemplatedfile.vcl`
 
-Beyond the `backendsFile` template and the `defaultFile`, you can place any other VCL files in the ConfigMap and they will land in the same folder as the aforementioned files.
+If a ConfigMap of name `.spec.vclConfigMap.name` does not exist on VarnishService creation, the operator will create one and populate it with a default `backends.vcl.tmpl` and `default.vcl`. Their behavior are as follows:
 
-If a ConfigMap of name `spec.vclConfigMap.name` does not exist on VarnishService creation, the operator will create one and populate it with a default `<backendsFile>.tmpl` and `<defaultFile>`. Their behavior are as follows:
-
-* [`<backendsFile>.tmpl`](/config/vcl/backends.vcl.tmpl): collect all backends into a single director and round-robin between them
-* [`<defaultFile>`](/config/vcl/default.vcl):
+* [`backends.vcl.tmpl`](/config/vcl/backends.vcl.tmpl): collect all backends into a single director and round-robin between them
+* [`default.vcl`](/config/vcl/default.vcl):
   * respond to `GET /heartbeat` checks with a 200
   * respond to `GET /liveness` checks with a 200 or 503, depending on healthy backends
   * respond to all other requests normally, caching all non-404 responses
   * hash request based on url
   * add `X-Varnish-Cache` header to response with "HIT" or "MISS" value, based on presence in cache
 
-If you would like to use the default `<backendsFile>.tmpl`, but a custom `<defaultFile>`, the easiest way is to create the VarnishService without the ConfigMap, let the operator create the ConfigMap for you, and then modify the contents of the ConfigMap after creation. Alternatively, just copy the content as linked above.
+If you would like to use the default `backends.vcl.tmpl`, but a custom `default.vcl`, the easiest way is to create the VarnishService without the ConfigMap, let the operator create the ConfigMap for you, and then modify the contents of the ConfigMap after creation. Alternatively, just copy the content as linked above.
 
-### Writing the <backendsFile>.tmpl
+### Writing a Templated VCL File
 
 The template file is a regular vcl file, with the addition of [Go templates](https://golang.org/pkg/text/template). This is because there is no way to know at startup what the IP addresses of the backends will be, so they must be injected at runtime. Not to mention, they can change over time if the backends get rescheduled by Kubernetes. These are the available fields in the template:
 
@@ -136,32 +122,29 @@ This loops over `.Backends`, names each backend `.PodName`, sets `.host` to `.IP
 
 For the full example of using the templates, see the [`backends.vcl.tmpl` file](/config/vcl/backends.vcl.tmpl).
 
-### Using user defined VCL Code versions
+### Using User Defined VCL Code Versions
 
-VCL related status information is available at field `vcl` in status object. 
+VCL related status information is available at field `.status.vcl`. 
 
-The current VCl version can be found in the `vcl.configMapVersion` status field. It matches the resource version of the config map that contains the VCL code. 
+The current VCl version can be found at `.status.vcl.configMapVersion`. It matches the resource version of the config map that contains the VCL code. 
 
-For user readable versions an annotation `VCLVersion` can be used. It should be set for the config map where the VCL configuration is defined.
+To tag your own versions, an annotation `VCLVersion` on the ConfigMap can be used.
 
-```bash
-> kubectl -n varnish-ns get cm varnish-config -o yaml
+```yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
   annotations:
     VCLVersion: v1.0 # <-- set by the user
-  creationTimestamp: "2018-12-21T12:59:07Z"
   resourceVersion: "292181"
-    ...
+  ...
 data:
     ...
 ```
 
-After setting the annotation, that version can be seen in the status field `vcl.version` of the varnish service. This field is optional and not present if the version is not set in the config map annotation.
+After setting the annotation, that version can be seen at `.status.vcl.version`. This field is optional, and will only appear if the annotation is set.
 
-```bash
-> kubectl -n varnish-ns get vs my-varnish -o yaml
+```yaml
 apiVersion: icm.ibm.com/v1alpha1
 kind: VarnishService
 metadata:
@@ -170,22 +153,17 @@ status:
   vcl:
     version: v1.0 # <-- reflects the `VCLVersion` annotation in the config map
     configMapVersion: "292181" # <-- reflects the config map resource version
-  deployment:
-    affinity:
-      podAntiAffinity:
-    ...   
+  ...
 ```
 
-After the VCL in the config map has been changed, the status field will be immediately updated to reflect the latest version. However that does not guarantee that Varnish pods run the latest VCL configuration. It needs time to reload and even could fail to reload if the VCL has syntax error for example.
+After the VCL in the ConfigMap has been changed, the associated status fields will be immediately updated to reflect the latest version. However that does not guarantee that Varnish pods run the latest VCL configuration. It needs time to reload and if there is a problem, such as a syntax error in the VCL, may never load.
  
-To give users a better observability about currently running VCL versions the status has a field `vcl.availability` which indicates how many pods have the latest version and how many of them are outdated. 
+For better observability about currently running VCL versions, see `.status.vcl.availability`, which indicates how many pods have the latest version and how many of them are outdated. 
 
-```bash
-> kubectl -n varnish-ns get vs my-varnish -o yaml
+```yaml
 apiVersion: icm.ibm.com/v1alpha1
 kind: VarnishService
 metadata:
-  annotations:
     ...
 status:
   vcl:
@@ -194,11 +172,10 @@ status:
     availability: 1 latest / 0 outdated # <-- all pods have the latest VCL version
   deployment:
     availableReplicas: 1
-    conditions:
     ...
 ```
 
-To check which pods have outdated versions, simply check their annotations. The annotation `configMapVersion` on the Varnish pod will indicate the latest version of the config map used. If it's not the same as in the VarnishService status it's likely that there's an issue.
+To check which pods have outdated versions, simply check their annotations. The annotation `configMapVersion` on the Varnish pod will indicate the latest version of the ConfigMap used. If it's not the same as in the VarnishService status it's likely that there's an issue.
 
 Example of detecting a pod that failed to reload:
 
@@ -244,17 +221,18 @@ As the logs indicate, the issue here is the invalid VCL syntax.
 Once the VarnishService resource yaml is ready, simply `kubectl apply -f <varnish-service>.yaml` to create the resource. Once complete, you should see:
 
 * a deployment with the name `<varnish-service-name>-deployment`. This is the Varnish cluster, and should have inherited everything under the `deployment` part of the spec.
-* 2 services, one `<varnish-service-name>-cached` and one `<varnish-service-name>-nocached`. As is implied by the names, using `<varnish-service-name>-cached` will direct to Varnish, which then forwards to the underlying deployment, while `<varnish-service-name>-nocached` will target the underlying deployment directly, with no Varnish caching. `<varnish-service-name>-cached` will have inherited everything under the `service` part of the spec, other than its `selector` and `port`, which will be redirected to the Varnish deployment.
-* A ConfigMap with VCL in it (either user-created, before running `kubectl apply -f <varnish-service>.yaml`, or generated by operator, after)
+* 2 services, one `<varnish-service-name>` and one `<varnish-service-name>-no-cache`. As is implied by the names, using `<varnish-service-name>` will act as the service configured under `.spec.service`, and will direct to Varnish before hitting the underlying deployment, while `<varnish-service-name>-no-cache` will target the underlying deployment directly, with no Varnish caching. `<varnish-service-name>` will have inherited everything under the `service` part of the spec, other than its `selector`, which will be redirected to the Varnish deployment.
+* A ConfigMap with VCL in it (either user-created, before running `kubectl apply -f <varnish-service>.yaml`, or generated by operator)
 * A role/rolebinding/clusterrole/clusterrolebinding/serviceAccount combination to give the Varnish deployment the ability to access necessary resources.
+* If configured, a PodDisruptionBudget as specced
 
 ### Updating a VarnishService Resource
 
-Just as with any other Kubernetes resource, using `kubectl apply`, `kubectl patch`, or `kubectl replace` will all update the VarnishService appropriately. The operator will handle how that update propagates to its dependent resources.
+Just as with any other Kubernetes resource, using `kubectl apply`, `kubectl patch`, or `kubectl replace` will all update the VarnishService appropriately. The operator will handle how that update propagates to its dependent resources. Conversely, trying to modify any of those dependent resources (Deployment, Services, Roles/Rolebindings, etc) will cause the operator to revert those changes, in the same way a Deployment does for its Pods. The only exception to this is the ConfigMap, the contents of which you can and should modify, since that is the VCL used to run the Varnish Pods.
 
 ### Deleting a VarnishService Resource
 
-Simply calling `kubectl delete` on the VarnishResource will recursively delete all dependent resources, so that is the only action you need to take. This includes a user-generated ConfigMap, as the VarnishService will take ownership of that ConfigMap after creation. Deleting any of the dependent resources will not do anything, in the same way that deleting the pod of a deployment will not. The operator will "fix" the deletion by creating a new resource to replace that which was deleted.
+Simply calling `kubectl delete` on the VarnishResource will recursively delete all dependent resources, so that is the only action you need to take. This includes a user-generated ConfigMap, as the VarnishService will take ownership of that ConfigMap after creation. Deleting any of the dependent resources will trigger the operator to recreate that resource, in the same way that deleting the Pod of a Deployment will trigger the recreation of that Pod.
 
 ### Checking Status of a VarnishService Resource
 
@@ -262,7 +240,7 @@ The VarnishService keeps track of its current status as events occur in the syst
 
 ### Prove that Varnish is Working
 
-In order to show that Varnish is properly configured, it is common to add a header to the response indicating whether Varnish responded from cache or from origin. In the `default.vcl` provided out of the box, that header is `X-Varnish-Cache: HIT` and `X-Varnish-Cache: MISS`. With such a header prepared, make a request against the `cached` service (ie, service called `<varnish-service-name>-cached`) and look at its headers for the varnish-added header.
+In order to show that Varnish is properly configured, it is common to add a header to the response indicating whether Varnish responded from cache or from origin. In the `default.vcl` provided out of the box, that header is `X-Varnish-Cache: HIT` and `X-Varnish-Cache: MISS`. With such a header prepared, make a request against the service (ie, name matches your `<varnish-service>`) and look at its headers for the varnish-added header.
 
 To make such a request, you can either
 
@@ -288,15 +266,15 @@ The way that Kubernetes manages deployed pods on nodes is through monitoring the
 
 ### Affinities
 
-[Kubernetes allows decent control](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#inter-pod-affinity-and-anti-affinity-beta-feature) on where pods get deployed based on labels associated with pods and/or nodes. For instance, you can configure pods of the same deployment to repel each other, meaning new pods entering the deployment will try to avoid nodes that already have a pod of that type. That way, you if any one node goes down, it will only take a single pod with it. Likewise, you can configure pods to be attracted to each other, for colocation that could decrease latency between pods. Note that reading through the above linked documentation is valuable, as it goes into limitations to affinities, as well as deeply explains how they work and when to use them.
+[Kubernetes allows control](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#inter-pod-affinity-and-anti-affinity-beta-feature) on where pods get deployed based on labels associated with pods and nodes. For instance, you can configure pods of the same deployment to repel each other, meaning new pods entering the deployment will try to avoid nodes that already have a pod of that type. That way, you if any one node goes down, it will only take a single pod with it. Likewise, you can configure pods to be attracted to each other, for colocation that could decrease latency between pods. Note that reading through the above linked documentation is valuable, as it goes into limitations to affinities, as well as deeply explains how they work and when to use them.
 
-For the purposes of this Varnish deployment, you will most likely want to configure a [pod anti-affinity](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#never-co-located-in-the-same-node) (see the deployment yaml right above this section for the example) so that each pod of the varnish deployment is on a different node. Since Varnish nodes do not need to talk to each other (at least in the free versions supported by this operator), there is no need for colocation, and so you should focus on minimizing the impact of lost nodes. An example of what that might look like is in the [example annotated yaml file](/config/samples/icm_v1alpha1_varnishservice.yaml) under `spec.deployment.affinity`.
+For the purposes of this Varnish deployment, you will most likely want to configure a [pod anti-affinity](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#never-co-located-in-the-same-node) so that each pod of the varnish deployment is on a different node. An example of what that might look like is in the [example annotated yaml file](/config/samples/icm_v1alpha1_varnishservice.yaml) under `spec.deployment.affinity`.
 
 ### Running Varnish pods on separate IKS worker pools
 
 This example shows how to create an IKS worker pool and make Varnish pods run strictly on its workers, one per node.
 
-Resources:
+References:
  * [How to create IKS clusters and worker pools.](https://console.bluemix.net/docs/containers/cs_clusters.html#clusters)
  * [Taints and Tolerations](https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/)
  * [Affinity and anti-affinity](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity)
@@ -352,7 +330,7 @@ Resources:
     kube-dal10-cr91ed9433e7bf4dc7b8348ae1022f9f27-w59   169.61.218.94   10.94.177.180   u2c.2x4.encrypted   normal   Ready    dal10   1.11.7_1543
     ```
     
-2. Taint created nodes to repel pods that don't have required toleration. 
+1. Taint created nodes to repel pods that don't have required toleration. 
 
     ```bash
     $ #Setup kubectl
@@ -387,7 +365,7 @@ Resources:
     
     This prevents all pods from scheduling on that node unless you already have pods with matching toleration
     
-3. Label the nodes for the ability to schedule your varnish pods only on that nodes. Those labels will be used in your VarnishService configuration later.
+1. Label the nodes for the ability to schedule your varnish pods only on that nodes. Those labels will be used in your VarnishService configuration later.
 
     ```bash
     $ kubectl label node 10.94.177.179 role=varnish-cache
@@ -395,7 +373,7 @@ Resources:
     $ kubectl label node 10.94.177.180 role=varnish-cache
     node/10.94.177.180 labeled 
     ```
-4. Define your VarnishService spec with necessary affinity and toleration configuration
+1. Define your VarnishService spec with necessary affinity and toleration configuration
 
     4.1 Define pods anti-affinity to not co-locate replicas on a node.
     

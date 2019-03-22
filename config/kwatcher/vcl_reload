@@ -5,7 +5,7 @@ if [[ -z $1 ]]; then
     exit 1
 fi
 if [[ -z $2 ]]; then
-    echo "Default File name not provided"
+    echo "Entrypoint File name not provided"
     exit 1
 fi
 

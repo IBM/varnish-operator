@@ -12,7 +12,7 @@ spec:
       control-plane: controller-manager
       controller-tools.k8s.io: "1.0"
   serviceName: varnish-service-controller-manager-service
-  replicas: {{ .Values.replicas }}
+  replicas: {{ if .Values.leaderElection.enabled }}{{ .Values.leaderElection.replicas }}{{ else }}1{{ end }}
   template:
     metadata:
       labels:

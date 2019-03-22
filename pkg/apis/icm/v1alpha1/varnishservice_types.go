@@ -16,8 +16,8 @@ const (
 	LabelVarnishUID       = "varnish-uid"
 
 	VarnishComponentVarnishes           = "varnishes"
-	VarnishComponentCachedService       = "cached-service"
-	VarnishComponentNoCachedService     = "nocached-service"
+	VarnishComponentCacheService        = "cache-service"
+	VarnishComponentNoCacheService      = "nocache-service"
 	VarnishComponentClusterRole         = "clusterrole"
 	VarnishComponentClusterRoleBinding  = "clusterrolebinding"
 	VarnishComponentRole                = "role"
@@ -36,8 +36,8 @@ const (
 // +kubebuilder:printcolumn:name="Current",type="integer",JSONPath=".status.deployment.readyReplicas",description="current number of varnish pods",format="int32",priority="0"
 // +kubebuilder:printcolumn:name="Up-To-Date",type="integer",JSONPath=".status.deployment.updatedReplicas",description="number of varnish pods that are up to date",format="int32",priority="0"
 // +kubebuilder:printcolumn:name="VCL-Version",type="string",JSONPath=".status.vcl.configMapVersion",description="version of the ConfigMap containing the VCL",priority="0"
-// +kubebuilder:printcolumn:name="Cached-Service-IP",type="string",JSONPath=".status.service.cached.ip",description="IP Address of the cached service",priority="0"
-// +kubebuilder:printcolumn:name="Nocached-Service-IP",type="string",JSONPath=".status.service.nocached.ip",description="IP Address of the nocached service",priority="0"
+// +kubebuilder:printcolumn:name="Service-IP",type="string",JSONPath=".status.service.ip",description="IP Address of the service backed by Varnish",priority="0"
+// +kubebuilder:printcolumn:name="ServiceNoCache-IP",type="string",JSONPath=".status.serviceNoCache.ip",description="IP Address of the service without any caching",priority="0"
 // +kubebuilder:subresource:status
 // +kubebuilder:subresource:scale:specpath=.spec.deployment.replicas,statuspath=.status.deployment.replicas,selectorpath=
 type VarnishService struct {
@@ -76,8 +76,6 @@ type VarnishContainer struct {
 	ImagePullPolicy v1.PullPolicy           `json:"imagePullPolicy,omitempty"`
 	RestartPolicy   v1.RestartPolicy        `json:"restartPolicy,omitempty"`
 	Resources       v1.ResourceRequirements `json:"resources,omitempty"`
-	LivenessProbe   *v1.Probe               `json:"livenessProbe,omitempty"`
-	ReadinessProbe  *v1.Probe               `json:"readinessProbe,omitempty"`
 	ImagePullSecret *string                 `json:"imagePullSecret,omitempty"`
 	VarnishArgs     []string                `json:"varnishArgs,omitempty"`
 }
@@ -94,9 +92,10 @@ type VarnishServiceService struct {
 type VarnishServiceStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 	// TODO: must have name of deployment too
-	Deployment appsv1.DeploymentStatus     `json:"deployment,omitempty"`
-	Service    VarnishServiceServiceStatus `json:"service,omitempty"`
-	VCL        VCLStatus                   `json:"vcl"`
+	Deployment     appsv1.DeploymentStatus     `json:"deployment,omitempty"`
+	Service        VarnishServiceServiceStatus `json:"service,omitempty"`
+	ServiceNoCache VarnishServiceServiceStatus `json:"serviceNoCache,omitempty"`
+	VCL            VCLStatus                   `json:"vcl"`
 }
 
 // VCLStatus describes the VCL versions status
@@ -106,17 +105,11 @@ type VCLStatus struct {
 	Availability     string  `json:"availability"`
 }
 
-// VarnishServiceSingleServiceStatus describes the status of one service as it exists within a VarnishService
-type VarnishServiceSingleServiceStatus struct {
+// VarnishServiceSingleServiceStatus describes the status of a service as it exists within a VarnishService
+type VarnishServiceServiceStatus struct {
 	v1.ServiceStatus `json:",inline"`
 	Name             string `json:"name,omitempty"`
 	IP               string `json:"ip,omitempty"`
-}
-
-// VarnishServiceServiceStatus defines the observed state of the Service portion of VarnishService
-type VarnishServiceServiceStatus struct {
-	Cached   VarnishServiceSingleServiceStatus `json:"cached,omitempty"`
-	NoCached VarnishServiceSingleServiceStatus `json:"noCached,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

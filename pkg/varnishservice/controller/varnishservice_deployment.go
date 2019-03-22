@@ -72,9 +72,16 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 								{Name: "LOG_LEVEL", Value: instance.Spec.LogLevel},
 								{Name: "VARNISH_ARGS", Value: strings.Join(instance.Spec.Deployment.Container.VarnishArgs, " ")},
 							},
-							Resources:       instance.Spec.Deployment.Container.Resources,
-							LivenessProbe:   instance.Spec.Deployment.Container.LivenessProbe,
-							ReadinessProbe:  instance.Spec.Deployment.Container.ReadinessProbe,
+							Resources: instance.Spec.Deployment.Container.Resources,
+							// TODO: get working liveness probe
+							//LivenessProbe:   &v1.Probe{},
+							ReadinessProbe: &v1.Probe{
+								Handler: v1.Handler{
+									Exec: &v1.ExecAction{
+										Command: []string{"/usr/bin/varnishadm", "ping"},
+									},
+								},
+							},
 							ImagePullPolicy: instance.Spec.Deployment.Container.ImagePullPolicy,
 						},
 					},

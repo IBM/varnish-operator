@@ -51,11 +51,11 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 							Ports: []v1.ContainerPort{
 								{
 									Name:          instance.Spec.Service.VarnishPort.Name,
-									ContainerPort: instance.Spec.Service.VarnishPort.Port,
+									ContainerPort: icmapiv1alpha1.VarnishPort,
 								},
 								{
 									Name:          instance.Spec.Service.VarnishExporterPort.Name,
-									ContainerPort: instance.Spec.Service.VarnishExporterPort.Port,
+									ContainerPort: icmapiv1alpha1.VarnishPrometheusExporterPort,
 								},
 							},
 							Env: []v1.EnvVar{

@@ -60,7 +60,6 @@ func (r *ReconcileVarnishService) reconcileServiceNoCache(instance, instanceStat
 func (r *ReconcileVarnishService) reconcileService(instance, instanceStatus *icmapiv1alpha1.VarnishService, varnishSelector map[string]string) error {
 	service := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			// TODO: change name to just `instance.name`, since VarnishService is supposed to replace Service.
 			Name:      instance.Name,
 			Namespace: instance.Namespace,
 			Labels:    labels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentCacheService),
@@ -77,27 +76,14 @@ func (r *ReconcileVarnishService) reconcileService(instance, instanceStatus *icm
 	}
 
 	instance.Spec.Service.ServiceSpec.DeepCopyInto(&service.Spec)
-
-	service.Spec.Ports = []v1.ServicePort{
-		{
-			Name: instance.Spec.Service.VarnishPort.Name,
-			Port: instance.Spec.Service.VarnishPort.Port,
-			TargetPort: intstr.IntOrString{
-				Type:   intstr.Int,
-				IntVal: instance.Spec.Service.VarnishPort.Port,
-			},
-		},
-		{
-			Name: instance.Spec.Service.VarnishExporterPort.Name,
-			Port: instance.Spec.Service.VarnishExporterPort.Port,
-			TargetPort: intstr.IntOrString{
-				Type:   intstr.Int,
-				IntVal: instance.Spec.Service.VarnishExporterPort.Port,
-			},
-		},
-	}
-
 	service.Spec.Selector = varnishSelector
+
+	service.Spec.Ports = append(service.Spec.Ports, instance.Spec.Service.VarnishExporterPort)
+	//the target port in the spec points to the backend, but this service should point to Varnish pods
+	//so the port object should look the same as in spec except for the target port which should be the port Varnish is listening on
+	varnishPort := instance.Spec.Service.VarnishPort
+	varnishPort.TargetPort = intstr.FromInt(icmapiv1alpha1.VarnishPort)
+	service.Spec.Ports = append(service.Spec.Ports, varnishPort)
 
 	if err := r.reconcileServiceGeneric(instance, &instanceStatus.Status.Service, service); err != nil {
 		return err

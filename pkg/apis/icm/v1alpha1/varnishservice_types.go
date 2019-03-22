@@ -25,6 +25,9 @@ const (
 	VarnishComponentVCLFileConfigMap    = "vcl-file-configmap"
 	VarnishComponentPodDisruptionBudget = "pdb"
 	VarnishComponentServiceAccount      = "serviceaccount"
+
+	VarnishPort                   = 6081
+	VarnishPrometheusExporterPort = 9131
 )
 
 // +genclient

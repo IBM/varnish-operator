@@ -69,19 +69,8 @@ func (ep *EndpointPredicate) Update(e event.UpdateEvent) bool {
 		return false
 	}
 
-	getIPs := func(eps []v1.EndpointSubset) []string {
-		ips := make([]string, 0)
-		for _, ep := range eps {
-			for _, addr := range append(ep.Addresses, ep.NotReadyAddresses...) {
-				ips = append(ips, addr.IP)
-			}
-
-		}
-		sort.Strings(ips)
-		return ips
-	}
-
-	if cmp.Equal(getIPs(oldEndpoints.Subsets), getIPs(newEndpoints.Subsets)) {
+	if cmp.Equal(getIPs(oldEndpoints.Subsets), getIPs(newEndpoints.Subsets)) &&
+		cmp.Equal(getPorts(oldEndpoints.Subsets), getPorts(newEndpoints.Subsets)) {
 		return false
 	}
 
@@ -90,4 +79,30 @@ func (ep *EndpointPredicate) Update(e event.UpdateEvent) bool {
 
 func (ep *EndpointPredicate) Generic(e event.GenericEvent) bool {
 	return ep.shared(e.Meta)
+}
+
+func getIPs(eps []v1.EndpointSubset) []string {
+	ips := make([]string, 0)
+	for _, ep := range eps {
+		for _, addr := range append(ep.Addresses, ep.NotReadyAddresses...) {
+			ips = append(ips, addr.IP)
+		}
+
+	}
+	sort.Strings(ips)
+	return ips
+}
+
+func getPorts(eps []v1.EndpointSubset) []int32 {
+	ports := make([]int32, 0)
+	for _, ep := range eps {
+		for _, port := range ep.Ports {
+			ports = append(ports, port.Port)
+		}
+
+	}
+	sort.Slice(ports, func(i, j int) bool {
+		return ports[i] < ports[j]
+	})
+	return ports
 }

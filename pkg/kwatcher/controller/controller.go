@@ -146,9 +146,8 @@ func (r *ReconcileVarnish) reconcileWithLogging(request reconcile.Request) (reco
 
 	r.scheme.Default(vs)
 
-	// ideally, I would pull these from the VarnishService since they could change with an update. For now, I am not doing that since I cannot default the values
-	varnishPort := vs.Spec.Service.VarnishPort.Port
-	targetPort := int32(vs.Spec.Service.VarnishPort.TargetPort.IntValue())
+	varnishPort := int32(v1alpha1.VarnishPort)
+	targetPort := vs.Spec.Service.VarnishPort.TargetPort.IntVal
 	entrypointFile := vs.Spec.VCLConfigMap.EntrypointFile
 
 	pod := &v1.Pod{}

@@ -68,19 +68,15 @@ func SetDefaults_VarnishServiceService(in *VarnishServiceService) {
 	if in.VarnishExporterPort.Name == "" {
 		in.VarnishExporterPort.Name = "varnishexporter"
 	}
-	if in.VarnishExporterPort.TargetPort == (intstr.IntOrString{}) {
-		in.VarnishExporterPort.TargetPort = intstr.IntOrString{
-			Type:   intstr.Int,
-			IntVal: in.VarnishExporterPort.Port,
-		}
-	}
+	//we don't support running exporter on custom port yet so ignore the value set by user for now
+	in.VarnishExporterPort.TargetPort = intstr.FromInt(VarnishPrometheusExporterPort)
 }
 
 // due to validating webhook, we can assume args are properly formed (in key/value pairs, with optional value) and there are no override args present in the list
 func setVarnishArgs(in *VarnishServiceSpec) {
 	varnishArgsOverrides := []string{
 		"-F",
-		"-a", fmt.Sprintf("0.0.0.0:%d", in.Service.VarnishPort.Port),
+		"-a", fmt.Sprintf("0.0.0.0:%d", VarnishPort),
 		"-S", "/etc/varnish/secret",
 		"-f", "/etc/varnish/" + in.VCLConfigMap.EntrypointFile,
 	}

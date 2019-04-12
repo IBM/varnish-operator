@@ -27,6 +27,7 @@ const (
 	VarnishComponentServiceAccount      = "serviceaccount"
 
 	VarnishPort                   = 6081
+	VarnishAdminPort              = 6082
 	VarnishPrometheusExporterPort = 9131
 )
 
@@ -55,7 +56,7 @@ type VarnishService struct {
 // Important: Run "make" to regenerate code after modifying this file
 type VarnishServiceSpec struct {
 	VCLConfigMap        VarnishVCLConfigMap                    `json:"vclConfigMap"`
-	Deployment          VarnishDeployment                      `json:"deployment"`
+	Deployment          VarnishDeployment                      `json:"deployment,omitempty"`
 	PodDisruptionBudget *policyv1beta1.PodDisruptionBudgetSpec `json:"podDisruptionBudget,omitempty"`
 	Service             VarnishServiceService                  `json:"service"`
 	LogLevel            string                                 `json:"logLevel,omitempty"`
@@ -75,7 +76,7 @@ type VarnishDeployment struct {
 }
 
 type VarnishContainer struct {
-	Image           string                  `json:"image"`
+	Image           string                  `json:"image,omitempty"`
 	ImagePullPolicy v1.PullPolicy           `json:"imagePullPolicy,omitempty"`
 	RestartPolicy   v1.RestartPolicy        `json:"restartPolicy,omitempty"`
 	Resources       v1.ResourceRequirements `json:"resources,omitempty"`
@@ -90,15 +91,12 @@ type VarnishServiceService struct {
 	PrometheusAnnotations bool           `json:"prometheusAnnotations,omitempty"`
 }
 
-// TODO: add configmap data
 // VarnishServiceStatus defines the observed state of VarnishService
 type VarnishServiceStatus struct {
-	// Important: Run "make" to regenerate code after modifying this file
-	// TODO: must have name of deployment too
-	Deployment     appsv1.DeploymentStatus     `json:"deployment,omitempty"`
-	Service        VarnishServiceServiceStatus `json:"service,omitempty"`
-	ServiceNoCache VarnishServiceServiceStatus `json:"serviceNoCache,omitempty"`
-	VCL            VCLStatus                   `json:"vcl"`
+	Deployment     VarnishServiceDeploymentStatus `json:"deployment,omitempty"`
+	Service        VarnishServiceServiceStatus    `json:"service,omitempty"`
+	ServiceNoCache VarnishServiceServiceStatus    `json:"serviceNoCache,omitempty"`
+	VCL            VCLStatus                      `json:"vcl"`
 }
 
 // VCLStatus describes the VCL versions status
@@ -113,6 +111,13 @@ type VarnishServiceServiceStatus struct {
 	v1.ServiceStatus `json:",inline"`
 	Name             string `json:"name,omitempty"`
 	IP               string `json:"ip,omitempty"`
+}
+
+// VarnishServiceDeploymentStatus comprises information about the deployment and its status.
+type VarnishServiceDeploymentStatus struct {
+	Name        string `json:"name,omitempty"`
+	VarnishArgs string `json:"varnishArgs,omitempty"`
+	appsv1.DeploymentStatus
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

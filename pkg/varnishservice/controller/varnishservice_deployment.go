@@ -21,13 +21,20 @@ import (
 func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *icmapiv1alpha1.VarnishService, serviceAccountName string, endpointSelector map[string]string) (map[string]string, error) {
 	varnishLabels := vslabels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentVarnishes)
 	gvk := instance.GroupVersionKind()
-	// TODO: this can eventually be moved into the mutating webhook, whenever that starts working
 	var varnishImage string
 	if instance.Spec.Deployment.Container.Image == "" {
 		varnishImage = r.config.CoupledVarnishImage
 	} else {
 		varnishImage = instance.Spec.Deployment.Container.Image
 	}
+
+	varnishdArgs := strings.Join(getSanitizedVarnishArgs(&instance.Spec), " ")
+
+	var imagePullSecrets []v1.LocalObjectReference
+	if instance.Spec.Deployment.Container.ImagePullSecret != nil {
+		imagePullSecrets = []v1.LocalObjectReference{{Name: *instance.Spec.Deployment.Container.ImagePullSecret}}
+	}
+
 	desired := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      instance.Name + "-varnish-deployment",
@@ -70,7 +77,7 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 								{Name: "VARNISH_SERVICE_KIND", Value: gvk.Kind},
 								{Name: "LOG_FORMAT", Value: instance.Spec.LogFormat},
 								{Name: "LOG_LEVEL", Value: instance.Spec.LogLevel},
-								{Name: "VARNISH_ARGS", Value: strings.Join(instance.Spec.Deployment.Container.VarnishArgs, " ")},
+								{Name: "VARNISH_ARGS", Value: varnishdArgs},
 							},
 							Resources: instance.Spec.Deployment.Container.Resources,
 							// TODO: get working liveness probe
@@ -89,6 +96,7 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 					ServiceAccountName: serviceAccountName,
 					Affinity:           instance.Spec.Deployment.Affinity,
 					Tolerations:        instance.Spec.Deployment.Tolerations,
+					ImagePullSecrets:   imagePullSecrets,
 				},
 			},
 		},
@@ -132,7 +140,9 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 		}
 	}
 
-	instanceStatus.Status.Deployment = found.Status
+	instanceStatus.Status.Deployment.DeploymentStatus = found.Status
+	instanceStatus.Status.Deployment.Name = found.Name
+	instanceStatus.Status.Deployment.VarnishArgs = varnishdArgs
 
 	return varnishLabels, nil
 }

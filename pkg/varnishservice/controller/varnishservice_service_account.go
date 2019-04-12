@@ -24,9 +24,6 @@ func (r *ReconcileVarnishService) reconcileServiceAccount(instance *icmapiv1alph
 			Labels:    labels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentServiceAccount),
 		},
 	}
-	if instance.Spec.Deployment.Container.ImagePullSecret != nil {
-		serviceAccount.ImagePullSecrets = []v1.LocalObjectReference{{Name: *instance.Spec.Deployment.Container.ImagePullSecret}}
-	}
 
 	logr := r.logger.With("name", serviceAccount.Name, "namespace", serviceAccount.Namespace)
 

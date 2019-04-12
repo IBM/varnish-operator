@@ -81,8 +81,6 @@ spec:
                       items:
                         type: string
                       type: array
-                  required:
-                  - image
                   type: object
                 replicas:
                   format: int32
@@ -122,14 +120,16 @@ spec:
               type: object
           required:
           - vclConfigMap
-          - deployment
           - service
           type: object
         status:
           properties:
             deployment:
-              description: 'Important: Run "make" to regenerate code after modifying
-                this file TODO: must have name of deployment too'
+              properties:
+                name:
+                  type: string
+                varnishArgs:
+                  type: string
               type: object
             service:
               properties:

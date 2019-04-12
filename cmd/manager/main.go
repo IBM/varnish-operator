@@ -17,11 +17,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 )
 
-func init() {
-	flag.Parse()
-}
-
 func main() {
+	// the following line exists to make glog happy, for more information, see: https://github.com/kubernetes/kubernetes/issues/17162
+	flag.Parse()
 	operatorConfig, err := vscfg.LoadConfig()
 	if err != nil {
 		log.Fatalf("unable to read env vars: %v", err)

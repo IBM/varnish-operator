@@ -1,4 +1,4 @@
 package compare
 
-var sharedIgnoreMetadata = []string{"Generation", "SelfLink", "UID", "ResourceVersion", "CreationTimestamp"}
+var sharedIgnoreMetadata = []string{"APIVersion", "Kind", "Generation", "SelfLink", "UID", "ResourceVersion", "CreationTimestamp"}
 var sharedIgnoreStatus = []string{"Status"}

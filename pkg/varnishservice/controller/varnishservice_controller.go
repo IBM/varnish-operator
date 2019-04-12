@@ -8,14 +8,13 @@ import (
 	"icm-varnish-k8s-operator/pkg/varnishservice/config"
 	"icm-varnish-k8s-operator/pkg/varnishservice/pods"
 
-	"k8s.io/apimachinery/pkg/types"
-
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
 	rbacv1beta1 "k8s.io/api/rbac/v1beta1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	"go.uber.org/zap"
 
@@ -62,7 +61,7 @@ func Add(mgr manager.Manager, cfg *config.Config, logr *logger.Logger) error {
 	// RoleBinding
 	// ServiceAccount
 
-	podPredicate, err := pods.NewAnnotationsPredicate(map[string]string{icmv1alpha1.LabelVarnishComponent: icmv1alpha1.VarnishComponentVarnishes})
+	podPredicate, err := pods.NewPredicate(map[string]string{icmv1alpha1.LabelVarnishComponent: icmv1alpha1.VarnishComponentVarnishes})
 	if err != nil {
 		return err
 	}

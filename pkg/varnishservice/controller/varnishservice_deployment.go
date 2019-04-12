@@ -4,6 +4,7 @@ import (
 	"context"
 	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 	vslabels "icm-varnish-k8s-operator/pkg/labels"
+	"icm-varnish-k8s-operator/pkg/logger"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
 	"strings"
 
@@ -18,7 +19,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *icmapiv1alpha1.VarnishService, serviceAccountName string, endpointSelector map[string]string) (map[string]string, error) {
+func (r *ReconcileVarnishService) reconcileDeployment(ctx context.Context, instance, instanceStatus *icmapiv1alpha1.VarnishService, serviceAccountName string, endpointSelector map[string]string) (map[string]string, error) {
 	varnishLabels := vslabels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentVarnishes)
 	gvk := instance.GroupVersionKind()
 	var varnishImage string
@@ -102,7 +103,8 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 		},
 	}
 
-	logr := r.logger.With("name", desired.Name, "namespace", desired.Namespace)
+	logr := logger.FromContext(ctx).With(logger.FieldComponent, icmapiv1alpha1.VarnishComponentVarnishes)
+	logr = logr.With(logger.FieldComponentName, desired.Name)
 
 	if err := controllerutil.SetControllerReference(instance, desired, r.scheme); err != nil {
 		return nil, errors.Wrap(err, "could not set controller as the OwnerReference for deployment")
@@ -111,14 +113,14 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 
 	found := &appsv1.Deployment{}
 
-	err := r.Get(context.TODO(), types.NamespacedName{Name: desired.Name, Namespace: desired.Namespace}, found)
+	err := r.Get(ctx, types.NamespacedName{Name: desired.Name, Namespace: desired.Namespace}, found)
 	// If the deployment does not exist, create it
 	// Else if there was a problem doing the GET, just return an error
 	// Else if the deployment exists, and it is different, update
 	// Else no changes, do nothing
 	if err != nil && kerrors.IsNotFound(err) {
 		logr.Infoc("Creating Deployment", "new", desired)
-		err = r.Create(context.TODO(), desired)
+		err = r.Create(ctx, desired)
 		if err != nil {
 			return nil, errors.Wrap(err, "could not create deployment")
 		}
@@ -132,7 +134,7 @@ func (r *ReconcileVarnishService) reconcileDeployment(instance, instanceStatus *
 			logr.Infoc("Updating Deployment", "diff", compare.DiffDeployment(found, desired))
 			found.Spec = desired.Spec
 			found.Labels = desired.Labels
-			if err = r.Update(context.TODO(), found); err != nil {
+			if err = r.Update(ctx, found); err != nil {
 				return nil, errors.Wrap(err, "could not update deployment")
 			}
 		} else {

@@ -10,6 +10,7 @@ import (
 	vslabels "icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/logger"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -123,23 +124,32 @@ type ReconcileVarnish struct {
 }
 
 func (r *ReconcileVarnish) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	r.logger.Debugw("Reconciling...")
-	res, err := r.reconcileWithLogging(request)
+	ctx := context.Background()
+
+	logr := r.logger.With(logger.FieldVarnishService, r.config.VarnishServiceName)
+	logr = logr.With(logger.FieldPodName, request.Name)
+	logr = logr.With(logger.FieldNamespace, request.Namespace)
+
+	logr.Debugw("Reconciling...")
+	start := time.Now()
+	defer logr.Debugf("Reconciled in %s", time.Since(start).String())
+	ctx = logger.ToContext(ctx, logr)
+	res, err := r.reconcileWithContext(ctx, request)
 	if err != nil {
 		if statusErr, ok := errors.Cause(err).(*apierrors.StatusError); ok && statusErr.ErrStatus.Reason == metav1.StatusReasonConflict {
-			r.logger.Info("Conflict occurred. Retrying...", zap.Error(err))
+			logr.Info("Conflict occurred. Retrying...", zap.Error(err))
 			return reconcile.Result{Requeue: true}, nil //retry but do not treat conflicts as errors
 		}
 
-		r.logger.Errorf("%+v", err)
+		logr.Errorf("%+v", err)
 		return reconcile.Result{}, err
 	}
 	return res, nil
 }
 
-func (r *ReconcileVarnish) reconcileWithLogging(request reconcile.Request) (reconcile.Result, error) {
+func (r *ReconcileVarnish) reconcileWithContext(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	vs := &v1alpha1.VarnishService{}
-	err := r.Get(context.Background(), types.NamespacedName{Namespace: request.Namespace, Name: r.config.VarnishServiceName}, vs)
+	err := r.Get(ctx, types.NamespacedName{Namespace: request.Namespace, Name: r.config.VarnishServiceName}, vs)
 	if err != nil {
 		return reconcile.Result{}, errors.WithStack(err)
 	}
@@ -151,12 +161,12 @@ func (r *ReconcileVarnish) reconcileWithLogging(request reconcile.Request) (reco
 	entrypointFile := vs.Spec.VCLConfigMap.EntrypointFile
 
 	pod := &v1.Pod{}
-	err = r.Get(context.Background(), types.NamespacedName{Namespace: request.Namespace, Name: r.config.PodName}, pod)
+	err = r.Get(ctx, types.NamespacedName{Namespace: request.Namespace, Name: r.config.PodName}, pod)
 	if err != nil {
 		return reconcile.Result{}, errors.WithStack(err)
 	}
 
-	cm, err := r.getConfigMap(r.config.Namespace, r.config.ConfigMapName)
+	cm, err := r.getConfigMap(ctx, r.config.Namespace, r.config.ConfigMapName)
 	if err != nil {
 		return reconcile.Result{}, errors.WithStack(err)
 	}
@@ -167,13 +177,13 @@ func (r *ReconcileVarnish) reconcileWithLogging(request reconcile.Request) (reco
 		return reconcile.Result{}, errors.WithStack(err)
 	}
 
-	bks, err := r.getPodInfo(r.config.Namespace, r.config.EndpointSelector, targetPort)
+	bks, err := r.getPodInfo(ctx, r.config.Namespace, r.config.EndpointSelector, targetPort)
 	if err != nil {
 		return reconcile.Result{}, errors.WithStack(err)
 	}
 
 	varnishLabels := labels.SelectorFromSet(vslabels.CombinedComponentLabels(vs, v1alpha1.VarnishComponentCacheService))
-	varnishNodes, err := r.getPodInfo(r.config.Namespace, varnishLabels, varnishPort)
+	varnishNodes, err := r.getPodInfo(ctx, r.config.Namespace, varnishLabels, varnishPort)
 
 	templatizedFiles, err := r.resolveTemplates(newTemplates, targetPort, varnishPort, bks, varnishNodes)
 	if err != nil {
@@ -193,18 +203,18 @@ func (r *ReconcileVarnish) reconcileWithLogging(request reconcile.Request) (reco
 		return reconcile.Result{}, errors.WithStack(err)
 	}
 
-	filesTouched, err := r.reconcileFiles(r.config.VCLDir, currFiles, newFiles)
+	filesTouched, err := r.reconcileFiles(ctx, r.config.VCLDir, currFiles, newFiles)
 	if err != nil {
 		return reconcile.Result{}, errors.WithStack(err)
 	}
 
 	if filesTouched {
-		if err = r.reconcileVarnish(vs, pod, cm); err != nil {
+		if err = r.reconcileVarnish(ctx, vs, pod, cm); err != nil {
 			return reconcile.Result{}, errors.WithStack(err)
 		}
 	}
 
-	if err := r.reconcilePod(filesTouched, pod, cm); err != nil {
+	if err := r.reconcilePod(ctx, filesTouched, pod, cm); err != nil {
 		return reconcile.Result{}, errors.WithStack(err)
 	}
 
@@ -229,22 +239,6 @@ func (r *ReconcileVarnish) verifyEntrypointExists(files, templates map[string]st
 	_, templateFound := templates[entrypoint+".tmpl"]
 	if !fileFound && !templateFound {
 		return errors.Errorf("%s must exist in configmap, but not found", entrypoint)
-	}
-	return nil
-}
-
-func verifyFilesExist(configMapFiles map[string]string, files ...string) error {
-	verify := func(filename string) error {
-		if _, found := configMapFiles[filename]; !found {
-			return errors.Errorf("%s must exist in configmap, but not found", filename)
-		}
-		return nil
-	}
-
-	for _, file := range files {
-		if err := verify(file); err != nil {
-			return err
-		}
 	}
 	return nil
 }

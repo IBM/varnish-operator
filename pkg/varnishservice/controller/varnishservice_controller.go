@@ -7,6 +7,7 @@ import (
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
 	"icm-varnish-k8s-operator/pkg/varnishservice/config"
 	"icm-varnish-k8s-operator/pkg/varnishservice/pods"
+	"time"
 
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
@@ -174,26 +175,32 @@ type ReconcileVarnishService struct {
 // +kubebuilder:rbac:groups=policy,resources=poddisruptionbudgets,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles;rolebindings;clusterroles;clusterrolebindings,verbs=list;watch;create;update;delete
 func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	r.logger.Debugw("Reconciling...")
-	res, err := r.wrappedReconcile(request)
+	ctx := context.Background()
+
+	logr := r.logger.With(logger.FieldVarnishService, request.Name)
+	logr = logr.With(logger.FieldNamespace, request.Namespace)
+	ctx = logger.ToContext(ctx, logr)
+
+	logr.Debugw("Reconciling...")
+	start := time.Now()
+	defer logr.Debugf("Reconciled in %s", time.Since(start).String())
+	res, err := r.reconcileWithContext(ctx, request)
 	if err != nil {
 		if statusErr, ok := errors.Cause(err).(*apierrors.StatusError); ok && statusErr.ErrStatus.Reason == metav1.StatusReasonConflict {
-			r.logger.Info("Conflict occurred. Retrying...", zap.Error(err))
+			logr.Info("Conflict occurred. Retrying...", zap.Error(err))
 			return reconcile.Result{Requeue: true}, nil //retry but do not treat conflicts as errors
 		}
 
-		r.logger.Errorf("%+v", err)
+		logr.Errorf("%+v", err)
 		return reconcile.Result{}, err
 	}
 	return res, nil
 }
 
-func (r *ReconcileVarnishService) wrappedReconcile(request reconcile.Request) (reconcile.Result, error) {
-	logr := r.logger.With("name", request.Name, "namespace", request.Namespace)
-
+func (r *ReconcileVarnishService) reconcileWithContext(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the VarnishService instance
 	instance := &icmv1alpha1.VarnishService{}
-	err := r.Get(context.TODO(), request.NamespacedName, instance)
+	err := r.Get(ctx, request.NamespacedName, instance)
 	if err != nil {
 		if kerrors.IsNotFound(err) {
 			// Object not found, return.  Created objects are automatically garbage collected.
@@ -219,51 +226,51 @@ func (r *ReconcileVarnishService) wrappedReconcile(request reconcile.Request) (r
 	instance.ObjectMeta.DeepCopyInto(&instanceStatus.ObjectMeta)
 	instance.Status.DeepCopyInto(&instanceStatus.Status)
 
-	serviceAccountName, err := r.reconcileServiceAccount(instance)
+	serviceAccountName, err := r.reconcileServiceAccount(ctx, instance)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-	roleName, err := r.reconcileRole(instance)
+	roleName, err := r.reconcileRole(ctx, instance)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-	if err = r.reconcileRoleBinding(instance, roleName, serviceAccountName); err != nil {
+	if err = r.reconcileRoleBinding(ctx, instance, roleName, serviceAccountName); err != nil {
 		return reconcile.Result{}, err
 	}
-	clusterRoleName, err := r.reconcileClusterRole(instance)
+	clusterRoleName, err := r.reconcileClusterRole(ctx, instance)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-	if err = r.reconcileClusterRoleBinding(instance, clusterRoleName, serviceAccountName); err != nil {
+	if err = r.reconcileClusterRoleBinding(ctx, instance, clusterRoleName, serviceAccountName); err != nil {
 		return reconcile.Result{}, err
 	}
-	endpointSelector, err := r.reconcileServiceNoCache(instance, instanceStatus)
+	endpointSelector, err := r.reconcileServiceNoCache(ctx, instance, instanceStatus)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-	varnishSelector, err := r.reconcileDeployment(instance, instanceStatus, serviceAccountName, endpointSelector)
+	varnishSelector, err := r.reconcileDeployment(ctx, instance, instanceStatus, serviceAccountName, endpointSelector)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 	// TODO: remove extra return var
-	_, err = r.reconcileConfigMap(varnishSelector, instance, instanceStatus)
+	_, err = r.reconcileConfigMap(ctx, varnishSelector, instance, instanceStatus)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-	if err = r.reconcilePodDisruptionBudget(instance, varnishSelector); err != nil {
+	if err = r.reconcilePodDisruptionBudget(ctx, instance, varnishSelector); err != nil {
 		return reconcile.Result{}, err
 	}
-	if err = r.reconcileService(instance, instanceStatus, varnishSelector); err != nil {
+	if err = r.reconcileService(ctx, instance, instanceStatus, varnishSelector); err != nil {
 		return reconcile.Result{}, err
 	}
 
 	if !compare.EqualVarnishServiceStatus(&instance.Status, &instanceStatus.Status) {
-		logr.Infoc("Updating VarnishService Status", "diff", compare.DiffVarnishServiceStatus(&instance.Status, &instanceStatus.Status))
-		if err = r.Status().Update(context.TODO(), instanceStatus); err != nil {
+		logger.FromContext(ctx).Infoc("Updating VarnishService Status", "diff", compare.DiffVarnishServiceStatus(&instance.Status, &instanceStatus.Status))
+		if err = r.Status().Update(ctx, instanceStatus); err != nil {
 			return reconcile.Result{}, errors.Wrapf(err, "could not update VarnishService Status %s:%s, %s:%s", "name", instance.Name, "namespace", instance.Namespace)
 		}
 	} else {
-		logr.Debugw("No updates for VarnishService status")
+		logger.FromContext(ctx).Debugw("No updates for VarnishService status")
 	}
 
 	return reconcile.Result{}, nil

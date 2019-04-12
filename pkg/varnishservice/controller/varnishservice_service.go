@@ -4,6 +4,7 @@ import (
 	"context"
 	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/labels"
+	"icm-varnish-k8s-operator/pkg/logger"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
 	"strconv"
 
@@ -16,7 +17,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func (r *ReconcileVarnishService) reconcileServiceNoCache(instance, instanceStatus *icmapiv1alpha1.VarnishService) (map[string]string, error) {
+func (r *ReconcileVarnishService) reconcileServiceNoCache(ctx context.Context, instance, instanceStatus *icmapiv1alpha1.VarnishService) (map[string]string, error) {
 	selector := make(map[string]string, len(instance.Spec.Service.Selector))
 	for k, v := range instance.Spec.Service.Selector {
 		selector[k] = v
@@ -51,13 +52,17 @@ func (r *ReconcileVarnishService) reconcileServiceNoCache(instance, instanceStat
 		},
 	}
 
-	if err := r.reconcileServiceGeneric(instance, &instanceStatus.Status.ServiceNoCache, serviceNoCache); err != nil {
+	logr := logger.FromContext(ctx).With(logger.FieldComponent, icmapiv1alpha1.VarnishComponentNoCacheService)
+	logr = logr.With(logger.FieldComponent, serviceNoCache.Name)
+	ctx = logger.ToContext(ctx, logr)
+
+	if err := r.reconcileServiceGeneric(ctx, instance, &instanceStatus.Status.ServiceNoCache, serviceNoCache); err != nil {
 		return selectorLabels, err
 	}
 	return selectorLabels, nil
 }
 
-func (r *ReconcileVarnishService) reconcileService(instance, instanceStatus *icmapiv1alpha1.VarnishService, varnishSelector map[string]string) error {
+func (r *ReconcileVarnishService) reconcileService(ctx context.Context, instance, instanceStatus *icmapiv1alpha1.VarnishService, varnishSelector map[string]string) error {
 	service := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      instance.Name,
@@ -65,6 +70,10 @@ func (r *ReconcileVarnishService) reconcileService(instance, instanceStatus *icm
 			Labels:    labels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentCacheService),
 		},
 	}
+
+	logr := logger.FromContext(ctx).With(logger.FieldComponent, icmapiv1alpha1.VarnishComponentCacheService)
+	logr = logr.With(logger.FieldComponent, service.Name)
+	ctx = logger.ToContext(ctx, logr)
 
 	prometheusAnnotations := map[string]string{
 		"prometheus.io/scrape": "true",
@@ -85,14 +94,14 @@ func (r *ReconcileVarnishService) reconcileService(instance, instanceStatus *icm
 	varnishPort.TargetPort = intstr.FromInt(icmapiv1alpha1.VarnishPort)
 	service.Spec.Ports = append(service.Spec.Ports, varnishPort)
 
-	if err := r.reconcileServiceGeneric(instance, &instanceStatus.Status.Service, service); err != nil {
+	if err := r.reconcileServiceGeneric(ctx, instance, &instanceStatus.Status.Service, service); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *ReconcileVarnishService) reconcileServiceGeneric(instance *icmapiv1alpha1.VarnishService, instanceServiceStatus *icmapiv1alpha1.VarnishServiceServiceStatus, desired *v1.Service) error {
-	logr := r.logger.With("name", desired.Name, "namespace", desired.Namespace)
+func (r *ReconcileVarnishService) reconcileServiceGeneric(ctx context.Context, instance *icmapiv1alpha1.VarnishService, instanceServiceStatus *icmapiv1alpha1.VarnishServiceServiceStatus, desired *v1.Service) error {
+	logr := logger.FromContext(ctx)
 
 	// Set controller reference for desired object
 	if err := controllerutil.SetControllerReference(instance, desired, r.scheme); err != nil {
@@ -102,14 +111,14 @@ func (r *ReconcileVarnishService) reconcileServiceGeneric(instance *icmapiv1alph
 
 	found := &v1.Service{}
 
-	err := r.Get(context.TODO(), types.NamespacedName{Name: desired.Name, Namespace: desired.Namespace}, found)
+	err := r.Get(ctx, types.NamespacedName{Name: desired.Name, Namespace: desired.Namespace}, found)
 	// If the desired does not exist, create it
 	// Else if there was a problem doing the GET, just return an error
 	// Else if the desired exists, and it is different, update
 	// Else no changes, do nothing
 	if err != nil && kerrors.IsNotFound(err) {
 		logr.Infoc("Creating Service", "new", desired)
-		if err = r.Create(context.TODO(), desired); err != nil {
+		if err = r.Create(ctx, desired); err != nil {
 			return errors.Wrap(err, "Unable to create service")
 		}
 	} else if err != nil {
@@ -128,7 +137,7 @@ func (r *ReconcileVarnishService) reconcileServiceGeneric(instance *icmapiv1alph
 			logr.Infoc("Updating Service", "diff", compare.DiffService(found, desired))
 			found.Spec = desired.Spec
 			found.Labels = desired.Labels
-			if err = r.Update(context.TODO(), found); err != nil {
+			if err = r.Update(ctx, found); err != nil {
 				return errors.Wrap(err, "Unable to update desired")
 			}
 		} else {

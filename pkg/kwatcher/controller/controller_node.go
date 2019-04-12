@@ -9,9 +9,9 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func (r *ReconcileVarnish) getNodeLabels(nodeName string) (map[string]string, error) {
+func (r *ReconcileVarnish) getNodeLabels(ctx context.Context, nodeName string) (map[string]string, error) {
 	found := &v1.Node{}
-	err := r.Get(context.TODO(), types.NamespacedName{Namespace: v1.NamespaceAll, Name: nodeName}, found)
+	err := r.Get(ctx, types.NamespacedName{Namespace: v1.NamespaceAll, Name: nodeName}, found)
 	if err != nil && kerrors.IsNotFound(err) {
 		return nil, errors.Wrapf(err, "could not find node with name %s", nodeName)
 	} else if err != nil {

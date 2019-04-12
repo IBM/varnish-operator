@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"icm-varnish-k8s-operator/pkg/logger"
 	"reflect"
 
 	"github.com/pkg/errors"
@@ -15,7 +16,7 @@ const (
 	annotationActiveVCLConfigName = "activeVCLConfigName"
 )
 
-func (r *ReconcileVarnish) reconcilePod(filesChanged bool, pod *v1.Pod, cm *v1.ConfigMap) error {
+func (r *ReconcileVarnish) reconcilePod(ctx context.Context, filesChanged bool, pod *v1.Pod, cm *v1.ConfigMap) error {
 	activeVCL, err := getActiveVCLConfig()
 	if err != nil {
 		return err
@@ -46,13 +47,13 @@ func (r *ReconcileVarnish) reconcilePod(filesChanged bool, pod *v1.Pod, cm *v1.C
 
 	podCopy.Annotations[annotationActiveVCLConfigName] = activeVCL.Name
 	if !reflect.DeepEqual(pod.Annotations, podCopy.Annotations) {
-		if err = r.Update(context.Background(), podCopy); err != nil {
+		if err = r.Update(ctx, podCopy); err != nil {
 			return errors.Wrapf(err, "failed to update pod")
 		}
 
-		r.logger.Infow("Pod has been successfully updated")
+		logger.FromContext(ctx).Infow("Pod has been successfully updated")
 	} else {
-		r.logger.Debugw("No updates for pod")
+		logger.FromContext(ctx).Debugw("No updates for pod")
 	}
 
 	return nil

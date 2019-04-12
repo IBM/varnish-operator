@@ -12,11 +12,17 @@ COPY Gopkg.toml Gopkg.lock ./
 # Populate the vendor folder
 RUN dep ensure -v --vendor-only
 
-COPY cmd/       cmd/
-COPY pkg/       pkg/
+COPY cmd/ cmd/
+COPY pkg/ pkg/
+COPY version.txt ./
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager icm-varnish-k8s-operator/cmd/manager
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+    go build \
+    -ldflags "-X main.Version=$(cat ./version.txt)" \
+    -a \
+    -o manager \
+    icm-varnish-k8s-operator/cmd/manager
 
 FROM alpine:3.8
 LABEL maintainer="thurston sandberg <thurston.sandberg@us.ibm.com>"

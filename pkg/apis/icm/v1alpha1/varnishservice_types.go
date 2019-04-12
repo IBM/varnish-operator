@@ -23,7 +23,7 @@ const (
 	VarnishComponentRole                = "role"
 	VarnishComponentRoleBinding         = "rolebinding"
 	VarnishComponentVCLFileConfigMap    = "vcl-file-configmap"
-	VarnishComponentPodDisruptionBudget = "pdb"
+	VarnishComponentPodDisruptionBudget = "poddisruptionbudget"
 	VarnishComponentServiceAccount      = "serviceaccount"
 
 	VarnishPort                   = 6081

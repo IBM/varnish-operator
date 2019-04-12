@@ -10,14 +10,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (r *ReconcileVarnish) getPodInfo(namespace string, labels labels.Selector, validPort int32) ([]PodInfo, error) {
+func (r *ReconcileVarnish) getPodInfo(ctx context.Context, namespace string, labels labels.Selector, validPort int32) ([]PodInfo, error) {
 	found := &v1.EndpointsList{}
 
 	opts := &client.ListOptions{
 		LabelSelector: labels,
 		Namespace:     namespace,
 	}
-	err := r.List(context.TODO(), opts, found)
+	err := r.List(ctx, opts, found)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not retrieve backends from namespace %s with labels %s", namespace, labels.String())
 	}
@@ -33,7 +33,7 @@ func (r *ReconcileVarnish) getPodInfo(namespace string, labels labels.Selector, 
 			for _, address := range append(endpoint.Addresses, endpoint.NotReadyAddresses...) {
 				for _, port := range endpoint.Ports {
 					if port.Port == validPort {
-						nodeLabels, err := r.getNodeLabels(*address.NodeName)
+						nodeLabels, err := r.getNodeLabels(ctx, *address.NodeName)
 						if err != nil {
 							return nil, errors.WithStack(err)
 						}

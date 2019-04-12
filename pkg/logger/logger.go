@@ -1,11 +1,23 @@
 package logger
 
 import (
+	"context"
 	"log"
 
 	"go.uber.org/zap/zapcore"
 
 	"go.uber.org/zap"
+)
+
+const (
+	FieldComponent       = "component"
+	FieldComponentName   = "component_name"
+	FieldVarnishService  = "varnish_service"
+	FieldOperatorVersion = "operator_version"
+	FieldKwatcherVersion = "kwatcher_version"
+	FieldFilePath        = "file_path"
+	FieldPodName         = "pod_name"
+	FieldNamespace       = "namespace"
 )
 
 type Logger struct {
@@ -44,4 +56,26 @@ func (l *Logger) Infoc(msg string, keysAndValues ...interface{}) {
 
 func (l *Logger) With(fields ...interface{}) *Logger {
 	return &Logger{l.SugaredLogger.With(fields...)}
+}
+
+type contextKey int
+
+const loggerCtxKey contextKey = iota
+
+func ToContext(ctx context.Context, l *Logger) context.Context {
+	return context.WithValue(ctx, loggerCtxKey, l)
+}
+
+func FromContext(ctx context.Context) *Logger {
+	ctxValue := ctx.Value(loggerCtxKey)
+	if ctxValue == nil {
+		return &Logger{zap.NewNop().Sugar()}
+	}
+
+	logr, ok := ctxValue.(*Logger)
+	if !ok {
+		return &Logger{zap.NewNop().Sugar()}
+	}
+
+	return logr
 }

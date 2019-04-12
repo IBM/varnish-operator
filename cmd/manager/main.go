@@ -17,6 +17,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 )
 
+var (
+	Version = "undefined" //will be overwritten by the correct version during docker build
+)
+
 func main() {
 	// the following line exists to make glog happy, for more information, see: https://github.com/kubernetes/kubernetes/issues/17162
 	flag.Parse()
@@ -26,6 +30,13 @@ func main() {
 	}
 
 	logr := logger.NewLogger(operatorConfig.LogFormat, operatorConfig.LogLevel)
+
+	logr.Infof("Version: %s", Version)
+	logr.Infof("Leader election enabled: %t", operatorConfig.LeaderElectionEnabled)
+	logr.Infof("Log level: %s", operatorConfig.LogLevel.String())
+	logr.Infof("Prometheus metrics exporter port: %d", operatorConfig.ContainerMetricsPort)
+
+	logr = logr.With(logger.FieldOperatorVersion, Version)
 
 	// Get a config to talk to the apiserver
 	clientConfig, err := config.GetConfig()

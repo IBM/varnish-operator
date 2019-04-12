@@ -9,10 +9,10 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func (r *ReconcileVarnish) getConfigMap(namespace, name string) (*v1.ConfigMap, error) {
+func (r *ReconcileVarnish) getConfigMap(ctx context.Context, namespace, name string) (*v1.ConfigMap, error) {
 	found := &v1.ConfigMap{}
 
-	err := r.Get(context.TODO(), types.NamespacedName{Namespace: namespace, Name: name}, found)
+	err := r.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, found)
 	if err != nil && kerrors.IsNotFound(err) {
 		return nil, errors.Wrap(err, "ConfigMap must exist to reconcile Varnish")
 	} else if err != nil {

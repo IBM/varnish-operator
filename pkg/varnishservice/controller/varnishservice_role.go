@@ -4,6 +4,7 @@ import (
 	"context"
 	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/labels"
+	"icm-varnish-k8s-operator/pkg/logger"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
 
 	"github.com/pkg/errors"
@@ -15,7 +16,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func (r *ReconcileVarnishService) reconcileRole(instance *icmapiv1alpha1.VarnishService) (string, error) {
+func (r *ReconcileVarnishService) reconcileRole(ctx context.Context, instance *icmapiv1alpha1.VarnishService) (string, error) {
 	role := &rbacv1beta1.Role{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      instance.Name + "-varnish-role",
@@ -46,7 +47,8 @@ func (r *ReconcileVarnishService) reconcileRole(instance *icmapiv1alpha1.Varnish
 		},
 	}
 
-	logr := r.logger.With("name", role.Name, "namespace", role.Namespace)
+	logr := logger.FromContext(ctx).With(logger.FieldComponent, icmapiv1alpha1.VarnishComponentRole)
+	logr = logr.With(logger.FieldComponentName, role.Name)
 
 	// Set controller reference for role
 	if err := controllerutil.SetControllerReference(instance, role, r.scheme); err != nil {
@@ -55,14 +57,14 @@ func (r *ReconcileVarnishService) reconcileRole(instance *icmapiv1alpha1.Varnish
 
 	found := &rbacv1beta1.Role{}
 
-	err := r.Get(context.TODO(), types.NamespacedName{Name: role.Name, Namespace: role.Namespace}, found)
+	err := r.Get(ctx, types.NamespacedName{Name: role.Name, Namespace: role.Namespace}, found)
 	// If the role does not exist, create it
 	// Else if there was a problem doing the GET, just return
 	// Else if the role exists, and it is different, update
 	// Else no changes, do nothing
 	if err != nil && kerrors.IsNotFound(err) {
 		logr.Infoc("Creating Role", "new", role)
-		if err = r.Create(context.TODO(), role); err != nil {
+		if err = r.Create(ctx, role); err != nil {
 			return "", errors.Wrap(err, "Unable to create role")
 		}
 	} else if err != nil {
@@ -71,7 +73,7 @@ func (r *ReconcileVarnishService) reconcileRole(instance *icmapiv1alpha1.Varnish
 		logr.Infoc("Updating Role", "diff", compare.DiffRole(found, role))
 		found.Rules = role.Rules
 		found.Labels = role.Labels
-		if err = r.Update(context.TODO(), found); err != nil {
+		if err = r.Update(ctx, found); err != nil {
 			return "", errors.Wrap(err, "Could not Update role")
 		}
 	} else {

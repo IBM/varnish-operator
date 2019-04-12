@@ -17,6 +17,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 )
 
+var (
+	Version = "undefined" //will be overwritten by the correct version during docker build
+)
+
 func main() {
 	// the following line exists to make glog happy, for more information, see: https://github.com/kubernetes/kubernetes/issues/17162
 	flag.Parse()
@@ -31,6 +35,10 @@ func main() {
 	}
 
 	logr := logger.NewLogger(kwatcherConfig.LogFormat, kwatcherConfig.LogLevel)
+	logr = logr.With(logger.FieldKwatcherVersion, Version)
+
+	logr.Infof("Version: %s", Version)
+	logr.Infof("Log level: %s", kwatcherConfig.LogLevel.String())
 
 	mgr, err := manager.New(clientConfig, manager.Options{Namespace: kwatcherConfig.Namespace})
 	if err != nil {

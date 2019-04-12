@@ -3,9 +3,11 @@ package controller
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/kwatcher/events"
+	"icm-varnish-k8s-operator/pkg/logger"
 	"os/exec"
 	"strings"
 	"time"
@@ -36,8 +38,8 @@ type VCLConfig struct {
 	ReferencedVCL *string //nil if Label == false
 }
 
-func (r *ReconcileVarnish) reconcileVarnish(vs *v1alpha1.VarnishService, pod *v1.Pod, cm *v1.ConfigMap) error {
-	r.logger.Debugw("Starting varnish reload...")
+func (r *ReconcileVarnish) reconcileVarnish(ctx context.Context, vs *v1alpha1.VarnishService, pod *v1.Pod, cm *v1.ConfigMap) error {
+	logger.FromContext(ctx).Debugw("Starting varnish reload...")
 	start := time.Now()
 	out, err := exec.Command("vcl_reload", createVCLConfigName(cm.GetResourceVersion()), vs.Spec.VCLConfigMap.EntrypointFile).CombinedOutput()
 	if err != nil {
@@ -54,7 +56,7 @@ func (r *ReconcileVarnish) reconcileVarnish(vs *v1alpha1.VarnishService, pod *v1
 		}
 		return errors.Wrap(err, string(out))
 	}
-	r.logger.Debugf("Varnish successfully reloaded in %f seconds", time.Since(start).Seconds())
+	logger.FromContext(ctx).Debugf("Varnish successfully reloaded in %f seconds", time.Since(start).Seconds())
 	return nil
 }
 

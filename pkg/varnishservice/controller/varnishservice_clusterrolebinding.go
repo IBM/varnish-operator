@@ -4,6 +4,7 @@ import (
 	"context"
 	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/labels"
+	"icm-varnish-k8s-operator/pkg/logger"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
 
 	"github.com/pkg/errors"
@@ -15,7 +16,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func (r *ReconcileVarnishService) reconcileClusterRoleBinding(instance *icmapiv1alpha1.VarnishService, roleName, serviceAccountName string) error {
+func (r *ReconcileVarnishService) reconcileClusterRoleBinding(ctx context.Context, instance *icmapiv1alpha1.VarnishService, roleName, serviceAccountName string) error {
 	clusterRoleBinding := &rbacv1beta1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   instance.Name + "-varnish-clusterrolebinding-" + instance.Namespace,
@@ -35,7 +36,8 @@ func (r *ReconcileVarnishService) reconcileClusterRoleBinding(instance *icmapiv1
 		},
 	}
 
-	logr := r.logger.With("name", clusterRoleBinding.Name, "namespace", clusterRoleBinding.Namespace)
+	logr := logger.FromContext(ctx).With(logger.FieldComponent, icmapiv1alpha1.VarnishComponentClusterRoleBinding)
+	logr = logr.With(logger.FieldComponentName, clusterRoleBinding.Name)
 
 	// Set controller reference for clusterRoleBinding
 	if err := controllerutil.SetControllerReference(instance, clusterRoleBinding, r.scheme); err != nil {
@@ -51,7 +53,7 @@ func (r *ReconcileVarnishService) reconcileClusterRoleBinding(instance *icmapiv1
 	// Else no changes, do nothing
 	if err != nil && kerrors.IsNotFound(err) {
 		logr.Infoc("Creating ClusterRoleBinding", "new", clusterRoleBinding)
-		if err = r.Create(context.TODO(), clusterRoleBinding); err != nil {
+		if err = r.Create(ctx, clusterRoleBinding); err != nil {
 			return errors.Wrap(err, "Unable to create ClusterRoleBinding")
 		}
 	} else if err != nil {
@@ -61,7 +63,7 @@ func (r *ReconcileVarnishService) reconcileClusterRoleBinding(instance *icmapiv1
 		found.Subjects = clusterRoleBinding.Subjects
 		found.RoleRef = clusterRoleBinding.RoleRef
 		found.Labels = clusterRoleBinding.Labels
-		if err = r.Update(context.TODO(), found); err != nil {
+		if err = r.Update(ctx, found); err != nil {
 			return errors.Wrap(err, "Could not Update ClusterRoleBinding")
 		}
 	} else {

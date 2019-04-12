@@ -5,6 +5,7 @@ import (
 	"fmt"
 	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 	vslabels "icm-varnish-k8s-operator/pkg/labels"
+	"icm-varnish-k8s-operator/pkg/logger"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
 	"io/ioutil"
 
@@ -23,12 +24,13 @@ const (
 	annotationVCLVersion = "VCLVersion"
 )
 
-func (r *ReconcileVarnishService) reconcileConfigMap(podsSelector map[string]string, instance, instanceStatus *icmapiv1alpha1.VarnishService) (*v1.ConfigMap, error) {
-	logr := r.logger.With("name", instance.Spec.VCLConfigMap.Name, "namespace", instance.Namespace)
+func (r *ReconcileVarnishService) reconcileConfigMap(ctx context.Context, podsSelector map[string]string, instance, instanceStatus *icmapiv1alpha1.VarnishService) (*v1.ConfigMap, error) {
+	logr := logger.FromContext(ctx).With(logger.FieldComponent, icmapiv1alpha1.VarnishComponentVCLFileConfigMap)
+	logr = logr.With(logger.FieldComponentName, instance.Spec.VCLConfigMap.Name)
 
 	cm := &v1.ConfigMap{}
 	cmLabels := vslabels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentVCLFileConfigMap)
-	err := r.Get(context.TODO(), types.NamespacedName{Name: instance.Spec.VCLConfigMap.Name, Namespace: instance.Namespace}, cm)
+	err := r.Get(ctx, types.NamespacedName{Name: instance.Spec.VCLConfigMap.Name, Namespace: instance.Namespace}, cm)
 	// if the ConfigMap does not exist, create it and set it with the default VCL files
 	// Else if there was a problem doing the Get, just return an error
 	// Else fill in missing values -- "OwnerReference" or Labels
@@ -55,7 +57,7 @@ func (r *ReconcileVarnishService) reconcileConfigMap(podsSelector map[string]str
 		}
 
 		logr.Infoc("Creating ConfigMap with default VCL files", "new", cm)
-		if err = r.Create(context.TODO(), cm); err != nil {
+		if err = r.Create(ctx, cm); err != nil {
 			return nil, errors.Wrap(err, "could not create ConfigMap")
 		}
 	} else if err != nil {
@@ -76,7 +78,7 @@ func (r *ReconcileVarnishService) reconcileConfigMap(podsSelector map[string]str
 
 		if !compare.EqualConfigMap(cm, cmCopy) {
 			logr.Infow("Updating ConfigMap with defaults", "diff", compare.DiffConfigMap(cm, cmCopy))
-			if err = r.Update(context.TODO(), cm); err != nil {
+			if err = r.Update(ctx, cm); err != nil {
 				return nil, errors.Wrap(err, "could not update deployment")
 			}
 		} else {

@@ -29,9 +29,7 @@ sub vcl_recv {
     return(synth(200, "OK"));
   }
 
-  #
-  # Do not cache paths with health (healthcheck cache fix)
-  ####
+  // Do not cache paths with health (healthcheck cache fix)
   if (req.url ~ "health") {
     return (pass);
   }
@@ -79,15 +77,15 @@ sub vcl_synth {
 
 sub vcl_hash {
 
-  # Called after vcl_recv to create a hash value for the request. This is used as a key
-  # to look up the object in Varnish.
+  // Called after vcl_recv to create a hash value for the request. This is used as a key
+  // to look up the object in Varnish.
   hash_data(req.url);
 
   return (lookup);
 }
 
 sub vcl_hit {
-  # Do not serve stale objects
+  // Do not serve stale objects
   if (obj.ttl >= 0s) {
     return (deliver);
   }
@@ -96,7 +94,7 @@ sub vcl_hit {
 
 sub vcl_backend_response {
 
-  # Do not cache 404s from backends
+  // Do not cache 404s from backends
   if (beresp.status == 404) {
     set beresp.ttl = 0s;
   }

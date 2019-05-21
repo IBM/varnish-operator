@@ -11,7 +11,7 @@ before_script:
   - npm install -g gitbook-cli
 script:
   - gitbook install
-  - gitbook build ./docs docs --log=debug --debug
+  - gitbook build ./docs docs_generated --log=debug --debug
 branches:
   only:
     - master
@@ -22,7 +22,7 @@ deploy:
   github_url: github.ibm.com
   on:
     branch: master
-  local_dir: docs
+  local_dir: docs_generated
 env:
   global:
     secure: Pw8bYn+0+Hlj4IGEWCXPUlSxuWU9kgM4QJWIJPmM5ePdufMXUxmuQdbKrxKvPtd4LMS13tcMccTluLf/iu3whd1T86Y9kWJNkiljclokLOlLnWlnYnh4gGglJE57WKYoInBmqYZMUgTqjsdeAFhG4wV4loYdldfrPfylHfV2eL73nCJ0xn2ml3k6sIEZm74vKIWT0Yf2vk43OjH9bt894zJ6B/NwNrWE6VRk2+0/dN7h43DjYB2rXm4LVC2n4w1W+YIdowSOEKCqPecIVPS3snFroipaZVpunOQ4UKmEYle7LCXkStUK70/GWPvTzrZZyFxS3j7Dl3GicOzMVEkCm69gOgV4eC9cnHZzOXk2iowwCP6ChZmOnItGbgVapUbOdv19Cg8ioMQb9QEjQuO5e9zHFRUarr9GN10TjJp+r4EYyTWaQ+Al+qW6chx3bh8jGV6WiMt7EwCMp3p43q8u462FchcWdJLUJs6jqXwREOX1W+Jf/xmCW1pP/DOvttjeKTVMik+IGZyBO3GKrw92skSFPB87O2/04vajfehWJvHQS67fPIDonQ4agMDinTwjJ26SAhsrj5crM2UzHx2SpcqhPU2X+SGIgNPufwU0DhMhGe6EHjuxasGWQVmtbhyCp7WasK0Js9BKyZFqno1LE/YPzOdBAGbIrHFPjyqGDhA=

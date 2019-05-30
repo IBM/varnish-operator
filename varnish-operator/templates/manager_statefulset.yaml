@@ -41,7 +41,7 @@ spec:
           value: {{ .Values.container.metricsPort | quote }}
         - name: CONTAINER_WEBHOOKPORT
           value: {{ .Values.container.webhookPort | quote }}
-        resources: {{ toYaml .Values.container.resources | nindent 10 -}}
+        resources: {{ toYaml .Values.container.resources | nindent 10 }}
         ports:
           - containerPort: {{ .Values.container.metricsPort }}
             name: metrics

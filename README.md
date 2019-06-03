@@ -2,6 +2,8 @@
 
 [![Build Status](https://wcp-twc-icmkube-jenkins.swg-devops.com/job/TheWeatherCompany%20ICM/job/icm-varnish-k8s-operator/job/master/badge/icon)](https://wcp-twc-icmkube-jenkins.swg-devops.com/job/TheWeatherCompany%20ICM/job/icm-varnish-k8s-operator/job/master/)
 
+Documentation can be found [here](https://pages.github.ibm.com/TheWeatherCompany/icm-varnish-k8s-operator/).
+
 VarnishService fills a space currently missing within Kubernetes on IBM Cloud: Varnish. IBM does not provide any managed Varnish instances, and Kubernetes does not have anything that works like Varnish does. Thus, this project aims to fill that space by providing a convenient way to deploy Varnish instances.
 
 By default, deploying a Varnish directly as a Deployment into Kubernetes is not immediately useful because the VCL must have IP addresses for its backends. The only obvious way to get an IP address is via a Kubernetes Service, but that Service already acts as a load balancer to the Deployment it backs, which means undefined behavior from the Varnish perspective, and adds an extra network hop. Thus, trying to use Varnish in a regular deployment is unproductive.

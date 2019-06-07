@@ -39,24 +39,27 @@ type VCLConfig struct {
 }
 
 func (r *ReconcileVarnish) reconcileVarnish(ctx context.Context, vs *v1alpha1.VarnishService, pod *v1.Pod, cm *v1.ConfigMap) error {
-	logger.FromContext(ctx).Debugw("Starting varnish reload...")
+	logr := logger.FromContext(ctx)
+	logr.Debugw("Starting varnish reload...")
 	start := time.Now()
 	out, err := exec.Command("vcl_reload", createVCLConfigName(cm.GetResourceVersion()), vs.Spec.VCLConfigMap.EntrypointFile).CombinedOutput()
 	if err != nil {
-		if isVCLCompilationError(err) {
+		if strings.Contains(string(out), "VCL compilation failed") {
 			vsEventMsg := "VCL compilation failed for pod " + pod.Name + ". See pod logs for details"
 			podEventMsg := "VCL compilation failed. See logs for details"
 			r.eventHandler.Warning(pod, events.EventReasonVCLCompilationError, podEventMsg)
 			r.eventHandler.Warning(vs, events.EventReasonVCLCompilationError, vsEventMsg)
-		} else {
-			podEventMsg := "Varnish reload failed for pod " + pod.Name + ". See pod logs for details"
-			vsEventMsg := "Varnish reload failed. See logs for details"
-			r.eventHandler.Warning(pod, events.EventReasonReloadError, podEventMsg)
-			r.eventHandler.Warning(vs, events.EventReasonReloadError, vsEventMsg)
+			logr.Warnw(string(out))
+			return nil
 		}
+
+		podEventMsg := "Varnish reload failed for pod " + pod.Name + ". See pod logs for details"
+		vsEventMsg := "Varnish reload failed. See logs for details"
+		r.eventHandler.Warning(pod, events.EventReasonReloadError, podEventMsg)
+		r.eventHandler.Warning(vs, events.EventReasonReloadError, vsEventMsg)
 		return errors.Wrap(err, string(out))
 	}
-	logger.FromContext(ctx).Debugf("Varnish successfully reloaded in %f seconds", time.Since(start).Seconds())
+	logr.Debugf("Varnish successfully reloaded in %f seconds", time.Since(start).Seconds())
 	return nil
 }
 
@@ -120,21 +123,6 @@ func parseVCLConfigsList(commandOutput []byte) ([]VCLConfig, error) {
 		}
 	}
 	return configs, nil
-}
-
-func isVCLCompilationError(err error) bool {
-	if err == nil {
-		return false
-	}
-
-	scanner := bufio.NewScanner(strings.NewReader(err.Error()))
-	for scanner.Scan() {
-		if scanner.Text() == "VCL compilation failed" {
-			return true
-		}
-	}
-
-	return false
 }
 
 // creates the VCL config name from config map version

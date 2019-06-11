@@ -12,9 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/api/core/v1"
-
 	"github.com/pkg/errors"
+	v1 "k8s.io/api/core/v1"
 )
 
 const (

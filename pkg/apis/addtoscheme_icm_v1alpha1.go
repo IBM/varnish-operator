@@ -4,7 +4,7 @@ import (
 	"icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
 
 	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kappsv1 "k8s.io/kubernetes/pkg/apis/apps/v1"
 	kv1 "k8s.io/kubernetes/pkg/apis/core/v1"

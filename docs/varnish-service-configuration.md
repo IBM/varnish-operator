@@ -1,0 +1,1 @@
+# VarnishService configuration

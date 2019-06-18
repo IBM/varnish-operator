@@ -1,18 +1,18 @@
 # Summary
 
 * [Introduction](README.md)
-* [Quick Start]()
-* [Getting started]()
+* [Quick Start](quick-start.md)
+* [Getting Started]()
     * [Installation]()
-    * [Create a simple VarnishService]()
-* [VarnishService spec]()
-* [Helm chart]()
-* [VCL configuration]()
+    * [Create a Simple VarnishService]()
+* [VarnishService Configuration](varnish-service-configuration.md)
+* [Operator Configuration](operator-configuration.md)
+* [VCL Configuration](vcl-configuration.md)
 * [Monitoring]()
 * [Updating your Varnish Operator]()
-* [Debugging issues]()
+* [Debugging Issues]()
 * [Architecture]()
-* [Development](development/README.md)
+* [Development](development.md)
 
 {% include "./build-info.md" %}
 

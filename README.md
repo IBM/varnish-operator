@@ -20,6 +20,18 @@ Varnish operator manages Varnish clusters using a CustomResourceDefinition that 
 
 The operator manages the whole lifecycle of the cluster: creating, deleting and keeping the cluster configuration up to date. The operator is responsible for building the VCL configuration using templates defined by the users and keeping the configuration up to date when relevant events occur (backend pod failure, scaling of the deployment, VCL configuration change).
 
+## Features
+
+ * [x] Basic install
+ * [x] Full lifecycle support (create/update/delete)
+ * [x] Automatic VCL configuration updates (using user defined templates)
+ * [x] Prometheus metrics support
+ * [x] Scaling
+ * [ ] Configurable rolling updates strategy
+ * [ ] Multiple Varnish versions support
+ * [ ] Autoscaling
+ * [ ] Nested directors support
+
 ### Further reading
 
 * [QuickStart](https://pages.github.ibm.com/TheWeatherCompany/icm-varnish-k8s-operator/quick-start.html)

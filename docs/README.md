@@ -2,6 +2,18 @@
 
 Varnish operator creates, configures and manages Varnish clusters. It generates the VCL configuration using user defined templates and keeps it up to date as the cluster changes.
 
+## Features
+
+ * [x] Basic install
+ * [x] Full lifecycle support (create/update/delete)
+ * [x] Automatic VCL configuration updates (using user defined templates)
+ * [x] Prometheus metrics support
+ * [x] Scaling
+ * [ ] Configurable rolling updates strategy
+ * [ ] Multiple Varnish versions support
+ * [ ] Autoscaling
+ * [ ] Nested directors support
+
 ### Overview
 
 The operator works based on a CustomResourceDefinition that manages the Varnish cluster. It defines a new kind called `VarnishService` that describes the desired state of your Varnish instances.

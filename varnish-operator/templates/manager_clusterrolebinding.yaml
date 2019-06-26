@@ -10,4 +10,4 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: default
-  namespace: {{ .Values.namespace | quote }}
+  namespace: {{ .Release.Namespace | quote }}

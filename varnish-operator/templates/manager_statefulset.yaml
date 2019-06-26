@@ -5,7 +5,7 @@ metadata:
     control-plane: controller-manager
     controller-tools.k8s.io: "1.0"
   name: varnish-operator
-  namespace: {{ .Values.namespace | quote }}
+  namespace: {{ .Release.Namespace | quote }}
 spec:
   selector:
     matchLabels:
@@ -21,12 +21,12 @@ spec:
         admission-controller: "varnish-service-admission-controller"
     spec:
       containers:
-      - name: manager
+      - name: varnish-operator
         image: {{ .Values.container.image | quote }}
         imagePullPolicy: {{ .Values.container.imagePullPolicy | title | quote }}
         env:
         - name: NAMESPACE
-          value: {{ .Values.namespace | quote }}
+          value: {{ .Release.Namespace | quote }}
         - name: LEADERELECTION_ENABLED
           value: {{ .Values.leaderElection.enabled | quote }}
         - name: LEADERELECTION_ID

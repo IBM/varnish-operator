@@ -5,8 +5,7 @@ PUBLISH_IMG ?= varnish-controller:${VERSION}
 VARNISH_PUBLISH_IMG ?= varnish:${VERSION}
 VARNISH_IMG ?= ${VARNISH_PUBLISH_IMG}-dev
 IMG ?= ${PUBLISH_IMG}-dev
-NAMESPACE := $(shell sed -n -e 's/^namespace: //p' ${ROOT_DIR}config/default/kustomization.yaml)
-NAME_PREFIX := $(shell sed -n -e 's/^namePrefix: //p' ${ROOT_DIR}config/default/kustomization.yaml)
+NAMESPACE ?= "default"
 
 # all: test manager
 all: fake-test manager kwatcher
@@ -54,13 +53,7 @@ helm-prepare: manifests
 	${ROOT_DIR}hack/create_helm_files.sh ${ROOT_DIR}varnish-operator/templates
 
 helm-upgrade: helm-prepare
-ifndef NAMESPACE
-	$(error trying to read "namespace:" line in config/default/kustomization.yaml. Did something change?)
-endif
-ifndef NAME_PREFIX
-	$(error trying to read "namePrefix" line in config/default/kustomization.yaml. Did something change?)
-endif
-	helm upgrade --install --namespace ${NAMESPACE} --force varnish-operator --wait --debug --set operator.controllerImage.tag=${VERSION} --set namespace=${NAMESPACE} --set namePrefix=${NAME_PREFIX} ${ROOT_DIR}varnish-operator
+	helm upgrade --install --namespace ${NAMESPACE} --force varnish-operator --set operator.controllerImage.tag=${VERSION} --set namespace=${NAMESPACE} ${ROOT_DIR}varnish-operator
 
 # Build the docker image
 # docker-build: test

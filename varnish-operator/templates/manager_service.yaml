@@ -5,7 +5,7 @@ metadata:
     control-plane: controller-manager
     controller-tools.k8s.io: "1.0"
   name: varnish-operator
-  namespace: {{ .Values.namespace | quote }}
+  namespace: {{ .Release.Namespace | quote }}
 spec:
   ports:
   - port: 443

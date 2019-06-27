@@ -21,6 +21,9 @@ var (
 	Version = "undefined" //will be overwritten by the correct version during docker build
 )
 
+// leaderElectionID defines the name of the ConfigMap acting as the lock for defining the leader
+const leaderElectionID = "varnish-operator-leader-election-lock"
+
 func main() {
 	// the following line exists to make glog happy, for more information, see: https://github.com/kubernetes/kubernetes/issues/17162
 	flag.Parse()
@@ -48,7 +51,7 @@ func main() {
 	mgr, err := manager.New(clientConfig, manager.Options{
 		MetricsBindAddress:      fmt.Sprintf(":%d", operatorConfig.ContainerMetricsPort),
 		LeaderElection:          operatorConfig.LeaderElectionEnabled,
-		LeaderElectionID:        operatorConfig.LeaderElectionID,
+		LeaderElectionID:        leaderElectionID,
 		LeaderElectionNamespace: operatorConfig.Namespace,
 	})
 	if err != nil {

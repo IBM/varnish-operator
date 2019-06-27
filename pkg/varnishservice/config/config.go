@@ -15,7 +15,6 @@ import (
 type Config struct {
 	Namespace             string        `env:"NAMESPACE" envDefault:"varnish-operator-system"`
 	LeaderElectionEnabled bool          `env:"LEADERELECTION_ENABLED" envDefault:"true"`
-	LeaderElectionID      string        `env:"LEADERELECTION_ID" envDefault:"varnish-operator-lock"`
 	ContainerImage        string        `env:"CONTAINER_IMAGE,required"`
 	LogLevel              zapcore.Level `env:"LOGLEVEL" envDefault:"info"`
 	LogFormat             string        `env:"LOGFORMAT" envDefault:"json"`

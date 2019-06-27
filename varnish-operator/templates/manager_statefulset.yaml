@@ -12,7 +12,7 @@ spec:
       control-plane: controller-manager
       controller-tools.k8s.io: "1.0"
   serviceName: varnish-service-controller-manager-service
-  replicas: {{ if .Values.leaderElection.enabled }}{{ .Values.leaderElection.replicas }}{{ else }}1{{ end }}
+  replicas: {{ .Values.replicas }}
   template:
     metadata:
       labels:
@@ -28,9 +28,7 @@ spec:
         - name: NAMESPACE
           value: {{ .Release.Namespace | quote }}
         - name: LEADERELECTION_ENABLED
-          value: {{ .Values.leaderElection.enabled | quote }}
-        - name: LEADERELECTION_ID
-          value: {{ .Values.leaderElection.id | quote }}
+          value: {{ if gt .Values.replicas 1.0 }}"true"{{ else }}"false"{{ end }}
         - name: CONTAINER_IMAGE
           value: {{ .Values.container.image | quote }}
         - name: LOGLEVEL

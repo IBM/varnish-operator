@@ -54,9 +54,15 @@ func SetDefaults_VarnishServiceService(in *VarnishServiceService) {
 			IntVal: in.VarnishPort.Port,
 		}
 	}
+
 	if in.VarnishExporterPort.Name == "" {
 		in.VarnishExporterPort.Name = "varnishexporter"
 	}
+
+	if in.VarnishExporterPort.Port == 0 {
+		in.VarnishExporterPort.Port = VarnishPrometheusExporterPort
+	}
+
 	//we don't support running exporter on custom port yet so ignore the value set by user for now
 	in.VarnishExporterPort.TargetPort = intstr.FromInt(VarnishPrometheusExporterPort)
 }

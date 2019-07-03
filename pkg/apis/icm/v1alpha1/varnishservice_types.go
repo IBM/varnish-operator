@@ -48,7 +48,7 @@ type VarnishService struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   VarnishServiceSpec   `json:"spec,omitempty"`
+	Spec   VarnishServiceSpec   `json:"spec"`
 	Status VarnishServiceStatus `json:"status,omitempty"`
 }
 
@@ -87,7 +87,7 @@ type VarnishContainer struct {
 type VarnishServiceService struct {
 	v1.ServiceSpec
 	VarnishPort           v1.ServicePort `json:"varnishPort"`
-	VarnishExporterPort   v1.ServicePort `json:"varnishExporterPort"`
+	VarnishExporterPort   v1.ServicePort `json:"varnishExporterPort,omitempty"`
 	PrometheusAnnotations bool           `json:"prometheusAnnotations,omitempty"`
 }
 

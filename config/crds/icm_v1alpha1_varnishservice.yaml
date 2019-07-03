@@ -106,7 +106,6 @@ spec:
                   type: object
               required:
               - varnishPort
-              - varnishExporterPort
               type: object
             vclConfigMap:
               properties:
@@ -168,6 +167,8 @@ spec:
           required:
           - vcl
           type: object
+      required:
+      - spec
   version: v1alpha1
 status:
   acceptedNames:

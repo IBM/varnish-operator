@@ -23,7 +23,7 @@ manager: generate fmt vet
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet
-	LOGLEVEL=debug LOGFORMAT=console CONTAINER_IMAGE=us.icr.io/icm-varnish/${VARNISH_IMG} LEADERELECTION_ENABLED=false go run ${ROOT_DIR}cmd/manager/main.go
+	NAMESPACE=${NAMESPACE} LOGLEVEL=debug LOGFORMAT=console CONTAINER_IMAGE=us.icr.io/icm-varnish/${VARNISH_IMG} LEADERELECTION_ENABLED=false go run ${ROOT_DIR}cmd/manager/main.go
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 install: manifests

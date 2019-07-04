@@ -67,10 +67,16 @@ $ make run
 cd /<GOPATH>/src/icm-varnish-k8s-operator/ && go generate ./pkg/... ./cmd/...
 cd /<GOPATH>/src/icm-varnish-k8s-operator/ && goimports -w ./pkg ./cmd
 cd /<GOPATH>/src/icm-varnish-k8s-operator/ && go vet ./pkg/... ./cmd/...
-LOGLEVEL=debug LOGFORMAT=console CONTAINER_IMAGE=us.icr.io/icm-varnish/varnish:0.14.5-dev LEADERELECTION_ENABLED=false go run /home/tsidei/go/src/icm-varnish-k8s-operator/cmd/manager/main.go
+NAMESPACE=default LOGLEVEL=debug LOGFORMAT=console CONTAINER_IMAGE=us.icr.io/icm-varnish/varnish:0.14.5-dev LEADERELECTION_ENABLED=false go run /home/tsidei/go/src/icm-varnish-k8s-operator/cmd/manager/main.go
 2019-06-06T12:40:16.771+0300	INFO	manager/main.go:34	Version: undefined
 2019-06-06T12:40:16.771+0300	INFO	manager/main.go:35	Leader election enabled: false
 ...
+```
+
+By default the operator will work in the `default` namespace. You can override that behaviour by setting the `NAMESPACE` env var:
+
+```bash
+$ NAMESPACE=varnish-operator make run
 ```
 
 After you've made changes to the operator code, just rerun `make run` to test them.

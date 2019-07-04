@@ -13,7 +13,7 @@ import (
 
 // Config describes constant values that will be applied to all varnish services, but may change per-cluster
 type Config struct {
-	Namespace             string        `env:"NAMESPACE" envDefault:"varnish-operator-system"`
+	Namespace             string        `env:"NAMESPACE" envDefault:"default"`
 	LeaderElectionEnabled bool          `env:"LEADERELECTION_ENABLED" envDefault:"true"`
 	ContainerImage        string        `env:"CONTAINER_IMAGE,required"`
 	LogLevel              zapcore.Level `env:"LOGLEVEL" envDefault:"info"`

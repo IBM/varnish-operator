@@ -1,5 +1,7 @@
 # Operator Configuration
 
+As the operator is packaged into [the Helm chart](https://helm.sh/docs/developing_charts/) the configuration is done by setting `values.yaml` overrides.
+
 | Field                                 | Description                                                                                                                                                                                                                                                                                                                                          | Default                  |
 |---------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------|
 | `replicas`                            | Number of Varnish operator pod replicas                                                                                                                                                                                                                                                                                                              | 1                        |

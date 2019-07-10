@@ -8,9 +8,9 @@ CustomResourceDefinition extends Kubernetes with the actual `VarnishService` res
 `VarnishService` spec fields are described in the [VarnishService configuration](varnish-service-configuration.md) section.
 
 #### Varnish Operator controller 
-The controller is an application deployed into your cluster that knows how to react to the VarnishService CustomResource. Meaning, this application watches for new or changed `VarnishService`s and handles the actual underlying infrastructure. It must be running at all times in the cluster and it usually lives in its own namespace away from your application.
+The controller is an application deployed into your cluster that knows how to react to the VarnishService CustomResource. Meaning, this application watches for new or changed `VarnishService`s and handles the actual underlying infrastructure. It must be running at all times in the cluster and it usually lives in its own namespace away from your application. It is built using the [Kubebuilder SDK](https://github.com/kubernetes-sigs/kubebuilder).
 
-The controller is [configurable](operator-configuration.md) through the helm chart for installing the operator.
+You can [configure](operator-configuration.md) the controller through operator's Helm chart.
 
 #### Varnish container image
 

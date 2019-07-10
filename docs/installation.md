@@ -1,95 +1,73 @@
-NOT READY SECTION. JUST MOVED THE OLD RELEVANT DOCS HERE
-
+# Varnish Operator 
 
 ## Installation
 
-The VarnishService Operator is packaged as a [Helm Chart](https://helm.sh/), hosted on [Artifactory](https://na.artifactory.swg-devops.com). To get access to this Artifactory, you must be a user on the ICM Core Engineering Bluemix account 1638245, and specifically a Blue Group that has access to the Artifactory resources. 
+### Prerequisites
 
+* Kubernetes v1.11 or newer and `kubectl` configured to communicate with your cluster
+* Helm
 
-### Configuring The Operator
+### Configure Helm repo
 
-The operator has options to customize the installation into your cluster, exposed as values in the Helm `values.yaml` file. [See the default `values.yaml` annotated with descriptions of each field](/varnish-operator/values.yaml) to see what can be customized when deploying this operator. You only need to specify values that are different from those contained in the `values.yaml`.
+Helm charts [are hosted in private Artifactory](https://pages.github.ibm.com/TheWeatherCompany/icm-docs/helm/chart-repositories.html#using-artifactory-as-a-helm-chart-repository) so you need to configure repo access first.
 
+1. Get access to [Artifactory](https://na.artifactory.swg-devops.com)
+1. Generate an API Key on the Artifactory website in your profile settings (click on your email in the top right corner)
+1. Add the repo and update your local list of charts: 
 
-### Getting Helm Access
-
-After you are a user on the correct Blue Group, you must generate an API key within [Artifactory](https://na.artifactory.swg-devops.com) for Helm to use. You can generate an API key on your profile page, found in the upper-right of the home page. Using that generated API Key, you can log in to Helm using [these instructions](https://www.jfrog.com/confluence/display/RTF/Helm+Chart+Repositories), where the username is your email and the password is your API key. Specifically, that will look like:
-
-```sh
-helm repo add wcp-icm-helm-virtual https://na.artifactory.swg-devops.com/artifactory/wcp-icm-helm-virtual --username=<your-email> --password=<encrypted-password>
-helm repo update
-```
-
-#### Remote Repo
-
-Alternatively, you can configure the ICM Core Engineering Artifactory repo as a remote repo on your Artifactory repo. This has the advantage that members of the team will only need to configure access to a single repo (your team's). In order to configure a remote repo, you will need to talk directly to the TaaS team to have them set this up.
-
-### Getting Container Registry Access
-
-As part of the install, you will also need access to the Container Registry in order to pull the Docker images associated with the Helm charts. Instructions for this can be found in [the icm-docs](https://pages.github.ibm.com/TheWeatherCompany/icm-docs/managed-kubernetes/container-registry.html#pulling-an-image-in-kubernetes)
-
-When installing, the Helm charts will create the operator (and thus look for the container-registry secret) in the `varnish-operator-system` namespace by default, although this can be overridden in a `values.yaml`.
-
-
-### Installing The Operator
-
-Once a Namespace has been created with a docker registry secret and an appropriate `values.yaml` has been assembled, install the operator using
-
-```sh
-helm upgrade --install <name-of-release> wcp-icm-helm-virtual/varnish-operator --version <latest-version> --wait --namespace <namespace-with-registry-token>
-```
-
-Note that
-
-* `<name-of-release>` can be any name and has the same meaning as `<name>` for `helm install --name <name>`. For consistency, you might consider using `varnish-operator`
-* `<namespace-with-registry-token>` must match `namespace` in the `values.yaml` file.
-
-## Usage
-
-Once the operator is installed, your cluster should have a new resource, `varnishservice` (with aliases `varnishservices` and `vs`). From this point, you can create a yaml file with the `VarnishService` Kind.
-
-### Configuring Access
-
-Since the VarnishService requires pulling images from the same private repository as the Operator, the same docker registry key must exist in the target namespace for the VarnishService. Thus, add a secret with the docker registry token to that namespace before creating the resource.
-
-### Configuring The VarnishService Resource
-
-VarnishService has [an example yaml file annotated with descriptions of each field](/config/samples/icm_v1alpha1_varnishservice.yaml) To see what can be customized for the VarnishService. Copy this file and customize it to your needs.
-
-### Creating a VarnishService Resource
-
-Once the VarnishService resource yaml is ready, simply `kubectl apply -f <varnish-service>.yaml` to create the resource. Once complete, you should see:
-
-* a deployment with the name `<varnish-service-name>-deployment`. This is the Varnish cluster, and should have inherited everything under the `deployment` part of the spec.
-* 2 services, one `<varnish-service-name>` and one `<varnish-service-name>-no-cache`. As is implied by the names, using `<varnish-service-name>` will act as the service configured under `.spec.service`, and will direct to Varnish before hitting the underlying deployment, while `<varnish-service-name>-no-cache` will target the underlying deployment directly, with no Varnish caching. `<varnish-service-name>` will have inherited everything under the `service` part of the spec, other than its `selector`, which will be redirected to the Varnish deployment.
-* A ConfigMap with VCL in it (either user-created, before running `kubectl apply -f <varnish-service>.yaml`, or generated by operator)
-* A role/rolebinding/clusterrole/clusterrolebinding/serviceAccount combination to give the Varnish deployment the ability to access necessary resources.
-* If configured, a PodDisruptionBudget as specced
-
-### Updating a VarnishService Resource
-
-Just as with any other Kubernetes resource, using `kubectl apply`, `kubectl patch`, or `kubectl replace` will all update the VarnishService appropriately. The operator will handle how that update propagates to its dependent resources. Conversely, trying to modify any of those dependent resources (Deployment, Services, Roles/Rolebindings, etc) will cause the operator to revert those changes, in the same way a Deployment does for its Pods. The only exception to this is the ConfigMap, the contents of which you can and should modify, since that is the VCL used to run the Varnish Pods.
-
-### Deleting a VarnishService Resource
-
-Simply calling `kubectl delete` on the VarnishResource will recursively delete all dependent resources, so that is the only action you need to take. This includes a user-generated ConfigMap, as the VarnishService will take ownership of that ConfigMap after creation. Deleting any of the dependent resources will trigger the operator to recreate that resource, in the same way that deleting the Pod of a Deployment will trigger the recreation of that Pod.
-
-### Checking Status of a VarnishService Resource
-
-The VarnishService keeps track of its current status as events occur in the system. This can be seen through the `Status` field, visible from `kubectl describe vs <your-varnishservice>`.
-
-### Prove that Varnish is Working
-
-In order to show that Varnish is properly configured, it is common to add a header to the response indicating whether Varnish responded from cache or from origin. In the `default.vcl` provided out of the box, that header is `X-Varnish-Cache: HIT` and `X-Varnish-Cache: MISS`. With such a header prepared, make a request against the service (ie, name matches your `<varnish-service>`) and look at its headers for the varnish-added header.
-
-To make such a request, you can either
-
-* expose that service through ingress, so that it is accessible to the outside world
-* exec onto a pod specifically to make a curl request against the service. For instance, running
-
-    ```sh
-    kubectl run curlbox --image=radial/busyboxplus:curl --restart=Never -it -- sh
+    ```bash
+    $ helm repo add icm https://na.artifactory.swg-devops.com/artifactory/wcp-icm-helm-virtual --username=<your-email> --password=<api-key>
+    $ helm repo update
     ```
+    
+### Configure image pull secret
 
-    will log you into a pod in the cluster that has curl and can access the service by name
-  * After exiting from the `curlbox` container, run `kubectl delete pod curlbox` to clean it up 
+Create a namespace for the operator:
+
+```bash
+$ kubectl create ns varnish-operator
+```
+
+Images are located in a private IBM cloud registry. You need to [create an image pull secret](https://pages.github.ibm.com/TheWeatherCompany/icm-docs/managed-kubernetes/container-registry.html#pulling-an-image-in-kubernetes) in your namespace to be able to pull images in the cluster.
+
+```bash
+$ kubectl create secret docker-registry container-reg-secret \
+    --namespace varnish-operator \
+    --docker-server us.icr.io \
+    --docker-username <user-name> \
+    --docker-password=<password> \
+    --docker-email=<email>
+```
+
+### Install Varnish Operator
+
+Use the image pull secret created in the previous step to install the operator:
+
+```bash
+$ helm install --name varnish-operator --namespace varnish-operator --set container.imagePullSecret=container-reg-secret icm/varnish-operator
+```                                                                                                                        
+
+You should see your operator pod up and running:
+
+```bash
+$ kubectl get pods --namespace varnish-operator
+NAME                 READY   STATUS              RESTARTS   AGE
+varnish-operator-0   1/1     Running             0          40s
+```
+
+Also, your cluster should have a new resource - `varnishservice` (with aliases `varnishservices` and `vs`). Now you're ready to create `VarnishService` resources.
+
+To tolerate pod failures, you can run multiple replicas of the operator by specifying the `replicas` field to more than `1` in Helm value overrides. Only one of the  replicas - the leader - will handle the work while others monitor if the leader is healthy. If the leader fails, one of the backup replicas will start to handle the work. That also means that if you need to check operator logs for debugging purposes you need to find the leader pod and check its logs.
+
+See [Operator Configuration](operator-configuration.md) section for more options to configure.
+
+## Operator Update
+
+Since the operator is packaged into a Helm chart, the update is done by a simple `helm upgrade` command.
+
+Note that when the operator version updates, the Varnish images get updated as well which causes a restart of all Varnish pods controlled by the operator. Since Varnish is an in-memory cache it means that **all cached data will be lost** so plan your upgrade procedure accordingly.
+
+## Uninstalling the Operator
+
+Uninstallation of the chart is also done by Helm.
+It deletes all created resources, including the CRD which will cause **deletion of all your VarnishService instances**.

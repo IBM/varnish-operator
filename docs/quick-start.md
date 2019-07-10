@@ -42,7 +42,7 @@ $ kubectl create secret docker-registry container-reg-secret \
 Use the image pull secret created in the previous step to install your operator:
 
 ```bash
-$ helm install --name varnish-operator --set namespace=varnish-operator --set container.imagePullSecret=container-reg-secret icm/varnish-operator
+$ helm install --name varnish-operator --namespace varnish-operator --set container.imagePullSecret=container-reg-secret icm/varnish-operator
 ```                                                                                                                        
 
 You should see your operator pod up and running:

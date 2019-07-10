@@ -8,7 +8,9 @@ metadata:
   namespace: {{ .Release.Namespace | quote }}
 spec:
   ports:
-  - port: 443
+  - name: prometheus-metrics
+    port: 9131
+    targetPort: {{ .Values.container.metricsPort }}
   selector:
     control-plane: controller-manager
     controller-tools.k8s.io: "1.0"

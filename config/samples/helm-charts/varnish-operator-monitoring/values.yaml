@@ -1,0 +1,16 @@
+# Default values for varnish-operator-monitoring.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+grafana:
+  admin:
+    existingSecret: grafana-admin-password
+  sidecar:
+    datasources:
+      enabled: true
+      labels:
+        grafana_datasource: "1"
+    dashboards:
+      enabled: true
+      labels:
+        grafana_dashboard: "1"

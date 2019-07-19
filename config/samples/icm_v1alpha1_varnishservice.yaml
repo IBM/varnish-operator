@@ -31,13 +31,13 @@ spec:
       # restart policy used for Varnish containers
 #     restartPolicy: Always
       # Resources allocated to the Varnish pod through Kubernetes. It is strongly recommended that you specify resources, since Varnish is an in-memory cache, and you do not want it restarting frequently.
-      resources:
-        limits:
-          cpu: 1
-          memory: 2040Mi
-        requests:
-          cpu: 1
-          memory: 2040Mi
+#      resources:
+#        limits:
+#          cpu: 1
+#          memory: 2040Mi
+#        requests:
+#          cpu: 1
+#          memory: 2040Mi
       # If secret is needed, use the name of the imagePullSecret created in the Getting Access section of the README.md
 #     imagePullSecret: docker-reg-secret
       # args that will be passed to the varnishd command line. For more information, run `varnishd "-?"`

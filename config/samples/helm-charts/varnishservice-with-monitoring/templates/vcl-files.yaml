@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-vcl-files
+  namespace: {{ .Release.Namespace}}
+data:
+  {{- range $path, $data := .Files.Glob "vcl-files/*" }}
+  {{ $path | base }}: |-
+    {{- $.Files.Get $path | nindent 4 }}
+  {{- end }}

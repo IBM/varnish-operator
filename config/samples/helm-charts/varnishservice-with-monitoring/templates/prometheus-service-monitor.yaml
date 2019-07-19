@@ -1,0 +1,16 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ .Release.Name }}-prometheus-service-monitor
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: varnish
+    tier: monitoring
+spec:
+  selector:
+    matchLabels:
+      varnish-owner: {{ .Release.Name }}-varnish
+      varnish-component: cache-service
+  endpoints:
+    - port: metrics
+      interval: 15s

@@ -1,0 +1,23 @@
+apiVersion: icm.ibm.com/v1alpha1
+kind: VarnishService
+metadata:
+  labels:
+    app: varnish
+  name: {{ .Release.Name }}-varnish
+  namespace: {{ .Release.Namespace }}
+spec:
+  vclConfigMap:
+    name: {{ .Release.Name }}-vcl-files
+    entrypointFile: default.vcl
+  deployment:
+    container:
+      imagePullSecret: {{ .Values.varnish.imagePullSecret }}
+  service:
+    selector:
+      {{ toYaml .Values.varnish.backendsSelector | nindent 6 }}
+    varnishPort:
+      port: 80
+      targetPort: {{ required "varnish.backendsPort is required" .Values.varnish.backendsPort}}
+    varnishExporterPort:
+      name: metrics
+      port: 9131

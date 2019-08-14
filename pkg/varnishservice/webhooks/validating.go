@@ -26,7 +26,7 @@ type validationWebhook struct {
 var _ inject.Client = &validationWebhook{}
 
 var (
-	varnishArgsKeyRegexp  = regexp.MustCompile("-\\w")
+	varnishArgsKeyRegexp  = regexp.MustCompile(`-\\w`)
 	disallowedVarnishArgs = map[string]bool{
 		"-a": true,
 		"-f": true,

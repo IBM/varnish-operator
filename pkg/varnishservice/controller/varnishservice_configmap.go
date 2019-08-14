@@ -7,10 +7,8 @@ import (
 	vslabels "icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/logger"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
-	"io/ioutil"
 
 	"github.com/pkg/errors"
-
 	v1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,11 +34,6 @@ func (r *ReconcileVarnishService) reconcileConfigMap(ctx context.Context, podsSe
 	// Else fill in missing values -- "OwnerReference" or Labels
 	// Else do nothing
 	if err != nil && kerrors.IsNotFound(err) {
-		defaultVCL, backendsVCLTmpl, err := readRequiredVCLFiles()
-		if err != nil {
-			return nil, errors.Wrap(err, "could not get default config map files")
-		}
-
 		cm = &v1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      instance.Spec.VCLConfigMap.Name,
@@ -48,8 +41,8 @@ func (r *ReconcileVarnishService) reconcileConfigMap(ctx context.Context, podsSe
 				Namespace: instance.Namespace,
 			},
 			Data: map[string]string{
-				instance.Spec.VCLConfigMap.EntrypointFile: defaultVCL,
-				"backends.vcl.tmpl":                       backendsVCLTmpl,
+				instance.Spec.VCLConfigMap.EntrypointFile: defaultVCLFileContent,
+				"backends.vcl.tmpl":                       backendsVCLTmplFileContent,
 			},
 		}
 		if err := controllerutil.SetControllerReference(instance, cm, r.scheme); err != nil {
@@ -115,16 +108,4 @@ func (r *ReconcileVarnishService) reconcileConfigMap(ctx context.Context, podsSe
 
 	instanceStatus.Status.VCL.Availability = fmt.Sprintf("%d latest / %d outdated", latest, outdated)
 	return cm, nil
-}
-
-func readRequiredVCLFiles() (defaultVCL, backendsVCLTmpl string, err error) {
-	var defaultVCLBytes, backendsVCLTmplBytes []byte
-	if defaultVCLBytes, err = ioutil.ReadFile("config/vcl/default.vcl"); err != nil {
-		return "", "", errors.Wrap(err, "could not find file default.vcl for ConfigMap")
-	}
-	if backendsVCLTmplBytes, err = ioutil.ReadFile("config/vcl/backends.vcl.tmpl"); err != nil {
-		return "", "", errors.Wrap(err, "could not find file backends.vcl.tmpl for ConfigMap")
-	}
-
-	return string(defaultVCLBytes), string(backendsVCLTmplBytes), nil
 }

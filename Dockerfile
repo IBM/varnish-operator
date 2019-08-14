@@ -35,7 +35,6 @@ RUN apk update &&\
 RUN addgroup -g 901 controller && adduser -D -u 901 -G controller controller
 # RUN chown -R controller
 
-COPY config/vcl/default.vcl config/vcl/backends.vcl.tmpl config/vcl/
 COPY --from=builder /go/src/icm-varnish-k8s-operator/manager .
 
 USER controller

@@ -1,10 +1,10 @@
 package v1alpha1
 
 import (
+	"context"
 	"testing"
 
 	"github.com/onsi/gomega"
-	"golang.org/x/net/context"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )

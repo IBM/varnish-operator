@@ -184,6 +184,9 @@ func (r *ReconcileVarnish) reconcileWithContext(ctx context.Context, request rec
 
 	varnishLabels := labels.SelectorFromSet(vslabels.CombinedComponentLabels(vs, v1alpha1.VarnishComponentCacheService))
 	varnishNodes, err := r.getPodInfo(ctx, r.config.Namespace, varnishLabels, varnishPort)
+	if err != nil {
+		return reconcile.Result{}, errors.WithStack(err)
+	}
 
 	templatizedFiles, err := r.resolveTemplates(newTemplates, targetPort, varnishPort, bks, varnishNodes)
 	if err != nil {

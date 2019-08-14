@@ -4,12 +4,14 @@ Requirements:
 
 * Kubernetes 1.11 or newer. You can use [minikube](https://kubernetes.io/docs/setup/minikube/) for local development)
 * Go 1.12
+* [Kubebuilder](https://book-v1.book.kubebuilder.io/getting_started/installation_and_setup.html#) 1.0.8
 * [dep](https://github.com/golang/dep)
 * [kustomize](https://github.com/kubernetes-sigs/kustomize)
 * [helm](https://helm.sh/)
 * [yq](https://yq.readthedocs.io/en/latest/)
 * [docker](https://docs.docker.com/install/)
 * [goimports](https://godoc.org/golang.org/x/tools/cmd/goimports)
+* [GolangCI-Lint](https://github.com/golangci/golangci-lint)
 * [gitbook cli](https://github.com/GitbookIO/gitbook-cli), if you want to modify and test the docs locally
 * [GOPATH](https://golang.org/cmd/go/#hdr-GOPATH_environment_variable) is set explicitly. Although setting GOPATH can be skipped in recent versions of Go (`~/go` will be used), the dependencies used in the operator rely on that env var to work correctly.
 
@@ -136,3 +138,9 @@ spec:
 The deployment will reload the pods with new image. If you're reusing the same image name, make sure `spec.deployment.container.imagePullPolicy` is set to `Always` and reload the pods manually by deleting them or recreating the `VarnishService`. 
 
 For images uploaded to a private registry, [create an image pull secret](https://pages.github.ibm.com/TheWeatherCompany/icm-docs/managed-kubernetes/container-registry.html#creating-an-image-pull-secret) and set the name of it in the `spec.container.imagePullSecret` field. 
+
+### Tests
+
+To run tests simply run `make test` in repo's root directory. 
+
+Tests depend on binaries provided by Kubebuilder so it has to be [installed](https://book-v1.book.kubebuilder.io/getting_started/installation_and_setup.html#) first.

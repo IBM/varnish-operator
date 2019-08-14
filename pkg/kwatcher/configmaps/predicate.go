@@ -9,8 +9,7 @@ import (
 var _ predicate.Predicate = &ConfigMapPredicate{}
 
 type ConfigMapPredicate struct {
-	namespace string
-	name      string
+	name string
 }
 
 func Predicate(name string) predicate.Predicate {

@@ -42,7 +42,7 @@ func (r *ReconcileVarnishService) reconcileServiceAccount(ctx context.Context, i
 	// Else if the service exists, and it is different, update
 	// Else no changes, do nothing
 	if err != nil && kerrors.IsNotFound(err) {
-		logr.Infoc("Creating Service sccount", "new", serviceAccount)
+		logr.Infoc("Creating Service account", "new", serviceAccount)
 		if err = r.Create(ctx, serviceAccount); err != nil {
 			return "", errors.Wrap(err, "Unable to create Service account")
 		}

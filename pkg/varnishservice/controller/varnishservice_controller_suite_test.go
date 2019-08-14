@@ -22,15 +22,20 @@ func TestMain(m *testing.M) {
 	t := &envtest.Environment{
 		CRDDirectoryPaths: []string{filepath.Join("..", "..", "..", "config", "crds")},
 	}
-	apis.AddToScheme(scheme.Scheme)
+	err := apis.AddToScheme(scheme.Scheme)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	var err error
 	if cfg, err = t.Start(); err != nil {
 		log.Fatal(err)
 	}
 
 	code := m.Run()
-	t.Stop()
+	err = t.Stop()
+	if err != nil {
+		log.Fatal(err)
+	}
 	os.Exit(code)
 }
 

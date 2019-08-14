@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	varnishArgsKeyRegexp = regexp.MustCompile("^-\\w")
+	varnishArgsKeyRegexp = regexp.MustCompile(`^-\\w`)
 	disallowedArgs       = [][]string{
 		{"-n"},
 	}

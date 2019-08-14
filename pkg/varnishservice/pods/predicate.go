@@ -22,11 +22,7 @@ func NewPredicate(selectorSet map[string]string) (predicate.Predicate, error) {
 }
 
 func (ep *Predicate) shared(meta metav1.Object) bool {
-	if ep.selector.Matches(labels.Set(meta.GetLabels())) {
-		return true
-	}
-
-	return false
+	return ep.selector.Matches(labels.Set(meta.GetLabels()))
 }
 
 func (ep *Predicate) Create(e event.CreateEvent) bool {

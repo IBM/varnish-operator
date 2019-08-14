@@ -17,9 +17,8 @@ import (
 var _ predicate.Predicate = &EndpointPredicate{}
 
 type EndpointPredicate struct {
-	namespace string
-	labels    map[string]string
-	logger    *logger.Logger
+	labels map[string]string
+	logger *logger.Logger
 }
 
 func NewPredicate(selectorString string, logr *logger.Logger) (predicate.Predicate, error) {

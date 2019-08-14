@@ -29,17 +29,19 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-// Add creates a new VarnishService Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
-// and Start it when the Manager is Started.
-func Add(mgr manager.Manager, cfg *config.Config, logr *logger.Logger) error {
-	r := &ReconcileVarnishService{
+func NewVarnishReconciler(mgr manager.Manager, cfg *config.Config, logr *logger.Logger) reconcile.Reconciler {
+	return &ReconcileVarnishService{
 		Client: mgr.GetClient(),
 		logger: logr,
 		config: cfg,
 		scheme: mgr.GetScheme(),
 		events: NewEventHandler(mgr.GetRecorder(EventRecorderNameVarnishService)),
 	}
+}
 
+// Add creates a new VarnishService Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
+// and Start it when the Manager is Started.
+func Add(r reconcile.Reconciler, mgr manager.Manager, logr *logger.Logger) error {
 	// Create a new controller
 	c, err := controller.New("varnishservice-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
@@ -253,10 +255,10 @@ func (r *ReconcileVarnishService) reconcileWithContext(ctx context.Context, requ
 		return reconcile.Result{}, err
 	}
 	// TODO: remove extra return var
-	_, err = r.reconcileConfigMap(ctx, varnishSelector, instance, instanceStatus)
-	if err != nil {
+	if _, err = r.reconcileConfigMap(ctx, varnishSelector, instance, instanceStatus); err != nil {
 		return reconcile.Result{}, err
 	}
+
 	if err = r.reconcilePodDisruptionBudget(ctx, instance, varnishSelector); err != nil {
 		return reconcile.Result{}, err
 	}

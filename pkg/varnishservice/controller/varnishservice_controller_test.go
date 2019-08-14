@@ -1,10 +1,13 @@
 package controller
 
 import (
+	"icm-varnish-k8s-operator/pkg/apis"
 	"icm-varnish-k8s-operator/pkg/logger"
 	"icm-varnish-k8s-operator/pkg/varnishservice/config"
 	"testing"
 	"time"
+
+	v1 "k8s.io/api/core/v1"
 
 	"go.uber.org/zap"
 
@@ -24,13 +27,26 @@ import (
 var c client.Client
 
 var expectedRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: "foo", Namespace: "default"}}
-var depKey = types.NamespacedName{Name: "foo-deployment", Namespace: "default"}
+var depKey = types.NamespacedName{Name: "foo-varnish-deployment", Namespace: "default"}
 
 const timeout = time.Second * 5
 
 func TestReconcile(t *testing.T) {
 	g := gomega.NewGomegaWithT(t)
-	instance := &icmv1alpha1.VarnishService{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "default"}}
+	instance := &icmv1alpha1.VarnishService{
+		ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "default"},
+		Spec: icmv1alpha1.VarnishServiceSpec{
+			Service: icmv1alpha1.VarnishServiceService{
+				VarnishPort: v1.ServicePort{
+					Port: 80,
+				},
+			},
+			VCLConfigMap: icmv1alpha1.VarnishVCLConfigMap{
+				Name:           "vcl-files",
+				EntrypointFile: "default.vcl",
+			},
+		},
+	}
 
 	// Setup the Manager and Controller.  Wrap the Controller Reconcile function so it writes each request to a
 	// channel when it is finished.
@@ -38,17 +54,23 @@ func TestReconcile(t *testing.T) {
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 	c = mgr.GetClient()
 
-	testCfg := &config.Config{}
-	testLogger := &logger.Logger{
-		SugaredLogger: zap.NewNop().Sugar(),
+	//zapLogr, err := zap.NewDevelopment() //uncomment if you want to see operator logs for debugging
+	zapLogr := zap.NewNop()
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	testCfg := &config.Config{
+		CoupledVarnishImage: "us.icr.io/icm-varnish/varnish:0.18.0",
 	}
 
-	r := &ReconcileVarnishService{
-		Client: mgr.GetClient(),
-		logger: testLogger,
+	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
+		g.Expect(err).NotTo(gomega.HaveOccurred())
 	}
-	_, requests := SetupTestReconcile(r)
-	g.Expect(Add(mgr, testCfg, testLogger)).NotTo(gomega.HaveOccurred())
+
+	testLogger := &logger.Logger{
+		SugaredLogger: zapLogr.Sugar(),
+	}
+
+	reconciler, requests := SetupTestReconcile(NewVarnishReconciler(mgr, testCfg, testLogger))
+	g.Expect(Add(reconciler, mgr, testLogger)).NotTo(gomega.HaveOccurred())
 	defer close(StartTestManager(mgr, g))
 
 	// Create the VarnishService object and expect the Reconcile and Deployment to be created
@@ -60,7 +82,13 @@ func TestReconcile(t *testing.T) {
 		return
 	}
 	g.Expect(err).NotTo(gomega.HaveOccurred())
-	defer c.Delete(context.TODO(), instance)
+	defer func() {
+		err := c.Delete(context.TODO(), instance)
+		if err != nil {
+			t.Logf("failed to delete the instance. Error: %v", err)
+		}
+	}()
+
 	g.Eventually(requests, timeout).Should(gomega.Receive(gomega.Equal(expectedRequest)))
 
 	deploy := &appsv1.Deployment{}
@@ -75,5 +103,4 @@ func TestReconcile(t *testing.T) {
 
 	// Manually delete Deployment since GC isn't enabled in the test control plane
 	g.Expect(c.Delete(context.TODO(), deploy)).To(gomega.Succeed())
-
 }

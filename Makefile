@@ -8,14 +8,15 @@ IMG ?= ${PUBLISH_IMG}-dev
 NAMESPACE ?= "default"
 
 # all: test manager
-all: fake-test manager kwatcher
-
-# test is failing right now because kubebuilder does not know how to test slices
-fake-test: generate fmt vet manifests
+all: test manager kwatcher
 
 # Run tests
 test: generate fmt vet manifests
-	go test ${ROOT_DIR}pkg/... ${ROOT_DIR}cmd/... -coverprofile cover.out
+	go test icm-varnish-k8s-operator/pkg/... icm-varnish-k8s-operator/cmd/... -coverprofile cover.out
+
+# Run lint tools
+lint:
+	golangci-lint run
 
 # Build manager binary
 manager: generate fmt vet
@@ -57,7 +58,7 @@ helm-upgrade: helm-prepare
 
 # Build the docker image
 # docker-build: test
-docker-build: fake-test
+docker-build: test
 	docker build ${ROOT_DIR} -t ${IMG} -f Dockerfile
 
 # Tag and push the docker image

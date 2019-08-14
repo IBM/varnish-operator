@@ -1,28 +1,52 @@
-dist: trusty
-sudo: false
-language: node_js
-node_js:
-  - lts/*
-cache:
-  directories:
-    - node_modules
-before_script:
-  - 'echo -e "---\nLast Commit: $TRAVIS_COMMIT\nTravis Build Number: $TRAVIS_BUILD_NUMBER" > ./docs/build-info.md'
-  - npm install -g gitbook-cli
-script:
-  - gitbook install
-  - gitbook build ./docs docs_generated --log=debug --debug
-branches:
-  only:
-    - master
-deploy:
-  provider: pages
-  skip_cleanup: true
-  github_token: "$ghtoken"
-  github_url: github.ibm.com
-  on:
-    branch: master
-  local_dir: docs_generated
-env:
-  global:
-    secure: "nRlRhTZBuKb34an2F+AXbF6FSD1Pg5Pe03P6S86r54M1R5w3nrSOqmOdcrl0aVx8q9kmDtgnIPEt1G+xeS/A6HtQ/wcHnorhIFlHOmUiLKfTNdoH/eBk/xj9pORsnDark/zuUl03y3TazW2NmvjKQQLxTnZ73ZQyyB0jp6yWdz3l7lL04ezC9MBuedWqX6jmjHeUzCpKQZgU/b0+fey+vhnodLX2ReeHAbRKAAGgVtTdYaF5fOeQrTwj8EiU+71BxKAlybTC2hZh5jX5JsS3ai6QiAjCa0OiKcPRwDpEZ6PT2oAjd8U9LA60ls20tkEl6n8FAMDRbF95IcjVV3BH3BbNemOujqpDBSDYwMYrEaV2LakKvJnXPuE1uVJnovK/2Scdt7ZgY4taREXPtvdAtGWF56WWWQ5ZEtPuRU1sk0+BWeuX2sXHZrG2b8h34yn2Q12RgjbtRuFYYO8w+VNWzg/EduEOf3IUB4nnjhtVfYHG0JMnYgN5cUortcPIhDtj3Q0cCi5T/u0WGYanoJq46ef1b2SXmOnbCI5UQVbU5oJuQOAGRescIfOiJaELE1bMkdloevW8Gg47ZQ2mrSAFJ7uwQZuPxSPYpqRU32lDwwj9NBoTycwwxDKGzWlKmlE1ajIDE6w+ziY8NQldc1nK6Fx/mRVZGSUSFeCoFSxzpfg="
+matrix:
+  include:
+    - dist: trusty
+      name: "Docs"
+      sudo: false
+      language: node_js
+      node_js:
+        - lts/*
+      cache:
+        directories:
+          - node_modules
+      before_script:
+        - 'echo -e "---\nLast Commit: $TRAVIS_COMMIT\nTravis Build Number: $TRAVIS_BUILD_NUMBER" > ./docs/build-info.md'
+        - npm install -g gitbook-cli
+      script:
+        - gitbook install
+        - gitbook build ./docs docs_generated --log=debug --debug
+      branches:
+        only:
+          - master
+      deploy:
+        provider: pages
+        skip_cleanup: true
+        github_token: "$ghtoken"
+        github_url: github.ibm.com
+        on:
+          branch: master
+        local_dir: docs_generated
+      env:
+        global:
+          secure: "nRlRhTZBuKb34an2F+AXbF6FSD1Pg5Pe03P6S86r54M1R5w3nrSOqmOdcrl0aVx8q9kmDtgnIPEt1G+xeS/A6HtQ/wcHnorhIFlHOmUiLKfTNdoH/eBk/xj9pORsnDark/zuUl03y3TazW2NmvjKQQLxTnZ73ZQyyB0jp6yWdz3l7lL04ezC9MBuedWqX6jmjHeUzCpKQZgU/b0+fey+vhnodLX2ReeHAbRKAAGgVtTdYaF5fOeQrTwj8EiU+71BxKAlybTC2hZh5jX5JsS3ai6QiAjCa0OiKcPRwDpEZ6PT2oAjd8U9LA60ls20tkEl6n8FAMDRbF95IcjVV3BH3BbNemOujqpDBSDYwMYrEaV2LakKvJnXPuE1uVJnovK/2Scdt7ZgY4taREXPtvdAtGWF56WWWQ5ZEtPuRU1sk0+BWeuX2sXHZrG2b8h34yn2Q12RgjbtRuFYYO8w+VNWzg/EduEOf3IUB4nnjhtVfYHG0JMnYgN5cUortcPIhDtj3Q0cCi5T/u0WGYanoJq46ef1b2SXmOnbCI5UQVbU5oJuQOAGRescIfOiJaELE1bMkdloevW8Gg47ZQ2mrSAFJ7uwQZuPxSPYpqRU32lDwwj9NBoTycwwxDKGzWlKmlE1ajIDE6w+ziY8NQldc1nK6Fx/mRVZGSUSFeCoFSxzpfg="
+    - dist: trusty
+      name: "Tests"
+      sudo: false
+      language: go
+      go:
+        - 1.12.x
+      before_script:
+        - mkdir -p $GOPATH/src/icm-varnish-k8s-operator
+        - cp -R . $GOPATH/src/icm-varnish-k8s-operator #Travis clones the repo in the wrong place so copy it to the correct one
+        - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh #install dep
+        - cd $GOPATH/src/icm-varnish-k8s-operator
+        - dep ensure -v -vendor-only
+        - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.17.1 #install golangci-lint
+        - curl -L -O "https://github.com/kubernetes-sigs/kubebuilder/releases/download/v1.0.8/kubebuilder_1.0.8_linux_amd64.tar.gz" #download kubebuilder
+        - tar -zxvf kubebuilder_1.0.8_linux_amd64.tar.gz
+        - mv kubebuilder_1.0.8_linux_amd64 kubebuilder && sudo mv kubebuilder /usr/local/
+        - export PATH=$PATH:/usr/local/kubebuilder/bin
+      script:
+        - golangci-lint run
+        - go test ./pkg/... ./cmd/... -coverprofile=cover.out
+        - "go tool cover -func=cover.out | tail -1 | awk '{print \"Total coverage: \" $3}'"

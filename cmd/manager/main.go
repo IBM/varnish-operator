@@ -68,7 +68,8 @@ func main() {
 
 	// Setup all Controllers
 	logr.Infow("Setting up controller")
-	if err := controller.Add(mgr, operatorConfig, logr); err != nil {
+	varnishReconciler := controller.NewVarnishReconciler(mgr, operatorConfig, logr)
+	if err := controller.Add(varnishReconciler, mgr, logr); err != nil {
 		logr.With(zap.Error(err)).Fatal("unable to register controllers to the manager")
 	}
 

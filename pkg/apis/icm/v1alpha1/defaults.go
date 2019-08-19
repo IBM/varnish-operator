@@ -18,7 +18,7 @@ import (
 // +k8s:defaulter-gen=covers
 func SetDefaults_VarnishService(in *VarnishService) {
 	SetDefaults_VarnishServiceSpec(&in.Spec)
-	SetDefaults_VarnishContainer(&in.Spec.Deployment.Container)
+	SetDefaults_VarnishContainer(&in.Spec.StatefulSet.Container)
 	SetDefaults_VarnishServiceService(&in.Spec.Service)
 }
 

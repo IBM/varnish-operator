@@ -7,17 +7,17 @@ metadata:
   name: varnishservices.icm.ibm.com
 spec:
   additionalPrinterColumns:
-  - JSONPath: .status.deployment.replicas
+  - JSONPath: .status.statefulSet.replicas
     description: desired number of varnish pods
     format: int32
     name: Desired
     type: integer
-  - JSONPath: .status.deployment.readyReplicas
+  - JSONPath: .status.statefulSet.readyReplicas
     description: current number of varnish pods
     format: int32
     name: Current
     type: integer
-  - JSONPath: .status.deployment.updatedReplicas
+  - JSONPath: .status.statefulSet.updatedReplicas
     description: number of varnish pods that are up to date
     format: int32
     name: Up-To-Date
@@ -43,8 +43,8 @@ spec:
   scope: Namespaced
   subresources:
     scale:
-      specReplicasPath: .spec.deployment.replicas
-      statusReplicasPath: .status.deployment.replicas
+      specReplicasPath: .spec.statefulSet.replicas
+      statusReplicasPath: .status.statefulSet.replicas
     status: {}
   validation:
     openAPIV3Schema:
@@ -69,16 +69,8 @@ spec:
           properties:
             deployment:
               properties:
-                affinity:
-                  type: object
                 container:
                   properties:
-                    image:
-                      type: string
-                    imagePullPolicy:
-                      type: string
-                    imagePullSecret:
-                      type: string
                     livenessProbe:
                       properties:
                         exec:
@@ -95,23 +87,6 @@ spec:
                               items:
                                 type: string
                               type: array
-                    resources:
-                      type: object
-                    restartPolicy:
-                      type: string
-                    varnishArgs:
-                      items:
-                        type: string
-                      type: array
-                  type: object
-                replicas:
-                  format: int32
-                  type: integer
-                tolerations:
-                  items:
-                    type: object
-                  type: array
-              type: object
             logFormat:
               enum:
               - json
@@ -148,6 +123,35 @@ spec:
               required:
               - varnishPort
               type: object
+            statefulSet:
+              properties:
+                affinity:
+                  type: object
+                container:
+                  properties:
+                    image:
+                      type: string
+                    imagePullPolicy:
+                      type: string
+                    imagePullSecret:
+                      type: string
+                    resources:
+                      type: object
+                    restartPolicy:
+                      type: string
+                    varnishArgs:
+                      items:
+                        type: string
+                      type: array
+                  type: object
+                replicas:
+                  format: int32
+                  type: integer
+                tolerations:
+                  items:
+                    type: object
+                  type: array
+              type: object
             vclConfigMap:
               properties:
                 entrypointFile:
@@ -165,13 +169,6 @@ spec:
           type: object
         status:
           properties:
-            deployment:
-              properties:
-                name:
-                  type: string
-                varnishArgs:
-                  type: string
-              type: object
             service:
               properties:
                 ip:
@@ -192,6 +189,13 @@ spec:
                     if one is present.
                   type: object
                 name:
+                  type: string
+              type: object
+            statefulSet:
+              properties:
+                name:
+                  type: string
+                varnishArgs:
                   type: string
               type: object
             vcl:

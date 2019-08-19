@@ -19,34 +19,36 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func (r *ReconcileVarnishService) reconcileDeployment(ctx context.Context, instance, instanceStatus *icmapiv1alpha1.VarnishService, serviceAccountName string, endpointSelector map[string]string) (map[string]string, error) {
+func (r *ReconcileVarnishService) reconcileStatefulSet(ctx context.Context, instance, instanceStatus *icmapiv1alpha1.VarnishService, serviceAccountName string, endpointSelector map[string]string, svcName string) (map[string]string, error) {
 	varnishLabels := vslabels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentVarnishes)
 	gvk := instance.GroupVersionKind()
 	var varnishImage string
-	if instance.Spec.Deployment.Container.Image == "" {
+	if instance.Spec.StatefulSet.Container.Image == "" {
 		varnishImage = r.config.CoupledVarnishImage
 	} else {
-		varnishImage = instance.Spec.Deployment.Container.Image
+		varnishImage = instance.Spec.StatefulSet.Container.Image
 	}
 
 	varnishdArgs := strings.Join(getSanitizedVarnishArgs(&instance.Spec), " ")
 
 	var imagePullSecrets []v1.LocalObjectReference
-	if instance.Spec.Deployment.Container.ImagePullSecret != nil {
-		imagePullSecrets = []v1.LocalObjectReference{{Name: *instance.Spec.Deployment.Container.ImagePullSecret}}
+	if instance.Spec.StatefulSet.Container.ImagePullSecret != nil {
+		imagePullSecrets = []v1.LocalObjectReference{{Name: *instance.Spec.StatefulSet.Container.ImagePullSecret}}
 	}
 
-	desired := &appsv1.Deployment{
+	desired := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      instance.Name + "-varnish-deployment",
+			Name:      instance.Name + "-varnish-statefulset",
 			Labels:    varnishLabels,
 			Namespace: instance.Namespace,
 		},
-		Spec: appsv1.DeploymentSpec{
-			Replicas: instance.Spec.Deployment.Replicas,
+		Spec: appsv1.StatefulSetSpec{
+			ServiceName: svcName,
+			Replicas:    instance.Spec.StatefulSet.Replicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: varnishLabels,
 			},
+			PodManagementPolicy: appsv1.ParallelPodManagement,
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: varnishLabels,
@@ -80,7 +82,7 @@ func (r *ReconcileVarnishService) reconcileDeployment(ctx context.Context, insta
 								{Name: "LOG_LEVEL", Value: instance.Spec.LogLevel},
 								{Name: "VARNISH_ARGS", Value: varnishdArgs},
 							},
-							Resources: instance.Spec.Deployment.Container.Resources,
+							Resources: instance.Spec.StatefulSet.Container.Resources,
 							// TODO: get working liveness probe
 							//LivenessProbe:   &v1.Probe{},
 							ReadinessProbe: &v1.Probe{
@@ -90,13 +92,13 @@ func (r *ReconcileVarnishService) reconcileDeployment(ctx context.Context, insta
 									},
 								},
 							},
-							ImagePullPolicy: instance.Spec.Deployment.Container.ImagePullPolicy,
+							ImagePullPolicy: instance.Spec.StatefulSet.Container.ImagePullPolicy,
 						},
 					},
-					RestartPolicy:      instance.Spec.Deployment.Container.RestartPolicy,
+					RestartPolicy:      instance.Spec.StatefulSet.Container.RestartPolicy,
 					ServiceAccountName: serviceAccountName,
-					Affinity:           instance.Spec.Deployment.Affinity,
-					Tolerations:        instance.Spec.Deployment.Tolerations,
+					Affinity:           instance.Spec.StatefulSet.Affinity,
+					Tolerations:        instance.Spec.StatefulSet.Tolerations,
 					ImagePullSecrets:   imagePullSecrets,
 				},
 			},
@@ -107,44 +109,44 @@ func (r *ReconcileVarnishService) reconcileDeployment(ctx context.Context, insta
 	logr = logr.With(logger.FieldComponentName, desired.Name)
 
 	if err := controllerutil.SetControllerReference(instance, desired, r.scheme); err != nil {
-		return nil, errors.Wrap(err, "could not set controller as the OwnerReference for deployment")
+		return nil, errors.Wrap(err, "could not set controller as the OwnerReference for statefulset")
 	}
 	r.scheme.Default(desired)
 
-	found := &appsv1.Deployment{}
+	found := &appsv1.StatefulSet{}
 
 	err := r.Get(ctx, types.NamespacedName{Name: desired.Name, Namespace: desired.Namespace}, found)
-	// If the deployment does not exist, create it
+	// If the statefulset does not exist, create it
 	// Else if there was a problem doing the GET, just return an error
-	// Else if the deployment exists, and it is different, update
+	// Else if the statefulset exists, and it is different, update
 	// Else no changes, do nothing
 	if err != nil && kerrors.IsNotFound(err) {
-		logr.Infoc("Creating Deployment", "new", desired)
+		logr.Infoc("Creating StatefulSet", "new", desired)
 		err = r.Create(ctx, desired)
 		if err != nil {
-			return nil, errors.Wrap(err, "could not create deployment")
+			return nil, errors.Wrap(err, "could not create statefulset")
 		}
 	} else if err != nil {
-		return nil, errors.Wrap(err, "could not get current state of deployment")
+		return nil, errors.Wrap(err, "could not get current state of statefulset")
 	} else {
 		// the pod selector is immutable once set, so always enforce the same as existing
 		desired.Spec.Selector = found.Spec.Selector
 		desired.Spec.Template.Labels = found.Spec.Template.Labels
-		if !compare.EqualDeployment(found, desired) {
-			logr.Infoc("Updating Deployment", "diff", compare.DiffDeployment(found, desired))
+		if !compare.EqualStatefulSet(found, desired) {
+			logr.Infoc("Updating StatefulSet", "diff", compare.DiffStatefulSet(found, desired))
 			found.Spec = desired.Spec
 			found.Labels = desired.Labels
 			if err = r.Update(ctx, found); err != nil {
-				return nil, errors.Wrap(err, "could not update deployment")
+				return nil, errors.Wrap(err, "could not update statefulset")
 			}
 		} else {
-			logr.Debugw("No updates for Deployment")
+			logr.Debugw("No updates for StatefulSet")
 		}
 	}
 
-	instanceStatus.Status.Deployment.DeploymentStatus = found.Status
-	instanceStatus.Status.Deployment.Name = found.Name
-	instanceStatus.Status.Deployment.VarnishArgs = varnishdArgs
+	instanceStatus.Status.StatefulSet.StatefulSetStatus = found.Status
+	instanceStatus.Status.StatefulSet.Name = found.Name
+	instanceStatus.Status.StatefulSet.VarnishArgs = varnishdArgs
 
 	return varnishLabels, nil
 }

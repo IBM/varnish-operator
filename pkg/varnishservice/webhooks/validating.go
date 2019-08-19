@@ -71,7 +71,7 @@ func (w *validationWebhook) Handle(ctx context.Context, req atypes.Request) atyp
 		return admission.ErrorResponse(http.StatusBadRequest, err)
 	}
 
-	if resp := validVarnishArgs(vs.Spec.Deployment.Container.VarnishArgs, w.logger); !resp.Response.Allowed {
+	if resp := validVarnishArgs(vs.Spec.StatefulSet.Container.VarnishArgs, w.logger); !resp.Response.Allowed {
 		return resp
 	}
 	if resp := validPorts(vs.Spec.Service); !resp.Response.Allowed {

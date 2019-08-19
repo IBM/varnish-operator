@@ -85,13 +85,20 @@ rules:
 - apiGroups:
   - apps
   resources:
-  - deployments
+  - statefulsets
   verbs:
   - list
   - watch
   - create
   - update
   - delete
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - list
+  - watch
 - apiGroups:
   - policy
   resources:

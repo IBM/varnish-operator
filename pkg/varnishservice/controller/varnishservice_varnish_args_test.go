@@ -23,7 +23,7 @@ func TestGetSanitizedVarnishArgs(t *testing.T) {
 			name: "no specified args",
 			spec: &v1alpha1.VarnishServiceSpec{
 				VCLConfigMap: vclConfigMap,
-				Deployment: v1alpha1.VarnishDeployment{
+				StatefulSet: v1alpha1.VarnishStatefulSet{
 					Container: v1alpha1.VarnishContainer{
 						VarnishArgs: nil,
 					},
@@ -41,7 +41,7 @@ func TestGetSanitizedVarnishArgs(t *testing.T) {
 			name: "flag -n should be stripped",
 			spec: &v1alpha1.VarnishServiceSpec{
 				VCLConfigMap: vclConfigMap,
-				Deployment: v1alpha1.VarnishDeployment{
+				StatefulSet: v1alpha1.VarnishStatefulSet{
 					Container: v1alpha1.VarnishContainer{
 						VarnishArgs: []string{"-n", "custom/work/directory"},
 					},
@@ -59,7 +59,7 @@ func TestGetSanitizedVarnishArgs(t *testing.T) {
 			name: "not allowed arguments should be overridden",
 			spec: &v1alpha1.VarnishServiceSpec{
 				VCLConfigMap: vclConfigMap,
-				Deployment: v1alpha1.VarnishDeployment{
+				StatefulSet: v1alpha1.VarnishStatefulSet{
 					Container: v1alpha1.VarnishContainer{
 						VarnishArgs: []string{"-S", "/etc/varnish/newsecret", "-T", "127.0.0.1:4235", "-a", "0.0.0.0:3425", "-f", "/custom-entry-point.vcl"},
 					},
@@ -77,7 +77,7 @@ func TestGetSanitizedVarnishArgs(t *testing.T) {
 			name: "options with the same key should be supported",
 			spec: &v1alpha1.VarnishServiceSpec{
 				VCLConfigMap: vclConfigMap,
-				Deployment: v1alpha1.VarnishDeployment{
+				StatefulSet: v1alpha1.VarnishStatefulSet{
 					Container: v1alpha1.VarnishContainer{
 						VarnishArgs: []string{"-p", "default_ttl=3600", "-p", "default_grace=3600"},
 					},
@@ -97,7 +97,7 @@ func TestGetSanitizedVarnishArgs(t *testing.T) {
 			name: "the order of arguments doesn't change the end results",
 			spec: &v1alpha1.VarnishServiceSpec{
 				VCLConfigMap: vclConfigMap,
-				Deployment: v1alpha1.VarnishDeployment{
+				StatefulSet: v1alpha1.VarnishStatefulSet{
 					Container: v1alpha1.VarnishContainer{
 						VarnishArgs: []string{"-p", "default_grace=3600", "-p", "default_ttl=3600"},
 					},

@@ -58,7 +58,7 @@ func Add(r reconcile.Reconciler, mgr manager.Manager, logr *logger.Logger) error
 	// Watch for changes in the below resources:
 	// Pods
 	// ConfigMap
-	// Deployment
+	// StatefulSet
 	// Service
 	// Role
 	// RoleBinding
@@ -91,7 +91,7 @@ func Add(r reconcile.Reconciler, mgr manager.Manager, logr *logger.Logger) error
 		return err
 	}
 
-	err = c.Watch(&source.Kind{Type: &appsv1.Deployment{}}, &handler.EnqueueRequestForOwner{
+	err = c.Watch(&source.Kind{Type: &appsv1.StatefulSet{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &icmv1alpha1.VarnishService{},
 	})
@@ -163,7 +163,7 @@ type ReconcileVarnishService struct {
 
 // Reconcile reads that state of the cluster for a VarnishService object and makes changes based on the state read
 // and what is in the VarnishService.Spec
-// Automatically generate RBAC rules to allow the Controller to read and write Deployments
+// Automatically generate RBAC rules to allow the Controller to read and write StatefulSets
 // +kubebuilder:rbac:groups=icm.ibm.com,resources=varnishservices,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups=icm.ibm.com,resources=varnishservices/status,verbs=update
 // +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update
@@ -173,7 +173,8 @@ type ReconcileVarnishService struct {
 // +kubebuilder:rbac:groups="",resources=pods,verbs=list;get;watch;update
 // +kubebuilder:rbac:groups="",resources=nodes,verbs=watch;list
 // +kubebuilder:rbac:groups="admissionregistration.k8s.io",resources="validatingwebhookconfigurations;mutatingwebhookconfigurations",verbs=list;watch;create;update;delete
-// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=list;watch;create;update;delete
+// +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=list;watch;create;update;delete
+// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=list;watch
 // +kubebuilder:rbac:groups=policy,resources=poddisruptionbudgets,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles;rolebindings;clusterroles;clusterrolebindings,verbs=list;watch;create;update;delete
 func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcile.Result, error) {
@@ -250,7 +251,11 @@ func (r *ReconcileVarnishService) reconcileWithContext(ctx context.Context, requ
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-	varnishSelector, err := r.reconcileDeployment(ctx, instance, instanceStatus, serviceAccountName, endpointSelector)
+	headlessServiceName, err := r.reconcileHeadlessService(ctx, instance)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+	varnishSelector, err := r.reconcileStatefulSet(ctx, instance, instanceStatus, serviceAccountName, endpointSelector, headlessServiceName)
 	if err != nil {
 		return reconcile.Result{}, err
 	}

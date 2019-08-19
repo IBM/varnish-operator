@@ -27,7 +27,7 @@ import (
 var c client.Client
 
 var expectedRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: "foo", Namespace: "default"}}
-var depKey = types.NamespacedName{Name: "foo-varnish-deployment", Namespace: "default"}
+var stsKey = types.NamespacedName{Name: "foo-varnish-statefulset", Namespace: "default"}
 
 const timeout = time.Second * 5
 
@@ -73,7 +73,7 @@ func TestReconcile(t *testing.T) {
 	g.Expect(Add(reconciler, mgr, testLogger)).NotTo(gomega.HaveOccurred())
 	defer close(StartTestManager(mgr, g))
 
-	// Create the VarnishService object and expect the Reconcile and Deployment to be created
+	// Create the VarnishService object and expect the Reconcile and StatefulSet to be created
 	err = c.Create(context.TODO(), instance)
 	// The instance object may not be a valid object because it might be missing some required fields.
 	// Please modify the instance object by adding required fields and then remove the following if statement.
@@ -91,16 +91,16 @@ func TestReconcile(t *testing.T) {
 
 	g.Eventually(requests, timeout).Should(gomega.Receive(gomega.Equal(expectedRequest)))
 
-	deploy := &appsv1.Deployment{}
-	g.Eventually(func() error { return c.Get(context.TODO(), depKey, deploy) }, timeout).
+	statefulSet := &appsv1.StatefulSet{}
+	g.Eventually(func() error { return c.Get(context.TODO(), stsKey, statefulSet) }, timeout).
 		Should(gomega.Succeed())
 
-	// Delete the Deployment and expect Reconcile to be called for Deployment deletion
-	g.Expect(c.Delete(context.TODO(), deploy)).NotTo(gomega.HaveOccurred())
+	// Delete the StatefulSet and expect Reconcile to be called for StatefulSet deletion
+	g.Expect(c.Delete(context.TODO(), statefulSet)).NotTo(gomega.HaveOccurred())
 	g.Eventually(requests, timeout).Should(gomega.Receive(gomega.Equal(expectedRequest)))
-	g.Eventually(func() error { return c.Get(context.TODO(), depKey, deploy) }, timeout).
+	g.Eventually(func() error { return c.Get(context.TODO(), stsKey, statefulSet) }, timeout).
 		Should(gomega.Succeed())
 
-	// Manually delete Deployment since GC isn't enabled in the test control plane
-	g.Expect(c.Delete(context.TODO(), deploy)).To(gomega.Succeed())
+	// Manually delete StatefulSet since GC isn't enabled in the test control plane
+	g.Expect(c.Delete(context.TODO(), statefulSet)).To(gomega.Succeed())
 }

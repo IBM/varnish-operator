@@ -17,7 +17,7 @@ func init() {
 
 // RegisterBuiltInDefaults adds in necessary default functions from kubernetes library into the scheme for this project
 func RegisterBuiltInDefaults(scheme *runtime.Scheme) error {
-	scheme.AddTypeDefaultingFunc(&appsv1.Deployment{}, func(obj interface{}) { kappsv1.SetObjectDefaults_Deployment(obj.(*appsv1.Deployment)) })
+	scheme.AddTypeDefaultingFunc(&appsv1.StatefulSet{}, func(obj interface{}) { kappsv1.SetObjectDefaults_StatefulSet(obj.(*appsv1.StatefulSet)) })
 	scheme.AddTypeDefaultingFunc(&v1.Service{}, func(obj interface{}) { kv1.SetObjectDefaults_Service(obj.(*v1.Service)) })
 	return nil
 }

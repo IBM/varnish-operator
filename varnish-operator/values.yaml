@@ -2,7 +2,7 @@
 replicas: 1
 container:
   # path to image + tag
-  image: us.icr.io/icm-varnish/varnish-controller:0.18.0
+  image: us.icr.io/icm-varnish/varnish-controller:0.19.0
   # If secret is needed, use the name of the imagePullSecret created in the Getting Access section of the README.md
 # imagePullSecret: docker-reg-secret
   # imagePullPolicy is passed directly to the varnish deployment, that controls how the varnish image will be pulled for new containers

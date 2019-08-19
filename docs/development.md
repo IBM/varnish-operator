@@ -130,12 +130,12 @@ apiVersion: icm.ibm.com/v1alpha1
 kind: VarnishService
 ...
 spec:
-  deployment:
+  statefulSet:
     container:
       image: <image-name>
 ...
 ```
-The deployment will reload the pods with new image. If you're reusing the same image name, make sure `spec.deployment.container.imagePullPolicy` is set to `Always` and reload the pods manually by deleting them or recreating the `VarnishService`. 
+The StatefulSet will reload the pods with new image. If you're reusing the same image name, make sure `spec.statefulSet.container.imagePullPolicy` is set to `Always` and reload the pods manually by deleting them or recreating the `VarnishService`. 
 
 For images uploaded to a private registry, [create an image pull secret](https://pages.github.ibm.com/TheWeatherCompany/icm-docs/managed-kubernetes/container-registry.html#creating-an-image-pull-secret) and set the name of it in the `spec.container.imagePullSecret` field. 
 

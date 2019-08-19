@@ -72,7 +72,7 @@ func (r *ReconcileVarnishService) reconcileConfigMap(ctx context.Context, podsSe
 		if !compare.EqualConfigMap(cm, cmCopy) {
 			logr.Infow("Updating ConfigMap with defaults", "diff", compare.DiffConfigMap(cm, cmCopy))
 			if err = r.Update(ctx, cm); err != nil {
-				return nil, errors.Wrap(err, "could not update deployment")
+				return nil, errors.Wrap(err, "could not update configmap")
 			}
 		} else {
 			logr.Debugw("No updates for ConfigMap")

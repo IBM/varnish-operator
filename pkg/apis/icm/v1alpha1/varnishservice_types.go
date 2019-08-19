@@ -24,6 +24,7 @@ const (
 	VarnishComponentRoleBinding         = "rolebinding"
 	VarnishComponentVCLFileConfigMap    = "vcl-file-configmap"
 	VarnishComponentPodDisruptionBudget = "poddisruptionbudget"
+	VarnishComponentHeadlessService     = "headless-service"
 	VarnishComponentServiceAccount      = "serviceaccount"
 
 	VarnishPort                   = 6081
@@ -36,14 +37,14 @@ const (
 
 // VarnishService is the Schema for the varnishservices API
 // +k8s:openapi-gen=true
-// +kubebuilder:printcolumn:name="Desired",type="integer",JSONPath=".status.deployment.replicas",description="desired number of varnish pods",format="int32",priority="0"
-// +kubebuilder:printcolumn:name="Current",type="integer",JSONPath=".status.deployment.readyReplicas",description="current number of varnish pods",format="int32",priority="0"
-// +kubebuilder:printcolumn:name="Up-To-Date",type="integer",JSONPath=".status.deployment.updatedReplicas",description="number of varnish pods that are up to date",format="int32",priority="0"
+// +kubebuilder:printcolumn:name="Desired",type="integer",JSONPath=".status.statefulSet.replicas",description="desired number of varnish pods",format="int32",priority="0"
+// +kubebuilder:printcolumn:name="Current",type="integer",JSONPath=".status.statefulSet.readyReplicas",description="current number of varnish pods",format="int32",priority="0"
+// +kubebuilder:printcolumn:name="Up-To-Date",type="integer",JSONPath=".status.statefulSet.updatedReplicas",description="number of varnish pods that are up to date",format="int32",priority="0"
 // +kubebuilder:printcolumn:name="VCL-Version",type="string",JSONPath=".status.vcl.configMapVersion",description="version of the ConfigMap containing the VCL",priority="0"
 // +kubebuilder:printcolumn:name="Service-IP",type="string",JSONPath=".status.service.ip",description="IP Address of the service backed by Varnish",priority="0"
 // +kubebuilder:printcolumn:name="ServiceNoCache-IP",type="string",JSONPath=".status.serviceNoCache.ip",description="IP Address of the service without any caching",priority="0"
 // +kubebuilder:subresource:status
-// +kubebuilder:subresource:scale:specpath=.spec.deployment.replicas,statuspath=.status.deployment.replicas,selectorpath=
+// +kubebuilder:subresource:scale:specpath=.spec.statefulSet.replicas,statuspath=.status.statefulSet.replicas,selectorpath=
 type VarnishService struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -56,7 +57,7 @@ type VarnishService struct {
 // Important: Run "make" to regenerate code after modifying this file
 type VarnishServiceSpec struct {
 	VCLConfigMap        VarnishVCLConfigMap                    `json:"vclConfigMap"`
-	Deployment          VarnishDeployment                      `json:"deployment,omitempty"`
+	StatefulSet         VarnishStatefulSet                     `json:"statefulSet,omitempty"`
 	PodDisruptionBudget *policyv1beta1.PodDisruptionBudgetSpec `json:"podDisruptionBudget,omitempty"`
 	Service             VarnishServiceService                  `json:"service"`
 	LogLevel            string                                 `json:"logLevel,omitempty"`
@@ -68,7 +69,7 @@ type VarnishVCLConfigMap struct {
 	EntrypointFile string `json:"entrypointFile"`
 }
 
-type VarnishDeployment struct {
+type VarnishStatefulSet struct {
 	Replicas    *int32           `json:"replicas,omitempty"`
 	Container   VarnishContainer `json:"container,omitempty"`
 	Affinity    *v1.Affinity     `json:"affinity,omitempty"`
@@ -93,10 +94,10 @@ type VarnishServiceService struct {
 
 // VarnishServiceStatus defines the observed state of VarnishService
 type VarnishServiceStatus struct {
-	Deployment     VarnishServiceDeploymentStatus `json:"deployment,omitempty"`
-	Service        VarnishServiceServiceStatus    `json:"service,omitempty"`
-	ServiceNoCache VarnishServiceServiceStatus    `json:"serviceNoCache,omitempty"`
-	VCL            VCLStatus                      `json:"vcl"`
+	StatefulSet    VarnishServiceStatefulSetStatus `json:"statefulSet,omitempty"`
+	Service        VarnishServiceServiceStatus     `json:"service,omitempty"`
+	ServiceNoCache VarnishServiceServiceStatus     `json:"serviceNoCache,omitempty"`
+	VCL            VCLStatus                       `json:"vcl"`
 }
 
 // VCLStatus describes the VCL versions status
@@ -113,11 +114,11 @@ type VarnishServiceServiceStatus struct {
 	IP               string `json:"ip,omitempty"`
 }
 
-// VarnishServiceDeploymentStatus comprises information about the deployment and its status.
-type VarnishServiceDeploymentStatus struct {
+// VarnishServiceStatefulSetStatus comprises information about the statefulset and its status.
+type VarnishServiceStatefulSetStatus struct {
 	Name        string `json:"name,omitempty"`
 	VarnishArgs string `json:"varnishArgs,omitempty"`
-	appsv1.DeploymentStatus
+	appsv1.StatefulSetStatus
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

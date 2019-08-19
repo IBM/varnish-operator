@@ -40,7 +40,7 @@ NAME                                                      READY   STATUS    REST
 nginx-5c7588df-8wsr6                                      1/1     Running   0          5m16s
 prometheus-varnish-test-prometheus-0                      3/3     Running   0          3m7s
 varnish-test-grafana-9f584598d-89smp                      2/2     Running   0          3m8s
-varnish-test-varnish-varnish-deployment-67dc8bdc8-mgzll   1/1     Running   0          3m7s
+varnish-test-varnish-varnish-statefulset-1                1/1     Running   0          3m7s
 ```
 
 and the corresponding services created:

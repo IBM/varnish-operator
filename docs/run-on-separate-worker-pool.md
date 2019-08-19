@@ -110,7 +110,7 @@ References:
       labels:
         role: varnish-cache
     spec:
-      deployment:
+      statefulSet:
         affinity:
           podAntiAffinity:
             requiredDuringSchedulingIgnoredDuringExecution:
@@ -128,7 +128,7 @@ References:
     
     ```yaml
     spec:
-      deployment:
+      statefulSet:
         affinity:
           nodeAffinity:
             requiredDuringSchedulingIgnoredDuringExecution:
@@ -145,7 +145,7 @@ References:
     
     ```yaml
     spec:
-      deployment:
+      statefulSet:
         tolerations:
           - key: "role"
             operator: "Equal"
@@ -177,7 +177,7 @@ References:
         name: varnish-worker-pool-files
         backendsFile: backends.vcl
         defaultFile: default.vcl
-      deployment:
+      statefulSet:
         replicas: 2
         container:
           resources:
@@ -239,8 +239,8 @@ References:
     ```bash
     $ kubectl get pods -n varnish-ns -o wide --selector role=varnish-cache
     NAME                                                         READY   STATUS    RESTARTS   AGE   IP               NODE            NOMINATED NODE
-    varnish-in-worker-pool-varnish-deployment-78c9b6f5bf-kqg72   1/1     Running   0          6m    172.30.244.65    10.94.177.179   <none>
-    varnish-in-worker-pool-varnish-deployment-78c9b6f5bf-pqtzv   1/1     Running   0          6m    172.30.136.129   10.94.177.180   <none>
+    varnish-in-worker-pool-varnish-statefulset-0                 1/1     Running   0          6m    172.30.244.65    10.94.177.179   <none>
+    varnish-in-worker-pool-varnish-statefulset-1                 1/1     Running   0          6m    172.30.136.129   10.94.177.180   <none>
 
     ```
     Check the `NODE` column. The value will be different for each pod.
@@ -250,7 +250,7 @@ References:
     
     ```yaml
     spec:
-      deployment:
+      statefulSet:
         affinity:
           podAntiAffinity:
             preferredDuringSchedulingIgnoredDuringExecution:

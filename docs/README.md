@@ -32,7 +32,7 @@ spec:
   vclConfigMap:
     name: vcl-files
     entrypointFile: default.vcl
-  deployment:
+  statefulSet:
    replicas: 3
     container:
       imagePullSecret: docker-reg-secret

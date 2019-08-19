@@ -16,13 +16,13 @@ For a `VarnishService` named `varnish-service-example` the command will look lik
 ```bash
 $ kubectl get pods -l varnish-owner=varnish-service-example                                                   
 NAME                                                          READY   STATUS    RESTARTS   AGE
-varnish-service-example-varnish-deployment-6875b997cf-mvxp5   1/1     Running   0          15s
+varnish-service-example-varnish-statefulset-0                 1/1     Running   0          15s
 ```
 
 Now, you can exec to that pod's container:
 
 ```bash
-$ kubectl exec -it varnish-service-example-varnish-deployment-6875b997cf-mvxp5 sh
+$ kubectl exec -it varnish-service-example-varnish-statefulset-0 sh
 ```
 
 and execute any available Varnish command line tool. For example `varnishadm`:
@@ -90,7 +90,7 @@ Note that if you have multiple replicas, Kubernetes will balance the load betwee
 
 ### VarnishService status
 
-As with any other Kubernetes resource, `VarnishService` has a `status` object describing the state of the resource. You can find the status of underlying Deployment and Service objects in a similar manner. The `status` object can also reveal information about the status of Varnish VCL configuration. It can be found in the `.status.vcl` object. The `status.vcl.availability` field is especially useful for debugging. It shows how many Varnish instances are running with the latest version of VCL.
+As with any other Kubernetes resource, `VarnishService` has a `status` object describing the state of the resource. You can find the status of the underlying StatefulSet and Service objects in a similar manner. The `status` object can also reveal information about the status of Varnish VCL configuration. It can be found in the `.status.vcl` object. The `status.vcl.availability` field is especially useful for debugging. It shows how many Varnish instances are running with the latest version of VCL.
 
 For example, if the field has value `availability: 3 latest / 0 outdated` it means that all pods are running the latest version of VCL. However if none of the pods are running the latest version (`availability: "0 latest / 3 outdated"`), it could mean that the VCL could be invalid. You can check it by looking at `VarnishService` events first:
 
@@ -105,16 +105,16 @@ Namespace:    varnish-operator-system
 Events:
   Type     Reason               Age   From     Message
   ----     ------               ----  ----     -------
-  Warning  VCLCompilationError  11s   varnish  VCL compilation failed for pod varnish-service-example-varnish-deployment-6875b997cf-mvxp5. See pod logs for details
+  Warning  VCLCompilationError  11s   varnish  VCL compilation failed for pod varnish-service-example-varnish-statefulset-0. See pod logs for details
 ```
 
 As you can see, the event indicates that it is a VCL compilation error indeed. To check the compilation error message see the pod logs:
 
 ```bash
-$ kubectl logs varnish-service-example-varnish-deployment-5c84d4c876-45qrh                 
+$ kubectl logs varnish-service-example-varnish-statefulset-0                 
 ...
 2019-07-04T10:50:53.481Z	INFO	kwatcher/main.go:60	Starting Varnish Watcher	{"kwatcher_version": "0.17.0"}
-2019-07-04T10:50:54.012Z	INFO	controller/controller_files.go:57	Rewriting file	{"kwatcher_version": "0.17.0", "varnish_service": "varnish-service-example", "pod_name": "varnish-service-example-varnish-deployment-5c84d4c876-45qrh", "namespace": "varnish-operator-system", "file_path": "/etc/varnish/backends.vcl"}
+2019-07-04T10:50:54.012Z	INFO	controller/controller_files.go:57	Rewriting file	{"kwatcher_version": "0.17.0", "varnish_service": "varnish-service-example", "pod_name": "varnish-service-example-varnish-statefulset-0", "namespace": "varnish-operator-system", "file_path": "/etc/varnish/backends.vcl"}
 2019-07-04T10:50:54.506Z	WARN	controller/controller_varnish.go:51	Message from VCC-compiler:
 Expected one of
 	'acl', 'sub', 'backend', 'probe', 'import', 'vcl',  or 'default'
@@ -128,7 +128,7 @@ Command failed with error code 106
 VCL compilation failed
 No VCL named v-974330-1562237454 known.
 Command failed with error code 106
-	{"kwatcher_version": "0.17.0", "varnish_service": "varnish-service-example", "pod_name": "varnish-service-example-varnish-deployment-5c84d4c876-45qrh", "namespace": "varnish-operator-system"}
+	{"kwatcher_version": "0.17.0", "varnish_service": "varnish-service-example", "pod_name": "varnish-service-example-varnish-statefulset-0", "namespace": "varnish-operator-system"}
 ```
 
 As you can see we have a type in word - `bakcend`. To fix it you'll have to modify your [ConfigMap containing your VCL files](vcl-configuration.md).

@@ -24,7 +24,7 @@ func getSanitizedVarnishArgs(spec *icmapiv1alpha1.VarnishServiceSpec) []string {
 		{"-T", fmt.Sprintf("127.0.0.1:%d", icmapiv1alpha1.VarnishAdminPort)},
 	}
 
-	rawArgs := spec.Deployment.Container.VarnishArgs
+	rawArgs := spec.StatefulSet.Container.VarnishArgs
 	var parsedArgs [][]string
 
 	// parse arguments and remove ones that should be overridden

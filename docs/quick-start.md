@@ -103,7 +103,7 @@ varnish-operator-0   1/1     Running             0          40s
           app: nginx-backend # labels that identify your backend pods
         varnishPort:
           name: varnish
-          port: 80 # Varnish deployment will be exposed on that port 
+          port: 80 # Varnish pods will be exposed on that port 
           targetPort: 80 # the port our backend pods listen on. 80 for nginx.
         varnishExporterPort: # prometheus exporter metrics port
           name: varnishexporter
@@ -117,7 +117,7 @@ varnish-operator-0   1/1     Running             0          40s
 
 Once `VarnishService` is created, you should see:
 
-* Deployment called `<varnish-service-name>-deployment`
+* StatefulSet called `<varnish-service-name>-statefulset`
 * Service called `<varnish-service-name>` which uses Varnish for caching
 * Service called `<varnish-service-name>-no-cache` which bypasses Varnish
 * ConfigMap called `vcl-config` containing VCL files that Varnish is using

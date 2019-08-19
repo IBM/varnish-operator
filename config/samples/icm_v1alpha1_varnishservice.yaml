@@ -20,12 +20,12 @@ spec:
     name: vcl-files
     # the name of the base VCL file
     entrypointFile: default.vcl
-  deployment:
+  statefulSet:
     # The number of varnish instances to run. If not specified, will use same default as deployment
 #   replicas: 2
     container:
       # path to image + tag
-      image: us.icr.io/icm-varnish/varnish:0.18.0
+      image: us.icr.io/icm-varnish/varnish:0.19.0
       # imagePullPolicy is passed directly to the varnish deployment, that controls how the varnish image will be pulled for new containers
 #     imagePullPolicy: Always
       # restart policy used for Varnish containers

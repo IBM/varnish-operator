@@ -26,9 +26,6 @@ matrix:
         on:
           branch: master
         local_dir: docs_generated
-      env:
-        global:
-          secure: "nRlRhTZBuKb34an2F+AXbF6FSD1Pg5Pe03P6S86r54M1R5w3nrSOqmOdcrl0aVx8q9kmDtgnIPEt1G+xeS/A6HtQ/wcHnorhIFlHOmUiLKfTNdoH/eBk/xj9pORsnDark/zuUl03y3TazW2NmvjKQQLxTnZ73ZQyyB0jp6yWdz3l7lL04ezC9MBuedWqX6jmjHeUzCpKQZgU/b0+fey+vhnodLX2ReeHAbRKAAGgVtTdYaF5fOeQrTwj8EiU+71BxKAlybTC2hZh5jX5JsS3ai6QiAjCa0OiKcPRwDpEZ6PT2oAjd8U9LA60ls20tkEl6n8FAMDRbF95IcjVV3BH3BbNemOujqpDBSDYwMYrEaV2LakKvJnXPuE1uVJnovK/2Scdt7ZgY4taREXPtvdAtGWF56WWWQ5ZEtPuRU1sk0+BWeuX2sXHZrG2b8h34yn2Q12RgjbtRuFYYO8w+VNWzg/EduEOf3IUB4nnjhtVfYHG0JMnYgN5cUortcPIhDtj3Q0cCi5T/u0WGYanoJq46ef1b2SXmOnbCI5UQVbU5oJuQOAGRescIfOiJaELE1bMkdloevW8Gg47ZQ2mrSAFJ7uwQZuPxSPYpqRU32lDwwj9NBoTycwwxDKGzWlKmlE1ajIDE6w+ziY8NQldc1nK6Fx/mRVZGSUSFeCoFSxzpfg="
     - dist: trusty
       name: "Tests"
       sudo: false
@@ -50,3 +47,6 @@ matrix:
         - golangci-lint run
         - go test ./pkg/... ./cmd/... -coverprofile=cover.out
         - "go tool cover -func=cover.out | tail -1 | awk '{print \"Total coverage: \" $3}'"
+env:
+  global:
+    secure: "nRlRhTZBuKb34an2F+AXbF6FSD1Pg5Pe03P6S86r54M1R5w3nrSOqmOdcrl0aVx8q9kmDtgnIPEt1G+xeS/A6HtQ/wcHnorhIFlHOmUiLKfTNdoH/eBk/xj9pORsnDark/zuUl03y3TazW2NmvjKQQLxTnZ73ZQyyB0jp6yWdz3l7lL04ezC9MBuedWqX6jmjHeUzCpKQZgU/b0+fey+vhnodLX2ReeHAbRKAAGgVtTdYaF5fOeQrTwj8EiU+71BxKAlybTC2hZh5jX5JsS3ai6QiAjCa0OiKcPRwDpEZ6PT2oAjd8U9LA60ls20tkEl6n8FAMDRbF95IcjVV3BH3BbNemOujqpDBSDYwMYrEaV2LakKvJnXPuE1uVJnovK/2Scdt7ZgY4taREXPtvdAtGWF56WWWQ5ZEtPuRU1sk0+BWeuX2sXHZrG2b8h34yn2Q12RgjbtRuFYYO8w+VNWzg/EduEOf3IUB4nnjhtVfYHG0JMnYgN5cUortcPIhDtj3Q0cCi5T/u0WGYanoJq46ef1b2SXmOnbCI5UQVbU5oJuQOAGRescIfOiJaELE1bMkdloevW8Gg47ZQ2mrSAFJ7uwQZuPxSPYpqRU32lDwwj9NBoTycwwxDKGzWlKmlE1ajIDE6w+ziY8NQldc1nK6Fx/mRVZGSUSFeCoFSxzpfg="

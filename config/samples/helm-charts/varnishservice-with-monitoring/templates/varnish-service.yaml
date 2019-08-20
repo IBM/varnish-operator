@@ -9,7 +9,7 @@ spec:
   vclConfigMap:
     name: {{ .Release.Name }}-vcl-files
     entrypointFile: default.vcl
-  deployment:
+  statefulSet:
     container:
       imagePullSecret: {{ .Values.varnish.imagePullSecret }}
   service:

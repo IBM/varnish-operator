@@ -94,7 +94,7 @@ varnish-operator-0   1/1     Running             0          40s
       vclConfigMap:
         name: vcl-config # name of the config map that will store your VCl files. Will be created if doesn't exist.
         entrypointFile: entrypoint.vcl # main file used by Varnish to compile the VCL code.
-      deployment:
+      statefulSet:
         replicas: 3 # run 3 replicas of Varnish
         container: 
           imagePullSecret: container-reg-secret # the image pull secret created above

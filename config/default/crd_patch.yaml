@@ -26,7 +26,7 @@ spec:
                 entrypointFile:
                   type: string
                   pattern: '^.+\.vcl$'
-            deployment:
+            statefulSet:
               properties:
                 container:
                   properties:

@@ -64,7 +64,7 @@ spec:
       #
       # If you do not include a memory resource limit, -s will just be set to "malloc" without the memory set. See https://varnish-cache.org/docs/trunk/users-guide/storage-backends.html#malloc for behavior of malloc
 #     varnishArgs: ["-p", "default_ttl=3600", "-p", "default_grace=3600"]
-    # Affinity to apply to the pods in the Varnish deployment. For more on affinity, see https://kubernetes.io/docs/concepts/configuration/assign-pod-node#affinity-and-anti-affinity
+    # Affinity to apply to Varnish pods. For more on affinity, see https://kubernetes.io/docs/concepts/configuration/assign-pod-node#affinity-and-anti-affinity
     # Also, see the README.md#affinites for suggested configurations
 #   affinity:
       # Keyword indicating that pods should repel each other based on the spec
@@ -74,7 +74,7 @@ spec:
 #       - labelSelector:
             # Apply the anti-affinity to all pods that match the following expression.
             # In this case, it finds pods with label "middleware: varnish".
-            # All labels applied to the VarnishService are also applied to its dependent resources, including the Varnish deployment.
+            # All labels applied to the VarnishService are also applied to its dependent resources, including the Varnish pods.
 #           matchExpressions:
 #           - key: middleware
 #             operator: In
@@ -84,7 +84,7 @@ spec:
           # Read https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#an-example-of-a-pod-that-uses-pod-affinity for a good explanation of topologyKey.
 #         topologyKey: "kubernetes.io/hostname"
 
-    # Tolerations to apply to the pods in the Varnish deployment. For more on tolerations, see https://kubernetes.io/docs/concepts/configuration/taint-and-toleration
+    # Tolerations to apply to Varnish pods. For more on tolerations, see https://kubernetes.io/docs/concepts/configuration/taint-and-toleration
     # Also, see the README.md#tolerations for suggested configurations
 #   tolerations:
   # PodDisruptionBudgets allow you to tell Kubernetes how tolerant you are about pods going down due to administrative events, such node autoscaling or node upgrades.

@@ -67,26 +67,6 @@ spec:
           type: object
         spec:
           properties:
-            deployment:
-              properties:
-                container:
-                  properties:
-                    livenessProbe:
-                      properties:
-                        exec:
-                          properties:
-                            command:
-                              items:
-                                type: string
-                              type: array
-                    readinessProbe:
-                      properties:
-                        exec:
-                          properties:
-                            command:
-                              items:
-                                type: string
-                              type: array
             logFormat:
               enum:
               - json
@@ -135,6 +115,22 @@ spec:
                       type: string
                     imagePullSecret:
                       type: string
+                    livenessProbe:
+                      properties:
+                        exec:
+                          properties:
+                            command:
+                              items:
+                                type: string
+                              type: array
+                    readinessProbe:
+                      properties:
+                        exec:
+                          properties:
+                            command:
+                              items:
+                                type: string
+                              type: array
                     resources:
                       type: object
                     restartPolicy:

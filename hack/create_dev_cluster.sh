@@ -71,25 +71,23 @@ metadata:
 spec:
   vclConfigMap:
     name: vcl-file
-    backendsFile: backends.vcl
     defaultFile: default.vcl
-  deployment:
+  statefulSet:
     replicas: 1
-    varnishMemory: "100M"
-    varnishResources:
-      limits:
-        cpu: 100m
-        memory: "200Mi"
-      requests:
-        cpu: 100m
-        memory: "200Mi"
-    imagePullSecretName: ${pull_secret}
+    container:
+      resources:
+        limits:
+          cpu: 100m
+          memory: "200Mi"
+        requests:
+          cpu: 100m
+          memory: "200Mi"
+      imagePullSecret: ${pull_secret}
   service:
     selector:
       run: nginx
-    ports:
-    - port: 80
-      protocol: TCP
+    varnishPort:
+      port: 80
 EOF
 
 sleep 3; kubectl rollout status deploy $(kubectl get deploy -l operator=varnish -o jsonpath='{.items[*].metadata.name}') --watch

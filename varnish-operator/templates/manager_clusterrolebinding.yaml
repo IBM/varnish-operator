@@ -9,5 +9,5 @@ roleRef:
   name: varnish-operator
 subjects:
 - kind: ServiceAccount
-  name: default
+  name: varnish-operator
   namespace: {{ .Release.Namespace | quote }}

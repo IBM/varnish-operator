@@ -20,6 +20,7 @@ spec:
         controller-tools.k8s.io: "1.0"
         admission-controller: "varnish-service-admission-controller"
     spec:
+      serviceAccountName: varnish-operator
       containers:
       - name: varnish-operator
         image: {{ .Values.container.image | quote }}

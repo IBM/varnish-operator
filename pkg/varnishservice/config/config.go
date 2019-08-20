@@ -65,8 +65,11 @@ func LoadConfig() (*Config, error) {
 	if !ok {
 		return &c, errors.New("image name does not include tag")
 	}
-	name := nt.Name()
-	repo := name[:strings.LastIndexByte(name, '/')] // chop off `/<image-name>`
+	repo := nt.Name()
+	if idx := strings.LastIndexByte(repo, '/'); idx != -1 {
+		repo = repo[:idx] // chop off `/<image-name>`
+	}
+
 	varnishImageName, err := dockerref.WithName(repo + "/varnish")
 	if err != nil {
 		return &c, errors.Wrap(err, "could not initialize varnish image name")

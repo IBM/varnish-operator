@@ -28,6 +28,18 @@ spec:
                   pattern: '^.+\.vcl$'
             statefulSet:
               properties:
+                updateStrategy:
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                        - OnDelete
+                        - RollingUpdate
+                    rollingUpdate:
+                      properties:
+                        partition:
+                          type: integer
+                          format: int32
                 container:
                   properties:
                     # enforce that .exec.command is a string array

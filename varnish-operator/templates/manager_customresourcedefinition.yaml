@@ -147,6 +147,19 @@ spec:
                   items:
                     type: object
                   type: array
+                updateStrategy:
+                  properties:
+                    rollingUpdate:
+                      properties:
+                        partition:
+                          format: int32
+                          type: integer
+                    type:
+                      enum:
+                      - OnDelete
+                      - RollingUpdate
+                      type: string
+                  type: object
               type: object
             vclConfigMap:
               properties:

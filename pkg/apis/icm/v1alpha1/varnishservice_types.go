@@ -70,10 +70,11 @@ type VarnishVCLConfigMap struct {
 }
 
 type VarnishStatefulSet struct {
-	Replicas    *int32           `json:"replicas,omitempty"`
-	Container   VarnishContainer `json:"container,omitempty"`
-	Affinity    *v1.Affinity     `json:"affinity,omitempty"`
-	Tolerations []v1.Toleration  `json:"tolerations,omitempty"`
+	Replicas       *int32                           `json:"replicas,omitempty"`
+	Container      VarnishContainer                 `json:"container,omitempty"`
+	UpdateStrategy appsv1.StatefulSetUpdateStrategy `json:"updateStrategy,omitempty"`
+	Affinity       *v1.Affinity                     `json:"affinity,omitempty"`
+	Tolerations    []v1.Toleration                  `json:"tolerations,omitempty"`
 }
 
 type VarnishContainer struct {

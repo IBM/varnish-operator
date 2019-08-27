@@ -9,7 +9,7 @@ Varnish operator creates, configures and manages Varnish clusters. It generates 
  * [x] Automatic VCL configuration updates (using user defined templates)
  * [x] Prometheus metrics support
  * [x] Scaling
- * [ ] Configurable rolling updates strategy
+ * [x] Configurable update strategy
  * [ ] Multiple Varnish versions support
  * [ ] Autoscaling
  * [ ] Nested directors support

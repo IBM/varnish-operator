@@ -225,6 +225,7 @@ func (in *VarnishStatefulSet) DeepCopyInto(out *VarnishStatefulSet) {
 		**out = **in
 	}
 	in.Container.DeepCopyInto(&out.Container)
+	in.UpdateStrategy.DeepCopyInto(&out.UpdateStrategy)
 	if in.Affinity != nil {
 		in, out := &in.Affinity, &out.Affinity
 		*out = new(v1.Affinity)

@@ -49,6 +49,7 @@ func (r *ReconcileVarnishService) reconcileStatefulSet(ctx context.Context, inst
 				MatchLabels: varnishLabels,
 			},
 			PodManagementPolicy: appsv1.ParallelPodManagement,
+			UpdateStrategy:      instance.Spec.StatefulSet.UpdateStrategy,
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: varnishLabels,

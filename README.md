@@ -27,7 +27,7 @@ The operator manages the whole lifecycle of the cluster: creating, deleting and 
  * [x] Automatic VCL configuration updates (using user defined templates)
  * [x] Prometheus metrics support
  * [x] Scaling
- * [ ] Configurable rolling updates strategy
+ * [x] Configurable update strategy
  * [ ] Multiple Varnish versions support
  * [ ] Autoscaling
  * [ ] Nested directors support

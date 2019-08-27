@@ -4,6 +4,7 @@
 package v1alpha1
 
 import (
+	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	v1 "k8s.io/api/core/v1"
@@ -28,6 +29,10 @@ func SetDefaults_VarnishServiceSpec(in *VarnishServiceSpec) {
 	}
 	if in.LogFormat == "" {
 		in.LogFormat = "json"
+	}
+
+	if in.StatefulSet.UpdateStrategy.Type == "" {
+		in.StatefulSet.UpdateStrategy.Type = appsv1.OnDeleteStatefulSetStrategyType
 	}
 }
 

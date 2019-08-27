@@ -65,7 +65,7 @@ See [Operator Configuration](operator-configuration.md) section for more options
 
 Since the operator is packaged into a Helm chart, the update is done by a simple `helm upgrade` command.
 
-Note that when the operator version updates, the Varnish images get updated as well which causes a restart of all Varnish pods controlled by the operator. Since Varnish is an in-memory cache it means that **all cached data will be lost** so plan your upgrade procedure accordingly.
+Note that when the operator version updates, the Varnish images get updated as well. That means that Varnish pods needs to be restarted with new configuration. As Varnish is an in-memory cache, it means losing cache data. To prevent accidental cache loss, by default, the update strategy is `OnDelete` which means the pods won't automatically get restarted. To update the pod you need to delete the pod manually, and it will come back with the new configuration. This behavior can be changed by setting the desired update strategy in the `.spec.statefulSet.updateStrategy` object. See [Varnish Service Configuration](varnish-service-configuration.md) section for more details.  
 
 ## Uninstalling the Operator
 

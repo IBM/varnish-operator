@@ -31,7 +31,7 @@ node("icm_slave") {
     DockerImageInfo operatorDockerImageInfo = icmGetDockerImageInfo(dockerRegistry, dockerRegistryNamespace, operatorDockerImageName,
             releaseBranch, gitInfo)
     icmDockerStages(operatorDockerImageInfo)
-
+    
     List<String> tags = icmGetTagsOnCommit()
     String repoVersion = new VersionUtils(this).getAppVersion()
     if (tags && tags.contains(repoVersion)) {

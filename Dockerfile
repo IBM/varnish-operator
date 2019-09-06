@@ -1,8 +1,10 @@
-FROM golang:1.11.5-alpine3.8 AS builder
+FROM golang:1.12-buster AS builder
+ENV DEBIAN_FRONTEND=noninteractive DEP_RELEASE_TAG=v0.5.4 INSTALL_DIRECTORY=/usr/local/bin
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git \
+        curl \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN apk update && apk add curl git
-
-ENV DEP_RELEASE_TAG=v0.5.1 INSTALL_DIRECTORY=/usr/local/bin
 RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 
 WORKDIR /go/src/icm-varnish-k8s-operator
@@ -24,16 +26,16 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     -o manager \
     icm-varnish-k8s-operator/cmd/manager
 
-FROM alpine:3.8
-LABEL maintainer="thurston sandberg <thurston.sandberg@us.ibm.com>"
+FROM debian:buster-slim
+LABEL maintainer="Alex Lytvynenko <oleksandr.lytvynenko@ibm.com>, Tomash Sidei <tomash.sidei@ibm.com>"
+ENV DEBIAN_FRONTEND=noninteractive 
 
 WORKDIR /
 
-RUN apk update &&\
-    apk upgrade
+RUN apt-get update && apt-get upgrade -y \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN addgroup -g 901 controller && adduser -D -u 901 -G controller controller
-# RUN chown -R controller
+RUN addgroup --gid 901 controller && adduser --uid 901 --gid 901 controller
 
 COPY --from=builder /go/src/icm-varnish-k8s-operator/manager .
 

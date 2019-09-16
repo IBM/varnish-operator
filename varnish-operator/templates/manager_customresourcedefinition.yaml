@@ -149,6 +149,15 @@ spec:
                   type: array
                 updateStrategy:
                   properties:
+                    delayedRollingUpdate:
+                      properties:
+                        delaySeconds:
+                          format: int32
+                          minimum: 1
+                          type: integer
+                      required:
+                      - delaySeconds
+                      type: object
                     rollingUpdate:
                       properties:
                         partition:
@@ -158,6 +167,7 @@ spec:
                       enum:
                       - OnDelete
                       - RollingUpdate
+                      - DelayedRollingUpdate
                       type: string
                   type: object
               type: object

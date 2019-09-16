@@ -34,6 +34,14 @@ func SetDefaults_VarnishServiceSpec(in *VarnishServiceSpec) {
 	if in.StatefulSet.UpdateStrategy.Type == "" {
 		in.StatefulSet.UpdateStrategy.Type = appsv1.OnDeleteStatefulSetStrategyType
 	}
+
+	if in.StatefulSet.UpdateStrategy.Type == VarnishUpdateStrategyDelayedRollingUpdate {
+		if in.StatefulSet.UpdateStrategy.DelayedRollingUpdate == nil {
+			in.StatefulSet.UpdateStrategy.DelayedRollingUpdate = &UpdateStrategyDelayedRollingUpdate{
+				DelaySeconds: 60,
+			}
+		}
+	}
 }
 
 func SetDefaults_VarnishContainer(in *VarnishContainer) {

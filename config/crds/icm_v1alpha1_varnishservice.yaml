@@ -107,6 +107,15 @@ spec:
                     type: object
                   type: array
                 updateStrategy:
+                  properties:
+                    delayedRollingUpdate:
+                      properties:
+                        delaySeconds:
+                          format: int32
+                          type: integer
+                      required:
+                      - delaySeconds
+                      type: object
                   type: object
               type: object
             vclConfigMap:

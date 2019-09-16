@@ -10,6 +10,8 @@ import (
 	"icm-varnish-k8s-operator/pkg/varnishservice/webhooks"
 	"log"
 
+	"sigs.k8s.io/controller-runtime/pkg/event"
+
 	"go.uber.org/zap"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -68,8 +70,9 @@ func main() {
 
 	// Setup all Controllers
 	logr.Infow("Setting up controller")
-	varnishReconciler := controller.NewVarnishReconciler(mgr, operatorConfig, logr)
-	if err := controller.Add(varnishReconciler, mgr, logr); err != nil {
+	reconcileChan := make(chan event.GenericEvent)
+	varnishReconciler := controller.NewVarnishReconciler(mgr, operatorConfig, logr, reconcileChan)
+	if err := controller.Add(varnishReconciler, mgr, logr, reconcileChan); err != nil {
 		logr.With(zap.Error(err)).Fatal("unable to register controllers to the manager")
 	}
 

@@ -30,6 +30,10 @@ const (
 	VarnishPort                   = 6081
 	VarnishAdminPort              = 6082
 	VarnishPrometheusExporterPort = 9131
+
+	VarnishContainerName = "varnish"
+
+	VarnishUpdateStrategyDelayedRollingUpdate = "DelayedRollingUpdate"
 )
 
 // +genclient
@@ -72,9 +76,18 @@ type VarnishVCLConfigMap struct {
 type VarnishStatefulSet struct {
 	Replicas       *int32                           `json:"replicas,omitempty"`
 	Container      VarnishContainer                 `json:"container,omitempty"`
-	UpdateStrategy appsv1.StatefulSetUpdateStrategy `json:"updateStrategy,omitempty"`
+	UpdateStrategy VarnishStatefulSetUpdateStrategy `json:"updateStrategy,omitempty"`
 	Affinity       *v1.Affinity                     `json:"affinity,omitempty"`
 	Tolerations    []v1.Toleration                  `json:"tolerations,omitempty"`
+}
+
+type VarnishStatefulSetUpdateStrategy struct {
+	appsv1.StatefulSetUpdateStrategy
+	DelayedRollingUpdate *UpdateStrategyDelayedRollingUpdate `json:"delayedRollingUpdate,omitempty"`
+}
+
+type UpdateStrategyDelayedRollingUpdate struct {
+	DelaySeconds int32 `json:"delaySeconds"`
 }
 
 type VarnishContainer struct {

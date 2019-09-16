@@ -19,7 +19,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func (r *ReconcileVarnishService) reconcileStatefulSet(ctx context.Context, instance, instanceStatus *icmapiv1alpha1.VarnishService, serviceAccountName string, endpointSelector map[string]string, svcName string) (map[string]string, error) {
+func (r *ReconcileVarnishService) reconcileStatefulSet(ctx context.Context, instance, instanceStatus *icmapiv1alpha1.VarnishService, serviceAccountName string, endpointSelector map[string]string, svcName string) (*appsv1.StatefulSet, map[string]string, error) {
 	varnishLabels := vslabels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentVarnishes)
 	gvk := instance.GroupVersionKind()
 	var varnishImage string
@@ -36,6 +36,15 @@ func (r *ReconcileVarnishService) reconcileStatefulSet(ctx context.Context, inst
 		imagePullSecrets = []v1.LocalObjectReference{{Name: *instance.Spec.StatefulSet.Container.ImagePullSecret}}
 	}
 
+	var updateStrategy appsv1.StatefulSetUpdateStrategy
+	if instance.Spec.StatefulSet.UpdateStrategy.Type == icmapiv1alpha1.VarnishUpdateStrategyDelayedRollingUpdate {
+		updateStrategy = appsv1.StatefulSetUpdateStrategy{
+			Type: appsv1.OnDeleteStatefulSetStrategyType,
+		}
+	} else {
+		updateStrategy = instance.Spec.StatefulSet.UpdateStrategy.StatefulSetUpdateStrategy
+	}
+
 	desired := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      instance.Name + "-varnish-statefulset",
@@ -49,7 +58,7 @@ func (r *ReconcileVarnishService) reconcileStatefulSet(ctx context.Context, inst
 				MatchLabels: varnishLabels,
 			},
 			PodManagementPolicy: appsv1.ParallelPodManagement,
-			UpdateStrategy:      instance.Spec.StatefulSet.UpdateStrategy,
+			UpdateStrategy:      updateStrategy,
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: varnishLabels,
@@ -57,7 +66,7 @@ func (r *ReconcileVarnishService) reconcileStatefulSet(ctx context.Context, inst
 				Spec: v1.PodSpec{
 					Containers: []v1.Container{
 						{
-							Name:  "varnish",
+							Name:  icmapiv1alpha1.VarnishContainerName,
 							Image: varnishImage,
 							Ports: []v1.ContainerPort{
 								{
@@ -92,6 +101,7 @@ func (r *ReconcileVarnishService) reconcileStatefulSet(ctx context.Context, inst
 										Command: []string{"/usr/bin/varnishadm", "ping"},
 									},
 								},
+								TimeoutSeconds: 30,
 							},
 							ImagePullPolicy: instance.Spec.StatefulSet.Container.ImagePullPolicy,
 						},
@@ -110,7 +120,7 @@ func (r *ReconcileVarnishService) reconcileStatefulSet(ctx context.Context, inst
 	logr = logr.With(logger.FieldComponentName, desired.Name)
 
 	if err := controllerutil.SetControllerReference(instance, desired, r.scheme); err != nil {
-		return nil, errors.Wrap(err, "could not set controller as the OwnerReference for statefulset")
+		return nil, nil, errors.Wrap(err, "could not set controller as the OwnerReference for statefulset")
 	}
 	r.scheme.Default(desired)
 
@@ -125,10 +135,10 @@ func (r *ReconcileVarnishService) reconcileStatefulSet(ctx context.Context, inst
 		logr.Infoc("Creating StatefulSet", "new", desired)
 		err = r.Create(ctx, desired)
 		if err != nil {
-			return nil, errors.Wrap(err, "could not create statefulset")
+			return nil, nil, errors.Wrap(err, "could not create statefulset")
 		}
 	} else if err != nil {
-		return nil, errors.Wrap(err, "could not get current state of statefulset")
+		return nil, nil, errors.Wrap(err, "could not get current state of statefulset")
 	} else {
 		// the pod selector is immutable once set, so always enforce the same as existing
 		desired.Spec.Selector = found.Spec.Selector
@@ -138,7 +148,7 @@ func (r *ReconcileVarnishService) reconcileStatefulSet(ctx context.Context, inst
 			found.Spec = desired.Spec
 			found.Labels = desired.Labels
 			if err = r.Update(ctx, found); err != nil {
-				return nil, errors.Wrap(err, "could not update statefulset")
+				return nil, nil, errors.Wrap(err, "could not update statefulset")
 			}
 		} else {
 			logr.Debugw("No updates for StatefulSet")
@@ -149,5 +159,5 @@ func (r *ReconcileVarnishService) reconcileStatefulSet(ctx context.Context, inst
 	instanceStatus.Status.StatefulSet.Name = found.Name
 	instanceStatus.Status.StatefulSet.VarnishArgs = varnishdArgs
 
-	return varnishLabels, nil
+	return found, varnishLabels, nil
 }

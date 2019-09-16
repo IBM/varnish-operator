@@ -35,11 +35,18 @@ spec:
                       enum:
                         - OnDelete
                         - RollingUpdate
+                        - DelayedRollingUpdate
                     rollingUpdate:
                       properties:
                         partition:
                           type: integer
                           format: int32
+                    delayedRollingUpdate:
+                      properties:
+                        delaySeconds:
+                          type: integer
+                          format: int32
+                          minimum: 1
                 container:
                   properties:
                     # enforce that .exec.command is a string array

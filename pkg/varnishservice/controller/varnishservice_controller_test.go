@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"sigs.k8s.io/controller-runtime/pkg/event"
+
 	v1 "k8s.io/api/core/v1"
 
 	"go.uber.org/zap"
@@ -69,8 +71,9 @@ func TestReconcile(t *testing.T) {
 		SugaredLogger: zapLogr.Sugar(),
 	}
 
-	reconciler, requests := SetupTestReconcile(NewVarnishReconciler(mgr, testCfg, testLogger))
-	g.Expect(Add(reconciler, mgr, testLogger)).NotTo(gomega.HaveOccurred())
+	reconcileChan := make(chan event.GenericEvent)
+	reconciler, requests := SetupTestReconcile(NewVarnishReconciler(mgr, testCfg, testLogger, reconcileChan))
+	g.Expect(Add(reconciler, mgr, testLogger, reconcileChan)).NotTo(gomega.HaveOccurred())
 	defer close(StartTestManager(mgr, g))
 
 	// Create the VarnishService object and expect the Reconcile and StatefulSet to be created

@@ -77,6 +77,16 @@ Just as with any other Kubernetes resource, using `kubectl apply`, `kubectl patc
 
 Some spec changes (like the image version or container config change) need a pod restart in order to be applied. As Varnish is an in-memory cache, it means cache data loss. To prevent accidental cache loss, by default, the update strategy is `OnDelete` which means the pods won't automatically get restarted. To update the pod you need to delete the pod manually, and it will come back with the new configuration. This behavior can be changed by setting the desired update strategy in the `.spec.statefulSet.updateStrategy` object. See [Varnish Service Configuration](varnish-service-configuration.md) section for more details.
 
+#### DelayedRollingUpdate
+
+Besides standard update strategies like `OnDelete` and `RollingUpdate`, the Varnish operator has an another one - `DelayedRollingUpdate`.
+
+`DelayedRollingUpdate` works the same way as `RollingUpdate` with the difference being a pause between pod updates. This is useful when all you want is to wait for a recently updated Varnish node to warm up before an another one reloads. The delay is configurable by the `.spec.statefulSet.updateStrategy.delayedRollingUpdate.delaySeconds` field. 
+
+The delay is counted from the time the pod is created in Kubernetes, not when it got scheduled and become ready so this has to be considered when choosing the delay time.
+
+The operator respects Pods readiness and does not reload the next pod until all pods are ready, even if the delay time elapsed. 
+
 ### Deleting a VarnishService Resource
 
 Simply calling `kubectl delete` on the `VarnishService` will recursively delete all dependent resources, so that is the only action you need to take. This includes a user-generated ConfigMap, as the VarnishService will take ownership of that ConfigMap after creation. Deleting any of the dependent resources will trigger the operator to recreate that resource, in the same way that deleting the Pod of a Deployment will trigger the recreation of that Pod.

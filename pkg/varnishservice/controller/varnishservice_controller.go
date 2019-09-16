@@ -7,7 +7,10 @@ import (
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
 	"icm-varnish-k8s-operator/pkg/varnishservice/config"
 	"icm-varnish-k8s-operator/pkg/varnishservice/pods"
+	vsreconcile "icm-varnish-k8s-operator/pkg/varnishservice/reconcile"
 	"time"
+
+	"sigs.k8s.io/controller-runtime/pkg/event"
 
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
@@ -29,19 +32,20 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-func NewVarnishReconciler(mgr manager.Manager, cfg *config.Config, logr *logger.Logger) reconcile.Reconciler {
+func NewVarnishReconciler(mgr manager.Manager, cfg *config.Config, logr *logger.Logger, reconcileChan chan event.GenericEvent) reconcile.Reconciler {
 	return &ReconcileVarnishService{
-		Client: mgr.GetClient(),
-		logger: logr,
-		config: cfg,
-		scheme: mgr.GetScheme(),
-		events: NewEventHandler(mgr.GetRecorder(EventRecorderNameVarnishService)),
+		Client:             mgr.GetClient(),
+		logger:             logr,
+		config:             cfg,
+		scheme:             mgr.GetScheme(),
+		events:             NewEventHandler(mgr.GetRecorder(EventRecorderNameVarnishService)),
+		reconcileTriggerer: vsreconcile.NewReconcileTriggerer(logr, reconcileChan),
 	}
 }
 
 // Add creates a new VarnishService Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(r reconcile.Reconciler, mgr manager.Manager, logr *logger.Logger) error {
+func Add(r reconcile.Reconciler, mgr manager.Manager, logr *logger.Logger, reconcileChan chan event.GenericEvent) error {
 	// Create a new controller
 	c, err := controller.New("varnishservice-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
@@ -68,6 +72,13 @@ func Add(r reconcile.Reconciler, mgr manager.Manager, logr *logger.Logger) error
 	if err != nil {
 		return err
 	}
+
+	fun := &source.Channel{Source: reconcileChan}
+	err = c.Watch(fun, &handler.EnqueueRequestForObject{})
+	if err != nil {
+		return err
+	}
+
 	err = c.Watch(&source.Kind{Type: &v1.Pod{}}, &handler.EnqueueRequestsFromMapFunc{
 		ToRequests: handler.ToRequestsFunc(
 			func(a handler.MapObject) []reconcile.Request {
@@ -155,10 +166,11 @@ var _ reconcile.Reconciler = &ReconcileVarnishService{}
 // ReconcileVarnishService reconciles a VarnishService object
 type ReconcileVarnishService struct {
 	client.Client
-	logger *logger.Logger
-	config *config.Config
-	scheme *runtime.Scheme
-	events *EventHandler
+	logger             *logger.Logger
+	config             *config.Config
+	scheme             *runtime.Scheme
+	events             *EventHandler
+	reconcileTriggerer *vsreconcile.ReconcileTriggerer
 }
 
 // Reconcile reads that state of the cluster for a VarnishService object and makes changes based on the state read
@@ -255,7 +267,7 @@ func (r *ReconcileVarnishService) reconcileWithContext(ctx context.Context, requ
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-	varnishSelector, err := r.reconcileStatefulSet(ctx, instance, instanceStatus, serviceAccountName, endpointSelector, headlessServiceName)
+	sts, varnishSelector, err := r.reconcileStatefulSet(ctx, instance, instanceStatus, serviceAccountName, endpointSelector, headlessServiceName)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -268,6 +280,10 @@ func (r *ReconcileVarnishService) reconcileWithContext(ctx context.Context, requ
 		return reconcile.Result{}, err
 	}
 	if err = r.reconcileService(ctx, instance, instanceStatus, varnishSelector); err != nil {
+		return reconcile.Result{}, err
+	}
+
+	if err = r.reconcileDelayedRollingUpdate(ctx, instance, instanceStatus, sts); err != nil {
 		return reconcile.Result{}, err
 	}
 

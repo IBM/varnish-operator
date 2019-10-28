@@ -3,7 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
-	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
+	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
 	vslabels "icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/logger"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
@@ -89,7 +89,7 @@ func (r *ReconcileVarnishService) reconcileConfigMap(ctx context.Context, podsSe
 
 	pods := &v1.PodList{}
 	selector := labels.SelectorFromSet(podsSelector)
-	err = r.List(context.Background(), &client.ListOptions{LabelSelector: selector}, pods)
+	err = r.List(context.Background(), pods, &client.MatchingLabelsSelector{Selector: selector})
 	if err != nil {
 		return nil, errors.Wrap(err, "can't get list of pods")
 	}

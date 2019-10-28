@@ -18,8 +18,9 @@ type Config struct {
 	ContainerImage        string        `env:"CONTAINER_IMAGE,required"`
 	LogLevel              zapcore.Level `env:"LOGLEVEL" envDefault:"info"`
 	LogFormat             string        `env:"LOGFORMAT" envDefault:"json"`
-	ContainerMetricsPort  int32         `env:"CONTAINER_METRICSPORT" envDefault:"8080"`
-	ContainerWebhookPort  int32         `env:"CONTAINER_WEBHOOKPORT" envDefault:"9244"`
+	WebhooksPort          int32         `env:"WEBHOOKS_PORT" envDefault:"7340"`
+	MetricsPort           int32         `env:"METRICS_PORT" envDefault:"8329"`
+	WebhooksEnabled       bool          `env:"WEBHOOKS_ENABLED" envDefault:"true"`
 
 	CoupledVarnishImage string
 }
@@ -44,7 +45,7 @@ func levelParser(v string) (interface{}, error) {
 var (
 	int32Type    = reflect.TypeOf(int32(0))
 	levelType    = reflect.TypeOf(zapcore.DebugLevel)
-	parseFuncMap = env.CustomParsers{
+	parseFuncMap = map[reflect.Type]env.ParserFunc{
 		int32Type: int32Parser,
 		levelType: levelParser,
 	}

@@ -1,21 +1,20 @@
-FROM golang:1.12-buster AS builder
-ENV DEBIAN_FRONTEND=noninteractive DEP_RELEASE_TAG=v0.5.4 INSTALL_DIRECTORY=/usr/local/bin
+FROM golang:1.13-buster AS builder
+ENV DEBIAN_FRONTEND=noninteractive INSTALL_DIRECTORY=/usr/local/bin
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git \
         curl \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-
 WORKDIR /go/src/icm-varnish-k8s-operator
 
 # Copy in the go src
-COPY Gopkg.toml Gopkg.lock ./
-# Populate the vendor folder
-RUN dep ensure -v --vendor-only
+COPY go.mod go.sum ./
+# Download modules
+RUN go mod download
 
 COPY cmd/ cmd/
 COPY pkg/ pkg/
+COPY api/ api/
 COPY version.txt ./
 
 # Build

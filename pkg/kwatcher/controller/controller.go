@@ -2,17 +2,20 @@ package controller
 
 import (
 	"context"
-	"icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
+	"icm-varnish-k8s-operator/api/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/kwatcher/config"
-	"icm-varnish-k8s-operator/pkg/kwatcher/configmaps"
-	"icm-varnish-k8s-operator/pkg/kwatcher/endpoints"
 	"icm-varnish-k8s-operator/pkg/kwatcher/events"
+	"icm-varnish-k8s-operator/pkg/kwatcher/predicates"
 	vslabels "icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/logger"
 	"strings"
 	"time"
 
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/source"
+
 	"github.com/pkg/errors"
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
@@ -22,11 +25,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 // PodInfo represents the relevant information of a pod for VCL code
@@ -36,23 +36,18 @@ type PodInfo struct {
 	PodName    string
 }
 
-// Add creates a new VarnishService Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
+// SetupVarnishReconciler creates a new VarnishService Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager, cfg *config.Config, logr *logger.Logger) error {
+func SetupVarnishReconciler(mgr manager.Manager, cfg *config.Config, logr *logger.Logger) error {
 	r := &ReconcileVarnish{
 		config:       cfg,
 		logger:       logr,
 		Client:       mgr.GetClient(),
 		scheme:       mgr.GetScheme(),
-		eventHandler: events.NewEventHandler(mgr.GetRecorder(events.EventRecorderName), cfg.PodName),
-	}
-	// Create a new controller
-	c, err := controller.New("varnishservice-controller", mgr, controller.Options{Reconciler: r})
-	if err != nil {
-		return errors.Wrap(err, "could not initialize controller")
+		eventHandler: events.NewEventHandler(mgr.GetEventRecorderFor(events.EventRecorderName), cfg.PodName),
 	}
 
-	err = c.Watch(&source.Kind{Type: &v1.ConfigMap{}}, &handler.EnqueueRequestsFromMapFunc{
+	podMapFunc := &handler.EnqueueRequestsFromMapFunc{
 		ToRequests: handler.ToRequestsFunc(
 			func(a handler.MapObject) []reconcile.Request {
 				return []reconcile.Request{
@@ -61,29 +56,25 @@ func Add(mgr manager.Manager, cfg *config.Config, logr *logger.Logger) error {
 						Name:      cfg.PodName,
 					}},
 				}
-			}),
-	}, configmaps.Predicate(cfg.ConfigMapName))
-	if err != nil {
-		return errors.Wrap(err, "could not watch configMap")
-	}
+			})}
 
-	backendEpPredicate, err := endpoints.NewPredicate(cfg.EndpointSelectorString, logr)
+	builder := ctrl.NewControllerManagedBy(mgr)
+	builder.Named("kwatcher")
+
+	// Normally the `For` function receives the type the operator owns. For the operator it's the VarnishService.
+	// For kwatcher we don't have such resource but still need to provide something for the `For` function, it will fail otherwise.
+	// For that reason we provide the v1alpha1.VarnishService resource but filter it all out. The operator will receive events from Kubernetes but won't react.
+	builder.For(&v1alpha1.VarnishService{})
+	builder.WithEventFilter(predicates.NewIgnoreVarnishServicesPredicate())
+
+	builder.Watches(&source.Kind{Type: &v1.ConfigMap{}}, podMapFunc)
+	builder.WithEventFilter(predicates.NewConfigMapNamePredicate(cfg.ConfigMapName, logr))
+
+	builder.Watches(&source.Kind{Type: &v1.Endpoints{}}, podMapFunc)
+
+	backendsLabels, err := labels.ConvertSelectorToLabelsMap(cfg.EndpointSelectorString)
 	if err != nil {
-		return errors.Wrap(err, "could not create endpoints predicate")
-	}
-	err = c.Watch(&source.Kind{Type: &v1.Endpoints{}}, &handler.EnqueueRequestsFromMapFunc{
-		ToRequests: handler.ToRequestsFunc(
-			func(a handler.MapObject) []reconcile.Request {
-				return []reconcile.Request{
-					{NamespacedName: types.NamespacedName{
-						Namespace: cfg.Namespace,
-						Name:      cfg.PodName,
-					}},
-				}
-			}),
-	}, backendEpPredicate)
-	if err != nil {
-		return errors.Wrap(err, "could not watch endpoints")
+		return err
 	}
 
 	varnishPodsSelector := labels.SelectorFromSet(labels.Set{
@@ -91,26 +82,11 @@ func Add(mgr manager.Manager, cfg *config.Config, logr *logger.Logger) error {
 		v1alpha1.LabelVarnishComponent: v1alpha1.VarnishComponentCacheService,
 		v1alpha1.LabelVarnishUID:       string(cfg.VarnishServiceUID),
 	})
-	varnishEpPredicate, err := endpoints.NewPredicate(varnishPodsSelector.String(), logr)
-	if err != nil {
-		return errors.Wrap(err, "could not create endpoints predicate")
-	}
-	err = c.Watch(&source.Kind{Type: &v1.Endpoints{}}, &handler.EnqueueRequestsFromMapFunc{
-		ToRequests: handler.ToRequestsFunc(
-			func(a handler.MapObject) []reconcile.Request {
-				return []reconcile.Request{
-					{NamespacedName: types.NamespacedName{
-						Namespace: cfg.Namespace,
-						Name:      cfg.PodName,
-					}},
-				}
-			}),
-	}, varnishEpPredicate)
-	if err != nil {
-		return errors.Wrap(err, "could not watch endpoints")
-	}
 
-	return nil
+	endpointsSelectors := []labels.Selector{labels.SelectorFromSet(backendsLabels), varnishPodsSelector}
+	builder.WithEventFilter(predicates.NewEndpointsSelectors(endpointsSelectors, logr))
+
+	return builder.Complete(r)
 }
 
 var _ reconcile.Reconciler = &ReconcileVarnish{}
@@ -127,8 +103,8 @@ func (r *ReconcileVarnish) Reconcile(request reconcile.Request) (reconcile.Resul
 	ctx := context.Background()
 
 	logr := r.logger.With(logger.FieldVarnishService, r.config.VarnishServiceName)
-	logr = logr.With(logger.FieldPodName, request.Name)
-	logr = logr.With(logger.FieldNamespace, request.Namespace)
+	logr = logr.With(logger.FieldPodName, r.config.PodName)
+	logr = logr.With(logger.FieldNamespace, r.config.Namespace)
 
 	logr.Debugw("Reconciling...")
 	start := time.Now()

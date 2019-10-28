@@ -1,2 +1,2 @@
 resources:
-  - rbac_role.yaml
+  - role.yaml

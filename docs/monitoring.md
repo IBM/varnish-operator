@@ -4,7 +4,7 @@
 
 The operator is built using the [Kubebuilder SDK](https://github.com/kubernetes-sigs/kubebuilder) which has built-in support for the Prometheus metrics exporter.
 
-By default, the operator Helm chart creates a Service that exposes the port the exporter is listening on. The default port is `9131` and can be changed by overriding the `container.metricsPort` field in [Helm chart](operator-configuration.md).
+A service, created by the operator's Helm chart, exposes the metrics on port `8329` (named `prometheus-metrics`) and can be used to scrape operator metrics.
 
 ### Monitoring Stack Example
 
@@ -14,8 +14,9 @@ After you have the [operator installed](installation.md), clone the repo and ins
 
 ```bash
 $ git clone git@github.ibm.com:TheWeatherCompany/icm-varnish-k8s-operator.git
-$ cd icm-varnish-k8s-operator
-$ helm install --name varnish-operator-monitoring config/samples/helm-charts/varnish-operator-monitoring
+$ cd icm-varnish-k8s-operator/config/samples/helm-charts/varnish-operator-monitoring
+$ helm dep build
+$ helm install --name varnish-operator-monitoring .
 ```
 
 No additional configuration needed. The monitoring stack relies on the labels set for the Service that exposes the operator pods.
@@ -48,8 +49,9 @@ It can be installed by cloning the repo and installing the chart with necessary 
 
 ```bash
 $ git clone git@github.ibm.com:TheWeatherCompany/icm-varnish-k8s-operator.git
-$ cd icm-varnish-k8s-operator
-$ helm install --name varnish-test config/samples/helm-charts/varnishservice-with-monitoring --set varnish.imagePullSecret=docker-reg-secret --set varnish.backendsSelector.app=nginx --set varnish.backendsPort=80
+$ cd icm-varnish-k8s-operator/config/samples/helm-charts/varnishservice-with-monitoring
+$ helm dep build
+$ helm install --name varnish-test . --set varnish.imagePullSecret=docker-reg-secret --set varnish.backendsSelector.app=nginx --set varnish.backendsPort=80
 ```
 
 Port forward the Grafana pod to see the dashboard:

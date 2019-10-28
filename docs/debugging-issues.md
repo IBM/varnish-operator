@@ -16,13 +16,13 @@ For a `VarnishService` named `varnish-service-example` the command will look lik
 ```bash
 $ kubectl get pods -l varnish-owner=varnish-service-example                                                   
 NAME                                                          READY   STATUS    RESTARTS   AGE
-varnish-service-example-varnish-statefulset-0                 1/1     Running   0          15s
+varnish-service-example-varnish-0                 1/1     Running   0          15s
 ```
 
 Now, you can exec to that pod's container:
 
 ```bash
-$ kubectl exec -it varnish-service-example-varnish-statefulset-0 sh
+$ kubectl exec -it varnish-service-example-varnish-0 sh
 ```
 
 and execute any available Varnish command line tool. For example `varnishadm`:
@@ -105,16 +105,16 @@ Namespace:    varnish-operator-system
 Events:
   Type     Reason               Age   From     Message
   ----     ------               ----  ----     -------
-  Warning  VCLCompilationError  11s   varnish  VCL compilation failed for pod varnish-service-example-varnish-statefulset-0. See pod logs for details
+  Warning  VCLCompilationError  11s   varnish  VCL compilation failed for pod varnish-service-example-varnish-0. See pod logs for details
 ```
 
 As you can see, the event indicates that it is a VCL compilation error indeed. To check the compilation error message see the pod logs:
 
 ```bash
-$ kubectl logs varnish-service-example-varnish-statefulset-0                 
+$ kubectl logs varnish-service-example-varnish-0                 
 ...
 2019-07-04T10:50:53.481Z	INFO	kwatcher/main.go:60	Starting Varnish Watcher	{"kwatcher_version": "0.17.0"}
-2019-07-04T10:50:54.012Z	INFO	controller/controller_files.go:57	Rewriting file	{"kwatcher_version": "0.17.0", "varnish_service": "varnish-service-example", "pod_name": "varnish-service-example-varnish-statefulset-0", "namespace": "varnish-operator-system", "file_path": "/etc/varnish/backends.vcl"}
+2019-07-04T10:50:54.012Z	INFO	controller/controller_files.go:57	Rewriting file	{"kwatcher_version": "0.17.0", "varnish_service": "varnish-service-example", "pod_name": "varnish-service-example-varnish-0", "namespace": "varnish-operator-system", "file_path": "/etc/varnish/backends.vcl"}
 2019-07-04T10:50:54.506Z	WARN	controller/controller_varnish.go:51	Message from VCC-compiler:
 Expected one of
 	'acl', 'sub', 'backend', 'probe', 'import', 'vcl',  or 'default'
@@ -128,7 +128,7 @@ Command failed with error code 106
 VCL compilation failed
 No VCL named v-974330-1562237454 known.
 Command failed with error code 106
-	{"kwatcher_version": "0.17.0", "varnish_service": "varnish-service-example", "pod_name": "varnish-service-example-varnish-statefulset-0", "namespace": "varnish-operator-system"}
+	{"kwatcher_version": "0.21.0", "varnish_service": "varnish-service-example", "pod_name": "varnish-service-example-varnish-0", "namespace": "varnish-operator-system"}
 ```
 
 As you can see we have a type in word - `bakcend`. To fix it you'll have to modify your [ConfigMap containing your VCL files](vcl-configuration.md).

@@ -1,3 +1,7 @@
-version: 1.0.0
+version: "2"
 domain: ibm.com
-repo: icm-varnish-k8s-operator
+repo: icm-varnish-operator
+resources:
+- group: icm
+  version: v1alpha1
+  kind: VarnishService

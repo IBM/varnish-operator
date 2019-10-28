@@ -2,7 +2,7 @@ package controller
 
 import (
 	"context"
-	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
+	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/logger"
 	"time"
@@ -30,8 +30,8 @@ func (r *ReconcileVarnishService) reconcileDelayedRollingUpdate(ctx context.Cont
 	}
 
 	stsPods := &v1.PodList{}
-	varnishPodLabels := klabels.SelectorFromSet(labels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentVarnishes))
-	if err := r.List(ctx, &client.ListOptions{LabelSelector: varnishPodLabels}, stsPods); err != nil {
+	varnishPodLabels := klabels.SelectorFromSet(labels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentVarnish))
+	if err := r.List(ctx, stsPods, &client.MatchingLabelsSelector{Selector: varnishPodLabels}); err != nil {
 		return errors.WithStack(err)
 	}
 

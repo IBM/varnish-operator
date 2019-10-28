@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    operator: varnish-operator
+  name: varnish-operator
+  namespace: {{ .Release.Namespace | quote }}
+spec:
+  selector:
+    matchLabels:
+      operator: varnish-operator
+  replicas: {{ .Values.replicas }}
+  template:
+    metadata:
+      labels:
+        operator: varnish-operator
+    spec:
+      serviceAccountName: varnish-operator
+      containers:
+      - name: varnish-operator
+        image: {{ .Values.container.image | quote }}
+        imagePullPolicy: {{ .Values.container.imagePullPolicy | title | quote }}
+        env:
+        - name: NAMESPACE
+          value: {{ .Release.Namespace | quote }}
+        - name: LEADERELECTION_ENABLED
+          value: {{ if gt .Values.replicas 1.0 }}"true"{{ else }}"false"{{ end }}
+        - name: CONTAINER_IMAGE
+          value: {{ .Values.container.image | quote }}
+        - name: WEBHOOKS_ENABLED
+          value: "true"
+        - name: LOGLEVEL
+          value: {{ .Values.logLevel | quote }}
+        - name: LOGFORMAT
+          value: {{ .Values.logFormat | quote }}
+        resources: {{ toYaml .Values.container.resources | nindent 10 }}
+        volumeMounts:
+          - mountPath: /tmp/k8s-webhook-server/serving-certs
+            name: cert
+            readOnly: true
+        ports:
+          - containerPort: 8329
+            name: metrics
+          - containerPort: 7340
+            name: webhook
+      volumes:
+        - name: cert
+          secret:
+            defaultMode: 420
+            secretName: varnish-operator-webhook-server-cert
+            items:
+              - key: cert
+                path: tls.crt
+              - key: key
+                path: tls.key
+      restartPolicy: {{ .Values.container.restartPolicy | quote }}
+      {{- with .Values.container.imagePullSecret }}
+      imagePullSecrets:
+      - name: {{ . | quote }}
+      {{- end }}
+      terminationGracePeriodSeconds: 10

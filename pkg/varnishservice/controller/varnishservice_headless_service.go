@@ -2,7 +2,7 @@ package controller
 
 import (
 	"context"
-	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
+	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/labels"
 	vslabels "icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/logger"
@@ -45,7 +45,7 @@ func (r *ReconcileVarnishService) reconcileHeadlessService(ctx context.Context, 
 			ClusterIP:       v1.ClusterIPNone,
 			Type:            v1.ServiceTypeClusterIP,
 			SessionAffinity: v1.ServiceAffinityNone,
-			Selector:        vslabels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentVarnishes),
+			Selector:        vslabels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentVarnish),
 		},
 	}
 

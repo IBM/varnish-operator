@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	statefulSetIgnoreFields = cmpopts.IgnoreFields(appsv1.StatefulSet{}, "Spec.Template.Spec.DeprecatedServiceAccount")
+	statefulSetIgnoreFields = cmpopts.IgnoreFields(appsv1.StatefulSet{}, "Spec.Template.Spec.DeprecatedServiceAccount", "Spec.Template.Spec.SchedulerName")
 	compareQuantity         = cmp.Comparer(func(x, y resource.Quantity) bool { return x.Cmp(y) == 0 })
 	deployOpts              = []cmp.Option{cmpopts.IgnoreFields(appsv1.StatefulSet{}, sharedIgnoreMetadata...), cmpopts.IgnoreFields(appsv1.StatefulSet{}, sharedIgnoreStatus...), statefulSetIgnoreFields, compareQuantity}
 )

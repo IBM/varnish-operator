@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name:  varnish-operator-webhooks-cert-patch
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    "helm.sh/hook-weight": "4"
+spec:
+  ttlSecondsAfterFinished: 0
+  template:
+    metadata:
+      name:  varnish-operator-webhooks-cert-patch
+      labels:
+        app: varnish-operator-webhooks-cert-patch
+    spec:
+      containers:
+        - name: patch
+          image: jettech/kube-webhook-certgen:v1.0.0
+          imagePullPolicy: Always
+          args:
+            - patch
+            - --webhook-name=varnish-operator-webhook-configuration
+            - --namespace={{ .Release.Namespace }}
+            - --secret-name=varnish-operator-webhook-server-cert
+            - --patch-failure-policy=Fail
+      restartPolicy: OnFailure
+      serviceAccountName: varnish-operator-webhooks-cert-patch
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 2000

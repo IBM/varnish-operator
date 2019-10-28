@@ -179,12 +179,12 @@ my-varnish  292181
 # figure out which pods doesn't have that latest version
 > kubectl get pods -n varnish-ns -o=custom-columns=NAME:.metadata.name,CONFIG_MAP_VERSION:.metadata.annotations.configMapVersion
 NAME                              CONFIG_MAP_VERSION
-my-varnish-varnish-statefulset-0  351231
-my-varnish-varnish-statefulset-1  351231
-my-varnish-varnish-statefulset-2  351231
+my-varnish-varnish-0  351231
+my-varnish-varnish-1  351231
+my-varnish-varnish-2  351231
 # Looks like all pods have outdated VCL. Lets check the logs of one of the pods
-> kubectl logs -n my-varnish my-varnish-varnish-statefulset-0 
-2019-06-24T12:59:56.105Z	INFO	controller/controller_files.go:57	Rewriting file	{"kwatcher_version": "0.14.6", "varnish_service": "my-varnish", "pod_name": "my-varnish-varnish-statefulset-0", "namespace": "my-varnish", "file_path": "/etc/varnish/backends.vcl"}
+> kubectl logs -n my-varnish my-varnish-varnish-0 
+2019-06-24T12:59:56.105Z	INFO	controller/controller_files.go:57	Rewriting file	{"kwatcher_version": "0.21.0", "varnish_service": "my-varnish", "pod_name": "my-varnish-varnish-0", "namespace": "my-varnish", "file_path": "/etc/varnish/backends.vcl"}
 2019-06-24T12:59:56.427Z	WARN	controller/controller_varnish.go:51	Message from VCC-compiler:
 Expected one of
 	'acl', 'sub', 'backend', 'probe', 'import', 'vcl',  or 'default'
@@ -198,7 +198,7 @@ Command failed with error code 106
 VCL compilation failed
 No VCL named v-20861922-1561381196 known.
 Command failed with error code 106
-	{"kwatcher_version": "0.14.6", "varnish_service": "my-varnish", "pod_name": "my-varnish-varnish-statefulset-0", "namespace": "my-varnish"}
+	{"kwatcher_version": "0.21.0", "varnish_service": "my-varnish", "pod_name": "my-varnish-varnish-0", "namespace": "my-varnish"}
 ```
 
 As the logs indicate, the issue here is the invalid VCL syntax.

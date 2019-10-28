@@ -2,18 +2,15 @@
 
 Requirements:
 
-* Kubernetes 1.11 or newer. You can use [minikube](https://kubernetes.io/docs/setup/minikube/) for local development)
-* Go 1.12
-* [Kubebuilder](https://book-v1.book.kubebuilder.io/getting_started/installation_and_setup.html#) 1.0.8
-* [dep](https://github.com/golang/dep)
-* [kustomize](https://github.com/kubernetes-sigs/kustomize)
+* Kubernetes 1.12 or newer. You can use [minikube](https://kubernetes.io/docs/setup/minikube/) for local development)
+* Go 1.12 with enabled go modules
+* [Kubebuilder](https://kubebuilder.io/quick-start.html#installation) 2.0.0+
+* [kustomize](https://github.com/kubernetes-sigs/kustomize) 3.1.0+
 * [helm](https://helm.sh/)
-* [yq](https://yq.readthedocs.io/en/latest/)
 * [docker](https://docs.docker.com/install/)
 * [goimports](https://godoc.org/golang.org/x/tools/cmd/goimports)
-* [GolangCI-Lint](https://github.com/golangci/golangci-lint)
+* [GolangCI-Lint](https://github.com/golangci/golangci-lint) 1.19.1+
 * [gitbook cli](https://github.com/GitbookIO/gitbook-cli), if you want to modify and test the docs locally
-* [GOPATH](https://golang.org/cmd/go/#hdr-GOPATH_environment_variable) is set explicitly. Although setting GOPATH can be skipped in recent versions of Go (`~/go` will be used), the dependencies used in the operator rely on that env var to work correctly.
 
 ### Code structure
 
@@ -28,12 +25,10 @@ The operator and kwatcher's codebases are located in `/pkg/varnishservice/` and 
 The main packages for both components can be found in the `cmd/` folder.
 
 ### Developing the operator
-Clone your repo into `$GOPATH/src` directory and pull the dependencies
 ```bash
-$ cd $GOPATH/src
 $ git clone git@github.ibm.com:TheWeatherCompany/icm-varnish-k8s-operator.git
 $ cd icm-varnish-k8s-operator
-$ dep ensure 
+$ go mod download
 ```
 
 #### Run the operator locally against a Kubernetes cluster
@@ -43,12 +38,9 @@ First, you need to install the [CRD](https://kubernetes.io/docs/tasks/access-kub
 
 ```bash
 $ make install
-go run /<GOPATH>/src/icm-varnish-k8s-operator/vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go all
-CRD manifests generated under '/<GOPATH>/src/icm-varnish-k8s-operator/config/crds' 
-RBAC manifests generated under '/<GOPATH>/src/icm-varnish-k8s-operator/config/rbac' 
-kustomize build /<GOPATH>/src/icm-varnish-k8s-operator/config/default | kubectl apply -f -
-customresourcedefinition.apiextensions.k8s.io/varnishservices.icm.ibm.com configured
-clusterrole.rbac.authorization.k8s.io/varnish-operator configured
+<path>/<to>/<controller-gen>/controller-gen "crd:trivialVersions=true" rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+kustomize build <path>/<to>/<repo>/icm-varnish-k8s-operator/config/crd | kubectl apply -f -
+customresourcedefinition.apiextensions.k8s.io/varnishservices.icm.ibm.com created
 ```
 
 You should see the created CRD in your cluster:
@@ -66,13 +58,12 @@ After that you're ready to run the operator:
  
 ```bash
 $ make run
-cd /<GOPATH>/src/icm-varnish-k8s-operator/ && go generate ./pkg/... ./cmd/...
-cd /<GOPATH>/src/icm-varnish-k8s-operator/ && goimports -w ./pkg ./cmd
-cd /<GOPATH>/src/icm-varnish-k8s-operator/ && go vet ./pkg/... ./cmd/...
-NAMESPACE=default LOGLEVEL=debug LOGFORMAT=console CONTAINER_IMAGE=us.icr.io/icm-varnish/varnish:0.14.5-dev LEADERELECTION_ENABLED=false go run /home/tsidei/go/src/icm-varnish-k8s-operator/cmd/manager/main.go
-2019-06-06T12:40:16.771+0300	INFO	manager/main.go:34	Version: undefined
-2019-06-06T12:40:16.771+0300	INFO	manager/main.go:35	Leader election enabled: false
-...
+make run                                                                                                              
+<path>/<to>/<controller-gen>/controller-gen object:headerFile=./hack/boilerplate.go.txt paths="./..."
+cd <path>/<to>/<repo>/icm-varnish-k8s-operator/ && go generate ./pkg/... ./cmd/...
+cd <path>/<to>/<repo>/icm-varnish-k8s-operator/ && goimports -w ./pkg ./cmd
+cd <path>/<to>/<repo>/icm-varnish-k8s-operator/ && go vet ./pkg/... ./cmd/...
+NAMESPACE="default" LOGLEVEL=debug LOGFORMAT=console CONTAINER_IMAGE=us.icr.io/icm-varnish/varnish:0.20.0-dev LEADERELECTION_ENABLED=false WEBHOOKS_ENABLED=false go run <path>/<to>/<repo>/icm-varnish-k8s-operator/cmd/manager/main.go...
 ```
 
 By default the operator will work in the `default` namespace. You can override that behaviour by setting the `NAMESPACE` env var:
@@ -96,8 +87,8 @@ This can be done using the helm template configured to use your custom image:
 ```bash
 docker build -t <image-name> -f Dockerfile .
 docker push <image-name>
-make helm-prepare #make sure your helm charts are in sync with current CRD and RBAC definitions
-helm install --name varnish-operator --namespace varnish-operator-system --set container.image=us.icr.io/icm-varnish/varnish-controller:tomash-test --set namespace=varnish-operator-system ./varnish-operator
+make manifests #make sure your helm charts are in sync with current CRD and RBAC definitions
+helm install --name varnish-operator --namespace varnish-operator-system --set container.image=us.icr.io/icm-varnish/varnish-controller:test ./varnish-operator
 ``` 
 
 If your docker image is located in a private container registry, you'll need to [create an image pull secret](https://pages.github.ibm.com/TheWeatherCompany/icm-docs/managed-kubernetes/container-registry.html#creating-an-image-pull-secret) and reference it by adding `--set container.imagePullSecret=<image-pull-secret>` to the `helm install` command.
@@ -105,7 +96,7 @@ If your docker image is located in a private container registry, you'll need to 
 Check the operator pod logs to make sure all works as expected:
 
 ```bash
-kubectl logs -n varnish-operator-system varnish-operator-0
+kubectl logs -n varnish-operator-system varnish-operator-fd96f48f-gn6mc
 {"level":"info","ts":1559818986.866487,"caller":"manager/main.go:34","msg":"Version: 0.14.5"}
 {"level":"info","ts":1559818986.8665597,"caller":"manager/main.go:35","msg":"Leader election enabled: true"}
 {"level":"info","ts":1559818986.866619,"caller":"manager/main.go:36","msg":"Log level: info"}
@@ -143,4 +134,4 @@ For images uploaded to a private registry, [create an image pull secret](https:/
 
 To run tests simply run `make test` in repo's root directory. 
 
-Tests depend on binaries provided by Kubebuilder so it has to be [installed](https://book-v1.book.kubebuilder.io/getting_started/installation_and_setup.html#) first.
+Tests depend on binaries provided by Kubebuilder so it has to be [installed](https://kubebuilder.io/quick-start.html#installation) first.

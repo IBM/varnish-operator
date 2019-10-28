@@ -1,7 +1,7 @@
 package compare
 
 import (
-	icmv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
+	icmv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
 
 	"github.com/google/go-cmp/cmp"
 )

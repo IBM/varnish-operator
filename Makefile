@@ -6,13 +6,14 @@ VARNISH_PUBLISH_IMG ?= varnish:${VERSION}
 VARNISH_IMG ?= ${VARNISH_PUBLISH_IMG}-dev
 IMG ?= ${PUBLISH_IMG}-dev
 NAMESPACE ?= "default"
+CRD_OPTIONS ?= "crd:trivialVersions=true"
 
 # all: test manager
 all: test manager kwatcher
 
 # Run tests
 test: generate fmt vet manifests
-	go test icm-varnish-k8s-operator/pkg/... icm-varnish-k8s-operator/cmd/... -coverprofile cover.out
+	go test icm-varnish-k8s-operator/pkg/... icm-varnish-k8s-operator/cmd/... icm-varnish-k8s-operator/api/... -coverprofile cover.out
 
 # Run lint tools
 lint:
@@ -24,36 +25,34 @@ manager: generate fmt vet
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet
-	NAMESPACE=${NAMESPACE} LOGLEVEL=debug LOGFORMAT=console CONTAINER_IMAGE=us.icr.io/icm-varnish/${VARNISH_IMG} LEADERELECTION_ENABLED=false go run ${ROOT_DIR}cmd/manager/main.go
+	NAMESPACE=${NAMESPACE} LOGLEVEL=debug LOGFORMAT=console CONTAINER_IMAGE=us.icr.io/icm-varnish/${VARNISH_IMG} LEADERELECTION_ENABLED=false WEBHOOKS_ENABLED=false go run ${ROOT_DIR}cmd/manager/main.go
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 install: manifests
-	kustomize build ${ROOT_DIR}config/default | kubectl apply -f -
+	kustomize build ${ROOT_DIR}config/crd | kubectl apply -f -
 
 uninstall:
-	kustomize build ${ROOT_DIR}config/default | kubectl delete -f -
+	kustomize build ${ROOT_DIR}config/crd | kubectl delete -f -
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests:
-	go run ${ROOT_DIR}vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go all
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=varnish-operator paths="./..." output:crd:artifacts:config=config/crd/bases
+	kustomize build ${ROOT_DIR}config/crd > $(ROOT_DIR)varnish-operator/templates/manager_customresourcedefinition.yaml
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=varnish-operator paths="./..." output:crd:none output:rbac:stdout > $(ROOT_DIR)varnish-operator/templates/manager_clusterrole.yaml
 
 # Run goimports against code
 fmt:
-	cd ${ROOT_DIR} && goimports -w ./pkg ./cmd
+	cd ${ROOT_DIR} && goimports -w ./pkg ./cmd ./api
 
 # Run go vet against code
 vet:
-	cd ${ROOT_DIR} && go vet ./pkg/... ./cmd/...
+	cd ${ROOT_DIR} && go vet ./pkg/... ./cmd/... ./api/...
 
 # Generate code
-generate:
-	cd ${ROOT_DIR} && go generate ./pkg/... ./cmd/...
+generate: controller-gen
+	$(CONTROLLER_GEN) object:headerFile=./hack/boilerplate.go.txt paths="./..."
 
-# Prepare .yaml files for helm
-helm-prepare: manifests
-	${ROOT_DIR}hack/create_helm_files.sh ${ROOT_DIR}varnish-operator/templates
-
-helm-upgrade: helm-prepare
+helm-upgrade: manifests
 	helm upgrade --install --namespace ${NAMESPACE} --force varnish-operator --set operator.controllerImage.tag=${VERSION} --set namespace=${NAMESPACE} ${ROOT_DIR}varnish-operator
 
 # Build the docker image
@@ -91,4 +90,14 @@ ifndef PUBLISH
 else
 	docker tag ${VARNISH_IMG} ${REPO_PATH}/${VARNISH_PUBLISH_IMG}
 	docker push ${REPO_PATH}/${VARNISH_PUBLISH_IMG}
+endif
+
+# find or download controller-gen
+# download controller-gen if necessary
+controller-gen:
+ifeq (, $(shell which controller-gen))
+	go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.2.0
+CONTROLLER_GEN=$(GOBIN)/controller-gen
+else
+CONTROLLER_GEN=$(shell which controller-gen)
 endif

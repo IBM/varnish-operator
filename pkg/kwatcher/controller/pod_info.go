@@ -12,12 +12,7 @@ import (
 
 func (r *ReconcileVarnish) getPodInfo(ctx context.Context, namespace string, labels labels.Selector, validPort int32) ([]PodInfo, error) {
 	found := &v1.EndpointsList{}
-
-	opts := &client.ListOptions{
-		LabelSelector: labels,
-		Namespace:     namespace,
-	}
-	err := r.List(ctx, opts, found)
+	err := r.List(ctx, found, client.MatchingLabelsSelector{Selector: labels}, client.InNamespace(namespace))
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not retrieve backends from namespace %s with labels %s", namespace, labels.String())
 	}

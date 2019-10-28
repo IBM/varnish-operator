@@ -1,7 +1,7 @@
 package labels
 
 import (
-	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
+	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
 )
 
 // CombinedComponentLabels create labels for a component and inherits VarnishService object labels

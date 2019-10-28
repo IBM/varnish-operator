@@ -5,16 +5,20 @@ package main
 
 import (
 	"flag"
-	"icm-varnish-k8s-operator/pkg/apis"
+	"icm-varnish-k8s-operator/api/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/kwatcher/config"
 	"icm-varnish-k8s-operator/pkg/kwatcher/controller"
 	"icm-varnish-k8s-operator/pkg/logger"
 	"log"
 
+	"github.com/go-logr/zapr"
+
+	"k8s.io/apimachinery/pkg/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+
 	"go.uber.org/zap"
-	kconfig "sigs.k8s.io/controller-runtime/pkg/client/config"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 )
 
 var (
@@ -24,10 +28,6 @@ var (
 func main() {
 	// the following line exists to make glog happy, for more information, see: https://github.com/kubernetes/kubernetes/issues/17162
 	flag.Parse()
-	clientConfig, err := kconfig.GetConfig()
-	if err != nil {
-		log.Fatalf("could not load rest client config. Error: %s", err)
-	}
 
 	kwatcherConfig, err := config.Load()
 	if err != nil {
@@ -40,24 +40,43 @@ func main() {
 	logr.Infof("Version: %s", Version)
 	logr.Infof("Log level: %s", kwatcherConfig.LogLevel.String())
 
-	mgr, err := manager.New(clientConfig, manager.Options{Namespace: kwatcherConfig.Namespace})
+	ctrl.SetLogger(zapr.NewLogger(logr.Desugar())) //set logger for controller-runtime to see internal library logs
+
+	scheme := runtime.NewScheme()
+	err = clientgoscheme.AddToScheme(scheme)
 	if err != nil {
-		logr.Fatalf("could not initialize manager", zap.Error(err))
+		logr.With(zap.Error(err)).Fatalf("unable to set up standard schemes config")
 	}
 
-	// Setup Scheme for all resources
-	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
-		logr.Fatal(err)
+	err = v1alpha1.AddToScheme(scheme)
+	// +kubebuilder:scaffold:scheme
+	if err != nil {
+		logr.With(zap.Error(err)).Fatalf("unable to set up varnish operator schemes config")
+	}
+
+	clientConfig, err := ctrl.GetConfig()
+	if err != nil {
+		log.Fatalf("could not load rest client config. Error: %s", err)
+	}
+
+	mgr, err := ctrl.NewManager(clientConfig, ctrl.Options{
+		Namespace: kwatcherConfig.Namespace,
+		Scheme:    scheme,
+	})
+
+	if err != nil {
+		logr.With(zap.Error(err)).Fatalf("could not initialize manager")
 	}
 
 	logr.Infow("Registering Components")
 
 	// Setup controller
-	if err = controller.Add(mgr, kwatcherConfig, logr); err != nil {
-		logr.Fatalw("could not setup controller", zap.Error(err))
+	if err = controller.SetupVarnishReconciler(mgr, kwatcherConfig, logr); err != nil {
+		logr.With(zap.Error(err)).Fatalw("could not setup controller")
 	}
 
 	logr.Infow("Starting Varnish Watcher")
-
-	logr.Fatal(mgr.Start(signals.SetupSignalHandler()))
+	if err = mgr.Start(signals.SetupSignalHandler()); err != nil {
+		logr.With(err).Fatalf("Failed to start manager")
+	}
 }

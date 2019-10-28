@@ -2,163 +2,78 @@ package controller
 
 import (
 	"context"
-	icmv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
+	icmv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/logger"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
 	"icm-varnish-k8s-operator/pkg/varnishservice/config"
-	"icm-varnish-k8s-operator/pkg/varnishservice/pods"
 	vsreconcile "icm-varnish-k8s-operator/pkg/varnishservice/reconcile"
 	"time"
+
+	"k8s.io/apimachinery/pkg/labels"
+
+	"k8s.io/apimachinery/pkg/types"
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	"sigs.k8s.io/controller-runtime/pkg/event"
 
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	rbacv1beta1 "k8s.io/api/rbac/v1beta1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-
-	"go.uber.org/zap"
 
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-func NewVarnishReconciler(mgr manager.Manager, cfg *config.Config, logr *logger.Logger, reconcileChan chan event.GenericEvent) reconcile.Reconciler {
-	return &ReconcileVarnishService{
+func SetupVarnishReconciler(mgr manager.Manager, cfg *config.Config, logr *logger.Logger, reconcileChan chan event.GenericEvent) error {
+	vsCtrl := &ReconcileVarnishService{
 		Client:             mgr.GetClient(),
 		logger:             logr,
 		config:             cfg,
 		scheme:             mgr.GetScheme(),
-		events:             NewEventHandler(mgr.GetRecorder(EventRecorderNameVarnishService)),
+		events:             NewEventHandler(mgr.GetEventRecorderFor(EventRecorderNameVarnishService)),
 		reconcileTriggerer: vsreconcile.NewReconcileTriggerer(logr, reconcileChan),
 	}
-}
 
-// Add creates a new VarnishService Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
-// and Start it when the Manager is Started.
-func Add(r reconcile.Reconciler, mgr manager.Manager, logr *logger.Logger, reconcileChan chan event.GenericEvent) error {
-	// Create a new controller
-	c, err := controller.New("varnishservice-controller", mgr, controller.Options{Reconciler: r})
-	if err != nil {
-		return err
-	}
+	builder := ctrl.NewControllerManagedBy(mgr)
+	builder.Named("varnishservice")
+	builder.For(&icmv1alpha1.VarnishService{})
+	builder.Owns(&v1.ConfigMap{})
+	builder.Owns(&appsv1.StatefulSet{})
+	builder.Owns(&v1.Service{})
+	builder.Owns(&rbacv1beta1.Role{})
+	builder.Owns(&rbacv1beta1.RoleBinding{})
+	builder.Owns(&rbacv1beta1.ClusterRole{})
+	builder.Owns(&rbacv1beta1.ClusterRoleBinding{})
+	builder.Owns(&v1.ServiceAccount{})
+	builder.Watches(&source.Channel{Source: reconcileChan}, &handler.EnqueueRequestForObject{})
 
-	// Watch for changes to VarnishService
-	logr.Infow("Starting watch loop for VarnishService objects")
-	err = c.Watch(&source.Kind{Type: &icmv1alpha1.VarnishService{}}, &handler.EnqueueRequestForObject{})
-	if err != nil {
-		return err
-	}
-
-	// Watch for changes in the below resources:
-	// Pods
-	// ConfigMap
-	// StatefulSet
-	// Service
-	// Role
-	// RoleBinding
-	// ServiceAccount
-
-	podPredicate, err := pods.NewPredicate(map[string]string{icmv1alpha1.LabelVarnishComponent: icmv1alpha1.VarnishComponentVarnishes})
-	if err != nil {
-		return err
-	}
-
-	fun := &source.Channel{Source: reconcileChan}
-	err = c.Watch(fun, &handler.EnqueueRequestForObject{})
-	if err != nil {
-		return err
-	}
-
-	err = c.Watch(&source.Kind{Type: &v1.Pod{}}, &handler.EnqueueRequestsFromMapFunc{
+	vsPodsSelector := labels.SelectorFromSet(map[string]string{icmv1alpha1.LabelVarnishComponent: icmv1alpha1.VarnishComponentVarnish})
+	builder.Watches(&source.Kind{Type: &v1.Pod{}}, &handler.EnqueueRequestsFromMapFunc{
 		ToRequests: handler.ToRequestsFunc(
-			func(a handler.MapObject) []reconcile.Request {
-				return []reconcile.Request{
+			func(a handler.MapObject) []ctrl.Request {
+				if !vsPodsSelector.Matches(labels.Set(a.Meta.GetLabels())) {
+					return nil
+				}
+
+				return []ctrl.Request{
 					{NamespacedName: types.NamespacedName{
 						Name:      a.Meta.GetLabels()[icmv1alpha1.LabelVarnishOwner],
 						Namespace: a.Meta.GetNamespace(),
 					}},
 				}
 			}),
-	}, podPredicate)
-	if err != nil {
-		return err
-	}
-
-	err = c.Watch(&source.Kind{Type: &v1.ConfigMap{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &icmv1alpha1.VarnishService{},
 	})
-	if err != nil {
-		return err
-	}
 
-	err = c.Watch(&source.Kind{Type: &appsv1.StatefulSet{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &icmv1alpha1.VarnishService{},
-	})
-	if err != nil {
-		return err
-	}
-
-	err = c.Watch(&source.Kind{Type: &v1.Service{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &icmv1alpha1.VarnishService{},
-	})
-	if err != nil {
-		return err
-	}
-
-	err = c.Watch(&source.Kind{Type: &rbacv1beta1.Role{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &icmv1alpha1.VarnishService{},
-	})
-	if err != nil {
-		return err
-	}
-
-	err = c.Watch(&source.Kind{Type: &rbacv1beta1.RoleBinding{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &icmv1alpha1.VarnishService{},
-	})
-	if err != nil {
-		return err
-	}
-
-	err = c.Watch(&source.Kind{Type: &rbacv1beta1.ClusterRole{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &icmv1alpha1.VarnishService{},
-	})
-	if err != nil {
-		return err
-	}
-
-	err = c.Watch(&source.Kind{Type: &rbacv1beta1.ClusterRoleBinding{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &icmv1alpha1.VarnishService{},
-	})
-	if err != nil {
-		return err
-	}
-
-	err = c.Watch(&source.Kind{Type: &v1.ServiceAccount{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &icmv1alpha1.VarnishService{},
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return builder.Complete(vsCtrl)
 }
 
 var _ reconcile.Reconciler = &ReconcileVarnishService{}
@@ -177,19 +92,18 @@ type ReconcileVarnishService struct {
 // and what is in the VarnishService.Spec
 // Automatically generate RBAC rules to allow the Controller to read and write StatefulSets
 // +kubebuilder:rbac:groups=icm.ibm.com,resources=varnishservices,verbs=list;watch;create;update;delete
-// +kubebuilder:rbac:groups=icm.ibm.com,resources=varnishservices/status,verbs=update
+// +kubebuilder:rbac:groups=icm.ibm.com,resources=varnishservices/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update
 // +kubebuilder:rbac:groups="",resources=services;serviceaccounts,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups="",resources=endpoints,verbs=list;watch
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 // +kubebuilder:rbac:groups="",resources=pods,verbs=list;get;watch;update
 // +kubebuilder:rbac:groups="",resources=nodes,verbs=watch;list
-// +kubebuilder:rbac:groups="admissionregistration.k8s.io",resources="validatingwebhookconfigurations;mutatingwebhookconfigurations",verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=list;watch;create;update;delete
-// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=list;watch
 // +kubebuilder:rbac:groups=policy,resources=poddisruptionbudgets,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles;rolebindings;clusterroles;clusterrolebindings,verbs=list;watch;create;update;delete
-func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+
+func (r *ReconcileVarnishService) Reconcile(request ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
 
 	logr := r.logger.With(logger.FieldVarnishService, request.Name)
@@ -203,16 +117,16 @@ func (r *ReconcileVarnishService) Reconcile(request reconcile.Request) (reconcil
 	if err != nil {
 		if statusErr, ok := errors.Cause(err).(*apierrors.StatusError); ok && statusErr.ErrStatus.Reason == metav1.StatusReasonConflict {
 			logr.Info("Conflict occurred. Retrying...", zap.Error(err))
-			return reconcile.Result{Requeue: true}, nil //retry but do not treat conflicts as errors
+			return ctrl.Result{Requeue: true}, nil //retry but do not treat conflicts as errors
 		}
 
 		logr.Errorf("%+v", err)
-		return reconcile.Result{}, err
+		return ctrl.Result{}, err
 	}
 	return res, nil
 }
 
-func (r *ReconcileVarnishService) reconcileWithContext(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
+func (r *ReconcileVarnishService) reconcileWithContext(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	// Fetch the VarnishService instance
 	instance := &icmv1alpha1.VarnishService{}
 	err := r.Get(ctx, request.NamespacedName, instance)
@@ -220,10 +134,10 @@ func (r *ReconcileVarnishService) reconcileWithContext(ctx context.Context, requ
 		if kerrors.IsNotFound(err) {
 			// Object not found, return.  Created objects are automatically garbage collected.
 			// For additional cleanup logic use finalizers.
-			return reconcile.Result{}, nil
+			return ctrl.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
-		return reconcile.Result{}, errors.Wrap(err, "could not read VarnishService")
+		return ctrl.Result{}, errors.Wrap(err, "could not read VarnishService")
 	}
 
 	r.scheme.Default(instance)
@@ -243,58 +157,58 @@ func (r *ReconcileVarnishService) reconcileWithContext(ctx context.Context, requ
 
 	serviceAccountName, err := r.reconcileServiceAccount(ctx, instance)
 	if err != nil {
-		return reconcile.Result{}, err
+		return ctrl.Result{}, err
 	}
 	roleName, err := r.reconcileRole(ctx, instance)
 	if err != nil {
-		return reconcile.Result{}, err
+		return ctrl.Result{}, err
 	}
 	if err = r.reconcileRoleBinding(ctx, instance, roleName, serviceAccountName); err != nil {
-		return reconcile.Result{}, err
+		return ctrl.Result{}, err
 	}
 	clusterRoleName, err := r.reconcileClusterRole(ctx, instance)
 	if err != nil {
-		return reconcile.Result{}, err
+		return ctrl.Result{}, err
 	}
 	if err = r.reconcileClusterRoleBinding(ctx, instance, clusterRoleName, serviceAccountName); err != nil {
-		return reconcile.Result{}, err
+		return ctrl.Result{}, err
 	}
 	endpointSelector, err := r.reconcileServiceNoCache(ctx, instance, instanceStatus)
 	if err != nil {
-		return reconcile.Result{}, err
+		return ctrl.Result{}, err
 	}
 	headlessServiceName, err := r.reconcileHeadlessService(ctx, instance)
 	if err != nil {
-		return reconcile.Result{}, err
+		return ctrl.Result{}, err
 	}
 	sts, varnishSelector, err := r.reconcileStatefulSet(ctx, instance, instanceStatus, serviceAccountName, endpointSelector, headlessServiceName)
 	if err != nil {
-		return reconcile.Result{}, err
+		return ctrl.Result{}, err
 	}
 	// TODO: remove extra return var
 	if _, err = r.reconcileConfigMap(ctx, varnishSelector, instance, instanceStatus); err != nil {
-		return reconcile.Result{}, err
+		return ctrl.Result{}, err
 	}
 
 	if err = r.reconcilePodDisruptionBudget(ctx, instance, varnishSelector); err != nil {
-		return reconcile.Result{}, err
+		return ctrl.Result{}, err
 	}
 	if err = r.reconcileService(ctx, instance, instanceStatus, varnishSelector); err != nil {
-		return reconcile.Result{}, err
+		return ctrl.Result{}, err
 	}
 
 	if err = r.reconcileDelayedRollingUpdate(ctx, instance, instanceStatus, sts); err != nil {
-		return reconcile.Result{}, err
+		return ctrl.Result{}, err
 	}
 
 	if !compare.EqualVarnishServiceStatus(&instance.Status, &instanceStatus.Status) {
 		logger.FromContext(ctx).Infoc("Updating VarnishService Status", "diff", compare.DiffVarnishServiceStatus(&instance.Status, &instanceStatus.Status))
 		if err = r.Status().Update(ctx, instanceStatus); err != nil {
-			return reconcile.Result{}, errors.Wrapf(err, "could not update VarnishService Status %s:%s, %s:%s", "name", instance.Name, "namespace", instance.Namespace)
+			return ctrl.Result{}, errors.Wrapf(err, "could not update VarnishService Status %s:%s, %s:%s", "name", instance.Name, "namespace", instance.Namespace)
 		}
 	} else {
 		logger.FromContext(ctx).Debugw("No updates for VarnishService status")
 	}
 
-	return reconcile.Result{}, nil
+	return ctrl.Result{}, nil
 }

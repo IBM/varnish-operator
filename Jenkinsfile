@@ -35,7 +35,6 @@ node("icm_slave") {
     String repoVersion = new VersionUtils(this).getAppVersion()
     if (tags && tags.contains(repoVersion)) {
         stage("Helm Chart Publish") {
-            sh "./hack/create_helm_files.sh ${helmChart}/templates"
             icmWithArtifactoryConfig(artifactoryRoot, artifactoryRepo, artifactoryUserPasswordId) {
                 icmHelmChartPackagePublish(helmChart, it.config.createHelmPublish())
             }

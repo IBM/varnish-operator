@@ -2,7 +2,7 @@ package controller
 
 import (
 	"context"
-	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
+	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
 	vslabels "icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/logger"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
@@ -20,7 +20,7 @@ import (
 )
 
 func (r *ReconcileVarnishService) reconcileStatefulSet(ctx context.Context, instance, instanceStatus *icmapiv1alpha1.VarnishService, serviceAccountName string, endpointSelector map[string]string, svcName string) (*appsv1.StatefulSet, map[string]string, error) {
-	varnishLabels := vslabels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentVarnishes)
+	varnishLabels := vslabels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentVarnish)
 	gvk := instance.GroupVersionKind()
 	var varnishImage string
 	if instance.Spec.StatefulSet.Container.Image == "" {
@@ -47,7 +47,7 @@ func (r *ReconcileVarnishService) reconcileStatefulSet(ctx context.Context, inst
 
 	desired := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      instance.Name + "-varnish-statefulset",
+			Name:      instance.Name + "-varnish",
 			Labels:    varnishLabels,
 			Namespace: instance.Namespace,
 		},
@@ -57,8 +57,9 @@ func (r *ReconcileVarnishService) reconcileStatefulSet(ctx context.Context, inst
 			Selector: &metav1.LabelSelector{
 				MatchLabels: varnishLabels,
 			},
-			PodManagementPolicy: appsv1.ParallelPodManagement,
-			UpdateStrategy:      updateStrategy,
+			PodManagementPolicy:  appsv1.ParallelPodManagement,
+			UpdateStrategy:       updateStrategy,
+			RevisionHistoryLimit: func(in int32) *int32 { return &in }(10),
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: varnishLabels,
@@ -72,17 +73,19 @@ func (r *ReconcileVarnishService) reconcileStatefulSet(ctx context.Context, inst
 								{
 									Name:          instance.Spec.Service.VarnishPort.Name,
 									ContainerPort: icmapiv1alpha1.VarnishPort,
+									Protocol:      v1.ProtocolTCP,
 								},
 								{
 									Name:          instance.Spec.Service.VarnishExporterPort.Name,
 									ContainerPort: icmapiv1alpha1.VarnishPrometheusExporterPort,
+									Protocol:      v1.ProtocolTCP,
 								},
 							},
 							Env: []v1.EnvVar{
 								{Name: "ENDPOINT_SELECTOR_STRING", Value: labels.SelectorFromSet(endpointSelector).String()},
 								{Name: "CONFIGMAP_NAME", Value: instance.Spec.VCLConfigMap.Name},
 								{Name: "NAMESPACE", Value: instance.Namespace},
-								{Name: "POD_NAME", ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{FieldPath: "metadata.name"}}},
+								{Name: "POD_NAME", ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{APIVersion: "v1", FieldPath: "metadata.name"}}},
 								{Name: "VARNISH_SERVICE_NAME", Value: instance.Name},
 								{Name: "VARNISH_SERVICE_UID", Value: string(instance.UID)},
 								{Name: "VARNISH_SERVICE_GROUP", Value: gvk.Group},
@@ -101,22 +104,30 @@ func (r *ReconcileVarnishService) reconcileStatefulSet(ctx context.Context, inst
 										Command: []string{"/usr/bin/varnishadm", "ping"},
 									},
 								},
-								TimeoutSeconds: 30,
+								TimeoutSeconds:   30,
+								PeriodSeconds:    10,
+								SuccessThreshold: 1,
+								FailureThreshold: 3,
 							},
-							ImagePullPolicy: instance.Spec.StatefulSet.Container.ImagePullPolicy,
+							TerminationMessagePath:   "/dev/termination-log",
+							TerminationMessagePolicy: v1.TerminationMessageReadFile,
+							ImagePullPolicy:          instance.Spec.StatefulSet.Container.ImagePullPolicy,
 						},
 					},
-					RestartPolicy:      instance.Spec.StatefulSet.Container.RestartPolicy,
-					ServiceAccountName: serviceAccountName,
-					Affinity:           instance.Spec.StatefulSet.Affinity,
-					Tolerations:        instance.Spec.StatefulSet.Tolerations,
-					ImagePullSecrets:   imagePullSecrets,
+					RestartPolicy:                 instance.Spec.StatefulSet.Container.RestartPolicy,
+					TerminationGracePeriodSeconds: func(in int64) *int64 { return &in }(30),
+					DNSPolicy:                     v1.DNSClusterFirst,
+					SecurityContext:               &v1.PodSecurityContext{},
+					ServiceAccountName:            serviceAccountName,
+					Affinity:                      instance.Spec.StatefulSet.Affinity,
+					Tolerations:                   instance.Spec.StatefulSet.Tolerations,
+					ImagePullSecrets:              imagePullSecrets,
 				},
 			},
 		},
 	}
 
-	logr := logger.FromContext(ctx).With(logger.FieldComponent, icmapiv1alpha1.VarnishComponentVarnishes)
+	logr := logger.FromContext(ctx).With(logger.FieldComponent, icmapiv1alpha1.VarnishComponentVarnish)
 	logr = logr.With(logger.FieldComponentName, desired.Name)
 
 	if err := controllerutil.SetControllerReference(instance, desired, r.scheme); err != nil {

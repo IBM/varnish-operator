@@ -2,7 +2,7 @@
 
 ### Prerequisites
 
-* Kubernetes v1.11 or newer and `kubectl` configured to communicate with your cluster
+* Kubernetes v1.12 or newer and `kubectl` configured to communicate with your cluster
 * Helm
 
 ### Configure Helm repo
@@ -117,7 +117,7 @@ varnish-operator-0   1/1     Running             0          40s
 
 Once `VarnishService` is created, you should see:
 
-* StatefulSet called `<varnish-service-name>-statefulset`
+* StatefulSet called `<varnish-service-name>`
 * Service called `<varnish-service-name>` which uses Varnish for caching
 * Service called `<varnish-service-name>-no-cache` which bypasses Varnish
 * ConfigMap called `vcl-config` containing VCL files that Varnish is using
@@ -182,7 +182,7 @@ $ curl -i localhost:8080/
 
 You should see nginx's welcome page. 
 
-`Server: nginx/1.17.0` header shows your backend response header and `Via: 1.1 varnish (Varnish/6.0)` indicates that the request has been passed through Varnish.
+`Server: nginx/1.17.0` header shows your backend response header and `Via: 1.1 varnish (Varnish/6.1.1)` indicates that the request has been passed through Varnish.
 
 ## What's next
 

@@ -26,4 +26,4 @@ K-watcher is a process that runs along with every Varnish instance in the same c
 
 ##### Prometheus metrics exporter
 
-The container also includes a [Prometheus metrics exporter](https://github.com/jonnenauha/prometheus_varnish_exporter) process for Varnish instances. The port it is listening on is configurable in the [VarnishService spec](varnish-service-configuration.md). 
+The container also includes a [Prometheus metrics exporter](https://github.com/jonnenauha/prometheus_varnish_exporter) process for Varnish instances. The Service port it is listening on is configurable in the [VarnishService spec](varnish-service-configuration.md). 

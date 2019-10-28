@@ -2,7 +2,7 @@ package controller
 
 import (
 	"context"
-	icmapiv1alpha1 "icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
+	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/logger"
 	"icm-varnish-k8s-operator/pkg/varnishservice/compare"
@@ -38,6 +38,7 @@ func (r *ReconcileVarnishService) reconcileServiceNoCache(ctx context.Context, i
 		Name:       instance.Spec.Service.VarnishPort.Name,
 		Port:       instance.Spec.Service.VarnishPort.Port,
 		TargetPort: instance.Spec.Service.VarnishPort.TargetPort,
+		Protocol:   instance.Spec.Service.VarnishPort.Protocol,
 	}
 
 	serviceNoCache := &v1.Service{
@@ -47,8 +48,10 @@ func (r *ReconcileVarnishService) reconcileServiceNoCache(ctx context.Context, i
 			Labels:    svcLabels,
 		},
 		Spec: v1.ServiceSpec{
-			Selector: selector,
-			Ports:    ports,
+			Selector:        selector,
+			Ports:           ports,
+			SessionAffinity: v1.ServiceAffinityNone,
+			Type:            v1.ServiceTypeClusterIP,
 		},
 	}
 

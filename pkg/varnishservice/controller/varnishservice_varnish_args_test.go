@@ -2,7 +2,7 @@ package controller
 
 import (
 	"fmt"
-	"icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
+	"icm-varnish-k8s-operator/api/v1alpha1"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"

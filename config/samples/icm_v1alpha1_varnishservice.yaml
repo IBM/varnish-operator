@@ -25,7 +25,7 @@ spec:
 #   replicas: 2
     container:
       # path to image + tag
-      image: us.icr.io/icm-varnish/varnish:0.20.1
+      image: us.icr.io/icm-varnish/varnish:0.21.0
       # updateStrategy can be used to control the way Varnish pods will be updated. "OnDelete" is by default.
 #      updateStrategy:
 #        type: "OnDelete"

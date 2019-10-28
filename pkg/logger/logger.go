@@ -79,3 +79,7 @@ func FromContext(ctx context.Context) *Logger {
 
 	return logr
 }
+
+func NewNopLogger() *Logger {
+	return &Logger{SugaredLogger: zap.NewNop().Sugar()}
+}

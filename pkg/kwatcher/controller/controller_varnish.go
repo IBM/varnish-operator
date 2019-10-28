@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"icm-varnish-k8s-operator/pkg/apis/icm/v1alpha1"
+	"icm-varnish-k8s-operator/api/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/kwatcher/events"
 	"icm-varnish-k8s-operator/pkg/logger"
 	"os/exec"

@@ -202,3 +202,128 @@ Command failed with error code 106
 ```
 
 As the logs indicate, the issue here is the invalid VCL syntax.
+
+### Advanced VCL with Varnish sharding
+
+Starting from Varnish 5.0 directors VMOD were extended by adding new director - shard director. It's basically a better hash director. The shard director selects backends by a key, which can be provided directly or derived from strings. For the same key, the shard director will always return the same backend, unless the backend configuration or health state changes. For differing keys, the shard director will likely choose different backends. In the default configuration, unhealthy backends are not selected.
+When used with clusters of Varnish servers, the shard director will, if otherwise configured equally, make the same decision on all servers. So requests sharing a common criterion used as the shard key will be balanced onto the same backend servers no matter which Varnish server handles the request.
+
+There are couple of very useful options that can be passed to shard director. The `rampup` feature is a slow start mechanism that allows just-gone-healthy backends to ease into full load smoothly, while the `warmup` feature prepares backends for the traffic they would see if the primary backend for a key goes down.
+
+#### Creating shard director
+
+Leveraging templating capabilities provided by operator, we can build `backends.vcl` config file. It will contain all entities required to setup varnish sharding cluster:
+ - Application backends
+ - Varnish backends (cluster members)
+ - Heartbeat probe for Varnish instances
+ - Director that holds application backends (round-robin, random, etc.)
+ - Shard director
+ - ACL with Varnish cluster members
+
+As described in [Writing a Templated VCL File](#writing-a-templated-vcl-file) section, create `backends.vcl.tmpl` and create a structure with all components:
+
+```vcl
+// Import VMOD directors
+import directors;
+
+// Define probe used for heartbeat
+probe heartbeat {
+  .request = "HEAD /heartbeat HTTP/1.1"
+      "Connection: close"
+      "Host: shard";
+  .interval = 1s;
+}
+
+// Application backends
+{{ range .Backends }}
+backend {{ .PodName }} {
+  .host = "{{ .IP }}";
+  .port = "{{ $.TargetPort }}";
+}
+{{ end }}
+
+// Varnish cluster backends
+{{ range .VarnishNodes }}
+backend {{ .PodName }} {
+  .host = "{{ .IP }}";
+  .port = "{{ $.VarnishPort }}";
+  .probe = heartbeat;
+}
+{{ end }}
+
+// Create ACL with Varnish cluster members
+acl acl_cluster {
+  {{ range .VarnishNodes }}
+  "{{ .IP }}"/32;
+  {{ end }}
+}
+
+// Here we create two directors - "real", application round-robin
+// and "cluster", Varnish shard director
+sub init_backends {
+  new real = directors.round_robin();
+  {{- range .Backends }}
+  real.add_backend({{ .PodName }});
+  {{- end }}
+
+  new cluster = directors.shard();
+  {{ range .VarnishNodes }}
+  cluster.add_backend({{ .PodName }});
+  {{ end }}
+  cluster.set_rampup(30s);
+  cluster.set_warmup(0.1);
+  cluster.reconfigure();
+}
+```
+Please note `set_rampup` and `set_warmup` options being passed to `cluster` director. They provide a mechanism to change how the shard director will manage cluster members downtime. 
+
+`set_rampup` configures slow start interval in seconds for servers which just came back from unhealthy. If chosen backend is in its rampup period, with a probability proportional to the fraction of time since the backup became healthy to the rampup period, return the next alternative backend, unless this is also in its rampup period. If duration is `0` (default), rampup is disabled. 
+
+`set_warmup` configures the default warmup probability. Sets the ratio of requests (`0.0` to `1.0`) that goes to the next alternate backend to warm it up when the preferred backend is healthy. Not active if any of the preferred or alternative backend are in rampup. Setting of `0.5` is a convenient way to spread the load for each key over two backends under normal operating conditions. If probability is `0.0` (default), warmup is disabled.
+
+Note that the shard director needs to be configured using at least one `.add_backend()` call(s) followed by a `.reconfigure()` call before it can hand out backends.
+
+Now, once backends and directors are properly configured, we can proceed with configuring main logic and client requests are processed. Next configuration snippet is **not complete VCL**, but rather only client facing logic - `vcl_recv` subroutine. 
+
+```vcl
+// Include and initialize backends
+include "backends.vcl";
+
+sub vcl_init {
+  call init_backends;
+  return (ok);
+}
+
+sub vcl_recv {
+
+  // Answer to heartbeats only from cluster members
+  if (remote.ip ~ acl_cluster) {
+    if (req.http.Host == "shard") {
+      if (req.url == "/heartbeat") {
+        return (synth(200));
+      }
+      return (synth(404));
+    }
+  }
+
+  // Let shard director to pick the backend (shard)
+  set req.backend_hint = cluster.backend(URL);
+  set req.http.X-shard = req.backend_hint;
+
+  // Use application backend if request came here from ourselves or from
+  // cluster members (i.e. sharding is already happened), otherwise let it pass
+  // to another shard
+  if (req.http.X-shard == server.identity || remote.ip ~ acl_cluster) {
+    set req.backend_hint = real.backend();
+  } else {
+    return(pass);
+  }
+
+  return (hash);
+}
+...
+```
+This snippet will route all requests to shard director for sharding, prevent multiple in-cluster hops when warmup is happened, and reroute requests to the shard that it primary for given request.
+
+Everything together can provide reliable way of handling lifecycle events for Varnish cluster members with graceful fallback and controlled pre-warmup of alternative backends.
+

@@ -18,8 +18,8 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     go build \
     -ldflags "-X main.Version=$(cat ./version.txt)" \
     -a \
-    -o kwatcher \
-    ./cmd/kwatcher/
+    -o varnish-controller \
+    ./cmd/varnish-controller/
 
 # Build Final Varnish image
 FROM debian:buster-slim
@@ -36,10 +36,10 @@ RUN apt-get update && apt install -y --no-install-recommends \
         prometheus-varnish-exporter \
     && rm -rf /var/lib/apt/lists/*
 
-COPY config/kwatcher/supervisord.conf /etc/supervisor/supervisord.conf
-COPY config/kwatcher/vcl_reload config/kwatcher/vcl_list config/kwatcher/start_varnishd config/kwatcher/start_k_watcher config/kwatcher/start_varnish_exporter /usr/local/bin/
+COPY config/varnish-controller/supervisord.conf /etc/supervisor/supervisord.conf
+COPY config/varnish-controller/vcl_reload config/varnish-controller/vcl_list config/varnish-controller/start_varnishd config/varnish-controller/start_varnish_controller config/varnish-controller/start_varnish_exporter /usr/local/bin/
 COPY config/vcl/default.vcl config/vcl/backends.vcl /etc/varnish/
-COPY --from=builder /go/src/icm-varnish-k8s-operator/kwatcher /kwatcher
+COPY --from=builder /go/src/icm-varnish-k8s-operator/varnish-controller /varnish-controller
 
 RUN chown -R varnish /etc/varnish /etc/supervisor /var/lib/varnish
 

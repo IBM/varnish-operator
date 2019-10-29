@@ -10,7 +10,7 @@ region = "us-south"
 dockerRegistry = "us.icr.io"
 dockerRegistryNamespace = "icm-varnish"
 varnishDockerImageName = "varnish"
-operatorDockerImageName = "varnish-controller"
+operatorDockerImageName = "varnish-operator"
 releaseBranch = "master"
 
 // for Helm chart publish

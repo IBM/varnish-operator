@@ -16,7 +16,7 @@ If a ConfigMap does not exist on VarnishService creation, the operator will crea
   * respond to all other requests normally, caching all non-404 responses
   * hash request based on url
   * add `X-Varnish-Cache` header to response with "HIT" or "MISS" value, based on presence in cache
-    
+
 ### Writing a Templated VCL File
 
 The template file is a regular VCL file, with the addition of [Go templates](https://golang.org/pkg/text/template). This is because there is no way to know the backend's IP addresses at startup, so they must be injected at runtime. Also they can change over time if the backends get rescheduled by Kubernetes. 
@@ -184,7 +184,7 @@ my-varnish-varnish-1  351231
 my-varnish-varnish-2  351231
 # Looks like all pods have outdated VCL. Lets check the logs of one of the pods
 > kubectl logs -n my-varnish my-varnish-varnish-0 
-2019-06-24T12:59:56.105Z	INFO	controller/controller_files.go:57	Rewriting file	{"kwatcher_version": "0.21.0", "varnish_service": "my-varnish", "pod_name": "my-varnish-varnish-0", "namespace": "my-varnish", "file_path": "/etc/varnish/backends.vcl"}
+2019-06-24T12:59:56.105Z	INFO	controller/controller_files.go:57	Rewriting file	{"varnish_controller_version": "0.21.0", "varnish_service": "my-varnish", "pod_name": "my-varnish-varnish-0", "namespace": "my-varnish", "file_path": "/etc/varnish/backends.vcl"}
 2019-06-24T12:59:56.427Z	WARN	controller/controller_varnish.go:51	Message from VCC-compiler:
 Expected one of
 	'acl', 'sub', 'backend', 'probe', 'import', 'vcl',  or 'default'
@@ -198,7 +198,7 @@ Command failed with error code 106
 VCL compilation failed
 No VCL named v-20861922-1561381196 known.
 Command failed with error code 106
-	{"kwatcher_version": "0.21.0", "varnish_service": "my-varnish", "pod_name": "my-varnish-varnish-0", "namespace": "my-varnish"}
+	{"varnish_controller_version": "0.21.0", "varnish_service": "my-varnish", "pod_name": "my-varnish-varnish-0", "namespace": "my-varnish"}
 ```
 
 As the logs indicate, the issue here is the invalid VCL syntax.

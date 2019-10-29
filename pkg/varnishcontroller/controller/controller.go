@@ -3,11 +3,11 @@ package controller
 import (
 	"context"
 	"icm-varnish-k8s-operator/api/v1alpha1"
-	"icm-varnish-k8s-operator/pkg/kwatcher/config"
-	"icm-varnish-k8s-operator/pkg/kwatcher/events"
-	"icm-varnish-k8s-operator/pkg/kwatcher/predicates"
 	vslabels "icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/logger"
+	"icm-varnish-k8s-operator/pkg/varnishcontroller/config"
+	"icm-varnish-k8s-operator/pkg/varnishcontroller/events"
+	"icm-varnish-k8s-operator/pkg/varnishcontroller/predicates"
 	"strings"
 	"time"
 
@@ -59,10 +59,10 @@ func SetupVarnishReconciler(mgr manager.Manager, cfg *config.Config, logr *logge
 			})}
 
 	builder := ctrl.NewControllerManagedBy(mgr)
-	builder.Named("kwatcher")
+	builder.Named("varnish-controller")
 
 	// Normally the `For` function receives the type the operator owns. For the operator it's the VarnishService.
-	// For kwatcher we don't have such resource but still need to provide something for the `For` function, it will fail otherwise.
+	// For varnish-controller we don't have such resource but still need to provide something for the `For` function, it will fail otherwise.
 	// For that reason we provide the v1alpha1.VarnishService resource but filter it all out. The operator will receive events from Kubernetes but won't react.
 	builder.For(&v1alpha1.VarnishService{})
 	builder.WithEventFilter(predicates.NewIgnoreVarnishServicesPredicate())

@@ -10,14 +10,14 @@ import (
 )
 
 const (
-	FieldComponent       = "component"
-	FieldComponentName   = "component_name"
-	FieldVarnishService  = "varnish_service"
-	FieldOperatorVersion = "operator_version"
-	FieldKwatcherVersion = "kwatcher_version"
-	FieldFilePath        = "file_path"
-	FieldPodName         = "pod_name"
-	FieldNamespace       = "namespace"
+	FieldComponent                = "component"
+	FieldComponentName            = "component_name"
+	FieldVarnishService           = "varnish_service"
+	FieldOperatorVersion          = "operator_version"
+	FieldVarnishControllerVersion = "varnish_controller_version"
+	FieldFilePath                 = "file_path"
+	FieldPodName                  = "pod_name"
+	FieldNamespace                = "namespace"
 )
 
 type Logger struct {

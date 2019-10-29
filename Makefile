@@ -1,7 +1,7 @@
 # Image URL to use in all building/pushing image targets
 ROOT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 VERSION ?= $(shell cat ${ROOT_DIR}version.txt)
-PUBLISH_IMG ?= varnish-controller:${VERSION}
+PUBLISH_IMG ?= varnish-operator:${VERSION}
 VARNISH_PUBLISH_IMG ?= varnish:${VERSION}
 VARNISH_IMG ?= ${VARNISH_PUBLISH_IMG}-dev
 IMG ?= ${PUBLISH_IMG}-dev
@@ -9,7 +9,7 @@ NAMESPACE ?= "default"
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 
 # all: test manager
-all: test manager kwatcher
+all: test manager varnish-controller
 
 # Run tests
 test: generate fmt vet manifests
@@ -73,8 +73,8 @@ else
 	docker push ${REPO_PATH}/${PUBLISH_IMG}
 endif
 
-kwatcher: fmt vet
-	go build -o ${ROOT_DIR}bin/kwatcher ${ROOT_DIR}cmd/kwatcher/
+varnish-controller: fmt vet
+	go build -o ${ROOT_DIR}bin/varnish-controller ${ROOT_DIR}cmd/varnish-controller/
 
 # Build the docker image
 docker-build-varnish: fmt vet

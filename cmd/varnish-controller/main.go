@@ -6,9 +6,9 @@ package main
 import (
 	"flag"
 	"icm-varnish-k8s-operator/api/v1alpha1"
-	"icm-varnish-k8s-operator/pkg/kwatcher/config"
-	"icm-varnish-k8s-operator/pkg/kwatcher/controller"
 	"icm-varnish-k8s-operator/pkg/logger"
+	"icm-varnish-k8s-operator/pkg/varnishcontroller/config"
+	"icm-varnish-k8s-operator/pkg/varnishcontroller/controller"
 	"log"
 
 	"github.com/go-logr/zapr"
@@ -21,24 +21,25 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 )
 
+// Version defines varnish-controller version. Will be overwritten by the correct version during docker build
 var (
-	Version = "undefined" //will be overwritten by the correct version during docker build
+	Version = "undefined"
 )
 
 func main() {
 	// the following line exists to make glog happy, for more information, see: https://github.com/kubernetes/kubernetes/issues/17162
 	flag.Parse()
 
-	kwatcherConfig, err := config.Load()
+	varnishControllerConfig, err := config.Load()
 	if err != nil {
-		log.Fatalf("could not load kwatcher config: %v", err)
+		log.Fatalf("could not load varnish-controller config: %v", err)
 	}
 
-	logr := logger.NewLogger(kwatcherConfig.LogFormat, kwatcherConfig.LogLevel)
-	logr = logr.With(logger.FieldKwatcherVersion, Version)
+	logr := logger.NewLogger(varnishControllerConfig.LogFormat, varnishControllerConfig.LogLevel)
+	logr = logr.With(logger.FieldVarnishControllerVersion, Version)
 
 	logr.Infof("Version: %s", Version)
-	logr.Infof("Log level: %s", kwatcherConfig.LogLevel.String())
+	logr.Infof("Log level: %s", varnishControllerConfig.LogLevel.String())
 
 	ctrl.SetLogger(zapr.NewLogger(logr.Desugar())) //set logger for controller-runtime to see internal library logs
 
@@ -60,7 +61,7 @@ func main() {
 	}
 
 	mgr, err := ctrl.NewManager(clientConfig, ctrl.Options{
-		Namespace: kwatcherConfig.Namespace,
+		Namespace: varnishControllerConfig.Namespace,
 		Scheme:    scheme,
 	})
 
@@ -71,11 +72,11 @@ func main() {
 	logr.Infow("Registering Components")
 
 	// Setup controller
-	if err = controller.SetupVarnishReconciler(mgr, kwatcherConfig, logr); err != nil {
+	if err = controller.SetupVarnishReconciler(mgr, varnishControllerConfig, logr); err != nil {
 		logr.With(zap.Error(err)).Fatalw("could not setup controller")
 	}
 
-	logr.Infow("Starting Varnish Watcher")
+	logr.Infow("Starting Varnish Controller")
 	if err = mgr.Start(signals.SetupSignalHandler()); err != nil {
 		logr.With(err).Fatalf("Failed to start manager")
 	}

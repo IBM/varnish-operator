@@ -17,11 +17,11 @@ Requirements:
 The project consists of 2 components working together:
 
 * Varnish operator itself, that manages `VarnishService` deployments
-* Kwatcher is a process that's running in the same container as Varnish. It is responsible for watching Kubernetes resources and reacting accordingly. For example, Kwatcher reloads the VCL configuration when backends scale or the VCL configuration has changed in the ConfigMap.
+* Varnish Controller is a process that's running in the same container as Varnish. It is responsible for watching Kubernetes resources and reacting accordingly. For example, Varnish Controller reloads the VCL configuration when backends scale or the VCL configuration has changed in the ConfigMap.
                                                                               
 Both components live in one repo and share the same codebase, dependencies, build scripts, etc.
 
-The operator and kwatcher's codebases are located in `/pkg/varnishservice/` and `pkg/kwatcher` folders respectively.
+The operator and varnish controller's codebases are located in `/pkg/varnishservice/` and `pkg/varnishcontroller` folders respectively.
 The main packages for both components can be found in the `cmd/` folder.
 
 ### Developing the operator
@@ -103,9 +103,9 @@ kubectl logs -n varnish-operator-system varnish-operator-fd96f48f-gn6mc
 ...
 ```
 
-### Developing kwatcher
+### Developing varnish controller
 
-Varnish pods (with kwatcher inside) can only be tested by running in Kubernetes. That means that we need to build an image every time we make a change in the code related to kwatcher.
+Varnish pods (with varnish-controller inside) can only be tested by running in Kubernetes. That means that we need to build an image every time we make a change in the code related to varnish-controller.
 
 After changes are made in the code, the typical workflow will be the following:
 

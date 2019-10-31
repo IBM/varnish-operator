@@ -1,5 +1,5 @@
 #!groovy
-@Library("icm-jenkins-common@0.84.0")
+@Library("icm-jenkins-common@0.87.0")
 import com.ibm.icm.*
 
 // for GitInfo
@@ -12,6 +12,7 @@ dockerRegistryNamespace = "icm-varnish"
 varnishDockerImageName = "varnish"
 operatorDockerImageName = "varnish-operator"
 releaseBranch = "master"
+credentialsId = 'ApplicationId-icmautomation'
 
 // for Helm chart publish
 helmChart = "varnish-operator"
@@ -19,25 +20,44 @@ artifactoryRoot = "na.artifactory.swg-devops.com/artifactory"
 artifactoryRepo = "wcp-icm-helm-local"
 artifactoryUserPasswordId = "TAAS-Artifactory-User-Password-Global"
 
+VersionUtils versionUtils = new VersionUtils(this)
+GitUtils gitUtils = new GitUtils(this)
+HelmUtils helmUtils = new HelmUtils(this)
+
 node("icm_slave") {
     GitInfo gitInfo = icmCheckoutStages()
+
     icmLoginToCloud(cloudApiKeyId, region, CloudCliPluginConsts.CONTAINER_PLUGINS)
 
     DockerImageInfo varnishDockerImageInfo = icmGetDockerImageInfo(dockerRegistry, dockerRegistryNamespace, varnishDockerImageName,
             releaseBranch, gitInfo)
-    icmDockerStages(varnishDockerImageInfo, ["-f": "Dockerfile.Varnish"])
 
     DockerImageInfo operatorDockerImageInfo = icmGetDockerImageInfo(dockerRegistry, dockerRegistryNamespace, operatorDockerImageName,
             releaseBranch, gitInfo)
-    icmDockerStages(operatorDockerImageInfo)
 
-    List<String> tags = icmGetTagsOnCommit()
-    String repoVersion = new VersionUtils(this).getAppVersion()
-    if (tags && tags.contains(repoVersion)) {
-        stage("Helm Chart Publish") {
+    String repoVersion = versionUtils.getAppVersion()
+
+    if ( gitInfo.branch == releaseBranch ) {
+
+        if ( ! gitUtils.doesTagExist(repoVersion) ) {
+
+            icmDockerStages(varnishDockerImageInfo, ["-f":"Dockerfile.Varnish"])
+            icmDockerStages(operatorDockerImageInfo)
+
             icmWithArtifactoryConfig(artifactoryRoot, artifactoryRepo, artifactoryUserPasswordId) {
-                icmHelmChartPackagePublish(helmChart, it.config.createHelmPublish())
+                icmHelmChartPackagePublishStage(helmChart, it.config.createHelmPublish())
             }
+
+            gitUtils.setTag(repoVersion, credentialsId, 'origin')
+        }
+    } else {
+        icmDockerStages(varnishDockerImageInfo, ["-f":"Dockerfile.Varnish"])
+        icmDockerStages(operatorDockerImageInfo)
+        stage('Set the helm chart version') {
+            helmUtils.setChartVersion(helmChart, repoVersion + '-' + gitInfo.branch.toLowerCase().replaceAll("(-|/|,|\\.)", "_"))
+        }
+        icmWithArtifactoryConfig(artifactoryRoot, artifactoryRepo, artifactoryUserPasswordId) {
+            icmHelmChartPackagePublishStage(helmChart, it.config.createHelmPublish())
         }
     }
 }

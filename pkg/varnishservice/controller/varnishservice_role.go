@@ -9,7 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	rbacv1beta1 "k8s.io/api/rbac/v1beta1"
+	rbac "k8s.io/api/rbac/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -17,13 +17,13 @@ import (
 )
 
 func (r *ReconcileVarnishService) reconcileRole(ctx context.Context, instance *icmapiv1alpha1.VarnishService) (string, error) {
-	role := &rbacv1beta1.Role{
+	role := &rbac.Role{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      instance.Name + "-varnish-role",
 			Namespace: instance.Namespace,
 			Labels:    labels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentRole),
 		},
-		Rules: []rbacv1beta1.PolicyRule{
+		Rules: []rbac.PolicyRule{
 			{
 				APIGroups: []string{""},
 				Resources: []string{"endpoints", "configmaps"},
@@ -55,7 +55,7 @@ func (r *ReconcileVarnishService) reconcileRole(ctx context.Context, instance *i
 		return "", errors.Wrap(err, "Cannot set controller reference for service")
 	}
 
-	found := &rbacv1beta1.Role{}
+	found := &rbac.Role{}
 
 	err := r.Get(ctx, types.NamespacedName{Name: role.Name, Namespace: role.Namespace}, found)
 	// If the role does not exist, create it

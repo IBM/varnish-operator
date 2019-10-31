@@ -9,7 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	rbacv1beta1 "k8s.io/api/rbac/v1beta1"
+	rbac "k8s.io/api/rbac/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -17,19 +17,19 @@ import (
 )
 
 func (r *ReconcileVarnishService) reconcileClusterRoleBinding(ctx context.Context, instance *icmapiv1alpha1.VarnishService, roleName, serviceAccountName string) error {
-	clusterRoleBinding := &rbacv1beta1.ClusterRoleBinding{
+	clusterRoleBinding := &rbac.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   instance.Name + "-varnish-clusterrolebinding-" + instance.Namespace,
 			Labels: labels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentClusterRoleBinding),
 		},
-		Subjects: []rbacv1beta1.Subject{
+		Subjects: []rbac.Subject{
 			{
 				Kind:      "ServiceAccount",
 				Name:      serviceAccountName,
 				Namespace: instance.Namespace,
 			},
 		},
-		RoleRef: rbacv1beta1.RoleRef{
+		RoleRef: rbac.RoleRef{
 			Kind:     "ClusterRole",
 			Name:     roleName,
 			APIGroup: "rbac.authorization.k8s.io",
@@ -44,7 +44,7 @@ func (r *ReconcileVarnishService) reconcileClusterRoleBinding(ctx context.Contex
 		return errors.Wrap(err, "Cannot set controller reference for ClusterRoleBinding")
 	}
 
-	found := &rbacv1beta1.ClusterRoleBinding{}
+	found := &rbac.ClusterRoleBinding{}
 
 	err := r.Get(context.TODO(), types.NamespacedName{Name: clusterRoleBinding.Name, Namespace: clusterRoleBinding.Namespace}, found)
 	// If the role does not exist, create it

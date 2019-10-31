@@ -3,17 +3,17 @@ package compare
 import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	rbacv1beta1 "k8s.io/api/rbac/v1beta1"
+	rbac "k8s.io/api/rbac/v1"
 )
 
 var (
-	clusterRoleOpts = []cmp.Option{cmpopts.IgnoreFields(rbacv1beta1.ClusterRole{}, sharedIgnoreMetadata...)}
+	clusterRoleOpts = []cmp.Option{cmpopts.IgnoreFields(rbac.ClusterRole{}, sharedIgnoreMetadata...)}
 )
 
-func EqualClusterRole(found, desired *rbacv1beta1.ClusterRole) bool {
+func EqualClusterRole(found, desired *rbac.ClusterRole) bool {
 	return cmp.Equal(found, desired, clusterRoleOpts...)
 }
 
-func DiffClusterRole(found, desired *rbacv1beta1.ClusterRole) string {
+func DiffClusterRole(found, desired *rbac.ClusterRole) string {
 	return cmp.Diff(found, desired, clusterRoleOpts...)
 }

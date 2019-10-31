@@ -9,7 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	rbacv1beta1 "k8s.io/api/rbac/v1beta1"
+	rbac "k8s.io/api/rbac/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -17,20 +17,20 @@ import (
 )
 
 func (r *ReconcileVarnishService) reconcileRoleBinding(ctx context.Context, instance *icmapiv1alpha1.VarnishService, roleName, serviceAccountName string) error {
-	roleBinding := &rbacv1beta1.RoleBinding{
+	roleBinding := &rbac.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      instance.Name + "-varnish-rolebinding",
 			Namespace: instance.Namespace,
 			Labels:    vslabels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentRoleBinding),
 		},
-		Subjects: []rbacv1beta1.Subject{
+		Subjects: []rbac.Subject{
 			{
 				Kind:      "ServiceAccount",
 				Name:      serviceAccountName,
 				Namespace: instance.Namespace,
 			},
 		},
-		RoleRef: rbacv1beta1.RoleRef{
+		RoleRef: rbac.RoleRef{
 			Kind:     "Role",
 			Name:     roleName,
 			APIGroup: "rbac.authorization.k8s.io",
@@ -45,7 +45,7 @@ func (r *ReconcileVarnishService) reconcileRoleBinding(ctx context.Context, inst
 		return errors.Wrap(err, "Cannot set controller reference for service")
 	}
 
-	found := &rbacv1beta1.RoleBinding{}
+	found := &rbac.RoleBinding{}
 
 	err := r.Get(ctx, types.NamespacedName{Name: roleBinding.Name, Namespace: roleBinding.Namespace}, found)
 	// If the role does not exist, create it

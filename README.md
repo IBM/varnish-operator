@@ -8,9 +8,9 @@ The project is in development and breaking changes can be introduced.
 
 The purpose of the project is to provide a convenient way to deploy and manage Varnish instances in Kubernetes.
 
-Kubernetes version `>=1.11.0` is supported.
+Kubernetes version `>=1.12.0` is supported.
 
-Varnish version 6.0.2 is supported.
+Varnish version 6.1.1 is supported.
 
 Full documentation can be found [here](https://pages.github.ibm.com/TheWeatherCompany/icm-varnish-k8s-operator/)
 

@@ -3,17 +3,17 @@ package compare
 import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	rbacv1beta1 "k8s.io/api/rbac/v1beta1"
+	rbac "k8s.io/api/rbac/v1"
 )
 
 var (
-	rolebindingOpts = []cmp.Option{cmpopts.IgnoreFields(rbacv1beta1.RoleBinding{}, sharedIgnoreMetadata...)}
+	rolebindingOpts = []cmp.Option{cmpopts.IgnoreFields(rbac.RoleBinding{}, sharedIgnoreMetadata...)}
 )
 
-func EqualRoleBinding(found, desired *rbacv1beta1.RoleBinding) bool {
+func EqualRoleBinding(found, desired *rbac.RoleBinding) bool {
 	return cmp.Equal(found, desired, rolebindingOpts...)
 }
 
-func DiffRoleBinding(found, desired *rbacv1beta1.RoleBinding) string {
+func DiffRoleBinding(found, desired *rbac.RoleBinding) string {
 	return cmp.Diff(found, desired, rolebindingOpts...)
 }

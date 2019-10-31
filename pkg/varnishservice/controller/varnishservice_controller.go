@@ -20,7 +20,7 @@ import (
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
-	rbacv1beta1 "k8s.io/api/rbac/v1beta1"
+	rbac "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -49,10 +49,10 @@ func SetupVarnishReconciler(mgr manager.Manager, cfg *config.Config, logr *logge
 	builder.Owns(&v1.ConfigMap{})
 	builder.Owns(&appsv1.StatefulSet{})
 	builder.Owns(&v1.Service{})
-	builder.Owns(&rbacv1beta1.Role{})
-	builder.Owns(&rbacv1beta1.RoleBinding{})
-	builder.Owns(&rbacv1beta1.ClusterRole{})
-	builder.Owns(&rbacv1beta1.ClusterRoleBinding{})
+	builder.Owns(&rbac.Role{})
+	builder.Owns(&rbac.RoleBinding{})
+	builder.Owns(&rbac.ClusterRole{})
+	builder.Owns(&rbac.ClusterRoleBinding{})
 	builder.Owns(&v1.ServiceAccount{})
 	builder.Watches(&source.Channel{Source: reconcileChan}, &handler.EnqueueRequestForObject{})
 

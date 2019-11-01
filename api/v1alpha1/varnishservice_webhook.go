@@ -28,6 +28,7 @@ var (
 		"-F": true,
 		"-n": true,
 		"-S": true,
+		"-b": true,
 	}
 	disallowedVarnishArgsAsString string
 )

@@ -34,11 +34,10 @@ RUN apt-get update && apt install -y --no-install-recommends \
         curl \
         supervisor \
         prometheus-varnish-exporter \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* /etc/varnish/*
 
 COPY config/varnish-controller/supervisord.conf /etc/supervisor/supervisord.conf
 COPY config/varnish-controller/vcl_reload config/varnish-controller/vcl_list config/varnish-controller/start_varnishd config/varnish-controller/start_varnish_controller config/varnish-controller/start_varnish_exporter /usr/local/bin/
-COPY config/vcl/default.vcl config/vcl/backends.vcl /etc/varnish/
 COPY --from=builder /go/src/icm-varnish-k8s-operator/varnish-controller /varnish-controller
 
 RUN chown -R varnish /etc/varnish /etc/supervisor /var/lib/varnish

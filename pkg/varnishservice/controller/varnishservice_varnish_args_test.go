@@ -34,7 +34,7 @@ func TestGetSanitizedVarnishArgs(t *testing.T) {
 				"-S", "/etc/varnish/secret",
 				"-T", fmt.Sprintf("127.0.0.1:%d", v1alpha1.VarnishAdminPort),
 				"-a", fmt.Sprintf("0.0.0.0:%d", v1alpha1.VarnishPort),
-				"-f", "/etc/varnish/entry-point-file.vcl",
+				"-b", "127.0.0.1:0",
 			},
 		},
 		{
@@ -52,16 +52,16 @@ func TestGetSanitizedVarnishArgs(t *testing.T) {
 				"-S", "/etc/varnish/secret",
 				"-T", fmt.Sprintf("127.0.0.1:%d", v1alpha1.VarnishAdminPort),
 				"-a", fmt.Sprintf("0.0.0.0:%d", v1alpha1.VarnishPort),
-				"-f", "/etc/varnish/entry-point-file.vcl",
+				"-b", "127.0.0.1:0",
 			},
 		},
 		{
-			name: "not allowed arguments should be overridden",
+			name: "flag -f should be stripped",
 			spec: &v1alpha1.VarnishServiceSpec{
 				VCLConfigMap: vclConfigMap,
 				StatefulSet: v1alpha1.VarnishStatefulSet{
 					Container: v1alpha1.VarnishContainer{
-						VarnishArgs: []string{"-S", "/etc/varnish/newsecret", "-T", "127.0.0.1:4235", "-a", "0.0.0.0:3425", "-f", "/custom-entry-point.vcl"},
+						VarnishArgs: []string{"-f", "/etc/varnish/entry-point-file.vcl"},
 					},
 				},
 			},
@@ -70,7 +70,25 @@ func TestGetSanitizedVarnishArgs(t *testing.T) {
 				"-S", "/etc/varnish/secret",
 				"-T", fmt.Sprintf("127.0.0.1:%d", v1alpha1.VarnishAdminPort),
 				"-a", fmt.Sprintf("0.0.0.0:%d", v1alpha1.VarnishPort),
-				"-f", "/etc/varnish/entry-point-file.vcl",
+				"-b", "127.0.0.1:0",
+			},
+		},
+		{
+			name: "not allowed arguments should be overridden",
+			spec: &v1alpha1.VarnishServiceSpec{
+				VCLConfigMap: vclConfigMap,
+				StatefulSet: v1alpha1.VarnishStatefulSet{
+					Container: v1alpha1.VarnishContainer{
+						VarnishArgs: []string{"-S", "/etc/varnish/newsecret", "-T", "127.0.0.1:4235", "-a", "0.0.0.0:3425", "-b", "127.0.0.1:3456"},
+					},
+				},
+			},
+			expectedResult: []string{
+				"-F",
+				"-S", "/etc/varnish/secret",
+				"-T", fmt.Sprintf("127.0.0.1:%d", v1alpha1.VarnishAdminPort),
+				"-a", fmt.Sprintf("0.0.0.0:%d", v1alpha1.VarnishPort),
+				"-b", "127.0.0.1:0",
 			},
 		},
 		{
@@ -88,7 +106,7 @@ func TestGetSanitizedVarnishArgs(t *testing.T) {
 				"-S", "/etc/varnish/secret",
 				"-T", fmt.Sprintf("127.0.0.1:%d", v1alpha1.VarnishAdminPort),
 				"-a", fmt.Sprintf("0.0.0.0:%d", v1alpha1.VarnishPort),
-				"-f", "/etc/varnish/entry-point-file.vcl",
+				"-b", "127.0.0.1:0",
 				"-p", "default_grace=3600",
 				"-p", "default_ttl=3600",
 			},
@@ -108,7 +126,7 @@ func TestGetSanitizedVarnishArgs(t *testing.T) {
 				"-S", "/etc/varnish/secret",
 				"-T", fmt.Sprintf("127.0.0.1:%d", v1alpha1.VarnishAdminPort),
 				"-a", fmt.Sprintf("0.0.0.0:%d", v1alpha1.VarnishPort),
-				"-f", "/etc/varnish/entry-point-file.vcl",
+				"-b", "127.0.0.1:0",
 				"-p", "default_grace=3600",
 				"-p", "default_ttl=3600",
 			},

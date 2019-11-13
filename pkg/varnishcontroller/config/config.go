@@ -14,20 +14,21 @@ import (
 	"github.com/pkg/errors"
 )
 
+const VCLConfigDir = "/etc/varnish"
+
 // Config that reads in env variables
 type Config struct {
 	EndpointSelectorString string        `env:"ENDPOINT_SELECTOR_STRING,required"`
 	ConfigMapName          string        `env:"CONFIGMAP_NAME,required"`
 	Namespace              string        `env:"NAMESPACE,required"`
 	PodName                string        `env:"POD_NAME,required"`
-	VarnishServiceName     string        `env:"VARNISH_SERVICE_NAME,required"`
-	VarnishServiceUID      types.UID     `env:"VARNISH_SERVICE_UID,required"`
-	VarnishServiceGroup    string        `env:"VARNISH_SERVICE_GROUP,required"`
-	VarnishServiceVersion  string        `env:"VARNISH_SERVICE_VERSION,required"`
-	VarnishServiceKind     string        `env:"VARNISH_SERVICE_KIND,required"`
+	VarnishClusterName     string        `env:"VARNISH_CLUSTER_NAME,required"`
+	VarnishClusterUID      types.UID     `env:"VARNISH_CLUSTER_UID,required"`
+	VarnishClusterGroup    string        `env:"VARNISH_CLUSTER_GROUP,required"`
+	VarnishClusterVersion  string        `env:"VARNISH_CLUSTER_VERSION,required"`
+	VarnishClusterKind     string        `env:"VARNISH_CLUSTER_KIND,required"`
 	LogFormat              string        `env:"LOG_FORMAT,required"`
 	LogLevel               zapcore.Level `env:"LOG_LEVEL,required"`
-	VCLDir                 string
 	EndpointSelector       labels.Selector
 }
 
@@ -59,9 +60,6 @@ func Load() (*Config, error) {
 	if err = env.ParseWithFuncs(&c, parsers); err != nil {
 		return &c, errors.WithStack(err)
 	}
-
-	// hard-coded here for convenience
-	c.VCLDir = "/etc/varnish"
 
 	c.EndpointSelector, err = labels.Parse(c.EndpointSelectorString)
 	if err != nil {

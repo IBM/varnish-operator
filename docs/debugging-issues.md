@@ -3,26 +3,26 @@
 ## Log levels
 The operator has configurable log levels which can be set in the `logLevel` field of your `values.yaml` [Helm chart](operator-configuration.md) override. Also you can change the output of the logs using `logFormat` field. It is `json` by default, but you can set it to `console` to have more user friendly log output.
 
-The `VarnishService` has the same configuration options regarding logging with `spec.logLevel` and `spec.logFormat` fields in the [`VarnishService` spec](varnish-service-configuration.md). Keep in mind that changing log level will cause the pods to restart and invalidate the cache.
+The `VarnishCluster` has the same configuration options regarding logging with `spec.logLevel` and `spec.logFormat` fields in the [`VarnishCluster` spec](varnish-cluster-configuration.md). Keep in mind that changing log level will cause the pods to restart and invalidate the cache.
 
 ## Using Varnish tools
 
 To debug some Varnish related issues you may want to use the tools provided by Varnish (`varnishlog`, `varnishadm`, `varnishncsa`, etc.). Those tools are available in the containers Varnish is running in.
 
-After you've [created your `VarnishService`](varnish-service.md) you should be able to see your Varnish pods. You can use the `varnish-owner=<your-varnishservice-name>` label to select your pods.
+After you've [created your `VarnishCluster`](varnish-cluster.md) you should be able to see your Varnish pods. You can use the `varnish-owner=<your-varnishcluster-name>` label to select your pods.
 
-For a `VarnishService` named `varnish-service-example` the command will look like this:
+For a `VarnishCluster` named `varnish-cluster-example` the command will look like this:
 
 ```bash
-$ kubectl get pods -l varnish-owner=varnish-service-example                                                   
+$ kubectl get pods -l varnish-owner=varnish-cluster-example                                                   
 NAME                                                          READY   STATUS    RESTARTS   AGE
-varnish-service-example-varnish-0                 1/1     Running   0          15s
+varnish-cluster-example-varnish-0                 1/1     Running   0          15s
 ```
 
 Now, you can exec to that pod's container:
 
 ```bash
-$ kubectl exec -it varnish-service-example-varnish-0 sh
+$ kubectl exec -it varnish-cluster-example-varnish-0 sh
 ```
 
 and execute any available Varnish command line tool. For example `varnishadm`:
@@ -88,15 +88,15 @@ GET /favicon.ico - miss
 
 Note that if you have multiple replicas, Kubernetes will balance the load between them and you may not see a log entry as the request could have gone to a different replica. Just make a few more requests and one of them will eventually land on the pod you're monitoring.
 
-### VarnishService status
+### VarnishCluster status
 
-As with any other Kubernetes resource, `VarnishService` has a `status` object describing the state of the resource. You can find the status of the underlying StatefulSet and Service objects in a similar manner. The `status` object can also reveal information about the status of Varnish VCL configuration. It can be found in the `.status.vcl` object. The `status.vcl.availability` field is especially useful for debugging. It shows how many Varnish instances are running with the latest version of VCL.
+As with any other Kubernetes resource, `VarnishCluster` has a `status` object describing the state of the resource. The `status` object can reveal information about the status of Varnish VCL configuration. It can be found in the `.status.vcl` object. The `status.vcl.availability` field is especially useful for debugging. It shows how many Varnish instances are running with the latest version of VCL.
 
-For example, if the field has value `availability: 3 latest / 0 outdated` it means that all pods are running the latest version of VCL. However if none of the pods are running the latest version (`availability: "0 latest / 3 outdated"`), it could mean that the VCL could be invalid. You can check it by looking at `VarnishService` events first:
+For example, if the field has value `availability: 3 latest / 0 outdated` it means that all pods are running the latest version of VCL. However if none of the pods are running the latest version (`availability: "0 latest / 3 outdated"`), it could mean that the VCL could be invalid. You can check it by looking at `VarnishCluster` events first:
 
 ```bash
-$ kubectl describe vs varnish-service-example
-Name:         varnish-service-example
+$ kubectl describe vc varnish-cluster-example
+Name:         varnish-cluster-example
 Namespace:    varnish-operator-system
     ...
   Vcl:
@@ -105,16 +105,16 @@ Namespace:    varnish-operator-system
 Events:
   Type     Reason               Age   From     Message
   ----     ------               ----  ----     -------
-  Warning  VCLCompilationError  11s   varnish  VCL compilation failed for pod varnish-service-example-varnish-0. See pod logs for details
+  Warning  VCLCompilationError  11s   varnish  VCL compilation failed for pod varnish-cluster-example-varnish-0. See pod logs for details
 ```
 
 As you can see, the event indicates that it is a VCL compilation error indeed. To check the compilation error message see the pod logs:
 
 ```bash
-$ kubectl logs varnish-service-example-varnish-0                 
+$ kubectl logs varnish-cluster-example-varnish-0                 
 ...
 2019-07-04T10:50:53.481Z	INFO	varnish-controller/main.go:79	Starting Varnish Controller	{"varnish_controller_version": "0.21.0"}
-2019-07-04T10:50:54.012Z	INFO	controller/controller_files.go:57	Rewriting file	{"varnish_controller_version": "0.21.0", "varnish_service": "varnish-service-example", "pod_name": "varnish-service-example-varnish-0", "namespace": "varnish-operator-system", "file_path": "/etc/varnish/backends.vcl"}
+2019-07-04T10:50:54.012Z	INFO	controller/controller_files.go:57	Rewriting file	{"varnish_controller_version": "0.21.0", "varnish_cluster": "varnish-cluster-example", "pod_name": "varnish-cluster-example-varnish-0", "namespace": "varnish-operator-system", "file_path": "/etc/varnish/backends.vcl"}
 2019-07-04T10:50:54.506Z	WARN	controller/controller_varnish.go:51	Message from VCC-compiler:
 Expected one of
 	'acl', 'sub', 'backend', 'probe', 'import', 'vcl',  or 'default'
@@ -128,7 +128,7 @@ Command failed with error code 106
 VCL compilation failed
 No VCL named v-974330-1562237454 known.
 Command failed with error code 106
-	{"varnish_controller_version": "0.21.0", "varnish_service": "varnish-service-example", "pod_name": "varnish-service-example-varnish-0", "namespace": "varnish-operator-system"}
+	{"varnish_controller_version": "0.21.0", "varnish_cluster": "varnish-cluster-example", "pod_name": "varnish-cluster-example-varnish-0", "namespace": "varnish-operator-system"}
 ```
 
-As you can see we have a type in word - `bakcend`. To fix it you'll have to modify your [ConfigMap containing your VCL files](vcl-configuration.md).
+As you can see we have a typo in word - `bakcend`. To fix it you'll have to modify your [ConfigMap containing your VCL files](vcl-configuration.md).

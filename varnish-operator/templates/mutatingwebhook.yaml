@@ -1,0 +1,24 @@
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: varnish-operator-webhook-configuration
+  namespace: {{ .Release.Namespace }}
+webhooks:
+  - clientConfig:
+      caBundle: Cg==
+      service:
+        name: varnish-operator-service
+        namespace: {{ .Release.Namespace }}
+        path: /mutate-icm-ibm-com-v1alpha1-varnishcluster
+    failurePolicy: Fail
+    name: mvarnishcluster.kb.io
+    rules:
+    - apiGroups:
+      - icm.ibm.com
+      apiVersions:
+      - v1alpha1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - varnishclusters

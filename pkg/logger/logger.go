@@ -12,7 +12,7 @@ import (
 const (
 	FieldComponent                = "component"
 	FieldComponentName            = "component_name"
-	FieldVarnishService           = "varnish_service"
+	FieldVarnishCluster           = "varnish_cluster"
 	FieldOperatorVersion          = "operator_version"
 	FieldVarnishControllerVersion = "varnish_controller_version"
 	FieldFilePath                 = "file_path"

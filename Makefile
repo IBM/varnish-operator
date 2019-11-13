@@ -8,8 +8,8 @@ IMG ?= ${PUBLISH_IMG}-dev
 NAMESPACE ?= "default"
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 
-# all: test manager
-all: test manager varnish-controller
+# all: test varnish-operator
+all: test varnish-operator varnish-controller
 
 # Run tests
 test: generate fmt vet manifests
@@ -19,13 +19,13 @@ test: generate fmt vet manifests
 lint:
 	golangci-lint run
 
-# Build manager binary
-manager: generate fmt vet
-	go build -o ${ROOT_DIR}bin/manager icm-varnish-k8s-operator/cmd/manager
+# Build varnish-operator binary
+varnish-operator: generate fmt vet
+	go build -o ${ROOT_DIR}bin/varnish-operator icm-varnish-k8s-operator/cmd/varnish-operator
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet
-	NAMESPACE=${NAMESPACE} LOGLEVEL=debug LOGFORMAT=console CONTAINER_IMAGE=us.icr.io/icm-varnish/${VARNISH_IMG} LEADERELECTION_ENABLED=false WEBHOOKS_ENABLED=false go run ${ROOT_DIR}cmd/manager/main.go
+	NAMESPACE=${NAMESPACE} LOGLEVEL=debug LOGFORMAT=console CONTAINER_IMAGE=us.icr.io/icm-varnish/${VARNISH_IMG} LEADERELECTION_ENABLED=false WEBHOOKS_ENABLED=false go run ${ROOT_DIR}cmd/varnish-operator/main.go
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 install: manifests
@@ -37,8 +37,8 @@ uninstall:
 # Generate manifests e.g. CRD, RBAC etc.
 manifests:
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=varnish-operator paths="./..." output:crd:artifacts:config=config/crd/bases
-	kustomize build ${ROOT_DIR}config/crd > $(ROOT_DIR)varnish-operator/templates/manager_customresourcedefinition.yaml
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=varnish-operator paths="./..." output:crd:none output:rbac:stdout > $(ROOT_DIR)varnish-operator/templates/manager_clusterrole.yaml
+	kustomize build ${ROOT_DIR}config/crd > $(ROOT_DIR)varnish-operator/templates/customresourcedefinition.yaml
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=varnish-operator paths="./..." output:crd:none output:rbac:stdout > $(ROOT_DIR)varnish-operator/templates/clusterrole.yaml
 
 # Run goimports against code
 fmt:

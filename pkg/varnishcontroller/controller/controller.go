@@ -3,13 +3,15 @@ package controller
 import (
 	"context"
 	"icm-varnish-k8s-operator/api/v1alpha1"
-	vslabels "icm-varnish-k8s-operator/pkg/labels"
+	vclabels "icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/logger"
 	"icm-varnish-k8s-operator/pkg/varnishcontroller/config"
 	"icm-varnish-k8s-operator/pkg/varnishcontroller/events"
 	"icm-varnish-k8s-operator/pkg/varnishcontroller/predicates"
 	"strings"
 	"time"
+
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -36,7 +38,7 @@ type PodInfo struct {
 	PodName    string
 }
 
-// SetupVarnishReconciler creates a new VarnishService Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
+// SetupVarnishReconciler creates a new VarnishCluster Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func SetupVarnishReconciler(mgr manager.Manager, cfg *config.Config, logr *logger.Logger) error {
 	r := &ReconcileVarnish{
@@ -61,11 +63,11 @@ func SetupVarnishReconciler(mgr manager.Manager, cfg *config.Config, logr *logge
 	builder := ctrl.NewControllerManagedBy(mgr)
 	builder.Named("varnish-controller")
 
-	// Normally the `For` function receives the type the operator owns. For the operator it's the VarnishService.
+	// Normally the `For` function receives the type the operator owns. For the operator it's the VarnishCluster.
 	// For varnish-controller we don't have such resource but still need to provide something for the `For` function, it will fail otherwise.
-	// For that reason we provide the v1alpha1.VarnishService resource but filter it all out. The operator will receive events from Kubernetes but won't react.
-	builder.For(&v1alpha1.VarnishService{})
-	builder.WithEventFilter(predicates.NewIgnoreVarnishServicesPredicate())
+	// For that reason we provide the v1alpha1.VarnishCluster resource but filter it all out. The operator will receive events from Kubernetes but won't react.
+	builder.For(&v1alpha1.VarnishCluster{})
+	builder.WithEventFilter(predicates.NewIgnoreVarnishClusterPredicate())
 
 	builder.Watches(&source.Kind{Type: &v1.ConfigMap{}}, podMapFunc)
 	builder.WithEventFilter(predicates.NewConfigMapNamePredicate(cfg.ConfigMapName, logr))
@@ -78,9 +80,9 @@ func SetupVarnishReconciler(mgr manager.Manager, cfg *config.Config, logr *logge
 	}
 
 	varnishPodsSelector := labels.SelectorFromSet(labels.Set{
-		v1alpha1.LabelVarnishOwner:     cfg.VarnishServiceName,
+		v1alpha1.LabelVarnishOwner:     cfg.VarnishClusterName,
 		v1alpha1.LabelVarnishComponent: v1alpha1.VarnishComponentCacheService,
-		v1alpha1.LabelVarnishUID:       string(cfg.VarnishServiceUID),
+		v1alpha1.LabelVarnishUID:       string(cfg.VarnishClusterUID),
 	})
 
 	endpointsSelectors := []labels.Selector{labels.SelectorFromSet(backendsLabels), varnishPodsSelector}
@@ -102,7 +104,7 @@ type ReconcileVarnish struct {
 func (r *ReconcileVarnish) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	ctx := context.Background()
 
-	logr := r.logger.With(logger.FieldVarnishService, r.config.VarnishServiceName)
+	logr := r.logger.With(logger.FieldVarnishCluster, r.config.VarnishClusterName)
 	logr = logr.With(logger.FieldPodName, r.config.PodName)
 	logr = logr.With(logger.FieldNamespace, r.config.Namespace)
 
@@ -124,17 +126,17 @@ func (r *ReconcileVarnish) Reconcile(request reconcile.Request) (reconcile.Resul
 }
 
 func (r *ReconcileVarnish) reconcileWithContext(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
-	vs := &v1alpha1.VarnishService{}
-	err := r.Get(ctx, types.NamespacedName{Namespace: request.Namespace, Name: r.config.VarnishServiceName}, vs)
+	vc := &v1alpha1.VarnishCluster{}
+	err := r.Get(ctx, types.NamespacedName{Namespace: request.Namespace, Name: r.config.VarnishClusterName}, vc)
 	if err != nil {
 		return reconcile.Result{}, errors.WithStack(err)
 	}
 
-	r.scheme.Default(vs)
+	r.scheme.Default(vc)
 
 	varnishPort := int32(v1alpha1.VarnishPort)
-	targetPort := vs.Spec.Service.VarnishPort.TargetPort.IntVal
-	entrypointFile := vs.Spec.VCLConfigMap.EntrypointFile
+	targetPort := vc.Spec.Backend.Port
+	entrypointFileName := vc.Spec.VCL.EntrypointFileName
 
 	pod := &v1.Pod{}
 	err = r.Get(ctx, types.NamespacedName{Namespace: request.Namespace, Name: r.config.PodName}, pod)
@@ -149,22 +151,22 @@ func (r *ReconcileVarnish) reconcileWithContext(ctx context.Context, request rec
 
 	newFiles, newTemplates := r.filesAndTemplates(cm.Data)
 
-	if err = r.verifyEntrypointExists(newFiles, newTemplates, entrypointFile); err != nil {
+	if err = r.verifyEntrypointExists(newFiles, newTemplates, entrypointFileName); err != nil {
 		return reconcile.Result{}, errors.WithStack(err)
 	}
 
-	bks, err := r.getPodInfo(ctx, r.config.Namespace, r.config.EndpointSelector, targetPort)
+	bks, backendPortNumber, err := r.getPodInfo(ctx, r.config.Namespace, r.config.EndpointSelector, targetPort)
 	if err != nil {
 		return reconcile.Result{}, errors.WithStack(err)
 	}
 
-	varnishLabels := labels.SelectorFromSet(vslabels.CombinedComponentLabels(vs, v1alpha1.VarnishComponentCacheService))
-	varnishNodes, err := r.getPodInfo(ctx, r.config.Namespace, varnishLabels, varnishPort)
+	varnishLabels := labels.SelectorFromSet(vclabels.CombinedComponentLabels(vc, v1alpha1.VarnishComponentCacheService))
+	varnishNodes, _, err := r.getPodInfo(ctx, r.config.Namespace, varnishLabels, intstr.FromString(v1alpha1.VarnishPortName))
 	if err != nil {
 		return reconcile.Result{}, errors.WithStack(err)
 	}
 
-	templatizedFiles, err := r.resolveTemplates(newTemplates, targetPort, varnishPort, bks, varnishNodes)
+	templatizedFiles, err := r.resolveTemplates(newTemplates, backendPortNumber, varnishPort, bks, varnishNodes)
 	if err != nil {
 		return reconcile.Result{}, errors.WithStack(err)
 	}
@@ -177,18 +179,18 @@ func (r *ReconcileVarnish) reconcileWithContext(ctx context.Context, request rec
 		newFiles[fileName] = contents
 	}
 
-	currFiles, err := getCurrentFiles(r.config.VCLDir)
+	currFiles, err := getCurrentFiles(config.VCLConfigDir)
 	if err != nil {
 		return reconcile.Result{}, errors.WithStack(err)
 	}
 
-	filesTouched, err := r.reconcileFiles(ctx, r.config.VCLDir, currFiles, newFiles)
+	filesTouched, err := r.reconcileFiles(ctx, config.VCLConfigDir, currFiles, newFiles)
 	if err != nil {
 		return reconcile.Result{}, errors.WithStack(err)
 	}
 
 	if filesTouched {
-		if err = r.reconcileVarnish(ctx, vs, pod, cm); err != nil {
+		if err = r.reconcileVarnish(ctx, vc, pod, cm); err != nil {
 			return reconcile.Result{}, errors.WithStack(err)
 		}
 	}

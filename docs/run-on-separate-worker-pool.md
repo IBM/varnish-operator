@@ -93,7 +93,7 @@ References:
     
     This prevents all pods from scheduling on that node unless you already have pods with matching toleration
     
-1. Label the nodes for the ability to schedule your varnish pods only on that nodes. Those labels will be used in your VarnishService configuration later.
+1. Label the nodes for the ability to schedule your varnish pods only on that nodes. Those labels will be used in your VarnishCluster configuration later.
 
     ```bash
     $ kubectl label node 10.94.177.179 role=varnish-cache
@@ -101,7 +101,7 @@ References:
     $ kubectl label node 10.94.177.180 role=varnish-cache
     node/10.94.177.180 labeled 
     ```
-1. Define your VarnishService spec with necessary affinity and toleration configuration
+1. Define your VarnishCluster spec with necessary affinity and toleration configuration
 
     4.1 Define pods anti-affinity to not co-locate replicas on a node.
     
@@ -110,17 +110,16 @@ References:
       labels:
         role: varnish-cache
     spec:
-      statefulSet:
-        affinity:
-          podAntiAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              - labelSelector:
-                  matchExpressions:
-                    - key: role
-                      operator: In
-                      values:
-                        - varnish-cache
-                topologyKey: "kubernetes.io/hostname"
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: role
+                    operator: In
+                    values:
+                      - varnish-cache
+              topologyKey: "kubernetes.io/hostname"
     ```
     That will make sure that two varnish pods doesn't get scheduled on one node. Kubernetes makes the decision based on labels we've set in the spec
     
@@ -128,16 +127,15 @@ References:
     
     ```yaml
     spec:
-      statefulSet:
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-              - matchExpressions:
-                - key: role
-                  operator: In
-                  values:
-                    - varnish-cache
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: role
+                operator: In
+                values:
+                  - varnish-cache
     ```
     That will make kubernetes schedule varnish pods only on our worker pool nodes. The labels used here are the ones we've assigned to the node in step 3
     
@@ -145,16 +143,15 @@ References:
     
     ```yaml
     spec:
-      statefulSet:
-        tolerations:
-          - key: "role"
-            operator: "Equal"
-            value: "varnish"
-            effect: "NoSchedule"
-          - key: "role"
-            operator: "Equal"
-            value: "varnish"
-            effect: "NoExecute"
+      tolerations:
+        - key: "role"
+          operator: "Equal"
+          value: "varnish"
+          effect: "NoSchedule"
+        - key: "role"
+          operator: "Equal"
+          value: "varnish"
+          effect: "NoExecute"
     ```
     In step 2 we made our node repel all pods that don't have specific tolerations. Here we added those tolerations to be eligible for scheduling on those nodes. The values are the ones we used when tainted our nodes in step 2. 
     
@@ -162,24 +159,22 @@ References:
 
     This step assumes you have varnish operator [installed](#installation) and the namespace has the necessary secret [installed](#configuring-access).
     
-    Complete VarnishService configuration example:
+    Complete VarnishCluster configuration example:
     
     ```yaml
     apiVersion: icm.ibm.com/v1alpha1
-    kind: VarnishService
+    kind: VarnishCluster
     metadata:
       labels:
         role: varnish-cache
       name: varnish-in-worker-pool
       namespace: varnish-ns
     spec:
-      vclConfigMap:
-        name: varnish-worker-pool-files
-        backendsFile: backends.vcl
-        defaultFile: default.vcl
-      statefulSet:
-        replicas: 2
-        container:
+      vcl:
+        configMapName: varnish-worker-pool-files
+        entrypointFileName: entrypoint.vcl
+      replicas: 2
+        varnish:
           resources:
             limits:
               cpu: 100m
@@ -187,9 +182,6 @@ References:
             requests:
               cpu: 100m
               memory: 256Mi
-          readinessProbe:
-            exec:
-              command: [/usr/bin/varnishadm, ping]
           imagePullSecret: docker-reg-secret
         affinity:
           podAntiAffinity:
@@ -218,21 +210,16 @@ References:
             operator: "Equal"
             value: "varnish-cache"
             effect: "NoExecute"
-      service:
+      backend:
         selector:
           app: HttPerf
-        varnishPort:
-          name: varnish
-          port: 2035
-          targetPort: 8080
-        varnishExporterPort:
-          name: varnishexporter
-          port: 9131
+      service:
+        port: 2035
     ```
     Apply your configuration:
     ```bash
     $ kubectl apply -f varnish-in-worker-pool.yaml
-    varnishservice.icm.ibm.com/varnish-in-worker-pool created
+    varnishcluster.icm.ibm.com/varnish-in-worker-pool created
     ```
     Here the operator will create all pods with specified configuration
 6. See your pods being scheduled strictly on your worker pool and spread across different nodes.
@@ -250,19 +237,18 @@ References:
     
     ```yaml
     spec:
-      statefulSet:
-        affinity:
-          podAntiAffinity:
-            preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 1
-              podAffinityTerm:
-                labelSelector:
-                  matchExpressions:
-                  - key: role
-                    operator: In
-                    values:
-                    - varnish-cache
-                topologyKey: "kubernetes.io/hostname"
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: role
+                  operator: In
+                  values:
+                  - varnish-cache
+              topologyKey: "kubernetes.io/hostname"
     ```
      It will still ask Kubernetes to spread pods onto different nodes but also allow to co-locate them if there are more pods than nodes.
      

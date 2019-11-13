@@ -17,7 +17,7 @@ func TestEndpointsUpdatePredicate(t *testing.T) {
 		}.AsSelector(),
 		labels.Set{
 			"varnish-component": "varnish-service",
-			"varnish-owner":     "varnishservice-example",
+			"varnish-owner":     "varnishcluster-example",
 			"varnish-uid":       "some-uid",
 		}.AsSelector(),
 	}
@@ -115,7 +115,7 @@ func TestEndpointsUpdatePredicate(t *testing.T) {
 					ObjectMeta: v12.ObjectMeta{
 						Labels: map[string]string{
 							"varnish-component": "varnish-service",
-							"varnish-owner":     "varnishservice-example",
+							"varnish-owner":     "varnishcluster-example",
 							"varnish-uid":       "some-uid",
 						},
 					},
@@ -154,7 +154,7 @@ func TestEndpointsUpdatePredicate(t *testing.T) {
 					ObjectMeta: v12.ObjectMeta{
 						Labels: map[string]string{
 							"varnish-component": "varnish-service",
-							"varnish-owner":     "varnishservice-example",
+							"varnish-owner":     "varnishcluster-example",
 							"varnish-uid":       "some-uid",
 						},
 					},
@@ -555,7 +555,7 @@ func TestEndpointsSharedPredicate(t *testing.T) {
 		}.AsSelector(),
 		labels.Set{
 			"varnish-component": "varnish-service",
-			"varnish-owner":     "varnishservice-example",
+			"varnish-owner":     "varnishcluster-example",
 			"varnish-uid":       "some-uid",
 		}.AsSelector(),
 	}
@@ -584,7 +584,7 @@ func TestEndpointsSharedPredicate(t *testing.T) {
 				ObjectMeta: v12.ObjectMeta{
 					Labels: map[string]string{
 						"varnish-component": "varnish-service",
-						"varnish-owner":     "varnishservice-example",
+						"varnish-owner":     "varnishcluster-example",
 						"varnish-uid":       "some-uid",
 					},
 				},

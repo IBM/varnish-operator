@@ -2,11 +2,11 @@
 
 Requirements:
 
-* Kubernetes 1.12 or newer. You can use [minikube](https://kubernetes.io/docs/setup/minikube/) for local development)
-* Go 1.12 with enabled go modules
+* Kubernetes 1.12 or newer. You can use [minikube](https://kubernetes.io/docs/setup/minikube/) for local development.
+* Go 1.12+ with enabled go modules
 * [Kubebuilder](https://kubebuilder.io/quick-start.html#installation) 2.0.0+
 * [kustomize](https://github.com/kubernetes-sigs/kustomize) 3.1.0+
-* [helm](https://helm.sh/)
+* [helm](https://helm.sh/) v2.14.3+
 * [docker](https://docs.docker.com/install/)
 * [goimports](https://godoc.org/golang.org/x/tools/cmd/goimports)
 * [GolangCI-Lint](https://github.com/golangci/golangci-lint) 1.19.1+
@@ -16,12 +16,12 @@ Requirements:
 
 The project consists of 2 components working together:
 
-* Varnish operator itself, that manages `VarnishService` deployments
+* Varnish operator itself, that manages `VarnishCluster` resources
 * Varnish Controller is a process that's running in the same container as Varnish. It is responsible for watching Kubernetes resources and reacting accordingly. For example, Varnish Controller reloads the VCL configuration when backends scale or the VCL configuration has changed in the ConfigMap.
                                                                               
 Both components live in one repo and share the same codebase, dependencies, build scripts, etc.
 
-The operator and varnish controller's codebases are located in `/pkg/varnishservice/` and `pkg/varnishcontroller` folders respectively.
+The operator and varnish controller's codebases are located in `/pkg/varnishcluster/` and `pkg/varnishcontroller` folders respectively.
 The main packages for both components can be found in the `cmd/` folder.
 
 ### Developing the operator
@@ -34,13 +34,15 @@ $ go mod download
 #### Run the operator locally against a Kubernetes cluster
 The operator can be run locally without building the image every time the code changes.
 
-First, you need to install the [CRD](https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/) for `VarnishService` resource.
+First, you need to install the [CRD](https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/) for `VarnishCluster` resource.
 
 ```bash
 $ make install
-<path>/<to>/<controller-gen>/controller-gen "crd:trivialVersions=true" rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
-kustomize build <path>/<to>/<repo>/icm-varnish-k8s-operator/config/crd | kubectl apply -f -
-customresourcedefinition.apiextensions.k8s.io/varnishservices.icm.ibm.com created
+<path>/<to>/<controller-gen>/controller-gen "crd:trivialVersions=true" rbac:roleName=varnish-operator paths="./..." output:crd:artifacts:config=config/crd/bases
+kustomize build <path>/<to>/<repo>/config/crd > <path>/<to>/<repo>/varnish-operator/templates/customresourcedefinition.yaml
+<path>/<to>/<controller-gen>/controller-gen "crd:trivialVersions=true" rbac:roleName=varnish-operator paths="./..." output:crd:none output:rbac:stdout > <path>/<to>/<repo>/varnish-operator/templates/clusterrole.yaml
+kustomize build <path>/<to>/<repo>/config/crd | kubectl apply -f -
+customresourcedefinition.apiextensions.k8s.io/varnishclusters.icm.ibm.com created
 ```
 
 You should see the created CRD in your cluster:
@@ -48,10 +50,10 @@ You should see the created CRD in your cluster:
 ```bash
 $ kubectl get customresourcedefinitions.apiextensions.k8s.io
  NAME                          CREATED AT
- varnishservices.icm.ibm.com   2019-06-05T09:53:26Z
+ varnishclusters.icm.ibm.com   2019-06-05T09:53:26Z
 ```
 
-`make install` should be run only for the first time and after changes in the CRD schema because it is only responsible for installing and updating the CRD for the `VarnishService` resource.
+`make install` should be run only for the first time and after changes in the CRD schema because it is only responsible for installing and updating the CRD for the `VarnishCluster` resource.
 
 After that you're ready to run the operator:
 
@@ -88,7 +90,7 @@ This can be done using the helm template configured to use your custom image:
 docker build -t <image-name> -f Dockerfile .
 docker push <image-name>
 make manifests #make sure your helm charts are in sync with current CRD and RBAC definitions
-helm install --name varnish-operator --namespace varnish-operator-system --set container.image=us.icr.io/icm-varnish/varnish-controller:test ./varnish-operator
+helm install --name varnish-operator --namespace varnish-operator-system --set container.image=<image-name> ./varnish-operator
 ``` 
 
 If your docker image is located in a private container registry, you'll need to [create an image pull secret](https://pages.github.ibm.com/TheWeatherCompany/icm-docs/managed-kubernetes/container-registry.html#creating-an-image-pull-secret) and reference it by adding `--set container.imagePullSecret=<image-pull-secret>` to the `helm install` command.
@@ -114,21 +116,20 @@ docker build -f Dockerfile.Varnish  -t <image-name> .
 docker push <image-name>
 ```
 
-Then, in your `VarnishService`, specify your image:
+Then, in your `VarnishCluster`, specify your image:
 
 ```yaml
 apiVersion: icm.ibm.com/v1alpha1
-kind: VarnishService
+kind: VarnishCluster
 ...
 spec:
-  statefulSet:
-    container:
-      image: <image-name>
+  varnish:
+    image: <image-name>
 ...
 ```
-The StatefulSet will reload the pods with new image. If you're reusing the same image name, make sure `spec.statefulSet.container.imagePullPolicy` is set to `Always` and reload the pods manually by deleting them or recreating the `VarnishService`. 
+The StatefulSet will reload the pods with new image. If you're reusing the same image name, make sure `spec.statefulSet.container.imagePullPolicy` is set to `Always` and reload the pods manually by deleting them or recreating the `VarnishCluster`. 
 
-For images uploaded to a private registry, [create an image pull secret](https://pages.github.ibm.com/TheWeatherCompany/icm-docs/managed-kubernetes/container-registry.html#creating-an-image-pull-secret) and set the name of it in the `spec.container.imagePullSecret` field. 
+For images uploaded to a private registry, [create an image pull secret](https://pages.github.ibm.com/TheWeatherCompany/icm-docs/managed-kubernetes/container-registry.html#creating-an-image-pull-secret) and set the name of it in the `spec.varnish.imagePullSecret` field. 
 
 ### Tests
 

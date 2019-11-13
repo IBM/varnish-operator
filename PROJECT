@@ -4,4 +4,4 @@ repo: icm-varnish-operator
 resources:
 - group: icm
   version: v1alpha1
-  kind: VarnishService
+  kind: VarnishCluster

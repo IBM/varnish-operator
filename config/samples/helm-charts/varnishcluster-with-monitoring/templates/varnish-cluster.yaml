@@ -1,0 +1,18 @@
+apiVersion: icm.ibm.com/v1alpha1
+kind: VarnishCluster
+metadata:
+  labels:
+    app: varnish
+  name: {{ .Release.Name }}-varnish
+  namespace: {{ .Release.Namespace }}
+spec:
+  vcl:
+    configMapName: {{ .Release.Name }}-vcl-files
+    entrypointFileName: entrypoint.vcl
+  varnish:
+    imagePullSecret: {{ .Values.varnish.imagePullSecret }}
+  backend:
+    selector:
+      {{ toYaml .Values.varnish.backendsSelector | nindent 6 }}
+  service:
+    port: 80

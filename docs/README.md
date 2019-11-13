@@ -12,43 +12,36 @@ Varnish operator creates, configures and manages Varnish clusters. It generates 
  * [x] Configurable update strategy
  * [ ] Multiple Varnish versions support
  * [ ] Autoscaling
- * [ ] Nested directors support
 
 ### Overview
 
-The operator works based on a CustomResourceDefinition that manages the Varnish cluster. It defines a new kind called `VarnishService` that describes the desired state of your Varnish instances.
+The operator works based on a CustomResourceDefinition that manages the Varnish cluster. It defines a new kind called `VarnishCluster` that describes the desired state of your Varnish instances.
 
-Example of a simple `VarnishService`:
+Example of a simple `VarnishCluster`:
 
 ```yaml
 apiVersion: icm.ibm.com/v1alpha1
-kind: VarnishService
+kind: VarnishCluster
 metadata:
   labels:
     operator: varnish
-  name: varnishservice-sample
+  name: varnishcluster-sample
   namespace: varnish-ns
 spec:
-  vclConfigMap:
-    name: vcl-files
-    entrypointFile: default.vcl
-  statefulSet:
-   replicas: 3
-    container:
-      imagePullSecret: docker-reg-secret
-  service:
+  vcl:
+    configMapName: vcl-files
+    entrypointFileName: entrypoint.vcl
+  replicas: 3
+  varnish:
+    imagePullSecret: docker-reg-secret
+  backend:  
     selector:
       app: nginx
-    varnishPort:
-      name: varnish
-      port: 80
-      targetPort: 80
-    varnishExporterPort:
-      name: varnishexporter
-      port: 9131
+  service:
+    port: 80
 ```
 
-See the [VarnishService configuration section](varnish-service-configuration.md) for more details about the `VarnishService` spec.
+See the [VarnishCluster configuration section](varnish-cluster-configuration.md) for more details about the `VarnishCluster` spec.
 
 ### VCL configuration
 
@@ -66,7 +59,7 @@ See the [VCL files configuration](vcl-configuration.md) section for more details
 ### Further reading
 
 * [Quickstart](quick-start.md)
-* [VarnishService configuration](varnish-service-configuration.md)
+* [VarnishCluster configuration](varnish-cluster-configuration.md)
 * [Varnish operator configuration](operator-configuration.md)
 * [VCL files configuration](vcl-configuration.md)
 * [Contribution](development.md)

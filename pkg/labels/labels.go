@@ -4,8 +4,8 @@ import (
 	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
 )
 
-// CombinedComponentLabels create labels for a component and inherits VarnishService object labels
-func CombinedComponentLabels(instance *icmapiv1alpha1.VarnishService, componentName string) (m map[string]string) {
+// CombinedComponentLabels create labels for a component and inherits VarnishCluster object labels
+func CombinedComponentLabels(instance *icmapiv1alpha1.VarnishCluster, componentName string) (m map[string]string) {
 	inherited := InheritLabels(instance)
 	generated := ComponentLabels(instance, componentName)
 
@@ -20,7 +20,7 @@ func CombinedComponentLabels(instance *icmapiv1alpha1.VarnishService, componentN
 }
 
 // CombinedComponentLabels create labels for a component
-func ComponentLabels(instance *icmapiv1alpha1.VarnishService, componentName string) map[string]string {
+func ComponentLabels(instance *icmapiv1alpha1.VarnishCluster, componentName string) map[string]string {
 	return map[string]string{
 		icmapiv1alpha1.LabelVarnishOwner:     instance.Name,
 		icmapiv1alpha1.LabelVarnishComponent: componentName,
@@ -28,7 +28,7 @@ func ComponentLabels(instance *icmapiv1alpha1.VarnishService, componentName stri
 	}
 }
 
-func InheritLabels(instance *icmapiv1alpha1.VarnishService) (m map[string]string) {
+func InheritLabels(instance *icmapiv1alpha1.VarnishCluster) (m map[string]string) {
 	m = make(map[string]string, len(instance.Labels))
 	for k, v := range instance.Labels {
 		m[k] = v

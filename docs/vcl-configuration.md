@@ -2,15 +2,15 @@
 
 Varnish VCL files are stored in a ConfigMap. Each entry in the ConfigMap corresponds to a file with VCL configuration.
 
-There are 2 fields relevant to configuring the `VarnishService` for VCL code, in `.spec.vclConfigMap` object:
+There are 2 fields relevant to configuring the `VarnishCluster` for VCL code, in `.spec.vcl` object:
 
-* **name**: This is a required field and tells the VarnishService the name of the ConfigMap that contains/will contain the VCL files
-* **entrypointFile**: The name of the file that acts as the entrypoint for Varnish. This is the name of the file that will be passed to the Varnish executable. If `entrypointFile` is templated (ends in `.tmpl`), exclude the `.tmpl` extension. For example, if ConfigMap has file `mytemplatedfile.vcl.tmpl`, set `entrypointFile: mytemplatedfile.vcl` as the generated file will omit the extension.
+* **configMapName**: This is a required field and tells the `VarnishCluster` resource the name of the ConfigMap that contains/will contain the VCL files
+* **entrypointFileName**: The name of the file that acts as the entrypoint for Varnish. If the entrypoint file is templated (ends in `.tmpl`), exclude the `.tmpl` extension. For example, if ConfigMap has file `mytemplatedfile.vcl.tmpl`, set `entrypointFileName: mytemplatedfile.vcl` as the generated file will omit the extension.
 
-If a ConfigMap does not exist on VarnishService creation, the operator will create one and populate it with a default `backends.vcl.tmpl` and `default.vcl`. Their behavior is as follows:
+If a ConfigMap does not exist on `VarnishCluster` creation, the operator will create one and populate it with a default `backends.vcl.tmpl` and `entrypoint.vcl`. Their behavior is as follows:
 
 * `backends.vcl.tmpl`: collect all backends into a single round-robin director
-* `default.vcl`:
+* `entrypoint.vcl`:
   * respond to `GET /heartbeat` checks with a 200
   * respond to `GET /liveness` checks with a 200 or 503, depending on healthy backends
   * respond to all other requests normally, caching all non-404 responses
@@ -23,7 +23,7 @@ The template file is a regular VCL file, with the addition of [Go templates](htt
 
 The file is considered templated if it's in the ConfigMap and the data entry key ends with `.tmpl` extension.
 
-Here's an example of a ConfigMap containing a templated file for defining backends (`backends.vcl.tmpl`) and a static file that has the rest of the VCL configuration (`main.vcl`):
+Here's an example of a ConfigMap containing a templated file for defining backends (`backends.vcl.tmpl`) and a static file that has the rest of the VCL configuration (`entrypoint.vcl`):
 
 ```yaml
 apiVersion: v1
@@ -51,7 +51,7 @@ data:
     
     ...
   # A static file as doesn't has the `.tmpl` extension
-  main.vcl: |
+  entrypoint.vcl: |
     vcl 4.0;
 
     import std;
@@ -138,7 +138,7 @@ After setting the annotation, that version can be seen at `.status.vcl.version`.
 
 ```yaml
 apiVersion: icm.ibm.com/v1alpha1
-kind: VarnishService
+kind: VarnishCluster
 metadata:
     ...
 status:
@@ -154,7 +154,7 @@ For better observability about currently running VCL versions, see `.status.vcl.
 
 ```yaml
 apiVersion: icm.ibm.com/v1alpha1
-kind: VarnishService
+kind: VarnishCluster
 metadata:
     ...
 status:
@@ -167,13 +167,13 @@ status:
     ...
 ```
 
-To check which pods have outdated versions, simply check their annotations. The annotation `configMapVersion` on the Varnish pod will indicate the latest version of the ConfigMap used. If it's not the same as in the VarnishService status it's likely that there's an issue.
+To check which pods have outdated versions, simply check their annotations. The annotation `configMapVersion` on the Varnish pod will indicate the latest version of the ConfigMap used. If it's not the same as in the `VarnishCluster` status it's likely that there's an issue.
 
 Example of detecting a pod that failed to reload:
 
 ```bash
 # get the latest version
-> kubectl get varnishservice -n varnish-ns my-varnish -o=custom-columns=NAME:.metadata.name,CONFIG_MAP_VERSION:.status.vcl.configMapVersion
+> kubectl get varnishcluster -n varnish-ns my-varnish -o=custom-columns=NAME:.metadata.name,CONFIG_MAP_VERSION:.status.vcl.configMapVersion
 NAME        CONFIG_MAP_VERSION
 my-varnish  292181
 # figure out which pods doesn't have that latest version
@@ -184,7 +184,7 @@ my-varnish-varnish-1  351231
 my-varnish-varnish-2  351231
 # Looks like all pods have outdated VCL. Lets check the logs of one of the pods
 > kubectl logs -n my-varnish my-varnish-varnish-0 
-2019-06-24T12:59:56.105Z	INFO	controller/controller_files.go:57	Rewriting file	{"varnish_controller_version": "0.21.0", "varnish_service": "my-varnish", "pod_name": "my-varnish-varnish-0", "namespace": "my-varnish", "file_path": "/etc/varnish/backends.vcl"}
+2019-06-24T12:59:56.105Z	INFO	controller/controller_files.go:57	Rewriting file	{"varnish_controller_version": "0.21.0", "varnish_cluster": "my-varnish", "pod_name": "my-varnish-varnish-0", "namespace": "my-varnish", "file_path": "/etc/varnish/backends.vcl"}
 2019-06-24T12:59:56.427Z	WARN	controller/controller_varnish.go:51	Message from VCC-compiler:
 Expected one of
 	'acl', 'sub', 'backend', 'probe', 'import', 'vcl',  or 'default'

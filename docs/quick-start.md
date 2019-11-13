@@ -49,23 +49,23 @@ You should see your operator pod up and running:
 
 ```bash
 $ kubectl get pods --namespace varnish-operator
-NAME                 READY   STATUS              RESTARTS   AGE
-varnish-operator-0   1/1     Running             0          40s
+NAME                              READY   STATUS              RESTARTS   AGE
+varnish-operator-fd96f48f-gn6mc   1/1     Running             0          40s
 ```
 
-### Create a VarnishService
+### Create a VarnishCluster
 
-1. Create a namespace where the VarnishService with the backend will live.
+1. Create a namespace where the `VarnishCluster` with the backend will live.
 
     ```bash
-    $ kubectl create ns varnish-service
+    $ kubectl create ns varnish-cluster
     ```
 
 1. Create the same image pull secret there. It will be used to pull Varnish images.
 
     ```bash
     $ kubectl create secret docker-registry container-reg-secret \
-        --namespace varnish-service \
+        --namespace varnish-cluster \
         --docker-server us.icr.io \
         --docker-username <user-name> \
         --docker-password=<password> \
@@ -74,52 +74,46 @@ varnish-operator-0   1/1     Running             0          40s
 1. Create a simple backend that will be cached by Varnish:
 
     ```bash
-    $ kubectl create deployment nginx-backend --image nginx -n varnish-service
+    $ kubectl create deployment nginx-backend --image nginx -n varnish-cluster
       deployment.apps/nginx-backend created
-    $ kubectl get deployment -n varnish-service nginx-backend --show-labels #get pod labels, they will be used to identify your backend pods
+    $ kubectl get deployment -n varnish-cluster nginx-backend --show-labels #get pod labels, they will be used to identify your backend pods
       NAME            READY   UP-TO-DATE   AVAILABLE   AGE   LABELS
       nginx-backend   1/1     1            1           15s   app=nginx-backend 
     ```
 
-1. Create your VarnishService:
+1. Create your `VarnishCluster`:
 
     ```bash
     $ cat <<EOF | kubectl create -f -
     apiVersion: icm.ibm.com/v1alpha1
-    kind: VarnishService
+    kind: VarnishCluster
     metadata:
-      name: varnishservice-example
-      namespace: varnish-service # the namespace we've created above
+      name: varnishcluster-example
+      namespace: varnish-cluster # the namespace we've created above
     spec:
-      vclConfigMap:
-        name: vcl-config # name of the config map that will store your VCl files. Will be created if doesn't exist.
-        entrypointFile: entrypoint.vcl # main file used by Varnish to compile the VCL code.
-      statefulSet:
-        replicas: 3 # run 3 replicas of Varnish
-        container: 
-          imagePullSecret: container-reg-secret # the image pull secret created above
-      service:
+      vcl:
+        configMapName: vcl-config # name of the config map that will store your VCl files. Will be created if doesn't exist.
+        entrypointFileName: entrypoint.vcl # main file used by Varnish to compile the VCL code.
+      replicas: 3 # run 3 replicas of Varnish
+      varnish:
+        imagePullSecret: container-reg-secret # the image pull secret created above
+      backend:
         selector:
           app: nginx-backend # labels that identify your backend pods
-        varnishPort:
-          name: varnish
-          port: 80 # Varnish pods will be exposed on that port 
-          targetPort: 80 # the port our backend pods listen on. 80 for nginx.
-        varnishExporterPort: # prometheus exporter metrics port
-          name: varnishexporter
-          port: 9131
+      service:
+        port: 80 # Varnish pods will be exposed on that port
     EOF
  
-    varnishservice.icm.ibm.com/varnishservice-example created  
+    varnishcluster.icm.ibm.com/varnishcluster-example created  
     ```
 
 ## What You Should See
 
-Once `VarnishService` is created, you should see:
+Once `VarnishCluster` is created, you should see:
 
-* StatefulSet called `<varnish-service-name>`
-* Service called `<varnish-service-name>` which uses Varnish for caching
-* Service called `<varnish-service-name>-no-cache` which bypasses Varnish
+* StatefulSet called `<varnish-cluster-name>`
+* Service called `<varnish-cluster-name>` which uses Varnish for caching
+* Service called `<varnish-cluster-name>-no-cache` which bypasses Varnish
 * ConfigMap called `vcl-config` containing VCL files that Varnish is using
 * Role/Rolebinding/ClusterRole/ClusterRoleBinding/ServiceAccount combination for permissions
 
@@ -128,7 +122,7 @@ You can check if all works by doing `kubectl port-forward` and checking the serv
 Port forward your service:
 
 ```bash
-$ kubectl port-forward -n varnish-service service/varnishservice-example 8080:80
+$ kubectl port-forward -n varnish-cluster service/varnishcluster-example 8080:80
 Forwarding from 127.0.0.1:8080 -> 6081
 Forwarding from [::1]:8080 -> 6081
 ...
@@ -187,5 +181,5 @@ You should see nginx's welcome page.
 ## What's next
 
 * [See how to configure your VCL files](vcl-configuration.md)
-* [Configure your `VarnishService`](varnish-service-configuration.md) (resource requests and limits, affinity rules, tolerations)
+* [Configure your `VarnishCluster`](varnish-cluster-configuration.md) (resource requests and limits, affinity rules, tolerations)
 * [Adjust your Varnish Operator configs](operator-configuration.md)

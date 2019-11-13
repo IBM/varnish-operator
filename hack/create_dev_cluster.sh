@@ -62,37 +62,37 @@ kubectl expose deployment nginx --port=80 --target-port=80
 
 kubectl apply -f - << EOF
 apiVersion: icm.ibm.com/v1alpha1
-kind: VarnishService
+kind: VarnishCluster
 metadata:
   labels:
     operator: varnish
   name: nginx
   namespace: default
 spec:
-  vclConfigMap:
-    name: vcl-file
-    defaultFile: default.vcl
-  statefulSet:
-    replicas: 1
-    container:
-      resources:
-        limits:
-          cpu: 100m
-          memory: "200Mi"
-        requests:
-          cpu: 100m
-          memory: "200Mi"
-      imagePullSecret: ${pull_secret}
-  service:
+  vcl:
+    configMapName: vcl-file
+    entrypointFileName: entrypoint.vcl
+  replicas: 1
+  varnish:
+    resources:
+      limits:
+        cpu: 100m
+        memory: "200Mi"
+      requests:
+        cpu: 100m
+        memory: "200Mi"
+    imagePullSecret: ${pull_secret}
+  backend:
     selector:
       run: nginx
-    varnishPort:
-      port: 80
+    port: 80
+  service:
+    port: 80
 EOF
 
 sleep 3; kubectl rollout status deploy $(kubectl get deploy -l operator=varnish -o jsonpath='{.items[*].metadata.name}') --watch
 
-varnish=$(kubectl get po -l varnish-component=varnishes -o jsonpath='{.items[*].metadata.name}')
+varnish=$(kubectl get po -l varnish-component=varnish -o jsonpath='{.items[*].metadata.name}')
 
 sleep 10; kubectl logs $varnish
 kubectl exec -it $varnish cat /etc/varnish/backends.vcl

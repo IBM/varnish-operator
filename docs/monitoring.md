@@ -8,7 +8,7 @@ A service, created by the operator's Helm chart, exposes the metrics on port `83
 
 ### Monitoring Stack Example
 
-The repo includes an [example helm chart](https://github.ibm.com/TheWeatherCompany/icm-varnish-k8s-operator/tree/master/config/samples/helm-charts/varnish-operator-monitoring) for a Prometheus and Grafana installation that is configured to scrape metrics from the operator and display included dashboards. It depends on the Prometheus operator so it has to be installed first.
+The repo includes an [example helm chart](https://github.ibm.com/TheWeatherCompany/icm-varnish-k8s-operator/tree/master/config/samples/helm-charts/varnish-operator-monitoring) for a Prometheus and Grafana installation that is configured to scrape metrics from the operator and display included dashboards. It depends on the [Prometheus Operator](https://github.com/coreos/prometheus-operator) so it has to be installed first.
 
 After you have the [operator installed](installation.md), clone the repo and install the helm chart.
 
@@ -35,21 +35,21 @@ The chart is not a complete solution and intended to be modified to the end user
 
 ## Varnish Monitoring
 
-Each Varnish pod has a [Varnish Prometheus metrics exporter](https://github.com/jonnenauha/prometheus_varnish_exporter) built-in. They exporter port is exposed by the `VarnishService` on port `9131` by default. It can be change by setting the `spec.service.varnishExporterPort.port` field in the [`VarnishService` spec](varnish-service-configuration.md).
+Each Varnish pod has a [Varnish Prometheus metrics exporter](https://github.com/jonnenauha/prometheus_varnish_exporter) built-in. They exporter port is exposed by the `VarnishCluster` on port `9131` by default. It can be changed by setting the `spec.service.prometheusExporterPort` field in the [`VarnishCluster` spec](varnish-cluster-configuration.md).
 
 The service port can be used to setup metrics scraping using [Prometheus Operator](https://github.com/coreos/prometheus-operator) `ServiceMonitor`.  
 
-The pods itself expose metrics on port `9131`. 
+The pods itself also expose metrics on port `9131`.
 
-### VarnishService with Monitoring Stack Example
+### VarnishCluster with Monitoring Stack Example
 
-The repo has a Helm chart example that installs a simple VarnishService with Prometheus and Grafana configured to monitor it. The chart depends on the Prometheus operator so it has to be installed first. 
+The repo has a Helm chart example that installs a simple VarnishCluster with Prometheus and Grafana configured to monitor it. The chart depends on the Prometheus operator so it has to be installed first. 
 
 It can be installed by cloning the repo and installing the chart with necessary backend configs:
 
 ```bash
 $ git clone git@github.ibm.com:TheWeatherCompany/icm-varnish-k8s-operator.git
-$ cd icm-varnish-k8s-operator/config/samples/helm-charts/varnishservice-with-monitoring
+$ cd icm-varnish-k8s-operator/config/samples/helm-charts/varnishcluster-with-monitoring
 $ helm dep build
 $ helm install --name varnish-test . --set varnish.imagePullSecret=docker-reg-secret --set varnish.backendsSelector.app=nginx --set varnish.backendsPort=80
 ```

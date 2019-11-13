@@ -37,32 +37,32 @@ type VCLConfig struct {
 	ReferencedVCL *string //nil if Label == false
 }
 
-func (r *ReconcileVarnish) reconcileVarnish(ctx context.Context, vs *v1alpha1.VarnishService, pod *v1.Pod, cm *v1.ConfigMap) error {
+func (r *ReconcileVarnish) reconcileVarnish(ctx context.Context, vc *v1alpha1.VarnishCluster, pod *v1.Pod, cm *v1.ConfigMap) error {
 	logr := logger.FromContext(ctx)
 	logr.Debugw("Starting varnish reload...")
 	start := time.Now()
-	out, err := exec.Command("vcl_reload", createVCLConfigName(cm.GetResourceVersion()), vs.Spec.VCLConfigMap.EntrypointFile).CombinedOutput()
+	out, err := exec.Command("vcl_reload", createVCLConfigName(cm.GetResourceVersion()), vc.Spec.VCL.EntrypointFileName).CombinedOutput()
 	if err != nil {
-		if strings.Contains(string(out), "VCL compilation failed") {
-			vsEventMsg := "VCL compilation failed for pod " + pod.Name + ". See pod logs for details"
-			podEventMsg := "VCL compilation failed. See logs for details"
+		if strings.Contains(string(out), "VarnishClusterVCL compilation failed") {
+			vcEventMsg := "VarnishClusterVCL compilation failed for pod " + pod.Name + ". See pod logs for details"
+			podEventMsg := "VarnishClusterVCL compilation failed. See logs for details"
 			r.eventHandler.Warning(pod, events.EventReasonVCLCompilationError, podEventMsg)
-			r.eventHandler.Warning(vs, events.EventReasonVCLCompilationError, vsEventMsg)
+			r.eventHandler.Warning(vc, events.EventReasonVCLCompilationError, vcEventMsg)
 			logr.Warnw(string(out))
 			return nil
 		}
 
-		podEventMsg := "Varnish reload failed for pod " + pod.Name + ". See pod logs for details"
-		vsEventMsg := "Varnish reload failed. See logs for details"
+		podEventMsg := "VarnishClusterVarnish reload failed for pod " + pod.Name + ". See pod logs for details"
+		vcEventMsg := "VarnishClusterVarnish reload failed. See logs for details"
 		r.eventHandler.Warning(pod, events.EventReasonReloadError, podEventMsg)
-		r.eventHandler.Warning(vs, events.EventReasonReloadError, vsEventMsg)
+		r.eventHandler.Warning(vc, events.EventReasonReloadError, vcEventMsg)
 		return errors.Wrap(err, string(out))
 	}
-	logr.Debugf("Varnish successfully reloaded in %f seconds", time.Since(start).Seconds())
+	logr.Debugf("VarnishClusterVarnish successfully reloaded in %f seconds", time.Since(start).Seconds())
 	return nil
 }
 
-// getActiveVCLConfig returns the VCL config currently used in Varnish
+// getActiveVCLConfig returns the VarnishClusterVCL config currently used in VarnishClusterVarnish
 func getActiveVCLConfig() (*VCLConfig, error) {
 	configsList, err := getVCLConfigsList()
 	if err != nil {
@@ -77,8 +77,8 @@ func getActiveVCLConfig() (*VCLConfig, error) {
 	}
 
 	if activeVersion == nil {
-		// That means that Varnish is in not started/invalid state. Return an error to trigger an another reconcile event
-		return nil, errors.Errorf("No active VCL configuration found")
+		// That means that VarnishClusterVarnish is in not started/invalid state. Return an error to trigger an another reconcile event
+		return nil, errors.Errorf("No active VarnishClusterVCL configuration found")
 	}
 
 	return activeVersion, nil
@@ -118,18 +118,18 @@ func parseVCLConfigsList(commandOutput []byte) ([]VCLConfig, error) {
 			config := VCLConfig{Status: columns[0], Name: columns[3], Label: isLabel, Temperature: temp[1], ReferencedVCL: refVCL}
 			configs = append(configs, config)
 		default:
-			return nil, errors.New("unknown VCL config format")
+			return nil, errors.New("unknown VarnishClusterVCL config format")
 		}
 	}
 	return configs, nil
 }
 
-// creates the VCL config name from config map version
+// creates the VarnishClusterVCL config name from config map version
 func createVCLConfigName(configMapVersion string) string {
 	return fmt.Sprintf("%s-%s-%d", VCLVersionPrefix, configMapVersion, time.Now().Unix())
 }
 
-// returns the config name the was used for VCL config name creation
+// returns the config name the was used for VarnishClusterVCL config name creation
 func extractConfigMapVersion(VCLConfigName string) string {
 	parts := strings.Split(VCLConfigName, "-")
 	if len(parts) < 2 {

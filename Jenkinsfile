@@ -1,5 +1,5 @@
 #!groovy
-@Library("icm-jenkins-common@0.87.0")
+@Library("icm-jenkins-common@0.91.0")
 import com.ibm.icm.*
 
 // for GitInfo
@@ -26,6 +26,8 @@ HelmUtils helmUtils = new HelmUtils(this)
 
 node("icm_slave") {
     GitInfo gitInfo = icmCheckoutStages()
+    String branch = gitInfo.branch
+    gitInfo.branch = StringUtils.slugify(gitInfo.branch)
 
     icmLoginToCloud(cloudApiKeyId, region, CloudCliPluginConsts.CONTAINER_PLUGINS)
 
@@ -37,7 +39,7 @@ node("icm_slave") {
 
     String repoVersion = versionUtils.getAppVersion()
 
-    if ( gitInfo.branch == releaseBranch ) {
+    if ( branch == releaseBranch ) {
 
         if ( ! gitUtils.doesTagExist(repoVersion) ) {
 
@@ -54,7 +56,7 @@ node("icm_slave") {
         icmDockerStages(varnishDockerImageInfo, ["-f":"Dockerfile.Varnish"])
         icmDockerStages(operatorDockerImageInfo)
         stage('Set the helm chart version') {
-            helmUtils.setChartVersion(helmChart, repoVersion + '-' + gitInfo.branch.toLowerCase().replaceAll("(-|/|,|\\.)", "_"))
+            helmUtils.setChartVersion(helmChart, repoVersion + '-' + gitInfo.branch)
         }
         icmWithArtifactoryConfig(artifactoryRoot, artifactoryRepo, artifactoryUserPasswordId) {
             icmHelmChartPackagePublishStage(helmChart, it.config.createHelmPublish())

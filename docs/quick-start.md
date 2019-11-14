@@ -92,7 +92,7 @@ varnish-operator-fd96f48f-gn6mc   1/1     Running             0          40s
       namespace: varnish-cluster # the namespace we've created above
     spec:
       vcl:
-        configMapName: vcl-config # name of the config map that will store your VCl files. Will be created if doesn't exist.
+        configMapName: vcl-config # name of the config map that will store your VCL files. Will be created if doesn't exist.
         entrypointFileName: entrypoint.vcl # main file used by Varnish to compile the VCL code.
       replicas: 3 # run 3 replicas of Varnish
       varnish:
@@ -106,6 +106,8 @@ varnish-operator-fd96f48f-gn6mc   1/1     Running             0          40s
  
     varnishcluster.icm.ibm.com/varnishcluster-example created  
     ```
+
+Step 3 and 4 can be executed in any order. If the backend doesn't exist on `VarnishCluster` creation, Varnish will still work but won't cache any backends responding with 504 response code. Once the backend pods are up and running, Varnish will automatically pick up the changes, reload the VCL and start serving and caching the requests.
 
 ## What You Should See
 

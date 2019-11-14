@@ -1,6 +1,8 @@
 # VCL files configuration
 
-Varnish VCL files are stored in a ConfigMap. Each entry in the ConfigMap corresponds to a file with VCL configuration.
+Varnish VCL files are stored in a ConfigMap. Each entry in the ConfigMap corresponds to a file with VCL configuration. 
+
+Modifications to VCL files in the ConfigMap are automatically applied to Varnish pods. This is handled by doing a VCL reload that does not restart the Varnish process. So the existing cache will not be lost.
 
 There are 2 fields relevant to configuring the `VarnishCluster` for VCL code, in `.spec.vcl` object:
 

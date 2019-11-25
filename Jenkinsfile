@@ -1,5 +1,5 @@
 #!groovy
-@Library("icm-jenkins-common@0.91.0")
+@Library("icm-jenkins-common@0.94.0")
 import com.ibm.icm.*
 
 // for GitInfo

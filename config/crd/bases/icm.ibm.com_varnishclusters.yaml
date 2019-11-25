@@ -875,12 +875,7 @@ spec:
                   type: string
                 version:
                   type: string
-              required:
-              - availability
-              - configMapVersion
               type: object
-          required:
-          - vcl
           type: object
       required:
       - spec

@@ -135,8 +135,8 @@ func (r *ReconcileVarnish) reconcileWithContext(ctx context.Context, request rec
 	r.scheme.Default(vc)
 
 	varnishPort := int32(v1alpha1.VarnishPort)
-	targetPort := vc.Spec.Backend.Port
-	entrypointFileName := vc.Spec.VCL.EntrypointFileName
+	targetPort := *vc.Spec.Backend.Port
+	entrypointFileName := *vc.Spec.VCL.EntrypointFileName
 
 	pod := &v1.Pod{}
 	err = r.Get(ctx, types.NamespacedName{Namespace: request.Namespace, Name: r.config.PodName}, pod)

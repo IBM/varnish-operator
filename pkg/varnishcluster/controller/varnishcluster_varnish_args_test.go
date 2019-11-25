@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"github.com/gogo/protobuf/proto"
 	"icm-varnish-k8s-operator/api/v1alpha1"
 	"testing"
 
@@ -9,9 +10,9 @@ import (
 )
 
 func TestGetSanitizedVarnishArgs(t *testing.T) {
-	vclConfigMap := v1alpha1.VarnishClusterVCL{
-		ConfigMapName:      "vcl-files",
-		EntrypointFileName: "entry-point-file.vcl",
+	vclConfigMap := &v1alpha1.VarnishClusterVCL{
+		ConfigMapName:      proto.String("vcl-files"),
+		EntrypointFileName: proto.String("entry-point-file.vcl"),
 	}
 
 	cases := []struct {
@@ -23,7 +24,7 @@ func TestGetSanitizedVarnishArgs(t *testing.T) {
 			name: "no specified args",
 			spec: &v1alpha1.VarnishClusterSpec{
 				VCL: vclConfigMap,
-				Varnish: v1alpha1.VarnishClusterVarnish{
+				Varnish: &v1alpha1.VarnishClusterVarnish{
 					Args: nil,
 				},
 			},
@@ -39,7 +40,7 @@ func TestGetSanitizedVarnishArgs(t *testing.T) {
 			name: "flag -n should be stripped",
 			spec: &v1alpha1.VarnishClusterSpec{
 				VCL: vclConfigMap,
-				Varnish: v1alpha1.VarnishClusterVarnish{
+				Varnish: &v1alpha1.VarnishClusterVarnish{
 					Args: []string{"-n", "custom/work/directory"},
 				},
 			},
@@ -55,7 +56,7 @@ func TestGetSanitizedVarnishArgs(t *testing.T) {
 			name: "flag -f should be stripped",
 			spec: &v1alpha1.VarnishClusterSpec{
 				VCL: vclConfigMap,
-				Varnish: v1alpha1.VarnishClusterVarnish{
+				Varnish: &v1alpha1.VarnishClusterVarnish{
 					Args: []string{"-f", "/etc/varnish/entry-point-file.vcl"},
 				},
 			},
@@ -71,7 +72,7 @@ func TestGetSanitizedVarnishArgs(t *testing.T) {
 			name: "not allowed arguments should be overridden",
 			spec: &v1alpha1.VarnishClusterSpec{
 				VCL: vclConfigMap,
-				Varnish: v1alpha1.VarnishClusterVarnish{
+				Varnish: &v1alpha1.VarnishClusterVarnish{
 					Args: []string{"-S", "/etc/varnish/newsecret", "-T", "127.0.0.1:4235", "-a", "0.0.0.0:3425", "-b", "127.0.0.1:3456"},
 				},
 			},
@@ -87,7 +88,7 @@ func TestGetSanitizedVarnishArgs(t *testing.T) {
 			name: "options with the same key should be supported",
 			spec: &v1alpha1.VarnishClusterSpec{
 				VCL: vclConfigMap,
-				Varnish: v1alpha1.VarnishClusterVarnish{
+				Varnish: &v1alpha1.VarnishClusterVarnish{
 					Args: []string{"-p", "default_ttl=3600", "-p", "default_grace=3600"},
 				},
 			},
@@ -105,7 +106,7 @@ func TestGetSanitizedVarnishArgs(t *testing.T) {
 			name: "the order of arguments doesn't change the end results",
 			spec: &v1alpha1.VarnishClusterSpec{
 				VCL: vclConfigMap,
-				Varnish: v1alpha1.VarnishClusterVarnish{
+				Varnish: &v1alpha1.VarnishClusterVarnish{
 					Args: []string{"-p", "default_grace=3600", "-p", "default_ttl=3600"},
 				},
 			},

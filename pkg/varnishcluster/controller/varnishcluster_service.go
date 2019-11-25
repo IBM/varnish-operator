@@ -45,8 +45,8 @@ func (r *ReconcileVarnishCluster) reconcileServiceNoCache(ctx context.Context, i
 				{
 					Name:       "backend",
 					Protocol:   v1.ProtocolTCP,
-					Port:       instance.Spec.Service.Port,
-					TargetPort: instance.Spec.Backend.Port,
+					Port:       *instance.Spec.Service.Port,
+					TargetPort: *instance.Spec.Backend.Port,
 				},
 			},
 			SessionAffinity: v1.ServiceAffinityNone,
@@ -84,13 +84,13 @@ func (r *ReconcileVarnishCluster) reconcileService(ctx context.Context, instance
 			{
 				Name:       icmapiv1alpha1.VarnishPortName,
 				Protocol:   v1.ProtocolTCP,
-				Port:       instance.Spec.Service.Port,
+				Port:       *instance.Spec.Service.Port,
 				TargetPort: intstr.FromString(icmapiv1alpha1.VarnishPortName),
 			},
 			{
 				Name:       icmapiv1alpha1.VarnishMetricsPortName,
 				Protocol:   v1.ProtocolTCP,
-				Port:       icmapiv1alpha1.VarnishPrometheusExporterPort,
+				Port:       instance.Spec.Service.MetricsPort,
 				TargetPort: intstr.FromString(icmapiv1alpha1.VarnishMetricsPortName),
 			},
 		},

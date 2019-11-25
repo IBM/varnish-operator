@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"github.com/gogo/protobuf/proto"
 	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
 	vclabels "icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/logger"
@@ -60,7 +61,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 			},
 			PodManagementPolicy:  appsv1.ParallelPodManagement,
 			UpdateStrategy:       updateStrategy,
-			RevisionHistoryLimit: func(in int32) *int32 { return &in }(10),
+			RevisionHistoryLimit: proto.Int(10),
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: varnishLabels,
@@ -84,7 +85,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 							},
 							Env: []v1.EnvVar{
 								{Name: "ENDPOINT_SELECTOR_STRING", Value: labels.SelectorFromSet(endpointSelector).String()},
-								{Name: "CONFIGMAP_NAME", Value: instance.Spec.VCL.ConfigMapName},
+								{Name: "CONFIGMAP_NAME", Value: *instance.Spec.VCL.ConfigMapName},
 								{Name: "NAMESPACE", Value: instance.Namespace},
 								{Name: "POD_NAME", ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{APIVersion: "v1", FieldPath: "metadata.name"}}},
 								{Name: "VARNISH_CLUSTER_NAME", Value: instance.Name},
@@ -96,7 +97,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 								{Name: "LOG_LEVEL", Value: instance.Spec.LogLevel},
 								{Name: "VARNISH_ARGS", Value: varnishdArgs},
 							},
-							Resources: instance.Spec.Varnish.Resources,
+							Resources: *instance.Spec.Varnish.Resources,
 							// TODO: get working liveness probe
 							//LivenessProbe:   &v1.Probe{},
 							ReadinessProbe: &v1.Probe{
@@ -116,7 +117,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 						},
 					},
 					RestartPolicy:                 instance.Spec.Varnish.RestartPolicy,
-					TerminationGracePeriodSeconds: func(in int64) *int64 { return &in }(30),
+					TerminationGracePeriodSeconds: proto.Int64(30),
 					DNSPolicy:                     v1.DNSClusterFirst,
 					SecurityContext:               &v1.PodSecurityContext{},
 					ServiceAccountName:            serviceAccountName,

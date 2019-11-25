@@ -1,14 +1,13 @@
 package controller
 
 import (
+	"github.com/gogo/protobuf/proto"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 )
 
 func TestParseConfigs(t *testing.T) {
-	createStrRef := func(str string) *string { return &str }
-
 	cases := []struct {
 		input       string
 		expected    []VCLConfig
@@ -57,7 +56,7 @@ available  label/warm          0 lable1 -> v55329
 					Name:          "lable1",
 					Temperature:   VCLTemperatureWarm,
 					Label:         true,
-					ReferencedVCL: createStrRef("v55329"),
+					ReferencedVCL: proto.String("v55329"),
 				},
 			},
 			expectedErr: nil,

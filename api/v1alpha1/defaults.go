@@ -24,10 +24,13 @@ func SetVarnishClusterListDefaults(in *VarnishClusterList) {
 
 func defaultVarnishCluster(in *VarnishCluster) {
 	defaultVarnishClusterSpec(&in.Spec)
-	defaultVarnish(&in.Spec.Varnish)
+	defaultVarnish(in.Spec.Varnish)
 }
 
 func defaultVarnishClusterSpec(in *VarnishClusterSpec) {
+	if in == nil {
+		in = &VarnishClusterSpec{}
+	}
 	var defaultReplicasNumber int32 = 1
 	if in.Replicas == nil {
 		in.Replicas = &defaultReplicasNumber
@@ -40,15 +43,21 @@ func defaultVarnishClusterSpec(in *VarnishClusterSpec) {
 		in.LogFormat = "json"
 	}
 
-	if in.UpdateStrategy.Type == "" {
-		in.UpdateStrategy.Type = OnDeleteVarnishClusterStrategyType
-	}
+	if in.UpdateStrategy != nil {
+		if in.UpdateStrategy.Type == "" {
+			in.UpdateStrategy.Type = OnDeleteVarnishClusterStrategyType
+		}
 
-	if in.UpdateStrategy.Type == VarnishUpdateStrategyDelayedRollingUpdate {
-		if in.UpdateStrategy.DelayedRollingUpdate == nil {
-			in.UpdateStrategy.DelayedRollingUpdate = &UpdateStrategyDelayedRollingUpdate{
-				DelaySeconds: 60,
+		if in.UpdateStrategy.Type == VarnishUpdateStrategyDelayedRollingUpdate {
+			if in.UpdateStrategy.DelayedRollingUpdate == nil {
+				in.UpdateStrategy.DelayedRollingUpdate = &UpdateStrategyDelayedRollingUpdate{
+					DelaySeconds: 60,
+				}
 			}
+		}
+	} else {
+		in.UpdateStrategy = &VarnishClusterUpdateStrategy{
+			Type: OnDeleteVarnishClusterStrategyType,
 		}
 	}
 
@@ -62,10 +71,18 @@ func defaultVarnishClusterSpec(in *VarnishClusterSpec) {
 }
 
 func defaultVarnish(in *VarnishClusterVarnish) {
+	if in == nil {
+		in = &VarnishClusterVarnish{}
+	}
+
 	if in.ImagePullPolicy == "" {
 		in.ImagePullPolicy = v1.PullAlways
 	}
 	if in.RestartPolicy == "" {
 		in.RestartPolicy = v1.RestartPolicyAlways
+	}
+
+	if in.Resources == nil {
+		in.Resources = &v1.ResourceRequirements{}
 	}
 }

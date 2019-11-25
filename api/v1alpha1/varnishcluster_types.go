@@ -1,5 +1,7 @@
 package v1alpha1
 
+// +kubebuilder:validation:Optional
+
 import (
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -33,9 +35,9 @@ const (
 	VarnishAdminPort              = 6082
 	VarnishPrometheusExporterPort = 9131
 
-	VarnishContainerName = "varnish"
+	VarnishContainerName   = "varnish"
 	VarnishMetricsPortName = "metrics"
-	VarnishPortName = "varnish"
+	VarnishPortName        = "varnish"
 
 	VarnishUpdateStrategyDelayedRollingUpdate = "DelayedRollingUpdate"
 )
@@ -53,18 +55,22 @@ type VarnishCluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
+	// +kubebuilder:validation:Required
 	Spec   VarnishClusterSpec   `json:"spec"`
 	Status VarnishClusterStatus `json:"status,omitempty"`
 }
 
 // VarnishClusterSpec defines the desired state of VarnishCluster
 type VarnishClusterSpec struct {
-	Replicas            *int32                                 `json:"replicas,omitempty"`
-	UpdateStrategy      VarnishClusterUpdateStrategy           `json:"updateStrategy,omitempty"`
-	Varnish             VarnishClusterVarnish                  `json:"varnish,omitempty"`
-	VCL                 VarnishClusterVCL                      `json:"vcl"`
-	Backend             VarnishClusterBackend                  `json:"backend"`
-	Service             VarnishClusterService                  `json:"service"`
+	Replicas       *int32                        `json:"replicas,omitempty"`
+	UpdateStrategy *VarnishClusterUpdateStrategy `json:"updateStrategy,omitempty"`
+	Varnish        *VarnishClusterVarnish        `json:"varnish,omitempty"`
+	// +kubebuilder:validation:Required
+	VCL *VarnishClusterVCL `json:"vcl,omitempty"`
+	// +kubebuilder:validation:Required
+	Backend *VarnishClusterBackend `json:"backend,omitempty"`
+	// +kubebuilder:validation:Required
+	Service             *VarnishClusterService                 `json:"service,omitempty"`
 	PodDisruptionBudget *policyv1beta1.PodDisruptionBudgetSpec `json:"podDisruptionBudget,omitempty"`
 	Affinity            *v1.Affinity                           `json:"affinity,omitempty"`
 	Tolerations         []v1.Toleration                        `json:"tolerations,omitempty"`
@@ -95,27 +101,32 @@ type UpdateStrategyDelayedRollingUpdate struct {
 }
 
 type VarnishClusterVarnish struct {
-	Image           string                  `json:"image,omitempty"`
-	ImagePullPolicy v1.PullPolicy           `json:"imagePullPolicy,omitempty"`
-	RestartPolicy   v1.RestartPolicy        `json:"restartPolicy,omitempty"`
-	Resources       v1.ResourceRequirements `json:"resources,omitempty"`
-	ImagePullSecret *string                 `json:"imagePullSecret,omitempty"`
-	Args            []string                `json:"args,omitempty"`
+	Image           string                   `json:"image,omitempty"`
+	ImagePullPolicy v1.PullPolicy            `json:"imagePullPolicy,omitempty"`
+	RestartPolicy   v1.RestartPolicy         `json:"restartPolicy,omitempty"`
+	Resources       *v1.ResourceRequirements `json:"resources,omitempty"`
+	ImagePullSecret *string                  `json:"imagePullSecret,omitempty"`
+	Args            []string                 `json:"args,omitempty"`
 }
 
 type VarnishClusterVCL struct {
-	ConfigMapName string `json:"configMapName"`
+	// +kubebuilder:validation:Required
+	ConfigMapName *string `json:"configMapName,omitempty"`
+	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Pattern=^.+\.vcl$
-	EntrypointFileName string `json:"entrypointFileName"`
+	EntrypointFileName *string `json:"entrypointFileName,omitempty"`
 }
 
 type VarnishClusterBackend struct {
-	Selector map[string]string  `json:"selector"`
-	Port     intstr.IntOrString `json:"port"`
+	// +kubebuilder:validation:Required
+	Selector map[string]string `json:"selector,omitempty"`
+	// +kubebuilder:validation:Required
+	Port *intstr.IntOrString `json:"port,omitempty"`
 }
 
 type VarnishClusterService struct {
-	Port        int32 `json:"port"`
+	// +kubebuilder:validation:Required
+	Port        *int32 `json:"port,omitempty"`
 	MetricsPort int32 `json:"metricsPort,omitempty"`
 	// +kubebuilder:validation:Enum=ClusterIP;LoadBalancer;NodePort
 	Type        v1.ServiceType    `json:"type,omitempty"`

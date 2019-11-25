@@ -28,7 +28,7 @@ func (r *ReconcileVarnishCluster) reconcileConfigMap(ctx context.Context, podsSe
 
 	cm := &v1.ConfigMap{}
 	cmLabels := vclabels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentVCLFileConfigMap)
-	err := r.Get(ctx, types.NamespacedName{Name: instance.Spec.VCL.ConfigMapName, Namespace: instance.Namespace}, cm)
+	err := r.Get(ctx, types.NamespacedName{Name: *instance.Spec.VCL.ConfigMapName, Namespace: instance.Namespace}, cm)
 	// if the ConfigMap does not exist, create it and set it with the default VCL files
 	// Else if there was a problem doing the Get, just return an error
 	// Else fill in missing values -- "OwnerReference" or Labels
@@ -36,12 +36,12 @@ func (r *ReconcileVarnishCluster) reconcileConfigMap(ctx context.Context, podsSe
 	if err != nil && kerrors.IsNotFound(err) {
 		cm = &v1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      instance.Spec.VCL.ConfigMapName,
+				Name:      *instance.Spec.VCL.ConfigMapName,
 				Labels:    cmLabels,
 				Namespace: instance.Namespace,
 			},
 			Data: map[string]string{
-				instance.Spec.VCL.EntrypointFileName: entrypointVCLFileContent,
+				*instance.Spec.VCL.EntrypointFileName: entrypointVCLFileContent,
 				"backends.vcl.tmpl":                  backendsVCLTmplFileContent,
 			},
 		}

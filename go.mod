@@ -6,6 +6,7 @@ require (
 	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/docker/distribution v0.0.0-20170726174610-edc3ab29cdff
 	github.com/go-logr/zapr v0.1.0
+	github.com/gogo/protobuf v1.1.1
 	github.com/google/go-cmp v0.3.0
 	github.com/onsi/ginkgo v1.8.0
 	github.com/onsi/gomega v1.5.0

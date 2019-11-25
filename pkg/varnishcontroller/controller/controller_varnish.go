@@ -41,7 +41,7 @@ func (r *ReconcileVarnish) reconcileVarnish(ctx context.Context, vc *v1alpha1.Va
 	logr := logger.FromContext(ctx)
 	logr.Debugw("Starting varnish reload...")
 	start := time.Now()
-	out, err := exec.Command("vcl_reload", createVCLConfigName(cm.GetResourceVersion()), vc.Spec.VCL.EntrypointFileName).CombinedOutput()
+	out, err := exec.Command("vcl_reload", createVCLConfigName(cm.GetResourceVersion()), *vc.Spec.VCL.EntrypointFileName).CombinedOutput()
 	if err != nil {
 		if strings.Contains(string(out), "VarnishClusterVCL compilation failed") {
 			vcEventMsg := "VarnishClusterVCL compilation failed for pod " + pod.Name + ". See pod logs for details"

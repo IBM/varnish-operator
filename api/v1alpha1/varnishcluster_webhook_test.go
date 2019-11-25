@@ -14,7 +14,7 @@ func TestValidatingWebhook(t *testing.T) {
 			name: "Valid values",
 			vc: &VarnishCluster{
 				Spec: VarnishClusterSpec{
-					Varnish: VarnishClusterVarnish{
+					Varnish: &VarnishClusterVarnish{
 						Args: []string{"-s", "malloc,2048M"},
 					},
 				},
@@ -25,7 +25,7 @@ func TestValidatingWebhook(t *testing.T) {
 			name: "Invalid values",
 			vc: &VarnishCluster{
 				Spec: VarnishClusterSpec{
-					Varnish: VarnishClusterVarnish{
+					Varnish: &VarnishClusterVarnish{
 						Args: []string{"-#@$s", "malloc,2048M"},
 					},
 				},
@@ -36,7 +36,7 @@ func TestValidatingWebhook(t *testing.T) {
 			name: "Empty values",
 			vc: &VarnishCluster{
 				Spec: VarnishClusterSpec{
-					Varnish: VarnishClusterVarnish{
+					Varnish: &VarnishClusterVarnish{
 						Args: []string{},
 					},
 				},
@@ -47,7 +47,7 @@ func TestValidatingWebhook(t *testing.T) {
 			name: "Key pattern should match the whole string",
 			vc: &VarnishCluster{
 				Spec: VarnishClusterSpec{
-					Varnish: VarnishClusterVarnish{
+					Varnish: &VarnishClusterVarnish{
 						Args: []string{"invalid-s-invalid", "malloc,2048M"},
 					},
 				},
@@ -58,7 +58,7 @@ func TestValidatingWebhook(t *testing.T) {
 			name: "Disallowed VarnishClusterVarnish arguments",
 			vc: &VarnishCluster{
 				Spec: VarnishClusterSpec{
-					Varnish: VarnishClusterVarnish{
+					Varnish: &VarnishClusterVarnish{
 						Args: []string{"-a", "-f", "-F", "-n", "-S"},
 					},
 				},

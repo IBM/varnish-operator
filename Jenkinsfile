@@ -10,6 +10,8 @@ region = "us-south"
 dockerRegistry = "us.icr.io"
 dockerRegistryNamespace = "icm-varnish"
 varnishDockerImageName = "varnish"
+varnishControllerDockerImageName = "varnish-controller"
+varnishMetricsExporterDockerImageName = "varnish-metrics-exporter"
 operatorDockerImageName = "varnish-operator"
 releaseBranch = "master"
 credentialsId = 'ApplicationId-icmautomation'
@@ -33,6 +35,10 @@ node("icm_slave") {
 
     DockerImageInfo varnishDockerImageInfo = icmGetDockerImageInfo(dockerRegistry, dockerRegistryNamespace, varnishDockerImageName,
             releaseBranch, gitInfo)
+    DockerImageInfo varnishControllerDockerImageInfo = icmGetDockerImageInfo(dockerRegistry, dockerRegistryNamespace, varnishControllerDockerImageName,
+            releaseBranch, gitInfo)
+    DockerImageInfo varnishMetricsExporterDockerImageInfo = icmGetDockerImageInfo(dockerRegistry, dockerRegistryNamespace, varnishMetricsExporterDockerImageName,
+            releaseBranch, gitInfo)
 
     DockerImageInfo operatorDockerImageInfo = icmGetDockerImageInfo(dockerRegistry, dockerRegistryNamespace, operatorDockerImageName,
             releaseBranch, gitInfo)
@@ -43,7 +49,9 @@ node("icm_slave") {
 
         if ( ! gitUtils.doesTagExist(repoVersion) ) {
 
-            icmDockerStages(varnishDockerImageInfo, ["-f":"Dockerfile.Varnish"])
+            icmDockerStages(varnishDockerImageInfo, ["-f":"Dockerfile.varnishd"])
+            icmDockerStages(varnishMetricsExporterDockerImageInfo, ["-f":"Dockerfile.exporter"])
+            icmDockerStages(varnishControllerDockerImageInfo, ["-f":"Dockerfile.controller"])
             icmDockerStages(operatorDockerImageInfo)
 
             icmWithArtifactoryConfig(artifactoryRoot, artifactoryRepo, artifactoryUserPasswordId) {
@@ -53,8 +61,12 @@ node("icm_slave") {
             gitUtils.setTag(repoVersion, credentialsId, 'origin')
         }
     } else {
-        icmDockerStages(varnishDockerImageInfo, ["-f":"Dockerfile.Varnish"])
+
+        icmDockerStages(varnishDockerImageInfo, ["-f":"Dockerfile.varnishd"])
+        icmDockerStages(varnishMetricsExporterDockerImageInfo, ["-f":"Dockerfile.exporter"])
+        icmDockerStages(varnishControllerDockerImageInfo, ["-f":"Dockerfile.controller"])
         icmDockerStages(operatorDockerImageInfo)
+
         stage('Set the helm chart version') {
             helmUtils.setChartVersion(helmChart, repoVersion + '-' + gitInfo.branch)
         }

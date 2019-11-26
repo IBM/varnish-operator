@@ -112,7 +112,7 @@ Varnish pods (with varnish-controller inside) can only be tested by running in K
 After changes are made in the code, the typical workflow will be the following:
 
 ```bash
-docker build -f Dockerfile.Varnish  -t <image-name> .
+docker build -f Dockerfile.controller  -t <image-name> .
 docker push <image-name>
 ```
 
@@ -124,12 +124,61 @@ kind: VarnishCluster
 ...
 spec:
   varnish:
+...
+    controller:
+      image: <image-name>
+...
+```
+
+The StatefulSet will reload the pods with new image. If you're reusing the same image name, make sure `spec.statefulSet.container.imagePullPolicy` is set to `Always` and reload the pods manually by deleting them or recreating the `VarnishCluster`. 
+
+For images uploaded to a private registry, [create an image pull secret](https://pages.github.ibm.com/TheWeatherCompany/icm-docs/managed-kubernetes/container-registry.html#creating-an-image-pull-secret) and set the name of it in the `spec.varnish.imagePullSecret` field.
+
+To change varnishd - varnish daemon or varnish metrics exporter containers refer to appropriate Docker files configurations. Update `VarnishCluster` and specify your images same way as it is described for varnish controller above.
+
+To build new varnishd use:
+
+```bash
+docker build -f Dockerfile.varnish -t <image-name> .
+docker push <image-name>
+```
+
+Then, in your `VarnishCluster`, specify your image for varnishd:
+
+```yaml
+apiVersion: icm.ibm.com/v1alpha1
+kind: VarnishCluster
+...
+spec:
+  varnish:
     image: <image-name>
 ...
 ```
-The StatefulSet will reload the pods with new image. If you're reusing the same image name, make sure `spec.statefulSet.container.imagePullPolicy` is set to `Always` and reload the pods manually by deleting them or recreating the `VarnishCluster`. 
 
-For images uploaded to a private registry, [create an image pull secret](https://pages.github.ibm.com/TheWeatherCompany/icm-docs/managed-kubernetes/container-registry.html#creating-an-image-pull-secret) and set the name of it in the `spec.varnish.imagePullSecret` field. 
+To build new varnish metrics exporter use:
+
+```bash
+docker build -f Dockerfile.exporter -t <image-name> .
+docker push <image-name>
+```
+
+Then, in your `VarnishCluster`, specify your image for varnish metrics exporter:
+
+```yaml
+apiVersion: icm.ibm.com/v1alpha1
+kind: VarnishCluster
+...
+spec:
+  varnish:
+...
+    metricsExporter:
+      image: <image-name>
+...
+```
+
+There is `PROMETHEUS_VARNISH_EXPORTER_VERSION` docker's build argument available. This allows you to specify which version of prometheus varnish metrics exporter to use in your image. Just set it to the required value before build the metrics exporter image:
+
+`docker build --build-arg PROMETHEUS_VARNISH_EXPORTER_VERSION=1.5.2  -t <image-name> -f Dockerfile.exporter .`
 
 ### Tests
 

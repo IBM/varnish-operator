@@ -31,6 +31,38 @@ spec:
     # some args are used for setting up Varnish to work with operator and are not allowed to be specified by the user
     args: ["-p", "default_ttl=3600", "-p", "default_grace=3600"]
 
+    # varnish's controller - an optional definiton for the pod. It allows override default image name and pull policy
+    # and defines the container's resources allocation.
+    #controller:
+    #  # path to image + tag to override, by default it refers to varnish.image with "-controller" suffix image.
+    #  image: us.icr.io/icm-varnish/varnish-controller:0.21.0
+    #  # imagePullPolicy controls how the varnish-controller image will be pulled for new containers
+    #  imagePullPolicy: Always
+    #  # Resources allocated to the Varnish controller container through Kubernetes.
+    #  #resources:
+    #  #  limits:
+    #  #    cpu: 1
+    #  #    memory: 2040Mi
+    #  #  requests:
+    #  #    cpu: 1
+    #  #    memory: 2040Mi
+    
+    # varnish's metrics exporter - an optional definiton for the pod. It allows override default image name and pull policy
+    # and defines the container's resources allocation.
+    #metricsExporter:
+    #  # path to image + tag to override, by default it refers to varnish.image with "-metrics-exporter" suffix image.
+    #  image: us.icr.io/icm-varnish/varnish-metrics-exporter:0.21.0
+    #  # imagePullPolicy controls how the varnish-metrics-exporter image will be pulled for new containers
+    #  imagePullPolicy: Always
+    #  # Resources allocated to the Varnish metrics exporter container through Kubernetes.
+    #  #resources:
+    #  #  limits:
+    #  #    cpu: 1
+    #  #    memory: 2040Mi
+    #  #  requests:
+    #  #    cpu: 1
+    #  #    memory: 2040Mi
+
   vcl:
     # the name given to the configMap that contains the contents of the vcl.
     # If the configMap does not exist, a basic round-robin-based VCL file will be created and used.

@@ -2,9 +2,13 @@
 ROOT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 VERSION ?= $(shell cat ${ROOT_DIR}version.txt)
 PUBLISH_IMG ?= varnish-operator:${VERSION}
+IMG ?= ${PUBLISH_IMG}-dev
 VARNISH_PUBLISH_IMG ?= varnish:${VERSION}
 VARNISH_IMG ?= ${VARNISH_PUBLISH_IMG}-dev
-IMG ?= ${PUBLISH_IMG}-dev
+VARNISH_CONTROLLER_PUBLISH_IMG ?= varnish-controller:${VERSION}
+VARNISH_CONTROLLER_IMG ?= ${VARNISH_CONTROLLER_PUBLISH_IMG}-dev
+VARNISH_METRICS_PUBLISH_IMG ?= varnish-metrics-exporter:${VERSION}
+VARNISH_METRICS_IMG ?= ${VARNISH_METRICS_PUBLISH_IMG}-dev
 NAMESPACE ?= "default"
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 
@@ -76,9 +80,9 @@ endif
 varnish-controller: fmt vet
 	go build -o ${ROOT_DIR}bin/varnish-controller ${ROOT_DIR}cmd/varnish-controller/
 
-# Build the docker image
+# Build the docker image with varnishd itself and varnish modules
 docker-build-varnish: fmt vet
-	docker build ${ROOT_DIR} -t ${VARNISH_IMG} -f Dockerfile.Varnish
+	docker build ${ROOT_DIR} -t ${VARNISH_IMG} -f Dockerfile.varnishd
 
 docker-tag-push-varnish:
 ifndef REPO_PATH
@@ -91,6 +95,41 @@ else
 	docker tag ${VARNISH_IMG} ${REPO_PATH}/${VARNISH_PUBLISH_IMG}
 	docker push ${REPO_PATH}/${VARNISH_PUBLISH_IMG}
 endif
+
+# Build the docker image with varnish controller
+docker-build-varnish-controller: fmt vet
+	docker build ${ROOT_DIR} -t ${VARNISH_CONTROLLER_IMG} -f Dockerfile.controller
+
+docker-tag-push-varnish-controller:
+ifndef REPO_PATH
+	$(error must set REPO_PATH, eg "make docker-tag-push REPO_PATH=us.icr.io/icm-varnish")
+endif
+ifndef PUBLISH
+	docker tag ${VARNISH_CONTROLLER_IMG} ${REPO_PATH}/${VARNISH_CONTROLLER_IMG}
+	docker push ${REPO_PATH}/${VARNISH_CONTROLLER_IMG}
+else
+	docker tag ${VARNISH_CONTROLLER_IMG} ${REPO_PATH}/${VARNISH_CONTROLLER_PUBLISH_IMG}
+	docker push ${REPO_PATH}/${VARNISH_CONTROLLER_PUBLISH_IMG}
+endif
+
+# Build the docker image with varnish metrics exporter
+docker-build-varnish-exporter: fmt vet
+	docker build ${ROOT_DIR} -t ${VARNISH_METRICS_IMG} -f Dockerfile.exporter
+
+docker-tag-push-varnish-exporter:
+ifndef REPO_PATH
+	$(error must set REPO_PATH, eg "make docker-tag-push REPO_PATH=us.icr.io/icm-varnish")
+endif
+ifndef PUBLISH
+	docker tag ${VARNISH_METRICS_IMG} ${REPO_PATH}/${VARNISH_METRICS_IMG}
+	docker push ${REPO_PATH}/${VARNISH_METRICS_IMG}
+else
+	docker tag ${VARNISH_METRICS_IMG} ${REPO_PATH}/${VARNISH_METRICS_PUBLISH_IMG}
+	docker push ${REPO_PATH}/${VARNISH_METRICS_PUBLISH_IMG}
+endif
+
+docker-build-pod: docker-build-varnish docker-build-varnish-exporter docker-build-varnish-controller
+docker-tag-push-pod: docker-tag-push-varnish docker-tag-push-varnish-exporter docker-tag-push-varnish-controller
 
 # find or download controller-gen
 # download controller-gen if necessary

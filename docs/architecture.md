@@ -12,20 +12,22 @@ The Varnish Operator is an application deployed into your cluster that knows how
 
 You can [configure](operator-configuration.md) the Varnish Operator via its Helm chart.
 
-#### Varnish container image
+#### Varnish Cluster's pod
 
-The container image is custom built with a few components built-in - Varnish, Varnish-Controller, and the Prometheus metrics exporter. The operator doesn't support arbitrary Varnish images due to additional components needed for the operator to function.
+The `VarnishCluster` resource contains a Kubernetes pod definition as a part. There are three containers available inside the pod. Each container is responsible for a specific task. The main Varnish container runs varnish process itself. Two sidecars containers are responsible for metrics export in Prometheus format and internal Kubernetes communications to control the Varnish instance.
 
-![Varnish cluster diagram](varnish-cluster.png)
+The containers share specific volumes for the varnish configuration and work directory. Only one container is configured to write to specific shared volume.
+
+![Varnish cluster pod](varnish-cluster.png)
 
 ##### Varnish
 
-The Varnish process itself. Currently only Varnish version `6.1.1` is supported.
+The Varnish process itself. Currently only Varnish version `6.1.1` is supported. The operator doesn't support arbitrary Varnish images due to additional components needed for the operator to function. The container image is custom built with varnish and varnish modules preinstalled.
 
 ##### Varnish-Controller
 
-Varnish-Controller is a process that runs along with every Varnish instance in the same container. It watches the resources needed to build the VCL configuration (ConfigMap with VCL files, backend pods, Varnish pods) and rebuilds it every time it notices a change.
+Varnish-Controller is a process which watches the resources needed to build the VCL configuration (ConfigMap with VCL files, backend pods, Varnish pods) and prepares configurations updates rebuilds every time it notices a change. It notifies varnish to apply changes when they are ready.
 
 ##### Prometheus metrics exporter
 
-The container also includes a [Prometheus metrics exporter](https://github.com/jonnenauha/prometheus_varnish_exporter) process for Varnish instances. The Service port it is listening on is configurable in the [VarnishCluster spec](varnish-cluster-configuration.md). 
+The pod also includes a [Prometheus metrics exporter](https://github.com/jonnenauha/prometheus_varnish_exporter) process image for Varnish instances. The Service port it is listening on is configurable in the [VarnishCluster spec](varnish-cluster-configuration.md).

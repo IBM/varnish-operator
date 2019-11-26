@@ -2,12 +2,13 @@ package controller
 
 import (
 	"context"
-	"github.com/gogo/protobuf/proto"
 	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
 	vclabels "icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/logger"
 	"icm-varnish-k8s-operator/pkg/varnishcluster/compare"
 	"strings"
+
+	"github.com/gogo/protobuf/proto"
 
 	"github.com/pkg/errors"
 
@@ -17,6 +18,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -47,6 +49,9 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 		updateStrategy.RollingUpdate = instance.Spec.UpdateStrategy.RollingUpdate
 	}
 
+	varnishControllerImage := imageNameGenerate(instance.Spec.Varnish.Controller.Image, varnishImage, icmapiv1alpha1.VarnishControllerImage)
+	varnishMetricsImage := imageNameGenerate(instance.Spec.Varnish.MetricsExporter.Image, varnishImage, icmapiv1alpha1.VarnishMetricsExporterImage)
+
 	desired := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      instance.Name + "-varnish",
@@ -67,7 +72,37 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 					Labels: varnishLabels,
 				},
 				Spec: v1.PodSpec{
+					Volumes: []v1.Volume{
+						{
+							Name: icmapiv1alpha1.VarnishSharedVolume,
+							VolumeSource: v1.VolumeSource{
+								EmptyDir: &v1.EmptyDirVolumeSource{},
+							},
+						},
+						{
+							Name: icmapiv1alpha1.VarnishSettingsVolume,
+							VolumeSource: v1.VolumeSource{
+								EmptyDir: &v1.EmptyDirVolumeSource{},
+							},
+						},
+					},
+					InitContainers: []v1.Container{
+						{
+							Name:  icmapiv1alpha1.VarnishContainerName + "-init",
+							Image: varnishImage,
+							VolumeMounts: []v1.VolumeMount{
+								{
+									Name:      icmapiv1alpha1.VarnishSettingsVolume,
+									MountPath: "/data",
+								},
+							},
+							Command:         []string{"/bin/bash", "-c"},
+							Args:            []string{"echo $VARNISH_SECRET > /data/secret"},
+							ImagePullPolicy: instance.Spec.Varnish.ImagePullPolicy,
+						},
+					},
 					Containers: []v1.Container{
+						//Varnish container
 						{
 							Name:  icmapiv1alpha1.VarnishContainerName,
 							Image: varnishImage,
@@ -77,24 +112,19 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 									ContainerPort: icmapiv1alpha1.VarnishPort,
 									Protocol:      v1.ProtocolTCP,
 								},
+							},
+							VolumeMounts: []v1.VolumeMount{
 								{
-									Name:          icmapiv1alpha1.VarnishMetricsPortName,
-									ContainerPort: icmapiv1alpha1.VarnishPrometheusExporterPort,
-									Protocol:      v1.ProtocolTCP,
+									Name:      icmapiv1alpha1.VarnishSharedVolume,
+									MountPath: "/var/lib/varnish",
+								},
+								{
+									Name:      icmapiv1alpha1.VarnishSettingsVolume,
+									MountPath: "/etc/varnish",
+									ReadOnly:  true,
 								},
 							},
 							Env: []v1.EnvVar{
-								{Name: "ENDPOINT_SELECTOR_STRING", Value: labels.SelectorFromSet(endpointSelector).String()},
-								{Name: "CONFIGMAP_NAME", Value: *instance.Spec.VCL.ConfigMapName},
-								{Name: "NAMESPACE", Value: instance.Namespace},
-								{Name: "POD_NAME", ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{APIVersion: "v1", FieldPath: "metadata.name"}}},
-								{Name: "VARNISH_CLUSTER_NAME", Value: instance.Name},
-								{Name: "VARNISH_CLUSTER_UID", Value: string(instance.UID)},
-								{Name: "VARNISH_CLUSTER_GROUP", Value: gvk.Group},
-								{Name: "VARNISH_CLUSTER_VERSION", Value: gvk.Version},
-								{Name: "VARNISH_CLUSTER_KIND", Value: gvk.Kind},
-								{Name: "LOG_FORMAT", Value: instance.Spec.LogFormat},
-								{Name: "LOG_LEVEL", Value: instance.Spec.LogLevel},
 								{Name: "VARNISH_ARGS", Value: varnishdArgs},
 							},
 							Resources: *instance.Spec.Varnish.Resources,
@@ -114,6 +144,80 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 							TerminationMessagePath:   "/dev/termination-log",
 							TerminationMessagePolicy: v1.TerminationMessageReadFile,
 							ImagePullPolicy:          instance.Spec.Varnish.ImagePullPolicy,
+						},
+						//Varnish metrics
+						{
+							Name:  icmapiv1alpha1.VarnishMetricsExporterName,
+							Image: varnishMetricsImage,
+							Ports: []v1.ContainerPort{
+								{
+									Name:          icmapiv1alpha1.VarnishMetricsPortName,
+									ContainerPort: icmapiv1alpha1.VarnishPrometheusExporterPort,
+									Protocol:      v1.ProtocolTCP,
+								},
+							},
+							VolumeMounts: []v1.VolumeMount{
+								{
+									Name:      icmapiv1alpha1.VarnishSharedVolume,
+									MountPath: "/var/lib/varnish",
+									ReadOnly:  true,
+								},
+								{
+									Name:      icmapiv1alpha1.VarnishSettingsVolume,
+									MountPath: "/etc/varnish",
+									ReadOnly:  true,
+								},
+							},
+							Resources: instance.Spec.Varnish.MetricsExporter.Resources,
+							// TODO: get working liveness probe
+							//LivenessProbe:   &v1.Probe{},
+							ReadinessProbe: &v1.Probe{
+								Handler: v1.Handler{
+									HTTPGet: &v1.HTTPGetAction{
+										Port: intstr.FromInt(icmapiv1alpha1.VarnishPrometheusExporterPort),
+									},
+								},
+								TimeoutSeconds:   30,
+								PeriodSeconds:    10,
+								SuccessThreshold: 1,
+								FailureThreshold: 3,
+							},
+							TerminationMessagePath:   "/dev/termination-log",
+							TerminationMessagePolicy: v1.TerminationMessageReadFile,
+							ImagePullPolicy:          instance.Spec.Varnish.MetricsExporter.ImagePullPolicy,
+						},
+						//Varnish controller
+						{
+							Name:  icmapiv1alpha1.VarnishControllerName,
+							Image: varnishControllerImage,
+							Env: []v1.EnvVar{
+								{Name: "ENDPOINT_SELECTOR_STRING", Value: labels.SelectorFromSet(endpointSelector).String()},
+								{Name: "CONFIGMAP_NAME", Value: *instance.Spec.VCL.ConfigMapName},
+								{Name: "NAMESPACE", Value: instance.Namespace},
+								{Name: "POD_NAME", ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{APIVersion: "v1", FieldPath: "metadata.name"}}},
+								{Name: "VARNISH_CLUSTER_NAME", Value: instance.Name},
+								{Name: "VARNISH_CLUSTER_UID", Value: string(instance.UID)},
+								{Name: "VARNISH_CLUSTER_GROUP", Value: gvk.Group},
+								{Name: "VARNISH_CLUSTER_VERSION", Value: gvk.Version},
+								{Name: "VARNISH_CLUSTER_KIND", Value: gvk.Kind},
+								{Name: "LOG_FORMAT", Value: instance.Spec.LogFormat},
+								{Name: "LOG_LEVEL", Value: instance.Spec.LogLevel},
+							},
+							VolumeMounts: []v1.VolumeMount{
+								{
+									Name:      icmapiv1alpha1.VarnishSettingsVolume,
+									MountPath: "/etc/varnish",
+								},
+								{
+									Name:      icmapiv1alpha1.VarnishSharedVolume,
+									MountPath: "/var/lib/varnish",
+									ReadOnly:  true,
+								},
+							},
+							Resources:                instance.Spec.Varnish.Controller.Resources,
+							TerminationMessagePath:   "/dev/termination-log",
+							TerminationMessagePolicy: v1.TerminationMessageReadFile,
+							ImagePullPolicy:          instance.Spec.Varnish.Controller.ImagePullPolicy,
 						},
 					},
 					RestartPolicy:                 instance.Spec.Varnish.RestartPolicy,
@@ -172,4 +276,21 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 	instanceStatus.Status.Replicas = found.Status.Replicas
 
 	return found, varnishLabels, nil
+}
+
+func imageNameGenerate(specified, base, suffix string) string {
+	if specified != "" {
+		return specified
+	}
+	baseName, tag := splitNameAndTag(base)
+	return baseName + suffix + tag
+}
+
+func splitNameAndTag(fullName string) (image, tag string) {
+	parts := strings.Split(fullName, ":")
+	image = parts[0]
+	if len(parts) > 1 {
+		tag = ":" + parts[1]
+	}
+	return
 }

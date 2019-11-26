@@ -42,7 +42,7 @@ func (r *ReconcileVarnishCluster) reconcileConfigMap(ctx context.Context, podsSe
 			},
 			Data: map[string]string{
 				*instance.Spec.VCL.EntrypointFileName: entrypointVCLFileContent,
-				"backends.vcl.tmpl":                  backendsVCLTmplFileContent,
+				"backends.vcl.tmpl":                   backendsVCLTmplFileContent,
 			},
 		}
 		if err := controllerutil.SetControllerReference(instance, cm, r.scheme); err != nil {

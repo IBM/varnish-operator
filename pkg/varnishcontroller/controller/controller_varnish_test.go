@@ -1,8 +1,9 @@
 package controller
 
 import (
-	"github.com/gogo/protobuf/proto"
 	"testing"
+
+	"github.com/gogo/protobuf/proto"
 
 	"github.com/google/go-cmp/cmp"
 )

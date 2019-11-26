@@ -35,9 +35,15 @@ const (
 	VarnishAdminPort              = 6082
 	VarnishPrometheusExporterPort = 9131
 
-	VarnishContainerName   = "varnish"
-	VarnishMetricsPortName = "metrics"
-	VarnishPortName        = "varnish"
+	VarnishContainerName        = "varnish"
+	VarnishMetricsExporterName  = "metrics-exporter"
+	VarnishMetricsExporterImage = "-metrics-exporter"
+	VarnishControllerName       = "varnish-controller"
+	VarnishControllerImage      = "-controller"
+	VarnishMetricsPortName      = "metrics"
+	VarnishPortName             = "varnish"
+	VarnishSharedVolume         = "shared-workdir"
+	VarnishSettingsVolume       = "shared-etc"
 
 	VarnishUpdateStrategyDelayedRollingUpdate = "DelayedRollingUpdate"
 )
@@ -101,12 +107,29 @@ type UpdateStrategyDelayedRollingUpdate struct {
 }
 
 type VarnishClusterVarnish struct {
-	Image           string                   `json:"image,omitempty"`
-	ImagePullPolicy v1.PullPolicy            `json:"imagePullPolicy,omitempty"`
-	RestartPolicy   v1.RestartPolicy         `json:"restartPolicy,omitempty"`
-	Resources       *v1.ResourceRequirements `json:"resources,omitempty"`
-	ImagePullSecret *string                  `json:"imagePullSecret,omitempty"`
-	Args            []string                 `json:"args,omitempty"`
+	Image string `json:"image,omitempty"`
+	// +kubebuilder:validation:Enum=Always;Never;IfNotPresent
+	ImagePullPolicy v1.PullPolicy                         `json:"imagePullPolicy,omitempty"`
+	RestartPolicy   v1.RestartPolicy                      `json:"restartPolicy,omitempty"`
+	Resources       *v1.ResourceRequirements              `json:"resources,omitempty"`
+	ImagePullSecret *string                               `json:"imagePullSecret,omitempty"`
+	Args            []string                              `json:"args,omitempty"`
+	Controller      *VarnishClusterVarnishController      `json:"controller,omitempty"`
+	MetricsExporter *VarnishClusterVarnishMetricsExporter `json:"metricsExporter,omitempty"`
+}
+
+type VarnishClusterVarnishController struct {
+	Image string `json:"image,omitempty"`
+	// +kubebuilder:validation:Enum=Always;Never;IfNotPresent
+	ImagePullPolicy v1.PullPolicy           `json:"imagePullPolicy,omitempty"`
+	Resources       v1.ResourceRequirements `json:"resources,omitempty"`
+}
+
+type VarnishClusterVarnishMetricsExporter struct {
+	Image string `json:"image,omitempty"`
+	// +kubebuilder:validation:Enum=Always;Never;IfNotPresent
+	ImagePullPolicy v1.PullPolicy           `json:"imagePullPolicy,omitempty"`
+	Resources       v1.ResourceRequirements `json:"resources,omitempty"`
 }
 
 type VarnishClusterVCL struct {
@@ -127,7 +150,7 @@ type VarnishClusterBackend struct {
 type VarnishClusterService struct {
 	// +kubebuilder:validation:Required
 	Port        *int32 `json:"port,omitempty"`
-	MetricsPort int32 `json:"metricsPort,omitempty"`
+	MetricsPort int32  `json:"metricsPort,omitempty"`
 	// +kubebuilder:validation:Enum=ClusterIP;LoadBalancer;NodePort
 	Type        v1.ServiceType    `json:"type,omitempty"`
 	Annotations map[string]string `json:"annotations,omitempty"`

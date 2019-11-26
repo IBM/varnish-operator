@@ -1,6 +1,4 @@
 #!/bin/sh
-echo $VARNISH_SECRET > /etc/varnish/secret
-
 # Start varnish and log
 # echo "** Starting Varnish cache with no backends"
 

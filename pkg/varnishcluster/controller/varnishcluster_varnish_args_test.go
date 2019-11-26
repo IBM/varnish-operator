@@ -2,9 +2,10 @@ package controller
 
 import (
 	"fmt"
-	"github.com/gogo/protobuf/proto"
 	"icm-varnish-k8s-operator/api/v1alpha1"
 	"testing"
+
+	"github.com/gogo/protobuf/proto"
 
 	"github.com/google/go-cmp/cmp"
 )

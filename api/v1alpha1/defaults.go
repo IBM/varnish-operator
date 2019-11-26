@@ -62,7 +62,7 @@ func defaultVarnishClusterSpec(in *VarnishClusterSpec) {
 	}
 
 	if in.Service.MetricsPort == 0 {
-		in.Service.MetricsPort = 9131
+		in.Service.MetricsPort = VarnishPrometheusExporterPort
 	}
 
 	if in.Service.Type == "" {
@@ -84,5 +84,26 @@ func defaultVarnish(in *VarnishClusterVarnish) {
 
 	if in.Resources == nil {
 		in.Resources = &v1.ResourceRequirements{}
+	}
+
+	defaultVarnishController(in.Controller)
+	defaultVarnishMetricsExporter(in.MetricsExporter)
+}
+
+func defaultVarnishController(in *VarnishClusterVarnishController) {
+	if in == nil {
+		in = &VarnishClusterVarnishController{}
+	}
+	if in.ImagePullPolicy == "" {
+		in.ImagePullPolicy = v1.PullAlways
+	}
+}
+
+func defaultVarnishMetricsExporter(in *VarnishClusterVarnishMetricsExporter) {
+	if in == nil {
+		in = &VarnishClusterVarnishMetricsExporter{}
+	}
+	if in.ImagePullPolicy == "" {
+		in.ImagePullPolicy = v1.PullAlways
 	}
 }

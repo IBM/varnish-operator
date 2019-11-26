@@ -1,5 +1,4 @@
 #!/bin/sh
-
 # Start varnish-controller
 echo -n "** Waiting for Varnish to start..."
 until varnishadm ping 2> /dev/null; do echo -n .; sleep 0.2; done;

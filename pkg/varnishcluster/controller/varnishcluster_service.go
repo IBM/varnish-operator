@@ -90,7 +90,7 @@ func (r *ReconcileVarnishCluster) reconcileService(ctx context.Context, instance
 			{
 				Name:       icmapiv1alpha1.VarnishMetricsPortName,
 				Protocol:   v1.ProtocolTCP,
-				Port:       instance.Spec.Service.MetricsPort,
+				Port:       icmapiv1alpha1.VarnishPrometheusExporterPort,
 				TargetPort: intstr.FromString(icmapiv1alpha1.VarnishMetricsPortName),
 			},
 		},

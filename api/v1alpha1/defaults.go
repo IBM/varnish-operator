@@ -24,13 +24,14 @@ func SetVarnishClusterListDefaults(in *VarnishClusterList) {
 
 func defaultVarnishCluster(in *VarnishCluster) {
 	defaultVarnishClusterSpec(&in.Spec)
+
+	if in.Spec.Varnish == nil {
+		in.Spec.Varnish = &VarnishClusterVarnish{}
+	}
 	defaultVarnish(in.Spec.Varnish)
 }
 
 func defaultVarnishClusterSpec(in *VarnishClusterSpec) {
-	if in == nil {
-		in = &VarnishClusterSpec{}
-	}
 	var defaultReplicasNumber int32 = 1
 	if in.Replicas == nil {
 		in.Replicas = &defaultReplicasNumber
@@ -71,10 +72,6 @@ func defaultVarnishClusterSpec(in *VarnishClusterSpec) {
 }
 
 func defaultVarnish(in *VarnishClusterVarnish) {
-	if in == nil {
-		in = &VarnishClusterVarnish{}
-	}
-
 	if in.ImagePullPolicy == "" {
 		in.ImagePullPolicy = v1.PullAlways
 	}
@@ -86,23 +83,24 @@ func defaultVarnish(in *VarnishClusterVarnish) {
 		in.Resources = &v1.ResourceRequirements{}
 	}
 
+	if in.Controller == nil {
+		in.Controller = &VarnishClusterVarnishController{}
+	}
 	defaultVarnishController(in.Controller)
+
+	if in.MetricsExporter == nil {
+		in.MetricsExporter = &VarnishClusterVarnishMetricsExporter{}
+	}
 	defaultVarnishMetricsExporter(in.MetricsExporter)
 }
 
 func defaultVarnishController(in *VarnishClusterVarnishController) {
-	if in == nil {
-		in = &VarnishClusterVarnishController{}
-	}
 	if in.ImagePullPolicy == "" {
 		in.ImagePullPolicy = v1.PullAlways
 	}
 }
 
 func defaultVarnishMetricsExporter(in *VarnishClusterVarnishMetricsExporter) {
-	if in == nil {
-		in = &VarnishClusterVarnishMetricsExporter{}
-	}
 	if in.ImagePullPolicy == "" {
 		in.ImagePullPolicy = v1.PullAlways
 	}

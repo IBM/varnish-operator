@@ -2,7 +2,7 @@ apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.2.2
+    controller-gen.kubebuilder.io/version: v0.2.4
   creationTimestamp: null
   name: varnishclusters.icm.ibm.com
 spec:
@@ -620,8 +620,9 @@ spec:
               properties:
                 port:
                   anyOf:
-                  - type: string
                   - type: integer
+                  - type: string
+                  x-kubernetes-int-or-string: true
                 selector:
                   additionalProperties:
                     type: string
@@ -650,21 +651,23 @@ spec:
               properties:
                 maxUnavailable:
                   anyOf:
-                  - type: string
                   - type: integer
+                  - type: string
                   description: An eviction is allowed if at most "maxUnavailable"
                     pods selected by "selector" are unavailable after the eviction,
                     i.e. even in absence of the evicted pod. For example, one can
                     prevent all voluntary evictions by specifying 0. This is a mutually
                     exclusive setting with "minAvailable".
+                  x-kubernetes-int-or-string: true
                 minAvailable:
                   anyOf:
-                  - type: string
                   - type: integer
+                  - type: string
                   description: An eviction is allowed if at least "minAvailable" pods
                     selected by "selector" will still be available after the eviction,
                     i.e. even in the absence of the evicted pod.  So for example you
                     can prevent all voluntary evictions by specifying "100%".
+                  x-kubernetes-int-or-string: true
                 selector:
                   description: Label query over pods whose evictions are managed by
                     the disruption budget.
@@ -722,9 +725,13 @@ spec:
                   type: object
                 metricsPort:
                   format: int32
+                  maximum: 65535
+                  minimum: 1
                   type: integer
                 port:
                   format: int32
+                  maximum: 65535
+                  minimum: 1
                   type: integer
                 type:
                   description: Service Type string describes ingress methods for a
@@ -910,6 +917,10 @@ spec:
                     restarted. Only one of the following restart policies may be specified.
                     If none of the following policies is specified, the default one
                     is RestartPolicyAlways.
+                  enum:
+                  - OnFailure
+                  - Never
+                  - Always
                   type: string
               type: object
             vcl:

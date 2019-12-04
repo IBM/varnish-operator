@@ -21,6 +21,10 @@ func (r *ReconcileVarnishCluster) reconcileClusterRole(ctx context.Context, inst
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   instance.Name + "-varnish-clusterrole-" + instance.Namespace,
 			Labels: labels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentClusterRole),
+			Annotations: map[string]string{
+				annotationVarnishClusterNamespace: instance.Namespace,
+				annotationVarnishClusterName:      instance.Name,
+			},
 		},
 		Rules: []rbac.PolicyRule{
 			{
@@ -57,12 +61,12 @@ func (r *ReconcileVarnishCluster) reconcileClusterRole(ctx context.Context, inst
 		logr.Infoc("Updating ClusterRole", "diff", compare.DiffClusterRole(found, role))
 		found.Rules = role.Rules
 		found.Labels = role.Labels
+		found.Annotations = role.Annotations
 		if err = r.Update(ctx, found); err != nil {
 			return "", errors.Wrap(err, "Could not Update ClusterRole")
 		}
 	} else {
 		logr.Debugw("No updates for ClusterRole")
-
 	}
 	return role.Name, nil
 }

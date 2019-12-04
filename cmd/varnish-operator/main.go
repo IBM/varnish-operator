@@ -85,7 +85,9 @@ func main() {
 	// Setup all Controllers
 	logr.Infow("Setting up controller")
 	reconcileChan := make(chan event.GenericEvent)
-	if err = controller.SetupVarnishReconciler(mgr, operatorConfig, logr, reconcileChan); err != nil {
+
+	vcCtrl := controller.NewVarnishReconciler(mgr, operatorConfig, logr, reconcileChan)
+	if err = controller.SetupVarnishReconciler(vcCtrl, mgr, reconcileChan); err != nil {
 		logr.With(zap.Error(err)).Fatalf("unable to setup controller")
 	}
 

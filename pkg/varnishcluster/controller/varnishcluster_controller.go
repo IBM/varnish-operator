@@ -33,31 +33,62 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-func SetupVarnishReconciler(mgr manager.Manager, cfg *config.Config, logr *logger.Logger, reconcileChan chan event.GenericEvent) error {
-	vcCtrl := &ReconcileVarnishCluster{
-		Client:             mgr.GetClient(),
-		logger:             logr,
-		config:             cfg,
-		scheme:             mgr.GetScheme(),
-		events:             NewEventHandler(mgr.GetEventRecorderFor(EventRecorderNameVarnishCluster)),
-		reconcileTriggerer: vcreconcile.NewReconcileTriggerer(logr, reconcileChan),
+const (
+	annotationVarnishClusterName      = "varnish-cluster-name"
+	annotationVarnishClusterNamespace = "varnish-cluster-namespace"
+)
+
+func SetupVarnishReconciler(vcCtrl reconcile.Reconciler, mgr manager.Manager, reconcileChan chan event.GenericEvent) error {
+	clusterRoleBindingEventHandler := &handler.EnqueueRequestsFromMapFunc{ToRequests: handler.ToRequestsFunc(
+		func(a handler.MapObject) []ctrl.Request {
+			cr, ok := a.Object.(*rbac.ClusterRoleBinding)
+			if !ok {
+				return nil
+			}
+
+			if cr.Annotations[annotationVarnishClusterNamespace] == "" {
+				return nil
+			}
+
+			if cr.Annotations[annotationVarnishClusterName] == "" {
+				return nil
+			}
+
+			return []ctrl.Request{
+				{NamespacedName: types.NamespacedName{
+					Name:      cr.Annotations[annotationVarnishClusterName],
+					Namespace: cr.Annotations[annotationVarnishClusterNamespace],
+				}},
+			}
+		}),
 	}
 
-	builder := ctrl.NewControllerManagedBy(mgr)
-	builder.Named("varnishcluster")
-	builder.For(&icmv1alpha1.VarnishCluster{})
-	builder.Owns(&v1.ConfigMap{})
-	builder.Owns(&appsv1.StatefulSet{})
-	builder.Owns(&v1.Service{})
-	builder.Owns(&rbac.Role{})
-	builder.Owns(&rbac.RoleBinding{})
-	builder.Owns(&rbac.ClusterRole{})
-	builder.Owns(&rbac.ClusterRoleBinding{})
-	builder.Owns(&v1.ServiceAccount{})
-	builder.Watches(&source.Channel{Source: reconcileChan}, &handler.EnqueueRequestForObject{})
+	clusterRoleEventHandler := &handler.EnqueueRequestsFromMapFunc{ToRequests: handler.ToRequestsFunc(
+		func(a handler.MapObject) []ctrl.Request {
+			cr, ok := a.Object.(*rbac.ClusterRole)
+			if !ok {
+				return nil
+			}
+
+			if cr.Annotations[annotationVarnishClusterNamespace] == "" {
+				return nil
+			}
+
+			if cr.Annotations[annotationVarnishClusterName] == "" {
+				return nil
+			}
+
+			return []ctrl.Request{
+				{NamespacedName: types.NamespacedName{
+					Name:      cr.Annotations[annotationVarnishClusterName],
+					Namespace: cr.Annotations[annotationVarnishClusterNamespace],
+				}},
+			}
+		}),
+	}
 
 	vcPodsSelector := labels.SelectorFromSet(map[string]string{icmv1alpha1.LabelVarnishComponent: icmv1alpha1.VarnishComponentVarnish})
-	builder.Watches(&source.Kind{Type: &v1.Pod{}}, &handler.EnqueueRequestsFromMapFunc{
+	varnishClusterPodsEventHandler := &handler.EnqueueRequestsFromMapFunc{
 		ToRequests: handler.ToRequestsFunc(
 			func(a handler.MapObject) []ctrl.Request {
 				if !vcPodsSelector.Matches(labels.Set(a.Meta.GetLabels())) {
@@ -71,7 +102,21 @@ func SetupVarnishReconciler(mgr manager.Manager, cfg *config.Config, logr *logge
 					}},
 				}
 			}),
-	})
+	}
+
+	builder := ctrl.NewControllerManagedBy(mgr)
+	builder.Named("varnishcluster")
+	builder.For(&icmv1alpha1.VarnishCluster{})
+	builder.Owns(&v1.ConfigMap{})
+	builder.Owns(&appsv1.StatefulSet{})
+	builder.Owns(&v1.Service{})
+	builder.Owns(&rbac.Role{})
+	builder.Owns(&rbac.RoleBinding{})
+	builder.Watches(&source.Kind{Type: &rbac.ClusterRole{}}, clusterRoleEventHandler)
+	builder.Watches(&source.Kind{Type: &rbac.ClusterRoleBinding{}}, clusterRoleBindingEventHandler)
+	builder.Owns(&v1.ServiceAccount{})
+	builder.Watches(&source.Channel{Source: reconcileChan}, &handler.EnqueueRequestForObject{})
+	builder.Watches(&source.Kind{Type: &v1.Pod{}}, varnishClusterPodsEventHandler)
 
 	return builder.Complete(vcCtrl)
 }
@@ -86,6 +131,17 @@ type ReconcileVarnishCluster struct {
 	scheme             *runtime.Scheme
 	events             *EventHandler
 	reconcileTriggerer *vcreconcile.ReconcileTriggerer
+}
+
+func NewVarnishReconciler(mgr manager.Manager, cfg *config.Config, logr *logger.Logger, reconcileChan chan event.GenericEvent) *ReconcileVarnishCluster {
+	return &ReconcileVarnishCluster{
+		Client:             mgr.GetClient(),
+		logger:             logr,
+		config:             cfg,
+		scheme:             mgr.GetScheme(),
+		events:             NewEventHandler(mgr.GetEventRecorderFor(EventRecorderNameVarnishCluster)),
+		reconcileTriggerer: vcreconcile.NewReconcileTriggerer(logr, reconcileChan),
+	}
 }
 
 // Reconcile reads that state of the cluster for a VarnishCluster object and makes changes based on the state read

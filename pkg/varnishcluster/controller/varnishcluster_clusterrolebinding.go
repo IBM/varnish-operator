@@ -21,10 +21,14 @@ func (r *ReconcileVarnishCluster) reconcileClusterRoleBinding(ctx context.Contex
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   instance.Name + "-varnish-clusterrolebinding-" + instance.Namespace,
 			Labels: labels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentClusterRoleBinding),
+			Annotations: map[string]string{
+				annotationVarnishClusterNamespace: instance.Namespace,
+				annotationVarnishClusterName:      instance.Name,
+			},
 		},
 		Subjects: []rbac.Subject{
 			{
-				Kind:      "ServiceAccount",
+				Kind:      rbac.ServiceAccountKind,
 				Name:      serviceAccountName,
 				Namespace: instance.Namespace,
 			},
@@ -32,7 +36,7 @@ func (r *ReconcileVarnishCluster) reconcileClusterRoleBinding(ctx context.Contex
 		RoleRef: rbac.RoleRef{
 			Kind:     "ClusterRole",
 			Name:     roleName,
-			APIGroup: "rbac.authorization.k8s.io",
+			APIGroup: rbac.GroupName,
 		},
 	}
 
@@ -63,6 +67,7 @@ func (r *ReconcileVarnishCluster) reconcileClusterRoleBinding(ctx context.Contex
 		found.Subjects = clusterRoleBinding.Subjects
 		found.RoleRef = clusterRoleBinding.RoleRef
 		found.Labels = clusterRoleBinding.Labels
+		found.Annotations = clusterRoleBinding.Annotations
 		if err = r.Update(ctx, found); err != nil {
 			return errors.Wrap(err, "Could not Update ClusterRoleBinding")
 		}

@@ -1,5 +1,5 @@
 #!groovy
-@Library("icm-jenkins-common@0.94.0")
+@Library("icm-jenkins-common@0.96.0")
 import com.ibm.icm.*
 
 // for GitInfo
@@ -27,7 +27,7 @@ GitUtils gitUtils = new GitUtils(this)
 HelmUtils helmUtils = new HelmUtils(this)
 
 node("icm_slave") {
-    GitInfo gitInfo = icmCheckoutStages()
+    GitInfo gitInfo = icmCheckoutStages(withTags: true)
     String branch = gitInfo.branch
     gitInfo.branch = StringUtils.slugify(gitInfo.branch)
 

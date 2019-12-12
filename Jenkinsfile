@@ -28,63 +28,57 @@ artifactoryRoot = "na.artifactory.swg-devops.com/artifactory"
 artifactoryRepo = "wcp-icm-helm-local"
 artifactoryUserPasswordId = "TAAS-Artifactory-User-Password-Global"
 
-VersionUtils versionUtils = new VersionUtils(this)
-HelmUtils helmUtils = new HelmUtils(this)
+node('icm_slave') {
+  GitInfo gitInfo = icmCheckoutStages(withTags: true) // By default the clone occurs without refs fetch
 
-node("icm_slave") {
-    GitInfo gitInfo = icmCheckoutStages(withTags: true) // By default the clone occurs without refs fetch
-    String branch = gitInfo.branch
-    gitInfo.branch = StringUtils.slugify(gitInfo.branch)
+  def appVersion = icmGetAppVersion() // Get the version from version.txt
+  boolean isTaggedCommit = icmGetTagsOnCommit().size() > 0 //used to avoid build runs on tag push
+  boolean isNewRelease = !isTaggedCommit && gitInfo.branch == releaseBranch
+  boolean isUntaggedCommit = !isTaggedCommit && gitInfo.branch != releaseBranch
+  slack = icmSlackNotifier(slackChannel)
 
-    DockerImageInfo varnishDockerImageInfo = icmGetDockerImageInfo(dockerRegistry, dockerRegistryNamespace, varnishDockerImageName,
-            releaseBranch, gitInfo)
-    DockerImageInfo varnishControllerDockerImageInfo = icmGetDockerImageInfo(dockerRegistry, dockerRegistryNamespace, varnishControllerDockerImageName,
-            releaseBranch, gitInfo)
-    DockerImageInfo varnishMetricsExporterDockerImageInfo = icmGetDockerImageInfo(dockerRegistry, dockerRegistryNamespace, varnishMetricsExporterDockerImageName,
-            releaseBranch, gitInfo)
-    DockerImageInfo operatorDockerImageInfo = icmGetDockerImageInfo(dockerRegistry, dockerRegistryNamespace, operatorDockerImageName,
-            releaseBranch, gitInfo)
+  HelmUtils helmUtils = new HelmUtils(this)
 
-    def appVersion = icmGetAppVersion() // Get the version from version.txt
-    boolean isTaggedCommit = icmGetTagsOnCommit().size() > 0 //used to avoid build runs on tag push
-    boolean isNewRelease = !isTaggedCommit && gitInfo.branch == releaseBranch
-    boolean isUntaggedCommit = !isTaggedCommit && gitInfo.branch != releaseBranch
-    slack = icmSlackNotifier(slackChannel)
-
-    if (isNewRelease) {
-        GitUtils gitUtils = new GitUtils(this)
-        if (!gitUtils.doesTagExist(appVersion)) {
-            println 'This is a release branch. Preparing the build...'
-            try {
-                icmCloudCliSetupStages(ibmCloud.apiKeyId, ibmCloud.region, CloudCliPluginConsts.CONTAINER_PLUGINS)
-                icmDockerStages(varnishDockerImageInfo, ["-f": "Dockerfile.varnishd"])
-                icmDockerStages(varnishMetricsExporterDockerImageInfo, ["-f": "Dockerfile.exporter"])
-                icmDockerStages(varnishControllerDockerImageInfo, ["-f": "Dockerfile.controller"])
-                icmDockerStages(operatorDockerImageInfo)
-                helmUtils.setChartVersion(helmChart, appVersion)
-                icmWithArtifactoryConfig(artifactoryRoot, artifactoryRepo, artifactoryUserPasswordId) {
-                    icmHelmChartPackagePublishStage(helmChart, it.config.createHelmPublish())
-                }
-                // Push the newly created release tag to origin
-                gitUtils.setTag(appVersion, gitCredentialId)
-                slack.info("icm-varnish-operator: $appVersion has been released. See the <https://github.ibm.com/TheWeatherCompany/icm-cassandra/releases/tag/${appVersion}|release notes>. For more debug info see the <${env.BUILD_URL}|Jenkins logs>")
-            } catch (err) {
-                String errorMessage = "Release $appVersion Failed! For more debug info see the <${env.BUILD_URL}|Jenkins logs>"
-                slack.error(errorMessage)
-                icmMarkBuildFailed(errorMessage)
-            }
-        }
-    } else if (isUntaggedCommit) {
-        println 'This is a feature branch. Preparing the build...'
+  if (isNewRelease) {
+    GitUtils gitUtils = new GitUtils(this)
+    if (!gitUtils.doesTagExist(appVersion)) {
+      println 'This is a release branch. Preparing the build...'
+      try {
         icmCloudCliSetupStages(ibmCloud.apiKeyId, ibmCloud.region, CloudCliPluginConsts.CONTAINER_PLUGINS)
-        appVersion += '-' + StringUtils.slugify(gitInfo.branch)
-        icmDockerStages(varnishDockerImageInfo, ["-f":"Dockerfile.varnishd"])
-        icmDockerStages(varnishMetricsExporterDockerImageInfo, ["-f":"Dockerfile.exporter"])
-        icmDockerStages(varnishControllerDockerImageInfo, ["-f":"Dockerfile.controller"])
-        icmDockerStages(operatorDockerImageInfo)
+        def buildRes = dockerBuildPush(appVersion, gitInfo) //use var assignment here to avoid `unable to resolve class Gitinfo`
         helmUtils.setChartVersion(helmChart, appVersion)
         icmWithArtifactoryConfig(artifactoryRoot, artifactoryRepo, artifactoryUserPasswordId) {
-            icmHelmChartPackagePublishStage(helmChart, it.config.createHelmPublish())
+          icmHelmChartPackagePublishStage(helmChart, it.config.createHelmPublish())
         }
+        // Push the newly created release tag to origin
+        gitUtils.setTag(appVersion, gitCredentialId)
+        slack.info("icm-varnish-operator: $appVersion has been released. See the <https://github.ibm.com/TheWeatherCompany/icm-varnish-k8s-operator/releases/tag/${appVersion}|release notes>. For more debug info see the <${env.BUILD_URL}|Jenkins logs>")
+      } catch (err) {
+        String errorMessage = "Release $appVersion Failed! For more debug info see the <${env.BUILD_URL}|Jenkins logs>"
+        slack.error(errorMessage)
+        icmMarkBuildFailed(errorMessage)
+      }
     }
+  } else if (isUntaggedCommit) {
+    println 'This is a feature branch. Preparing the build...'
+    icmCloudCliSetupStages(ibmCloud.apiKeyId, ibmCloud.region, CloudCliPluginConsts.CONTAINER_PLUGINS)
+    appVersion += '-' + StringUtils.slugify(gitInfo.branch)
+    def buildRes = dockerBuildPush(appVersion, gitInfo) //use var assignment here to avoid `unable to resolve class Gitinfo`
+    helmUtils.setChartVersion(helmChart, appVersion)
+    icmWithArtifactoryConfig(artifactoryRoot, artifactoryRepo, artifactoryUserPasswordId) {
+      icmHelmChartPackagePublishStage(helmChart, it.config.createHelmPublish())
+    }
+  }
+}
+
+def dockerBuildPush(String appVersion, GitInfo gitinfo) {
+  DockerImageInfo varnishDockerImageInfo = icmGetDockerImageInfo(dockerRegistry, dockerRegistryNamespace, varnishDockerImageName, appVersion, gitinfo)
+  DockerImageInfo varnishControllerDockerImageInfo = icmGetDockerImageInfo(dockerRegistry, dockerRegistryNamespace, varnishControllerDockerImageName, appVersion, gitinfo)
+  DockerImageInfo varnishMetricsExporterDockerImageInfo = icmGetDockerImageInfo(dockerRegistry, dockerRegistryNamespace, varnishMetricsExporterDockerImageName, appVersion, gitinfo)
+  DockerImageInfo operatorDockerImageInfo = icmGetDockerImageInfo(dockerRegistry, dockerRegistryNamespace, operatorDockerImageName, appVersion, gitinfo)
+
+  icmDockerStages(varnishDockerImageInfo, ["-f": "Dockerfile.varnishd"])
+  icmDockerStages(varnishMetricsExporterDockerImageInfo, ["-f": "Dockerfile.exporter"])
+  icmDockerStages(varnishControllerDockerImageInfo, ["-f": "Dockerfile.controller"])
+  icmDockerStages(operatorDockerImageInfo)
 }

@@ -2,9 +2,14 @@
 @Library("icm-jenkins-common@0.96.0")
 import com.ibm.icm.*
 
-// for GitInfo
-cloudApiKeyId = "icm_bluemix_1638245"
-region = "us-south"
+icmJenkinsProperties().
+    rotateBuilds(numToKeep: 30, daysToKeep: 45).
+    disableConcurrentBuilds().
+    apply()
+
+ibmCloud = [
+    region: 'us-south',
+    apiKeyId: 'icm_bluemix_1638245'] // id of Jenkins credential secret text
 
 // for Docker
 dockerRegistry = "us.icr.io"
@@ -14,7 +19,8 @@ varnishControllerDockerImageName = "varnish-controller"
 varnishMetricsExporterDockerImageName = "varnish-metrics-exporter"
 operatorDockerImageName = "varnish-operator"
 releaseBranch = "master"
-credentialsId = 'ApplicationId-icmautomation'
+slackChannel = 'varnish-operator-notifications'
+gitCredentialId = 'ApplicationId-icmautomation'
 
 // for Helm chart publish
 helmChart = "varnish-operator"
@@ -23,15 +29,12 @@ artifactoryRepo = "wcp-icm-helm-local"
 artifactoryUserPasswordId = "TAAS-Artifactory-User-Password-Global"
 
 VersionUtils versionUtils = new VersionUtils(this)
-GitUtils gitUtils = new GitUtils(this)
 HelmUtils helmUtils = new HelmUtils(this)
 
 node("icm_slave") {
-    GitInfo gitInfo = icmCheckoutStages(withTags: true)
+    GitInfo gitInfo = icmCheckoutStages(withTags: true) // By default the clone occurs without refs fetch
     String branch = gitInfo.branch
     gitInfo.branch = StringUtils.slugify(gitInfo.branch)
-
-    icmLoginToCloud(cloudApiKeyId, region, CloudCliPluginConsts.CONTAINER_PLUGINS)
 
     DockerImageInfo varnishDockerImageInfo = icmGetDockerImageInfo(dockerRegistry, dockerRegistryNamespace, varnishDockerImageName,
             releaseBranch, gitInfo)
@@ -39,37 +42,47 @@ node("icm_slave") {
             releaseBranch, gitInfo)
     DockerImageInfo varnishMetricsExporterDockerImageInfo = icmGetDockerImageInfo(dockerRegistry, dockerRegistryNamespace, varnishMetricsExporterDockerImageName,
             releaseBranch, gitInfo)
-
     DockerImageInfo operatorDockerImageInfo = icmGetDockerImageInfo(dockerRegistry, dockerRegistryNamespace, operatorDockerImageName,
             releaseBranch, gitInfo)
 
-    String repoVersion = versionUtils.getAppVersion()
+    def appVersion = icmGetAppVersion() // Get the version from version.txt
+    boolean isTaggedCommit = icmGetTagsOnCommit().size() > 0 //used to avoid build runs on tag push
+    boolean isNewRelease = !isTaggedCommit && gitInfo.branch == releaseBranch
+    boolean isUntaggedCommit = !isTaggedCommit && gitInfo.branch != releaseBranch
+    slack = icmSlackNotifier(slackChannel)
 
-    if ( branch == releaseBranch ) {
-
-        if ( ! gitUtils.doesTagExist(repoVersion) ) {
-
-            icmDockerStages(varnishDockerImageInfo, ["-f":"Dockerfile.varnishd"])
-            icmDockerStages(varnishMetricsExporterDockerImageInfo, ["-f":"Dockerfile.exporter"])
-            icmDockerStages(varnishControllerDockerImageInfo, ["-f":"Dockerfile.controller"])
-            icmDockerStages(operatorDockerImageInfo)
-
-            icmWithArtifactoryConfig(artifactoryRoot, artifactoryRepo, artifactoryUserPasswordId) {
-                icmHelmChartPackagePublishStage(helmChart, it.config.createHelmPublish())
+    if (isNewRelease) {
+        GitUtils gitUtils = new GitUtils(this)
+        if (!gitUtils.doesTagExist(appVersion)) {
+            println 'This is a release branch. Preparing the build...'
+            try {
+                icmCloudCliSetupStages(ibmCloud.apiKeyId, ibmCloud.region, CloudCliPluginConsts.CONTAINER_PLUGINS)
+                icmDockerStages(varnishDockerImageInfo, ["-f": "Dockerfile.varnishd"])
+                icmDockerStages(varnishMetricsExporterDockerImageInfo, ["-f": "Dockerfile.exporter"])
+                icmDockerStages(varnishControllerDockerImageInfo, ["-f": "Dockerfile.controller"])
+                icmDockerStages(operatorDockerImageInfo)
+                helmUtils.setChartVersion(helmChart, appVersion)
+                icmWithArtifactoryConfig(artifactoryRoot, artifactoryRepo, artifactoryUserPasswordId) {
+                    icmHelmChartPackagePublishStage(helmChart, it.config.createHelmPublish())
+                }
+                // Push the newly created release tag to origin
+                gitUtils.setTag(appVersion, gitCredentialId)
+                slack.info("icm-varnish-operator: $appVersion has been released. See the <https://github.ibm.com/TheWeatherCompany/icm-cassandra/releases/tag/${appVersion}|release notes>. For more debug info see the <${env.BUILD_URL}|Jenkins logs>")
+            } catch (err) {
+                String errorMessage = "Release $appVersion Failed! For more debug info see the <${env.BUILD_URL}|Jenkins logs>"
+                slack.error(errorMessage)
+                icmMarkBuildFailed(errorMessage)
             }
-
-            gitUtils.setTag(repoVersion, credentialsId, 'origin')
         }
-    } else {
-
+    } else if (isUntaggedCommit) {
+        println 'This is a feature branch. Preparing the build...'
+        icmCloudCliSetupStages(ibmCloud.apiKeyId, ibmCloud.region, CloudCliPluginConsts.CONTAINER_PLUGINS)
+        appVersion += '-' + StringUtils.slugify(gitInfo.branch)
         icmDockerStages(varnishDockerImageInfo, ["-f":"Dockerfile.varnishd"])
         icmDockerStages(varnishMetricsExporterDockerImageInfo, ["-f":"Dockerfile.exporter"])
         icmDockerStages(varnishControllerDockerImageInfo, ["-f":"Dockerfile.controller"])
         icmDockerStages(operatorDockerImageInfo)
-
-        stage('Set the helm chart version') {
-            helmUtils.setChartVersion(helmChart, repoVersion + '-' + gitInfo.branch)
-        }
+        helmUtils.setChartVersion(helmChart, appVersion)
         icmWithArtifactoryConfig(artifactoryRoot, artifactoryRepo, artifactoryUserPasswordId) {
             icmHelmChartPackagePublishStage(helmChart, it.config.createHelmPublish())
         }

@@ -81,7 +81,7 @@ varnish-controller: fmt vet
 	go build -o ${ROOT_DIR}bin/varnish-controller ${ROOT_DIR}cmd/varnish-controller/
 
 # Build the docker image with varnishd itself and varnish modules
-docker-build-varnish: fmt vet
+docker-build-varnish:
 	docker build ${ROOT_DIR} -t ${VARNISH_IMG} -f Dockerfile.varnishd
 
 docker-tag-push-varnish:
@@ -113,7 +113,7 @@ else
 endif
 
 # Build the docker image with varnish metrics exporter
-docker-build-varnish-exporter: fmt vet
+docker-build-varnish-exporter:
 	docker build ${ROOT_DIR} -t ${VARNISH_METRICS_IMG} -f Dockerfile.exporter
 
 docker-tag-push-varnish-exporter:

@@ -32,7 +32,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 		varnishImage = instance.Spec.Varnish.Image
 	}
 
-	varnishdArgs := strings.Join(getSanitizedVarnishArgs(&instance.Spec), " ")
+	varnishdArgs := getSanitizedVarnishArgs(&instance.Spec)
 
 	var imagePullSecrets []v1.LocalObjectReference
 	if instance.Spec.Varnish.ImagePullSecret != nil {
@@ -72,6 +72,11 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 					Labels: varnishLabels,
 				},
 				Spec: v1.PodSpec{
+					// Share a single process namespace between all of the containers in a pod.
+					// When this is set containers will be able to view and signal processes from other containers
+					// in the same pod.It is required for the pod to provide reliable way to collect metrics.
+					// Otherwise metrics collection container may only collect general varnish process metrics.
+					ShareProcessNamespace: proto.Bool(true),
 					Volumes: []v1.Volume{
 						{
 							Name: icmapiv1alpha1.VarnishSharedVolume,
@@ -124,9 +129,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 									ReadOnly:  true,
 								},
 							},
-							Env: []v1.EnvVar{
-								{Name: "VARNISH_ARGS", Value: varnishdArgs},
-							},
+							Args:      varnishdArgs,
 							Resources: *instance.Spec.Varnish.Resources,
 							// TODO: get working liveness probe
 							//LivenessProbe:   &v1.Probe{},
@@ -272,7 +275,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 		}
 	}
 
-	instanceStatus.Status.VarnishArgs = varnishdArgs
+	instanceStatus.Status.VarnishArgs = strings.Join(varnishdArgs, " ")
 	instanceStatus.Status.Replicas = found.Status.Replicas
 
 	return found, varnishLabels, nil

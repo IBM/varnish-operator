@@ -21,9 +21,10 @@ import (
 	"icm-varnish-k8s-operator/pkg/varnishcluster/config"
 	vcreconcile "icm-varnish-k8s-operator/pkg/varnishcluster/reconcile"
 	"path/filepath"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sync"
 	"testing"
+
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	"github.com/go-logr/zapr"
 
@@ -56,12 +57,12 @@ import (
 // These tests use Ginkgo (BDD-style Go testing framework). Refer to
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
-var cfg *rest.Config                            //config for the rest client
-var k8sClient client.Client                     //k8s client that will use the config above to point to the test environment
-var testEnv *envtest.Environment                //brings up the control plane that you can connect to using the client above
-var requestsChan = make(chan reconcile.Request) //receives a value every time a reconcile loop finishes
-var mgrStopCh = make(chan struct{})             //stops the manager by sending a value to the channel
-var waitGroup = &sync.WaitGroup{}               //waits until the reconcile loops finish. Used to gracefully shutdown the environment
+var cfg *rest.Config                              //config for the rest client
+var k8sClient client.Client                       //k8s client that will use the config above to point to the test environment
+var testEnv *envtest.Environment                  //brings up the control plane that you can connect to using the client above
+var requestsChan = make(chan reconcile.Request)   //receives a value every time a reconcile loop finishes
+var mgrStopCh = make(chan struct{})               //stops the manager by sending a value to the channel
+var waitGroup = &sync.WaitGroup{}                 //waits until the reconcile loops finish. Used to gracefully shutdown the environment
 var reconcileChan = make(chan event.GenericEvent) //can be used to send manually reconcile events. Useful for testing.
 
 func TestAPIs(t *testing.T) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"icm-varnish-k8s-operator/pkg/logger"
 	"reflect"
+	"strings"
 
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
@@ -16,7 +17,7 @@ const (
 )
 
 func (r *ReconcileVarnish) reconcilePod(ctx context.Context, filesChanged bool, pod *v1.Pod, cm *v1.ConfigMap) error {
-	activeVCL, err := getActiveVCLConfig()
+	activeVCLName, err := r.varnish.GetActiveConfigurationName()
 	if err != nil {
 		return err
 	}
@@ -28,7 +29,7 @@ func (r *ReconcileVarnish) reconcilePod(ctx context.Context, filesChanged bool, 
 		podCopy.Annotations = make(map[string]string)
 	}
 
-	activeVCLConfigMapVersion := extractConfigMapVersion(activeVCL.Name)
+	activeVCLConfigMapVersion := extractConfigMapVersion(activeVCLName)
 	latestConfigMapInUse := cm.GetResourceVersion() == activeVCLConfigMapVersion
 
 	// update version annotations only if the latest config map is in use or
@@ -44,7 +45,7 @@ func (r *ReconcileVarnish) reconcilePod(ctx context.Context, filesChanged bool, 
 		podCopy.Annotations[annotationConfigMapVersion] = cm.GetResourceVersion()
 	}
 
-	podCopy.Annotations[annotationActiveVCLConfigName] = activeVCL.Name
+	podCopy.Annotations[annotationActiveVCLConfigName] = activeVCLName
 	if !reflect.DeepEqual(pod.Annotations, podCopy.Annotations) {
 		if err = r.Update(ctx, podCopy); err != nil {
 			return errors.Wrapf(err, "failed to update pod")
@@ -56,4 +57,13 @@ func (r *ReconcileVarnish) reconcilePod(ctx context.Context, filesChanged bool, 
 	}
 
 	return nil
+}
+
+// returns the config name the was used for VarnishClusterVCL config name creation
+func extractConfigMapVersion(VCLConfigName string) string {
+	parts := strings.Split(VCLConfigName, "-")
+	if len(parts) < 2 {
+		return ""
+	}
+	return parts[len(parts)-2]
 }

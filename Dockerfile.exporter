@@ -7,7 +7,6 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
 
 FROM debian:buster-slim
 LABEL maintainer="Alex Lytvynenko <oleksandr.lytvynenko@ibm.com>, Tomash Sidei <tomash.sidei@ibm.com>, Oleksandr Ohurtsov <oleksandr.ohurtsov@ibm.com>"
-COPY config/varnish-controller/start_varnish_exporter /
 COPY  --from=importer /prometheus-varnish-exporter /usr/bin/
 COPY  --from=importer /usr/bin/varnishadm /usr/bin/varnishstat /usr/bin/
 RUN     apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends libc6 libedit2 libncursesw6 libtinfo6 libvarnishapi2 \
@@ -17,4 +16,4 @@ RUN     apt-get update && apt-get upgrade -y && apt-get install -y --no-install-
                 && rm -rf /var/lib/apt/lists/*
 USER varnish
 
-CMD ["/start_varnish_exporter"]
+ENTRYPOINT ["/usr/bin/prometheus-varnish-exporter"]

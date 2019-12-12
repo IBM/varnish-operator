@@ -1,5 +1,0 @@
-#!/bin/sh
-# Start varnish and log
-# echo "** Starting Varnish cache with no backends"
-
-varnishd $VARNISH_ARGS

@@ -9,6 +9,7 @@ import (
 	"icm-varnish-k8s-operator/pkg/logger"
 	"icm-varnish-k8s-operator/pkg/varnishcontroller/config"
 	"icm-varnish-k8s-operator/pkg/varnishcontroller/controller"
+	"icm-varnish-k8s-operator/pkg/varnishcontroller/varnishadm"
 	"log"
 
 	"github.com/go-logr/zapr"
@@ -72,10 +73,18 @@ func main() {
 	logr.Infow("Registering Components")
 
 	// Setup controller
-	if err = controller.SetupVarnishReconciler(mgr, varnishControllerConfig, logr); err != nil {
+	varnishAdm := varnishadm.NewVarnishAdministartor(varnishControllerConfig.VarnishPingTimeout,
+		varnishControllerConfig.VarnishPingDelay,
+		config.VCLConfigDir,
+		varnishControllerConfig.VarnishAdmArgs)
+
+	if err = controller.SetupVarnishReconciler(mgr, varnishControllerConfig, varnishAdm, logr); err != nil {
 		logr.With(zap.Error(err)).Fatalw("could not setup controller")
 	}
-
+	logr.Infow("Looking up for a Varnish service")
+	if err = varnishAdm.Ping(); err != nil {
+		logr.With(err).Fatalf("Varnish is unreachable")
+	}
 	logr.Infow("Starting Varnish Controller")
 	if err = mgr.Start(signals.SetupSignalHandler()); err != nil {
 		logr.With(err).Fatalf("Failed to start manager")

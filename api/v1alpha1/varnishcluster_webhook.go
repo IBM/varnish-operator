@@ -78,6 +78,9 @@ func (in *VarnishCluster) ValidateCreate() error {
 	logr = logr.With(logger.FieldVarnishCluster, in.Name)
 
 	logr.Debug("Validating webhook has been called on create request")
+	if in.Spec.Varnish == nil {
+		return nil
+	}
 	if err := validVarnishArgs(in.Spec.Varnish.Args); err != nil {
 		return err
 	}
@@ -92,6 +95,9 @@ func (in *VarnishCluster) ValidateUpdate(old runtime.Object) error {
 	logr = logr.With(logger.FieldVarnishCluster, in.Name)
 
 	logr.Debug("Validating webhook has been called on update request")
+	if in.Spec.Varnish == nil {
+		return nil
+	}
 	if err := validVarnishArgs(in.Spec.Varnish.Args); err != nil {
 		return err
 	}

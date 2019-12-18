@@ -140,3 +140,8 @@ CONTROLLER_GEN=$(GOBIN)/controller-gen
 else
 CONTROLLER_GEN=$(shell which controller-gen)
 endif
+
+e2e-tests:
+	sh $(ROOT_DIR)hack/create_dev_cluster.sh
+	KUBECONFIG=$(ROOT_DIR)e2e-tests-kubeconfig go test ./tests
+	sh $(ROOT_DIR)hack/delete_dev_cluster.sh

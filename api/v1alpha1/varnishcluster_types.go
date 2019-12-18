@@ -89,9 +89,9 @@ type VarnishClusterSpec struct {
 type VarnishClusterUpdateStrategyType string
 
 const (
-	OnDeleteVarnishClusterStrategyType             VarnishClusterUpdateStrategyType = appsv1.OnDeleteStatefulSetStrategyType
-	RollingUpdateVarnishClusterStrategyType        VarnishClusterUpdateStrategyType = appsv1.RollingUpdateStatefulSetStrategyType
-	DelayedRollingUpdateVarnishClusterStrategyType VarnishClusterUpdateStrategyType = "DelayedRollingUpdate"
+	OnDeleteVarnishClusterStrategyType             = VarnishClusterUpdateStrategyType(appsv1.OnDeleteStatefulSetStrategyType)
+	RollingUpdateVarnishClusterStrategyType        = VarnishClusterUpdateStrategyType(appsv1.RollingUpdateStatefulSetStrategyType)
+	DelayedRollingUpdateVarnishClusterStrategyType = VarnishClusterUpdateStrategyType("DelayedRollingUpdate")
 )
 
 type VarnishClusterUpdateStrategy struct {

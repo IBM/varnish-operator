@@ -1,5 +1,5 @@
 #!groovy
-@Library("icm-jenkins-common@0.96.0")
+@Library("icm-jenkins-common@0.96.1")
 import com.ibm.icm.*
 
 icmJenkinsProperties().

@@ -13,7 +13,6 @@ import (
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 func (r *ReconcileVarnishCluster) reconcileClusterRole(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster) (string, error) {
@@ -38,14 +37,8 @@ func (r *ReconcileVarnishCluster) reconcileClusterRole(ctx context.Context, inst
 	logr := logger.FromContext(ctx).With(logger.FieldComponent, icmapiv1alpha1.VarnishComponentClusterRole)
 	logr = logr.With(logger.FieldComponentName, role.Name)
 
-	// Set controller reference for role
-	if err := controllerutil.SetControllerReference(instance, role, r.scheme); err != nil {
-		return "", errors.Wrap(err, "Cannot set controller reference for ClusterRole")
-	}
-
 	found := &rbac.ClusterRole{}
-
-	err := r.Get(context.TODO(), types.NamespacedName{Name: role.Name, Namespace: role.Namespace}, found)
+	err := r.Get(context.TODO(), types.NamespacedName{Name: role.Name}, found)
 	// If the role does not exist, create it
 	// Else if there was a problem doing the GET, just return
 	// Else if the role exists, and it is different, update

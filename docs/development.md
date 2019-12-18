@@ -11,6 +11,7 @@ Requirements:
 * [goimports](https://godoc.org/golang.org/x/tools/cmd/goimports)
 * [GolangCI-Lint](https://github.com/golangci/golangci-lint) 1.19.1+
 * [gitbook cli](https://github.com/GitbookIO/gitbook-cli), if you want to modify and test the docs locally
+* [kind](https://github.com/kubernetes-sigs/kind) v0.6.0+ for running end to end tests
 
 ### Code structure
 
@@ -185,3 +186,14 @@ There is `PROMETHEUS_VARNISH_EXPORTER_VERSION` docker's build argument available
 To run tests simply run `make test` in repo's root directory. 
 
 Tests depend on binaries provided by Kubebuilder so it has to be [installed](https://kubebuilder.io/quick-start.html#installation) first.
+
+### End to End tests
+
+To run end-to-end tests you have to have [kind](https://github.com/kubernetes-sigs/kind) installed first. Then, simply run `make e2e-tests` in the root directory.
+
+It will do the following:
+ 1. Bring up a kubernetes cluster using `kind`. You can also set the Kubernetes version you want to use by setting the `KUBERNETES_VERSION` env var (e.g. `KUBERNETES_VERSION=1.6.3 make e2e-tests`)
+ 1. Build all docker images and load them into the cluster
+ 1. Install the operator using the local Helm chart. It will set the image pull policy to `Never` to be able to use the built images in previous step.
+ 1. Run tests written in Go. The tests also rely on the docker images built and loaded into the cluster. It requires you to remember to use the local docker images, but it also facilitates better portability.
+ 1. Delete the cluster

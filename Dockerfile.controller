@@ -1,6 +1,6 @@
 FROM golang:1.13-buster AS builder
 ENV DEBIAN_FRONTEND=noninteractive INSTALL_DIRECTORY=/usr/local/bin
-RUN apt-get update && apt install -y --no-install-recommends git curl
+RUN apt-get update && apt-get install -y --no-install-recommends git curl
 WORKDIR /go/src/icm-varnish-k8s-operator
 
 COPY go.mod go.sum ./
@@ -18,7 +18,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     ./cmd/varnish-controller/
 
 FROM debian:buster-slim as binary
-RUN     apt-get update && apt install -y --no-install-recommends varnish
+RUN apt-get update && apt-get install -y --no-install-recommends varnish
 
 # Build Final Varnish image
 FROM debian:buster-slim

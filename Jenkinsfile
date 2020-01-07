@@ -19,8 +19,11 @@ varnishControllerDockerImageName = "varnish-controller"
 varnishMetricsExporterDockerImageName = "varnish-metrics-exporter"
 operatorDockerImageName = "varnish-operator"
 releaseBranch = "master"
+docsBranch = "gh-pages"
 slackChannel = 'varnish-operator-notifications'
 gitCredentialId = 'ApplicationId-icmautomation'
+committerUsername = 'Core Engineering'
+committerEmail = 'coreeng@us.ibm.com'
 
 // for Helm chart publish
 helmChart = "varnish-operator"
@@ -60,6 +63,9 @@ node('icm_slave_go') {
         icmWithArtifactoryConfig(artifactoryRoot, artifactoryRepo, artifactoryUserPasswordId) {
           icmHelmChartPackagePublishStage(helmChart, it.config.createHelmPublish())
         }
+
+        buildPushDocs()
+
         // Push the newly created release tag to origin
         gitUtils.setTag(appVersion, gitCredentialId)
         slack.info("icm-varnish-operator: $appVersion has been released. See the <https://github.ibm.com/TheWeatherCompany/icm-varnish-k8s-operator/releases/tag/${appVersion}|release notes>. For more debug info see the <${env.BUILD_URL}|Jenkins logs>")
@@ -91,4 +97,29 @@ def dockerBuildPush(String appVersion, GitInfo gitinfo) {
   icmDockerStages(varnishMetricsExporterDockerImageInfo, ["-f": "Dockerfile.exporter"])
   icmDockerStages(varnishControllerDockerImageInfo, ["-f": "Dockerfile.controller"])
   icmDockerStages(operatorDockerImageInfo)
+}
+
+def buildPushDocs() {
+  stage('Docs') {
+    String url = steps.sh(returnStdout: true, script: "git remote get-url origin").replaceAll("https://", "").trim()
+    sh(script: """
+      gitbook install
+      gitbook build ./docs docs_generated --log=debug --debug
+      cd docs_generated/
+      git init
+      git add .
+      git config --local user.name \"$committerUsername\"
+      git config --local user.email \"$committerEmail\"
+      git commit -m "Deploy Docs from Jenkins"
+    """)
+
+    UserPasswordByIdInfo userPasswordByIdInfo = new UserPasswordByIdInfo(this, gitCredentialId)
+    userPasswordByIdInfo.withUserAndPassword { username, password ->
+      sh(
+        script: "git push --force --quiet \"https://$username:$password@$url\" HEAD:$docsBranch"
+      )
+    }
+
+    sh("cd .. && rm -rf ./docs_generated")
+  }
 }

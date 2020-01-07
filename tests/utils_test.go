@@ -82,7 +82,7 @@ func waitForPodsReadiness(namespace string, selector map[string]string) {
 			}
 		}
 		return true
-	}, time.Second*30, time.Second*2).Should(BeTrue())
+	}, time.Minute, time.Second*2).Should(BeTrue(), "pods should become ready")
 }
 
 func portForwardPod(namespace string, selector map[string]string, portsToForward []string) *portforward.PortForwarder {

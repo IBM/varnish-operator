@@ -28,8 +28,18 @@ artifactoryRoot = "na.artifactory.swg-devops.com/artifactory"
 artifactoryRepo = "wcp-icm-helm-local"
 artifactoryUserPasswordId = "TAAS-Artifactory-User-Password-Global"
 
-node('icm_slave') {
+node('icm_slave_go') {
   GitInfo gitInfo = icmCheckoutStages(withTags: true) // By default the clone occurs without refs fetch
+
+  stage('Tests') {
+    sh(script: """
+      export GO111MODULE=on
+      go mod download
+      golangci-lint run
+      go test ./pkg/... ./api/... -coverprofile=cover.out
+      go tool cover -func=cover.out | tail -1 | awk '{print \"Total coverage: \" \$3}'
+    """)
+  }
 
   def appVersion = icmGetAppVersion() // Get the version from version.txt
   boolean isTaggedCommit = icmGetTagsOnCommit().size() > 0 //used to avoid build runs on tag push

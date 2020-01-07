@@ -26,22 +26,6 @@ matrix:
         on:
           branch: master
         local_dir: docs_generated
-    - dist: trusty
-      name: "Tests"
-      sudo: false
-      language: go
-      go:
-        - 1.13.x
-      before_script:
-        - go mod download
-        - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.19.1 #install golangci-lint
-        - curl -sL https://go.kubebuilder.io/dl/2.0.1/linux/amd64 | tar -xz -C /tmp/ #download kubebuilder
-        - export KUBEBUILDER_ASSETS=/tmp/kubebuilder_2.0.1_linux_amd64/bin
-        - export PATH=$PATH:/tmp/kubebuilder_2.0.1_linux_amd64/bin
-      script:
-        - golangci-lint run
-        - go test ./pkg/... ./cmd/... -coverprofile=cover.out
-        - "go tool cover -func=cover.out | tail -1 | awk '{print \"Total coverage: \" $3}'"
     - name: "End to End tests"
       language: go
       go:

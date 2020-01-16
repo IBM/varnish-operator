@@ -1,5 +1,5 @@
 #!groovy
-@Library("icm-jenkins-common@0.96.1")
+@Library("icm-jenkins-common@0.100.0")
 import com.ibm.icm.*
 
 icmJenkinsProperties().
@@ -12,24 +12,24 @@ ibmCloud = [
     apiKeyId: 'icm_bluemix_1638245'] // id of Jenkins credential secret text
 
 // for Docker
-dockerRegistry = "us.icr.io"
-dockerRegistryNamespace = "icm-varnish"
-varnishDockerImageName = "varnish"
-varnishControllerDockerImageName = "varnish-controller"
-varnishMetricsExporterDockerImageName = "varnish-metrics-exporter"
-operatorDockerImageName = "varnish-operator"
-releaseBranch = "master"
-docsBranch = "gh-pages"
+docker = [
+    registry: 'us.icr.io',
+    registryNamespace: 'icm-varnish',
+    isLatest: false
+]
+
+releaseBranch = 'master'
+docsBranch = 'gh-pages'
 slackChannel = 'varnish-operator-notifications'
 gitCredentialId = 'ApplicationId-icmautomation'
 committerUsername = 'Core Engineering'
 committerEmail = 'coreeng@us.ibm.com'
 
 // for Helm chart publish
-helmChart = "varnish-operator"
-artifactoryRoot = "na.artifactory.swg-devops.com/artifactory"
-artifactoryRepo = "wcp-icm-helm-local"
-artifactoryUserPasswordId = "TAAS-Artifactory-User-Password-Global"
+helmChart = 'varnish-operator'
+artifactoryRoot = 'na.artifactory.swg-devops.com/artifactory'
+artifactoryRepo = 'wcp-icm-helm-local'
+artifactoryUserPasswordId = 'TAAS-Artifactory-User-Password-Global'
 
 node('icm_slave_go') {
   GitInfo gitInfo = icmCheckoutStages(withTags: true) // By default the clone occurs without refs fetch
@@ -68,7 +68,7 @@ node('icm_slave_go') {
 
         // Push the newly created release tag to origin
         gitUtils.setTag(appVersion, gitCredentialId)
-        slack.info("icm-varnish-operator: $appVersion has been released. See the <https://github.ibm.com/TheWeatherCompany/icm-varnish-k8s-operator/releases/tag/${appVersion}|release notes>. For more debug info see the <${env.BUILD_URL}|Jenkins logs>")
+        slack.info("Varnish Operator: $appVersion has been released. See the <https://github.ibm.com/TheWeatherCompany/icm-varnish-k8s-operator/releases/tag/${appVersion}|release notes>. For more debug info see the <${env.BUILD_URL}|Jenkins logs>")
       } catch (err) {
         String errorMessage = "Release $appVersion Failed! For more debug info see the <${env.BUILD_URL}|Jenkins logs>"
         slack.error(errorMessage)
@@ -88,15 +88,25 @@ node('icm_slave_go') {
 }
 
 def dockerBuildPush(String appVersion, GitInfo gitinfo) {
-  DockerImageInfo varnishDockerImageInfo = icmGetDockerImageInfo(dockerRegistry, dockerRegistryNamespace, varnishDockerImageName, appVersion, gitinfo)
-  DockerImageInfo varnishControllerDockerImageInfo = icmGetDockerImageInfo(dockerRegistry, dockerRegistryNamespace, varnishControllerDockerImageName, appVersion, gitinfo)
-  DockerImageInfo varnishMetricsExporterDockerImageInfo = icmGetDockerImageInfo(dockerRegistry, dockerRegistryNamespace, varnishMetricsExporterDockerImageName, appVersion, gitinfo)
-  DockerImageInfo operatorDockerImageInfo = icmGetDockerImageInfo(dockerRegistry, dockerRegistryNamespace, operatorDockerImageName, appVersion, gitinfo)
+  stage('Docker build & push') {
 
-  icmDockerStages(varnishDockerImageInfo, ["-f": "Dockerfile.varnishd"])
-  icmDockerStages(varnishMetricsExporterDockerImageInfo, ["-f": "Dockerfile.exporter"])
-  icmDockerStages(varnishControllerDockerImageInfo, ["-f": "Dockerfile.controller"])
-  icmDockerStages(operatorDockerImageInfo)
+    def stepsForParallel = [:]
+
+    stepsForParallel['Building varnish'] = {
+      icmDockerStages(new DockerImageInfo(docker.registry, docker.registryNamespace, 'varnish', appVersion, docker.isLatest), ['-f': 'Dockerfile.varnishd'])
+    }
+    stepsForParallel['Building varnish-metrics-exporter'] = {
+      icmDockerStages(new DockerImageInfo(docker.registry, docker.registryNamespace, 'varnish-metrics-exporter', appVersion, docker.isLatest), ['-f': 'Dockerfile.exporter'])
+    }
+    stepsForParallel['Building varnish-controller'] = {
+      icmDockerStages(new DockerImageInfo(docker.registry, docker.registryNamespace, 'varnish-controller', appVersion, docker.isLatest), ['-f': 'Dockerfile.controller'])
+    }
+    stepsForParallel['Building varnish-operator'] = {
+      icmDockerStages(new DockerImageInfo(docker.registry, docker.registryNamespace, 'varnish-operator', appVersion, docker.isLatest))
+    }
+
+    parallel stepsForParallel
+  }
 }
 
 def buildPushDocs() {

@@ -12,7 +12,7 @@ spec:
 
   varnish:
     # path to image + tag
-    image: us.icr.io/icm-varnish/varnish:0.22.0
+    image: us.icr.io/icm-varnish/varnish:0.22.1
     imagePullSecret: docker-reg-secret
     # imagePullPolicy controls how the varnish image will be pulled for new containers
     imagePullPolicy: Always
@@ -35,7 +35,7 @@ spec:
     # and defines the container's resources allocation.
     #controller:
     #  # path to image + tag to override, by default it refers to varnish.image with "-controller" suffix image.
-    #  image: us.icr.io/icm-varnish/varnish-controller:0.21.0
+    #  image: us.icr.io/icm-varnish/varnish-controller:0.22.1
     #  # imagePullPolicy controls how the varnish-controller image will be pulled for new containers
     #  imagePullPolicy: Always
     #  # Resources allocated to the Varnish controller container through Kubernetes.
@@ -51,7 +51,7 @@ spec:
     # and defines the container's resources allocation.
     #metricsExporter:
     #  # path to image + tag to override, by default it refers to varnish.image with "-metrics-exporter" suffix image.
-    #  image: us.icr.io/icm-varnish/varnish-metrics-exporter:0.21.0
+    #  image: us.icr.io/icm-varnish/varnish-metrics-exporter:0.22.1
     #  # imagePullPolicy controls how the varnish-metrics-exporter image will be pulled for new containers
     #  imagePullPolicy: Always
     #  # Resources allocated to the Varnish metrics exporter container through Kubernetes.

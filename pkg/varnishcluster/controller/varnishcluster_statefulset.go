@@ -131,8 +131,6 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 							},
 							Args:      varnishdArgs,
 							Resources: *instance.Spec.Varnish.Resources,
-							// TODO: get working liveness probe
-							//LivenessProbe:   &v1.Probe{},
 							ReadinessProbe: &v1.Probe{
 								Handler: v1.Handler{
 									Exec: &v1.ExecAction{
@@ -172,8 +170,6 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 								},
 							},
 							Resources: instance.Spec.Varnish.MetricsExporter.Resources,
-							// TODO: get working liveness probe
-							//LivenessProbe:   &v1.Probe{},
 							ReadinessProbe: &v1.Probe{
 								Handler: v1.Handler{
 									HTTPGet: &v1.HTTPGetAction{
@@ -216,6 +212,18 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 									MountPath: "/var/lib/varnish",
 									ReadOnly:  true,
 								},
+							},
+							ReadinessProbe: &v1.Probe{
+								Handler: v1.Handler{
+									HTTPGet: &v1.HTTPGetAction{
+										Port: intstr.FromInt(icmapiv1alpha1.HealthCheckPort),
+										Path: "/readyz",
+									},
+								},
+								TimeoutSeconds:   10,
+								PeriodSeconds:    3,
+								SuccessThreshold: 1,
+								FailureThreshold: 3,
 							},
 							Resources:                instance.Spec.Varnish.Controller.Resources,
 							TerminationMessagePath:   "/dev/termination-log",

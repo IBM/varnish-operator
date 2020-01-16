@@ -5,12 +5,15 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"icm-varnish-k8s-operator/api/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/logger"
 	"icm-varnish-k8s-operator/pkg/varnishcontroller/config"
 	"icm-varnish-k8s-operator/pkg/varnishcontroller/controller"
 	"icm-varnish-k8s-operator/pkg/varnishcontroller/varnishadm"
 	"log"
+
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
 
 	"github.com/go-logr/zapr"
 
@@ -62,12 +65,18 @@ func main() {
 	}
 
 	mgr, err := ctrl.NewManager(clientConfig, ctrl.Options{
-		Namespace: varnishControllerConfig.Namespace,
-		Scheme:    scheme,
+		Namespace:              varnishControllerConfig.Namespace,
+		Scheme:                 scheme,
+		HealthProbeBindAddress: fmt.Sprintf(":%d", v1alpha1.HealthCheckPort),
 	})
 
 	if err != nil {
 		logr.With(zap.Error(err)).Fatalf("could not initialize manager")
+	}
+
+	err = mgr.AddReadyzCheck("ping", healthz.Ping)
+	if err != nil {
+		logr.With(zap.Error(err)).Fatal("unable to set readiness check")
 	}
 
 	logr.Infow("Registering Components")

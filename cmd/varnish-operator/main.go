@@ -7,9 +7,9 @@ import (
 	"icm-varnish-k8s-operator/pkg/logger"
 	vccfg "icm-varnish-k8s-operator/pkg/varnishcluster/config"
 	"icm-varnish-k8s-operator/pkg/varnishcluster/controller"
-	"log"
-
 	"k8s.io/apimachinery/pkg/runtime"
+	"log"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -45,6 +45,7 @@ func main() {
 	logr.Infof("Leader election enabled: %t", operatorConfig.LeaderElectionEnabled)
 	logr.Infof("Log level: %s", operatorConfig.LogLevel.String())
 	logr.Infof("Prometheus metrics exporter port: %d", operatorConfig.MetricsPort)
+	logr.Infof("Health probes port: %d", v1alpha1.HealthCheckPort)
 
 	logr = logr.With(logger.FieldOperatorVersion, Version)
 
@@ -75,9 +76,15 @@ func main() {
 		LeaderElection:          operatorConfig.LeaderElectionEnabled,
 		LeaderElectionID:        leaderElectionID,
 		LeaderElectionNamespace: operatorConfig.Namespace,
+		HealthProbeBindAddress:  fmt.Sprintf(":%d", v1alpha1.HealthCheckPort),
 	})
 	if err != nil {
 		logr.With(zap.Error(err)).Fatal("unable to set up overall controller manager")
+	}
+
+	err = mgr.AddReadyzCheck("ping", healthz.Ping)
+	if err != nil {
+		logr.With(zap.Error(err)).Fatal("unable to set readiness check")
 	}
 
 	logr.Infow("Registering Components")

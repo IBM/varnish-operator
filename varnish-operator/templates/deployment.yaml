@@ -34,6 +34,10 @@ spec:
         - name: LOGFORMAT
           value: {{ .Values.logFormat | quote }}
         resources: {{ toYaml .Values.container.resources | nindent 10 }}
+        readinessProbe:
+          httpGet:
+            port: 8234
+            path: /readyz
         volumeMounts:
           - mountPath: /tmp/k8s-webhook-server/serving-certs
             name: cert
@@ -43,6 +47,8 @@ spec:
             name: metrics
           - containerPort: 7340
             name: webhook
+          - containerPort: 8234
+            name: healthz
       volumes:
         - name: cert
           secret:

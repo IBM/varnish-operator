@@ -5,6 +5,7 @@ import (
 	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
 	vclabels "icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/logger"
+	"icm-varnish-k8s-operator/pkg/names"
 	"icm-varnish-k8s-operator/pkg/varnishcluster/compare"
 
 	"k8s.io/apimachinery/pkg/labels"
@@ -35,7 +36,7 @@ func (r *ReconcileVarnishCluster) reconcileServiceNoCache(ctx context.Context, i
 
 	serviceNoCache := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      instance.Name + "-no-cache",
+			Name:      names.NoCacheService(instance.Name),
 			Namespace: instance.Namespace,
 			Labels:    svcLabels,
 		},

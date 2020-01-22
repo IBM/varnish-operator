@@ -5,6 +5,7 @@ import (
 	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
 	vclabels "icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/logger"
+	"icm-varnish-k8s-operator/pkg/names"
 	"icm-varnish-k8s-operator/pkg/varnishcluster/compare"
 	"strings"
 
@@ -22,7 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, instance, instanceStatus *icmapiv1alpha1.VarnishCluster, serviceAccountName string, endpointSelector map[string]string, svcName string) (*appsv1.StatefulSet, map[string]string, error) {
+func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, instance, instanceStatus *icmapiv1alpha1.VarnishCluster, endpointSelector map[string]string) (*appsv1.StatefulSet, map[string]string, error) {
 	varnishLabels := vclabels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentVarnish)
 	gvk := instance.GroupVersionKind()
 	var varnishImage string
@@ -54,12 +55,12 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 
 	desired := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      instance.Name + "-varnish",
+			Name:      names.StatefulSet(instance.Name),
 			Labels:    varnishLabels,
 			Namespace: instance.Namespace,
 		},
 		Spec: appsv1.StatefulSetSpec{
-			ServiceName: svcName,
+			ServiceName: names.HeadlessService(instance.Name),
 			Replicas:    instance.Spec.Replicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: varnishLabels,
@@ -101,9 +102,11 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 									MountPath: "/data",
 								},
 							},
-							Command:         []string{"/bin/bash", "-c"},
-							Args:            []string{"echo $VARNISH_SECRET > /data/secret"},
-							ImagePullPolicy: instance.Spec.Varnish.ImagePullPolicy,
+							Command:                  []string{"/bin/bash", "-c"},
+							Args:                     []string{"echo $VARNISH_SECRET > /data/secret"},
+							ImagePullPolicy:          instance.Spec.Varnish.ImagePullPolicy,
+							TerminationMessagePath:   "/dev/termination-log",
+							TerminationMessagePolicy: v1.TerminationMessageReadFile,
 						},
 					},
 					Containers: []v1.Container{
@@ -173,7 +176,9 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 							ReadinessProbe: &v1.Probe{
 								Handler: v1.Handler{
 									HTTPGet: &v1.HTTPGetAction{
-										Port: intstr.FromInt(icmapiv1alpha1.VarnishPrometheusExporterPort),
+										Port:   intstr.FromInt(icmapiv1alpha1.VarnishPrometheusExporterPort),
+										Scheme: v1.URISchemeHTTP,
+										Path:   "/",
 									},
 								},
 								TimeoutSeconds:   30,
@@ -231,14 +236,14 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 							ImagePullPolicy:          instance.Spec.Varnish.Controller.ImagePullPolicy,
 						},
 					},
-					RestartPolicy:                 instance.Spec.Varnish.RestartPolicy,
 					TerminationGracePeriodSeconds: proto.Int64(30),
 					DNSPolicy:                     v1.DNSClusterFirst,
 					SecurityContext:               &v1.PodSecurityContext{},
-					ServiceAccountName:            serviceAccountName,
+					ServiceAccountName:            names.ServiceAccount(instance.Name),
 					Affinity:                      instance.Spec.Affinity,
 					Tolerations:                   instance.Spec.Tolerations,
 					ImagePullSecrets:              imagePullSecrets,
+					RestartPolicy:                 v1.RestartPolicyAlways,
 				},
 			},
 		},

@@ -4,6 +4,7 @@ import (
 	"context"
 	icmv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/logger"
+	"icm-varnish-k8s-operator/pkg/names"
 	"icm-varnish-k8s-operator/pkg/varnishcluster/compare"
 	"icm-varnish-k8s-operator/pkg/varnishcluster/config"
 	vcreconcile "icm-varnish-k8s-operator/pkg/varnishcluster/reconcile"
@@ -188,8 +189,15 @@ func (r *ReconcileVarnishCluster) reconcileWithContext(ctx context.Context, requ
 	err := r.Get(ctx, request.NamespacedName, instance)
 	if err != nil {
 		if kerrors.IsNotFound(err) {
-			// Object not found, return.  Created objects are automatically garbage collected.
-			// For additional cleanup logic use finalizers.
+			// There were situations when the VarnishCluser object has been deleted before the finalisation logic is executed below.
+			// So make sure the resources supposed to be cleaned up by the finalizer are removed.
+			if err := r.deleteCR(ctx, types.NamespacedName{Name: names.ClusterRole(request.Name, request.Namespace)}); err != nil {
+				return ctrl.Result{}, err
+			}
+			if err := r.deleteCRB(ctx, types.NamespacedName{Name: names.ClusterRoleBinding(request.Name, request.Namespace)}); err != nil {
+				return ctrl.Result{}, err
+			}
+
 			return ctrl.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
@@ -207,37 +215,51 @@ func (r *ReconcileVarnishCluster) reconcileWithContext(ctx context.Context, requ
 		instance.Kind = "VarnishCluster"
 	}
 
+	// If VarnishCluster is deleted by the user, but since we have finalizers Kubernetes only marks it as deleted.
+	// We need to do our cleanup logic and delete the finalizers in order to let Kubernetes to delete the object from etcd
+	// and garbage collect all owned objects.
+	// The rest of the code is designed to not be executed when the resource is marked for deletion.
+	if !instance.DeletionTimestamp.IsZero() {
+		err = r.finalizerCleanUp(ctx, instance)
+		return ctrl.Result{}, err
+	}
+
+	err = r.reconcileFinalizers(ctx, instance)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
 	instanceStatus := &icmv1alpha1.VarnishCluster{}
 	instance.ObjectMeta.DeepCopyInto(&instanceStatus.ObjectMeta)
 	instance.Status.DeepCopyInto(&instanceStatus.Status)
 
-	serviceAccountName, err := r.reconcileServiceAccount(ctx, instance)
+	err = r.reconcileServiceAccount(ctx, instance)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	roleName, err := r.reconcileRole(ctx, instance)
+	err = r.reconcileRole(ctx, instance)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	if err = r.reconcileRoleBinding(ctx, instance, roleName, serviceAccountName); err != nil {
+	if err = r.reconcileRoleBinding(ctx, instance); err != nil {
 		return ctrl.Result{}, err
 	}
-	clusterRoleName, err := r.reconcileClusterRole(ctx, instance)
+	err = r.reconcileClusterRole(ctx, instance)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	if err = r.reconcileClusterRoleBinding(ctx, instance, clusterRoleName, serviceAccountName); err != nil {
+	if err = r.reconcileClusterRoleBinding(ctx, instance); err != nil {
 		return ctrl.Result{}, err
 	}
 	endpointSelector, err := r.reconcileServiceNoCache(ctx, instance, instanceStatus)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	headlessServiceName, err := r.reconcileHeadlessService(ctx, instance)
+	err = r.reconcileHeadlessService(ctx, instance)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	sts, varnishSelector, err := r.reconcileStatefulSet(ctx, instance, instanceStatus, serviceAccountName, endpointSelector, headlessServiceName)
+	sts, varnishSelector, err := r.reconcileStatefulSet(ctx, instance, instanceStatus, endpointSelector)
 	if err != nil {
 		return ctrl.Result{}, err
 	}

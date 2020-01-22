@@ -5,6 +5,7 @@ import (
 	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/logger"
+	"icm-varnish-k8s-operator/pkg/names"
 	"icm-varnish-k8s-operator/pkg/varnishcluster/compare"
 
 	"github.com/pkg/errors"
@@ -16,10 +17,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func (r *ReconcileVarnishCluster) reconcileRole(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster) (string, error) {
+func (r *ReconcileVarnishCluster) reconcileRole(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster) error {
 	role := &rbac.Role{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      instance.Name + "-varnish-role",
+			Name:      names.Role(instance.Name),
 			Namespace: instance.Namespace,
 			Labels:    labels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentRole),
 		},
@@ -52,7 +53,7 @@ func (r *ReconcileVarnishCluster) reconcileRole(ctx context.Context, instance *i
 
 	// Set controller reference for role
 	if err := controllerutil.SetControllerReference(instance, role, r.scheme); err != nil {
-		return "", errors.Wrap(err, "Cannot set controller reference for service")
+		return errors.Wrap(err, "Cannot set controller reference for service")
 	}
 
 	found := &rbac.Role{}
@@ -65,20 +66,20 @@ func (r *ReconcileVarnishCluster) reconcileRole(ctx context.Context, instance *i
 	if err != nil && kerrors.IsNotFound(err) {
 		logr.Infoc("Creating Role", "new", role)
 		if err = r.Create(ctx, role); err != nil {
-			return "", errors.Wrap(err, "Unable to create role")
+			return errors.Wrap(err, "Unable to create role")
 		}
 	} else if err != nil {
-		return "", errors.Wrap(err, "Could not Get role")
+		return errors.Wrap(err, "Could not Get role")
 	} else if !compare.EqualRole(found, role) {
 		logr.Infoc("Updating Role", "diff", compare.DiffRole(found, role))
 		found.Rules = role.Rules
 		found.Labels = role.Labels
 		if err = r.Update(ctx, found); err != nil {
-			return "", errors.Wrap(err, "Could not Update role")
+			return errors.Wrap(err, "Could not Update role")
 		}
 	} else {
 		logr.Debugw("No updates for Role")
 
 	}
-	return role.Name, nil
+	return nil
 }

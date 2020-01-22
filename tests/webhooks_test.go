@@ -2,11 +2,10 @@ package tests
 
 import (
 	"context"
-	icmv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
-
 	"github.com/gogo/protobuf/proto"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	icmv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -26,6 +25,7 @@ var _ = Describe("Validating webhook", func() {
 	AfterEach(func() {
 		err := k8sClient.DeleteAllOf(context.Background(), &icmv1alpha1.VarnishCluster{}, client.InNamespace(vcNamespace))
 		Expect(err).To(Succeed())
+		waitUntilVarnishClusterRemoved(vcName, vcNamespace)
 	})
 
 	It("is working", func() {
@@ -70,6 +70,7 @@ var _ = Describe("Mutating webhook", func() {
 	AfterEach(func() {
 		err := k8sClient.DeleteAllOf(context.Background(), &icmv1alpha1.VarnishCluster{}, client.InNamespace(vcNamespace))
 		Expect(err).To(Succeed())
+		waitUntilVarnishClusterRemoved(vcName, vcNamespace)
 	})
 
 	It("is working", func() {

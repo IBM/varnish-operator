@@ -75,9 +75,6 @@ func defaultVarnish(in *VarnishClusterVarnish) {
 	if in.ImagePullPolicy == "" {
 		in.ImagePullPolicy = v1.PullAlways
 	}
-	if in.RestartPolicy == "" {
-		in.RestartPolicy = v1.RestartPolicyAlways
-	}
 
 	if in.Resources == nil {
 		in.Resources = &v1.ResourceRequirements{}

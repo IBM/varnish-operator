@@ -5,6 +5,7 @@ import (
 	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/logger"
+	"icm-varnish-k8s-operator/pkg/names"
 	"icm-varnish-k8s-operator/pkg/varnishcluster/compare"
 
 	"github.com/pkg/errors"
@@ -15,10 +16,10 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func (r *ReconcileVarnishCluster) reconcileClusterRole(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster) (string, error) {
+func (r *ReconcileVarnishCluster) reconcileClusterRole(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster) error {
 	role := &rbac.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   instance.Name + "-varnish-clusterrole-" + instance.Namespace,
+			Name:   names.ClusterRole(instance.Name, instance.Namespace),
 			Labels: labels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentClusterRole),
 			Annotations: map[string]string{
 				annotationVarnishClusterNamespace: instance.Namespace,
@@ -46,20 +47,20 @@ func (r *ReconcileVarnishCluster) reconcileClusterRole(ctx context.Context, inst
 	if err != nil && kerrors.IsNotFound(err) {
 		logr.Infoc("Creating ClusterRole", "new", role)
 		if err = r.Create(ctx, role); err != nil {
-			return "", errors.Wrap(err, "Unable to create ClusterRole")
+			return errors.Wrap(err, "Unable to create ClusterRole")
 		}
 	} else if err != nil {
-		return "", errors.Wrap(err, "Could not Get ClusterRole")
+		return errors.Wrap(err, "Could not Get ClusterRole")
 	} else if !compare.EqualClusterRole(found, role) {
 		logr.Infoc("Updating ClusterRole", "diff", compare.DiffClusterRole(found, role))
 		found.Rules = role.Rules
 		found.Labels = role.Labels
 		found.Annotations = role.Annotations
 		if err = r.Update(ctx, found); err != nil {
-			return "", errors.Wrap(err, "Could not Update ClusterRole")
+			return errors.Wrap(err, "Could not Update ClusterRole")
 		}
 	} else {
 		logr.Debugw("No updates for ClusterRole")
 	}
-	return role.Name, nil
+	return nil
 }

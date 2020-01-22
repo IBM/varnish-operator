@@ -4,10 +4,15 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	icmv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -61,7 +66,7 @@ func waitForPodsTermination(namespace string, selector map[string]string) {
 		Expect(err).To(Succeed())
 
 		return len(podList.Items) == 0
-	}, time.Minute*1, time.Second*5).Should(BeTrue())
+	}, time.Minute, time.Second*5).Should(BeTrue())
 }
 
 func waitForPodsReadiness(namespace string, selector map[string]string) {
@@ -83,6 +88,19 @@ func waitForPodsReadiness(namespace string, selector map[string]string) {
 		}
 		return true
 	}, time.Minute, time.Second*2).Should(BeTrue(), "pods should become ready")
+}
+
+func waitUntilVarnishClusterRemoved(name, namespace string) {
+	Eventually(func() metav1.StatusReason {
+		err := k8sClient.Get(context.Background(), types.NamespacedName{Name: name, Namespace: namespace}, &icmv1alpha1.VarnishCluster{})
+		if err != nil {
+			if statusErr, ok := err.(*errors.StatusError); ok {
+				return statusErr.ErrStatus.Reason
+			}
+		}
+
+		return "Found"
+	}, time.Second*5).Should(Equal(metav1.StatusReasonNotFound), "the varnishcluster should be deleted after finalizers are finished")
 }
 
 func portForwardPod(namespace string, selector map[string]string, portsToForward []string) *portforward.PortForwarder {

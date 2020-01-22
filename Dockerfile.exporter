@@ -7,13 +7,15 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
 
 FROM debian:buster-slim
 LABEL maintainer="Alex Lytvynenko <oleksandr.lytvynenko@ibm.com>, Tomash Sidei <tomash.sidei@ibm.com>, Oleksandr Ohurtsov <oleksandr.ohurtsov@ibm.com>"
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends libc6 libedit2 libncursesw6 libtinfo6 libvarnishapi2 \
+    && adduser --quiet --system --no-create-home --home /nonexistent --group varnish \
+    && mkdir -p /etc/varnish /var/lib/varnish \
+    && chown -R varnish /etc/varnish /var/lib/varnish \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY  --from=importer /prometheus-varnish-exporter /usr/bin/
 COPY  --from=importer /usr/bin/varnishadm /usr/bin/varnishstat /usr/bin/
-RUN     apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends libc6 libedit2 libncursesw6 libtinfo6 libvarnishapi2 \
-        && adduser --quiet --system --no-create-home --home /nonexistent --group varnish \
-        && mkdir -p /etc/varnish /var/lib/varnish \
-        && chown -R varnish /etc/varnish /var/lib/varnish \
-                && rm -rf /var/lib/apt/lists/*
+
 USER varnish
 
 ENTRYPOINT ["/usr/bin/prometheus-varnish-exporter"]

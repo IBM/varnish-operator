@@ -3,11 +3,10 @@ package controller
 import (
 	"context"
 	icmv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
+	"icm-varnish-k8s-operator/pkg/names"
 	"time"
 
 	rbac "k8s.io/api/rbac/v1"
-
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/gogo/protobuf/proto"
 	. "github.com/onsi/ginkgo"
@@ -43,7 +42,7 @@ var _ = Describe("the clusterrole", func() {
 		},
 	}
 
-	crName := types.NamespacedName{Name: vc.Name + "-varnish-clusterrole-" + vc.Namespace, Namespace: vcNamespace}
+	crName := types.NamespacedName{Name: names.ClusterRole(vc.Name, vc.Namespace)}
 
 	AfterEach(func() {
 		CleanUpCreatedResources(vcName, vcNamespace)
@@ -55,16 +54,14 @@ var _ = Describe("the clusterrole", func() {
 			err := k8sClient.Create(context.Background(), newVC)
 			Expect(err).ToNot(HaveOccurred())
 
-			Eventually(requestsChan, time.Second*5).Should(Receive(Equal(reconcile.Request{NamespacedName: types.NamespacedName{Name: vcName, Namespace: vcNamespace}})))
-
 			cr := &rbac.ClusterRole{}
 			Eventually(func() error {
 				return k8sClient.Get(context.Background(), crName, cr)
-			}).Should(Succeed())
+			}, time.Second*5).Should(Succeed())
 
 			Expect(cr.Labels).To(Equal(map[string]string{
 				icmv1alpha1.LabelVarnishOwner:     vcName,
-				icmv1alpha1.LabelVarnishComponent: "clusterrole",
+				icmv1alpha1.LabelVarnishComponent: icmv1alpha1.VarnishComponentClusterRole,
 				icmv1alpha1.LabelVarnishUID:       string(newVC.UID),
 			}))
 			Expect(cr.Annotations).To(Equal(map[string]string{
@@ -80,23 +77,19 @@ var _ = Describe("the clusterrole", func() {
 			err := k8sClient.Create(context.Background(), newVC)
 			Expect(err).ToNot(HaveOccurred())
 
-			Eventually(requestsChan, time.Second*5).Should(Receive(Equal(reconcile.Request{NamespacedName: types.NamespacedName{Name: vcName, Namespace: vcNamespace}})))
-
 			cr := &rbac.ClusterRole{}
 			Eventually(func() error {
 				return k8sClient.Get(context.Background(), crName, cr)
-			}).Should(Succeed())
+			}, time.Second*5).Should(Succeed())
 
 			cr.Annotations = map[string]string{"rewritten": "annotations"}
 			err = k8sClient.Update(context.Background(), cr)
 			Expect(err).To(Succeed())
 
-			Eventually(requestsChan, time.Second*5).Should(Receive(Equal(reconcile.Request{NamespacedName: types.NamespacedName{Name: vcName, Namespace: vcNamespace}})))
-
 			//Expect the operator to notice the changes and restore the desired state
 			Eventually(func() map[string]string {
 				updatedCr := &rbac.ClusterRole{}
-				err = k8sClient.Get(context.Background(), types.NamespacedName{Name: vc.Name + "-varnish-clusterrole-" + vc.Namespace, Namespace: vcNamespace}, updatedCr)
+				err = k8sClient.Get(context.Background(), types.NamespacedName{Name: names.ClusterRole(vc.Name, vc.Namespace)}, updatedCr)
 				Expect(err).To(Succeed())
 				return updatedCr.Annotations
 			}, time.Second*5).Should(Equal(map[string]string{

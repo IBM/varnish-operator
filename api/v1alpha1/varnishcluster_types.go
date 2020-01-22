@@ -111,8 +111,6 @@ type VarnishClusterVarnish struct {
 	Image string `json:"image,omitempty"`
 	// +kubebuilder:validation:Enum=Always;Never;IfNotPresent
 	ImagePullPolicy v1.PullPolicy `json:"imagePullPolicy,omitempty"`
-	// +kubebuilder:validation:Enum=OnFailure;Never;Always
-	RestartPolicy   v1.RestartPolicy                      `json:"restartPolicy,omitempty"`
 	Resources       *v1.ResourceRequirements              `json:"resources,omitempty"`
 	ImagePullSecret *string                               `json:"imagePullSecret,omitempty"`
 	Args            []string                              `json:"args,omitempty"`

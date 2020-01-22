@@ -6,6 +6,7 @@ import (
 	"icm-varnish-k8s-operator/pkg/labels"
 	vclabels "icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/logger"
+	"icm-varnish-k8s-operator/pkg/names"
 	"icm-varnish-k8s-operator/pkg/varnishcluster/compare"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -19,8 +20,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func (r *ReconcileVarnishCluster) reconcileHeadlessService(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster) (string, error) {
-	namespacedName := types.NamespacedName{Namespace: instance.Namespace, Name: instance.Name + "-headless-service"}
+func (r *ReconcileVarnishCluster) reconcileHeadlessService(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster) error {
+	namespacedName := types.NamespacedName{Namespace: instance.Namespace, Name: names.HeadlessService(instance.Name)}
 	logr := logger.FromContext(ctx)
 
 	logr = logr.With(logger.FieldComponent, icmapiv1alpha1.VarnishComponentHeadlessService)
@@ -50,7 +51,7 @@ func (r *ReconcileVarnishCluster) reconcileHeadlessService(ctx context.Context, 
 	}
 
 	if err := controllerutil.SetControllerReference(instance, desired, r.scheme); err != nil {
-		return "", errors.Wrap(err, "could not set controller as the OwnerReference for headless service")
+		return errors.Wrap(err, "could not set controller as the OwnerReference for headless service")
 	}
 
 	found := &v1.Service{}
@@ -63,18 +64,18 @@ func (r *ReconcileVarnishCluster) reconcileHeadlessService(ctx context.Context, 
 	if err != nil && kerrors.IsNotFound(err) {
 		logr.Infoc("Creating Headless Service", "new", desired)
 		if err = r.Create(ctx, desired); err != nil {
-			return "", errors.Wrap(err, "could not create Headless Service")
+			return errors.Wrap(err, "could not create Headless Service")
 		}
 	} else if err != nil {
-		return "", errors.Wrap(err, "could not get current state of Headless Service")
+		return errors.Wrap(err, "could not get current state of Headless Service")
 	} else if !compare.EqualService(found, desired) {
 		logr.Infoc("Updating Headless Service", "diff", compare.DiffService(found, desired))
 		if err = r.Update(ctx, found); err != nil {
-			return "", errors.Wrap(err, "could not update Headless Service")
+			return errors.Wrap(err, "could not update Headless Service")
 		}
 	} else {
 		logr.Debugw("No updates for Headless Service")
 	}
 
-	return namespacedName.Name, nil
+	return nil
 }

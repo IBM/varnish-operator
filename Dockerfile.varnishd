@@ -3,11 +3,11 @@ LABEL maintainer="Alex Lytvynenko <oleksandr.lytvynenko@ibm.com>, Tomash Sidei <
 
 # This secret is for testing purposes only and should be overrided on runtime via env var
 ENV VARNISH_SECRET=c5m4HSNJwFz7A1Hygc0xoENSsoEFwTr
-RUN  apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
-        varnish \
-        varnish-modules \
-        && rm -rf /var/lib/apt/lists/* /etc/varnish/* \
-        && chown -R varnish /etc/varnish /var/lib/varnish
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
+    varnish \
+    varnish-modules \
+    && rm -rf /var/lib/apt/lists/* /etc/varnish/* \
+    && chown -R varnish /etc/varnish /var/lib/varnish
 
 USER varnish
 

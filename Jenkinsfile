@@ -34,15 +34,7 @@ artifactoryUserPasswordId = 'TAAS-Artifactory-User-Password-Global'
 node('icm_slave_go') {
   GitInfo gitInfo = icmCheckoutStages(withTags: true) // By default the clone occurs without refs fetch
 
-  stage('Tests') {
-    sh(script: """
-      export GO111MODULE=on
-      go mod download
-      golangci-lint run
-      go test ./pkg/... ./api/... -coverprofile=cover.out
-      go tool cover -func=cover.out | tail -1 | awk '{print \"Total coverage: \" \$3}'
-    """)
-  }
+  runTests()
 
   def appVersion = icmGetAppVersion() // Get the version from version.txt
   boolean isTaggedCommit = icmGetTagsOnCommit().size() > 0 //used to avoid build runs on tag push
@@ -131,5 +123,17 @@ def buildPushDocs() {
     }
 
     sh("cd .. && rm -rf ./docs_generated")
+  }
+}
+
+def runTests() {
+  stage('Tests') {
+    sh(script: """
+      export GO111MODULE=on
+      go mod download
+      golangci-lint run
+      go test ./pkg/... ./api/... -coverprofile=cover.out
+      go tool cover -func=cover.out | tail -1 | awk '{print \"Total coverage: \" \$3}'
+    """)
   }
 }

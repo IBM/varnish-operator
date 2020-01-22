@@ -1,0 +1,118 @@
+package tests
+
+import (
+	"context"
+	"fmt"
+	icmv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
+	"icm-varnish-k8s-operator/pkg/names"
+	"time"
+
+	apps "k8s.io/api/apps/v1"
+	rbac "k8s.io/api/rbac/v1"
+
+	v1 "k8s.io/api/core/v1"
+	policyv1beta1 "k8s.io/api/policy/v1beta1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/gogo/protobuf/proto"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+)
+
+var _ = Describe("Varnish Cluster", func() {
+	validBackendPort := intstr.FromInt(8080)
+	vcNamespace := "default"
+	vcName := "test"
+	objMeta := metav1.ObjectMeta{
+		Namespace: vcNamespace,
+		Name:      vcName,
+	}
+
+	AfterEach(func() {
+		err := k8sClient.DeleteAllOf(context.Background(), &icmv1alpha1.VarnishCluster{}, client.InNamespace(vcNamespace))
+		Expect(err).To(Succeed())
+		waitUntilVarnishClusterRemoved(vcName, vcNamespace)
+	})
+
+	Context("when deleted", func() {
+		It("should also garbage collect created resources", func() {
+			minAvailabe := intstr.FromInt(1)
+			vc := &icmv1alpha1.VarnishCluster{
+				ObjectMeta: objMeta,
+				Spec: icmv1alpha1.VarnishClusterSpec{
+					Backend: &icmv1alpha1.VarnishClusterBackend{
+						Selector: map[string]string{"app": "nginx"},
+						Port:     &validBackendPort,
+					},
+					Varnish: &icmv1alpha1.VarnishClusterVarnish{},
+					PodDisruptionBudget: &policyv1beta1.PodDisruptionBudgetSpec{
+						MinAvailable: &minAvailabe,
+					},
+					Service: &icmv1alpha1.VarnishClusterService{
+						Port: proto.Int32(8081),
+					},
+					VCL: &icmv1alpha1.VarnishClusterVCL{
+						ConfigMapName:      proto.String("test"),
+						EntrypointFileName: proto.String("test.vcl"),
+					},
+				},
+			}
+
+			By("Creating VarnishCluster")
+			Expect(k8sClient.Create(context.Background(), vc)).To(Succeed())
+
+			By("Checking if all resources are created")
+			expectResourceIsCreated(types.NamespacedName{Name: *vc.Spec.VCL.ConfigMapName, Namespace: vcNamespace}, &v1.ConfigMap{})
+			expectResourceIsCreated(types.NamespacedName{Name: names.HeadlessService(vcName), Namespace: vcNamespace}, &v1.Service{})
+			expectResourceIsCreated(types.NamespacedName{Name: names.NoCacheService(vcName), Namespace: vcNamespace}, &v1.Service{})
+			expectResourceIsCreated(types.NamespacedName{Name: vcName, Namespace: vcNamespace}, &v1.Service{})
+			expectResourceIsCreated(types.NamespacedName{Name: names.PodDisruptionBudget(vcName), Namespace: vcNamespace}, &policyv1beta1.PodDisruptionBudget{})
+			expectResourceIsCreated(types.NamespacedName{Name: names.Role(vcName), Namespace: vcNamespace}, &rbac.Role{})
+			expectResourceIsCreated(types.NamespacedName{Name: names.RoleBinding(vcName), Namespace: vcNamespace}, &rbac.RoleBinding{})
+			expectResourceIsCreated(types.NamespacedName{Name: names.ServiceAccount(vcName), Namespace: vcNamespace}, &v1.ServiceAccount{})
+			expectResourceIsCreated(types.NamespacedName{Name: names.StatefulSet(vcName), Namespace: vcNamespace}, &apps.StatefulSet{})
+
+			By("Deleting VarnishCluster")
+			Expect(k8sClient.Delete(context.Background(), vc)).To(Succeed())
+
+			By("Waiting for VarnishCluster to be removed")
+			waitUntilVarnishClusterRemoved(vcName, vcNamespace)
+
+			By("Checking if all created resources are deleted")
+			expectResourceIsDeleted(types.NamespacedName{Name: *vc.Spec.VCL.ConfigMapName, Namespace: vcNamespace}, &v1.ConfigMap{})
+			expectResourceIsDeleted(types.NamespacedName{Name: names.HeadlessService(vcName), Namespace: vcNamespace}, &v1.Service{})
+			expectResourceIsDeleted(types.NamespacedName{Name: names.NoCacheService(vcName), Namespace: vcNamespace}, &v1.Service{})
+			expectResourceIsDeleted(types.NamespacedName{Name: vcName, Namespace: vcNamespace}, &v1.Service{})
+			expectResourceIsDeleted(types.NamespacedName{Name: names.PodDisruptionBudget(vcName), Namespace: vcNamespace}, &policyv1beta1.PodDisruptionBudget{})
+			expectResourceIsDeleted(types.NamespacedName{Name: names.Role(vcName), Namespace: vcNamespace}, &rbac.Role{})
+			expectResourceIsDeleted(types.NamespacedName{Name: names.RoleBinding(vcName), Namespace: vcNamespace}, &rbac.RoleBinding{})
+			expectResourceIsDeleted(types.NamespacedName{Name: names.ServiceAccount(vcName), Namespace: vcNamespace}, &v1.ServiceAccount{})
+			expectResourceIsDeleted(types.NamespacedName{Name: names.StatefulSet(vcName), Namespace: vcNamespace}, &apps.StatefulSet{})
+		})
+	})
+})
+
+func expectResourceIsCreated(name types.NamespacedName, obj runtime.Object) {
+	Eventually(func() error {
+		return k8sClient.Get(context.Background(), name, obj)
+	}, time.Second*5).Should(Succeed(), fmt.Sprintf("%T %s expected to exist", obj, name))
+}
+
+func expectResourceIsDeleted(name types.NamespacedName, obj runtime.Object) {
+	Eventually(func() metav1.StatusReason {
+		err := k8sClient.Get(context.Background(), name, obj)
+		if err != nil {
+			if statusErr, ok := err.(*errors.StatusError); ok {
+				return statusErr.ErrStatus.Reason
+			}
+		}
+
+		return "Found"
+	}, time.Second*5).Should(Equal(metav1.StatusReasonNotFound), fmt.Sprintf("%T %s should be deleted", obj, name))
+}

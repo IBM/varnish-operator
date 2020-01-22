@@ -5,6 +5,7 @@ import (
 	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
 	vclabels "icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/logger"
+	"icm-varnish-k8s-operator/pkg/names"
 	"icm-varnish-k8s-operator/pkg/varnishcluster/compare"
 
 	"github.com/pkg/errors"
@@ -16,23 +17,23 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func (r *ReconcileVarnishCluster) reconcileRoleBinding(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster, roleName, serviceAccountName string) error {
+func (r *ReconcileVarnishCluster) reconcileRoleBinding(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster) error {
 	roleBinding := &rbac.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      instance.Name + "-varnish-rolebinding",
+			Name:      names.RoleBinding(instance.Name),
 			Namespace: instance.Namespace,
 			Labels:    vclabels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentRoleBinding),
 		},
 		Subjects: []rbac.Subject{
 			{
 				Kind:      "ServiceAccount",
-				Name:      serviceAccountName,
+				Name:      names.ServiceAccount(instance.Name),
 				Namespace: instance.Namespace,
 			},
 		},
 		RoleRef: rbac.RoleRef{
 			Kind:     "Role",
-			Name:     roleName,
+			Name:     names.Role(instance.Name),
 			APIGroup: "rbac.authorization.k8s.io",
 		},
 	}

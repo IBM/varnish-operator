@@ -23,10 +23,10 @@ import (
 )
 
 var _ = Describe("Varnish cluster", func() {
-	namespace := "default"
+	vcNamespace := "default"
 	vcName := "test"
 	objMeta := metav1.ObjectMeta{
-		Namespace: namespace,
+		Namespace: vcNamespace,
 		Name:      vcName,
 	}
 	backendResponse := "TEST"
@@ -37,7 +37,7 @@ var _ = Describe("Varnish cluster", func() {
 	backendsDeployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      backendDeploymentName,
-			Namespace: namespace,
+			Namespace: vcNamespace,
 			Labels:    backendLabels,
 		},
 		Spec: appsv1.DeploymentSpec{
@@ -98,20 +98,21 @@ var _ = Describe("Varnish cluster", func() {
 
 	AfterEach(func() {
 		By("deleting created resources")
-		Expect(k8sClient.DeleteAllOf(context.Background(), &icmv1alpha1.VarnishCluster{}, client.InNamespace(namespace))).To(Succeed())
-		Expect(k8sClient.DeleteAllOf(context.Background(), &appsv1.Deployment{}, client.InNamespace(namespace), client.MatchingLabels(backendLabels))).To(Succeed())
-		waitForPodsTermination(namespace, varnishPodLabels)
-		waitForPodsTermination(namespace, backendLabels)
+		Expect(k8sClient.DeleteAllOf(context.Background(), &icmv1alpha1.VarnishCluster{}, client.InNamespace(vcNamespace))).To(Succeed())
+		Expect(k8sClient.DeleteAllOf(context.Background(), &appsv1.Deployment{}, client.InNamespace(vcNamespace), client.MatchingLabels(backendLabels))).To(Succeed())
+		waitForPodsTermination(vcNamespace, varnishPodLabels)
+		waitForPodsTermination(vcNamespace, backendLabels)
+		waitUntilVarnishClusterRemoved(vcName, vcNamespace)
 	})
 
 	It("pods respond with backend responses and metrics", func() {
 		Expect(k8sClient.Create(context.Background(), backendsDeployment)).To(Succeed())
 		Expect(k8sClient.Create(context.Background(), vc)).To(Succeed())
 		By("backend pods become ready")
-		waitForPodsReadiness(namespace, backendLabels)
+		waitForPodsReadiness(vcNamespace, backendLabels)
 		By("varnish pods become ready")
-		waitForPodsReadiness(namespace, varnishPodLabels)
-		pf := portForwardPod(namespace, varnishPodLabels, []string{"6081:6081", "9131:9131"})
+		waitForPodsReadiness(vcNamespace, varnishPodLabels)
+		pf := portForwardPod(vcNamespace, varnishPodLabels, []string{"6081:6081", "9131:9131"})
 		defer pf.Close()
 
 		By("varnish pod responds with the backend response")

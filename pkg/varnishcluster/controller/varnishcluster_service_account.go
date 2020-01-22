@@ -5,6 +5,7 @@ import (
 	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/logger"
+	"icm-varnish-k8s-operator/pkg/names"
 	"icm-varnish-k8s-operator/pkg/varnishcluster/compare"
 
 	"github.com/pkg/errors"
@@ -16,8 +17,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func (r *ReconcileVarnishCluster) reconcileServiceAccount(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster) (string, error) {
-	saName := instance.Name + "-varnish-serviceaccount"
+func (r *ReconcileVarnishCluster) reconcileServiceAccount(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster) error {
+	saName := names.ServiceAccount(instance.Name)
 	serviceAccount := &v1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      saName,
@@ -31,7 +32,7 @@ func (r *ReconcileVarnishCluster) reconcileServiceAccount(ctx context.Context, i
 
 	// Set controller reference for service object
 	if err := controllerutil.SetControllerReference(instance, serviceAccount, r.scheme); err != nil {
-		return "", errors.Wrap(err, "Cannot set controller reference for Service account")
+		return errors.Wrap(err, "Cannot set controller reference for Service account")
 	}
 
 	found := &v1.ServiceAccount{}
@@ -44,19 +45,19 @@ func (r *ReconcileVarnishCluster) reconcileServiceAccount(ctx context.Context, i
 	if err != nil && kerrors.IsNotFound(err) {
 		logr.Infoc("Creating Service account", "new", serviceAccount)
 		if err = r.Create(ctx, serviceAccount); err != nil {
-			return "", errors.Wrap(err, "Unable to create Service account")
+			return errors.Wrap(err, "Unable to create Service account")
 		}
 	} else if err != nil {
-		return "", errors.Wrap(err, "Could not get Service account")
+		return errors.Wrap(err, "Could not get Service account")
 	} else if !compare.EqualServiceAccount(found, serviceAccount) {
 		logr.Infoc("Updating Service account", "diff", compare.DiffServiceAccount(found, serviceAccount))
 		found.ImagePullSecrets = serviceAccount.ImagePullSecrets
 		found.Labels = serviceAccount.Labels
 		if err = r.Update(ctx, found); err != nil {
-			return "", errors.Wrap(err, "Unable to update service account")
+			return errors.Wrap(err, "Unable to update service account")
 		}
 	} else {
 		logr.Debugw("No updates for Service account")
 	}
-	return saName, nil
+	return nil
 }

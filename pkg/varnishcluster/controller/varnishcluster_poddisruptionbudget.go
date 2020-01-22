@@ -5,6 +5,7 @@ import (
 	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/logger"
+	"icm-varnish-k8s-operator/pkg/names"
 	"icm-varnish-k8s-operator/pkg/varnishcluster/compare"
 
 	"github.com/pkg/errors"
@@ -16,7 +17,7 @@ import (
 )
 
 func (r *ReconcileVarnishCluster) reconcilePodDisruptionBudget(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster, podSelector map[string]string) error {
-	namespacedName := types.NamespacedName{Namespace: instance.Namespace, Name: instance.Name + "-varnish-pdb"}
+	namespacedName := types.NamespacedName{Namespace: instance.Namespace, Name: names.PodDisruptionBudget(instance.Name)}
 	logr := logger.FromContext(ctx)
 	logr = logr.With(logger.FieldComponent, icmapiv1alpha1.VarnishComponentPodDisruptionBudget)
 	logr = logr.With(logger.FieldComponentName, namespacedName.Name)

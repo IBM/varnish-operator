@@ -150,7 +150,7 @@ func NewVarnishReconciler(mgr manager.Manager, cfg *config.Config, logr *logger.
 // Automatically generate RBAC rules to allow the Controller to read and write StatefulSets
 // +kubebuilder:rbac:groups=icm.ibm.com,resources=varnishclusters,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups=icm.ibm.com,resources=varnishclusters/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update
+// +kubebuilder:rbac:groups="",resources=configmaps;secrets,verbs=get;list;watch;create;update
 // +kubebuilder:rbac:groups="",resources=services;serviceaccounts,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups="",resources=endpoints,verbs=list;watch
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
@@ -257,6 +257,9 @@ func (r *ReconcileVarnishCluster) reconcileWithContext(ctx context.Context, requ
 	}
 	err = r.reconcileHeadlessService(ctx, instance)
 	if err != nil {
+		return ctrl.Result{}, err
+	}
+	if err = r.reconcileVarnishSecret(ctx, instance); err != nil {
 		return ctrl.Result{}, err
 	}
 	sts, varnishSelector, err := r.reconcileStatefulSet(ctx, instance, instanceStatus, endpointSelector)

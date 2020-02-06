@@ -32,7 +32,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 	} else {
 		varnishImage = instance.Spec.Varnish.Image
 	}
-
+	varnishSecretName, varnishSecretKeyName := namesForInstanceSecret(instance)
 	varnishdArgs := getSanitizedVarnishArgs(&instance.Spec)
 
 	var imagePullSecrets []v1.LocalObjectReference
@@ -91,24 +91,23 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 								EmptyDir: &v1.EmptyDirVolumeSource{},
 							},
 						},
-					},
-					InitContainers: []v1.Container{
 						{
-							Name:  icmapiv1alpha1.VarnishContainerName + "-init",
-							Image: varnishImage,
-							VolumeMounts: []v1.VolumeMount{
-								{
-									Name:      icmapiv1alpha1.VarnishSettingsVolume,
-									MountPath: "/data",
+							Name: icmapiv1alpha1.VarnishSecretVolume,
+							VolumeSource: v1.VolumeSource{
+								Secret: &v1.SecretVolumeSource{
+									Items: []v1.KeyToPath{
+										{
+											Key:  varnishSecretKeyName,
+											Path: "secret",
+											Mode: proto.Int32(0444), //octal mode read only
+										},
+									},
+									SecretName: varnishSecretName,
 								},
 							},
-							Command:                  []string{"/bin/bash", "-c"},
-							Args:                     []string{"echo $VARNISH_SECRET > /data/secret"},
-							ImagePullPolicy:          instance.Spec.Varnish.ImagePullPolicy,
-							TerminationMessagePath:   "/dev/termination-log",
-							TerminationMessagePolicy: v1.TerminationMessageReadFile,
 						},
 					},
+
 					Containers: []v1.Container{
 						//Varnish container
 						{
@@ -129,6 +128,11 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 								{
 									Name:      icmapiv1alpha1.VarnishSettingsVolume,
 									MountPath: "/etc/varnish",
+									ReadOnly:  true,
+								},
+								{
+									Name:      icmapiv1alpha1.VarnishSecretVolume,
+									MountPath: "/etc/varnish-secret",
 									ReadOnly:  true,
 								},
 							},
@@ -215,6 +219,11 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 								{
 									Name:      icmapiv1alpha1.VarnishSharedVolume,
 									MountPath: "/var/lib/varnish",
+									ReadOnly:  true,
+								},
+								{
+									Name:      icmapiv1alpha1.VarnishSecretVolume,
+									MountPath: "/etc/varnish-secret",
 									ReadOnly:  true,
 								},
 							},

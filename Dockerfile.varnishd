@@ -1,8 +1,6 @@
 FROM debian:buster-slim
 LABEL maintainer="Alex Lytvynenko <oleksandr.lytvynenko@ibm.com>, Tomash Sidei <tomash.sidei@ibm.com>, Oleksandr Ohurtsov <oleksandr.ohurtsov@ibm.com>"
 
-# This secret is for testing purposes only and should be overrided on runtime via env var
-ENV VARNISH_SECRET=c5m4HSNJwFz7A1Hygc0xoENSsoEFwTr
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     varnish \
     varnish-modules \

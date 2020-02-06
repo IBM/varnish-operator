@@ -223,4 +223,6 @@ func CleanUpCreatedResources(vcName, vcNamespace string) {
 	Expect(err).To(BeNil())
 	err = k8sClient.DeleteAllOf(context.Background(), &apps.StatefulSet{}, client.InNamespace(vcNamespace))
 	Expect(err).To(BeNil())
+	err = k8sClient.DeleteAllOf(context.Background(), &v1.Secret{}, client.InNamespace(vcNamespace))
+	Expect(err).To(haveNoErrorOrNotFoundError)
 }

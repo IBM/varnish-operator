@@ -811,6 +811,18 @@ spec:
               type: object
             varnish:
               properties:
+                admAuth:
+                  properties:
+                    key:
+                      pattern: ^[a-zA-Z0-9._-]+$
+                      type: string
+                    secretName:
+                      maxLength: 253
+                      pattern: ^[a-z0-9.-]+$
+                      type: string
+                  required:
+                  - secretName
+                  type: object
                 args:
                   items:
                     type: string
@@ -916,6 +928,8 @@ spec:
             vcl:
               properties:
                 configMapName:
+                  maxLength: 253
+                  pattern: ^[a-z0-9.-]+$
                   type: string
                 entrypointFileName:
                   pattern: ^.+\.vcl$

@@ -63,6 +63,7 @@ The `varnish-component` could have the following values:
  * `role` - The role defining the namespaced permissions for a particular `VarnishCluster`
  * `rolebinding` - Binds the role to the serviceaccount used by a particular `VarnishCluster`
  * `vcl-file-configmap` - The ConfigMap that stores the VCL files
+* `secret` - The Secret to keep `varnishadm` auth credentials
  * `headless-service` - A headless service that backs the StatefulSet
  * `poddisruptionbudget` - PodDisruptionBudget configuration for a particular `VarnishCluster`
  * `serviceaccount` - A serviceaccount used by the Varnish pods

@@ -7,8 +7,9 @@ import (
 	"icm-varnish-k8s-operator/pkg/logger"
 	vccfg "icm-varnish-k8s-operator/pkg/varnishcluster/config"
 	"icm-varnish-k8s-operator/pkg/varnishcluster/controller"
-	"k8s.io/apimachinery/pkg/runtime"
 	"log"
+
+	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 
 	ctrl "sigs.k8s.io/controller-runtime"

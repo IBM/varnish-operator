@@ -30,6 +30,7 @@ const (
 	VarnishComponentServiceAccount      = "serviceaccount"
 	VarnishComponentValidatingWebhook   = "validating-webhook"
 	VarnishComponentMutatingWebhook     = "mutating-webhook"
+	VarnishComponentSecret              = "secret"
 
 	VarnishPort                   = 6081
 	VarnishAdminPort              = 6082
@@ -43,8 +44,9 @@ const (
 	VarnishControllerImage      = "-controller"
 	VarnishMetricsPortName      = "metrics"
 	VarnishPortName             = "varnish"
-	VarnishSharedVolume         = "shared-workdir"
-	VarnishSettingsVolume       = "shared-etc"
+	VarnishSharedVolume         = "workdir"
+	VarnishSettingsVolume       = "settings"
+	VarnishSecretVolume         = "secret"
 
 	VarnishUpdateStrategyDelayedRollingUpdate = "DelayedRollingUpdate"
 )
@@ -110,12 +112,13 @@ type UpdateStrategyDelayedRollingUpdate struct {
 type VarnishClusterVarnish struct {
 	Image string `json:"image,omitempty"`
 	// +kubebuilder:validation:Enum=Always;Never;IfNotPresent
-	ImagePullPolicy v1.PullPolicy `json:"imagePullPolicy,omitempty"`
+	ImagePullPolicy v1.PullPolicy                         `json:"imagePullPolicy,omitempty"`
 	Resources       *v1.ResourceRequirements              `json:"resources,omitempty"`
 	ImagePullSecret *string                               `json:"imagePullSecret,omitempty"`
 	Args            []string                              `json:"args,omitempty"`
 	Controller      *VarnishClusterVarnishController      `json:"controller,omitempty"`
 	MetricsExporter *VarnishClusterVarnishMetricsExporter `json:"metricsExporter,omitempty"`
+	Secret          *VarnishClusterVarnishSecret          `json:"admAuth,omitempty"`
 }
 
 type VarnishClusterVarnishController struct {
@@ -134,6 +137,8 @@ type VarnishClusterVarnishMetricsExporter struct {
 
 type VarnishClusterVCL struct {
 	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MaxLength=253
+	// +kubebuilder:validation:Pattern=`^[a-z0-9.-]+$`
 	ConfigMapName *string `json:"configMapName,omitempty"`
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Pattern=^.+\.vcl$
@@ -145,6 +150,15 @@ type VarnishClusterBackend struct {
 	Selector map[string]string `json:"selector,omitempty"`
 	// +kubebuilder:validation:Required
 	Port *intstr.IntOrString `json:"port,omitempty"`
+}
+
+type VarnishClusterVarnishSecret struct {
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MaxLength=253
+	// +kubebuilder:validation:Pattern=`^[a-z0-9.-]+$`
+	SecretName *string `json:"secretName,omitempty"`
+	//+kubebuilder:validation:Pattern=`^[a-zA-Z0-9._-]+$`
+	Key *string `json:"key,omitempty"`
 }
 
 type VarnishClusterService struct {

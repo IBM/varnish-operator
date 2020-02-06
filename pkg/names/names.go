@@ -32,7 +32,10 @@ func StatefulSet(vcName string) string {
 	return vcName + "-varnish"
 }
 
-
 func ServiceAccount(vcName string) string {
 	return vcName + "-varnish-serviceaccount"
+}
+
+func VarnishSecret(vcName string) string {
+	return vcName + "-varnish-secret"
 }

@@ -28,7 +28,7 @@ type Config struct {
 	VarnishClusterGroup    string        `env:"VARNISH_CLUSTER_GROUP,required"`
 	VarnishClusterVersion  string        `env:"VARNISH_CLUSTER_VERSION,required"`
 	VarnishClusterKind     string        `env:"VARNISH_CLUSTER_KIND,required"`
-	VarnishAdmArgs         []string      `env:"VARNISHADM_ARGS" envDefault:"-S /etc/varnish/secret -T 127.0.0.1:6082" envSeparator:" " `
+	VarnishAdmArgs         []string      `env:"VARNISHADM_ARGS" envDefault:"-S /etc/varnish-secret/secret -T 127.0.0.1:6082" envSeparator:" " `
 	VarnishPingTimeout     time.Duration `env:"VARNISHADM_PING_TIMEOUT" envDefault:"90s"`
 	VarnishPingDelay       time.Duration `env:"VARNISHADM_PING_DELAY" envDefault:"200ms"`
 	LogFormat              string        `env:"LOG_FORMAT,required"`

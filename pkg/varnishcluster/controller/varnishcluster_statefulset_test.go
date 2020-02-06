@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 	icmv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
-	"k8s.io/apimachinery/pkg/labels"
 	"time"
+
+	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/gogo/protobuf/proto"
 	. "github.com/onsi/ginkgo"
@@ -98,7 +99,7 @@ var _ = Describe("statefulset", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(varnishContainer.Args).To(Equal([]string{
 				"-F",
-				"-S", "/etc/varnish/secret",
+				"-S", "/etc/varnish-secret/secret",
 				"-T", "127.0.0.1:6082",
 				"-a", "0.0.0.0:6081",
 				"-b", "127.0.0.1:0",
@@ -117,17 +118,17 @@ var _ = Describe("statefulset", func() {
 				icmv1alpha1.LabelVarnishOwner:     vcName,
 				icmv1alpha1.LabelVarnishComponent: icmv1alpha1.VarnishComponentNoCacheService,
 				icmv1alpha1.LabelVarnishUID:       string(newVC.UID),
-			}).String()},))
-			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "CONFIGMAP_NAME", Value: *newVC.Spec.VCL.ConfigMapName},))
-			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "NAMESPACE", Value: vcNamespace},))
-			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "POD_NAME", ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{APIVersion: "v1", FieldPath: "metadata.name"}}},))
-			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "VARNISH_CLUSTER_NAME", Value: vcName},))
-			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "VARNISH_CLUSTER_UID", Value: string(newVC.UID)},))
-			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "VARNISH_CLUSTER_GROUP", Value: "icm.ibm.com"},))
-			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "VARNISH_CLUSTER_VERSION", Value: "v1alpha1"},))
-			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "VARNISH_CLUSTER_KIND", Value: "VarnishCluster"},))
-			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "LOG_FORMAT", Value: "json"},))
-			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "LOG_LEVEL", Value: "info"},))
+			}).String()}))
+			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "CONFIGMAP_NAME", Value: *newVC.Spec.VCL.ConfigMapName}))
+			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "NAMESPACE", Value: vcNamespace}))
+			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "POD_NAME", ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{APIVersion: "v1", FieldPath: "metadata.name"}}}))
+			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "VARNISH_CLUSTER_NAME", Value: vcName}))
+			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "VARNISH_CLUSTER_UID", Value: string(newVC.UID)}))
+			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "VARNISH_CLUSTER_GROUP", Value: "icm.ibm.com"}))
+			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "VARNISH_CLUSTER_VERSION", Value: "v1alpha1"}))
+			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "VARNISH_CLUSTER_KIND", Value: "VarnishCluster"}))
+			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "LOG_FORMAT", Value: "json"}))
+			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "LOG_LEVEL", Value: "info"}))
 
 			metricsContainer, err := getContainerByName(podSpec, icmv1alpha1.VarnishMetricsExporterName)
 			Expect(err).ToNot(HaveOccurred())
@@ -158,7 +159,7 @@ var _ = Describe("statefulset", func() {
 			Expect(varnishContainer.Args).To(Equal([]string{
 				"-F",
 				"-S",
-				"/etc/varnish/secret",
+				"/etc/varnish-secret/secret",
 				"-T",
 				"127.0.0.1:6082",
 				"-a",

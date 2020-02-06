@@ -20,7 +20,7 @@ func getSanitizedVarnishArgs(spec *icmapiv1alpha1.VarnishClusterSpec) []string {
 	varnishArgsOverrides := [][]string{
 		{"-F"},
 		{"-a", fmt.Sprintf("0.0.0.0:%d", icmapiv1alpha1.VarnishPort)},
-		{"-S", "/etc/varnish/secret"},
+		{"-S", "/etc/varnish-secret/secret"},
 		{"-b", "127.0.0.1:0"}, //start a varnishd without predefined backend. It has to be overridden by settings from ConfigMap
 		{"-T", fmt.Sprintf("127.0.0.1:%d", icmapiv1alpha1.VarnishAdminPort)},
 	}

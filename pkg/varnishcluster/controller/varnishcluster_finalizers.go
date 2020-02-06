@@ -2,11 +2,12 @@ package controller
 
 import (
 	"context"
-	"github.com/google/go-cmp/cmp"
-	"github.com/pkg/errors"
 	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/logger"
 	"icm-varnish-k8s-operator/pkg/names"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/pkg/errors"
 	v1 "k8s.io/api/rbac/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"

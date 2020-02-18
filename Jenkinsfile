@@ -47,8 +47,13 @@ node('icm_slave_go') {
 
   HelmUtils helmUtils = new HelmUtils(this)
 
+  // Builds for the release branch are triggered for any commit to it except tags (last commit shouldn't contain associated tags)
+  // and if tag from version.txt exist in cloned repo jenkins completes the job silently with no errors
+  // Builds are triggered for commits made on non-release branches except tags
+
   if (isNewRelease) {
     GitUtils gitUtils = new GitUtils(this)
+    // If it's master and version.txt have changed - make a release (push a new git tag, docker images and helm chart)
     if (!gitUtils.doesTagExist(appVersion)) {
       println 'This is a release branch. Preparing the build...'
       try {
@@ -70,6 +75,9 @@ node('icm_slave_go') {
         icmMarkBuildFailed(errorMessage)
       }
     }
+    // If it's master and version.txt haven't changed - do nothing.
+
+  // If it's a feature branch - push only artifacts (docker images, helm chart), but do not push a git tag
   } else if (isUntaggedCommit) {
     println 'This is a feature branch. Preparing the build...'
     icmCloudCliSetupStages(ibmCloud.apiKeyId, ibmCloud.region, CloudCliPluginConsts.CONTAINER_PLUGINS)

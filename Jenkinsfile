@@ -31,6 +31,9 @@ artifactoryRoot = 'na.artifactory.swg-devops.com/artifactory'
 artifactoryRepo = 'wcp-icm-helm-local'
 artifactoryUserPasswordId = 'TAAS-Artifactory-User-Password-Global'
 
+// For go modules download
+goVirtualProxyRepo = 'wcp-icm-go-virtual'
+
 node('icm_slave_go') {
   GitInfo gitInfo = icmCheckoutStages(withTags: true) // By default the clone occurs without refs fetch
 
@@ -84,20 +87,23 @@ def dockerBuildPush(String appVersion, GitInfo gitinfo) {
 
     def stepsForParallel = [:]
 
-    stepsForParallel['Building varnish'] = {
-      icmDockerStages(new DockerImageInfo(docker.registry, docker.registryNamespace, 'varnish', appVersion, docker.isLatest), ['-f': 'Dockerfile.varnishd'])
-    }
-    stepsForParallel['Building varnish-metrics-exporter'] = {
-      icmDockerStages(new DockerImageInfo(docker.registry, docker.registryNamespace, 'varnish-metrics-exporter', appVersion, docker.isLatest), ['-f': 'Dockerfile.exporter'])
-    }
-    stepsForParallel['Building varnish-controller'] = {
-      icmDockerStages(new DockerImageInfo(docker.registry, docker.registryNamespace, 'varnish-controller', appVersion, docker.isLatest), ['-f': 'Dockerfile.controller'])
-    }
-    stepsForParallel['Building varnish-operator'] = {
-      icmDockerStages(new DockerImageInfo(docker.registry, docker.registryNamespace, 'varnish-operator', appVersion, docker.isLatest))
-    }
+    icmWithArtifactoryConfig(artifactoryRoot, goVirtualProxyRepo, artifactoryUserPasswordId) {
+      stepsForParallel['Building varnish'] = {
+        icmDockerStages(new DockerImageInfo(docker.registry, docker.registryNamespace, 'varnish', appVersion, docker.isLatest), ['-f': 'Dockerfile.varnishd'])
+      }
+      stepsForParallel['Building varnish-metrics-exporter'] = {
+        icmDockerStages(new DockerImageInfo(docker.registry, docker.registryNamespace, 'varnish-metrics-exporter', appVersion, docker.isLatest), ['-f': 'Dockerfile.exporter'])
+      }
+      stepsForParallel['Building varnish-controller'] = {
+        icmDockerStages(new DockerImageInfo(docker.registry, docker.registryNamespace, 'varnish-controller', appVersion, docker.isLatest), ['-f': 'Dockerfile.controller', '--build-arg': "GOPROXY=\"https://${ARTIFACTORY_USER}:${ARTIFACTORY_PASS}@na.artifactory.swg-devops.com/artifactory/${ARTIFACTORY_REPO}/\""])
+      }
+      stepsForParallel['Building varnish-operator'] = {
+        icmDockerStages(new DockerImageInfo(docker.registry, docker.registryNamespace, 'varnish-operator', appVersion, docker.isLatest), ['-f': 'Dockerfile', '--build-arg': "GOPROXY=\"https://${ARTIFACTORY_USER}:${ARTIFACTORY_PASS}@na.artifactory.swg-devops.com/artifactory/${ARTIFACTORY_REPO}/\""])
+      }
+
 
     parallel stepsForParallel
+    }
   }
 }
 
@@ -128,12 +134,15 @@ def buildPushDocs() {
 
 def runTests() {
   stage('Tests') {
-    sh(script: """
+    icmWithArtifactoryConfig(artifactoryRoot, goVirtualProxyRepo, artifactoryUserPasswordId) {
+      sh(script: """
       export GO111MODULE=on
+      export GOPROXY="https://${ARTIFACTORY_USER}:${ARTIFACTORY_PASS}@na.artifactory.swg-devops.com/artifactory/${ARTIFACTORY_REPO}/"
       go mod download
       golangci-lint run
       go test ./pkg/... ./api/... -coverprofile=cover.out
       go tool cover -func=cover.out | tail -1 | awk '{print \"Total coverage: \" \$3}'
     """)
+    }
   }
 }

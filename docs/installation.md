@@ -70,4 +70,14 @@ Note that when the operator version updates, the Varnish images get updated as w
 ## Uninstalling the Operator
 
 Uninstallation of the chart is also done by Helm.
-It deletes all created resources, including the CRD which will cause **deletion of all your `VarnishCluster` instances**.
+It deletes all created resources, including the CRD.
+ 
+The operator uses [finalizers](https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#finalizers) to perform some clean-up operations. That means you need to delete all `VarnishCluster` resources before deleting the operator. Otherwise those resources won't be deleted automatically and get stuck on your cluster.
+
+If you happen to remove the operator first, to delete the remaining `VarnishCluster` resources you need to manually edit them and remove the finalizers:
+
+  `kubectl patch varnishcluster <your-varnishcuster> -p '{"metadata":{"finalizers": []}}' --type=merge`
+
+Then you need to delete the remaining objects:
+ * ClusterRole named <varnishcluster-name>-varnish-clusterrole-<varnishcluster-namespace>
+ * ClusterRoleBinding named <varnishcluster-name>-varnish-clusterrolebinding-<varnishcluster-namespace>

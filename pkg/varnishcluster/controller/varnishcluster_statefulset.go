@@ -102,7 +102,8 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 											Mode: proto.Int32(0444), //octal mode read only
 										},
 									},
-									SecretName: varnishSecretName,
+									DefaultMode: proto.Int32(v1.SecretVolumeSourceDefaultMode),
+									SecretName:  varnishSecretName,
 								},
 							},
 						},
@@ -230,8 +231,9 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 							ReadinessProbe: &v1.Probe{
 								Handler: v1.Handler{
 									HTTPGet: &v1.HTTPGetAction{
-										Port: intstr.FromInt(icmapiv1alpha1.HealthCheckPort),
-										Path: "/readyz",
+										Port:   intstr.FromInt(icmapiv1alpha1.HealthCheckPort),
+										Path:   "/readyz",
+										Scheme: v1.URISchemeHTTP,
 									},
 								},
 								TimeoutSeconds:   10,
@@ -285,6 +287,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 		// the pod selector is immutable once set, so always enforce the same as existing
 		desired.Spec.Selector = found.Spec.Selector
 		desired.Spec.Template.Labels = found.Spec.Template.Labels
+		desired.Spec.Template.Annotations = found.Spec.Template.Annotations
 		if !compare.EqualStatefulSet(found, desired) {
 			logr.Infoc("Updating StatefulSet", "diff", compare.DiffStatefulSet(found, desired))
 			found.Spec = desired.Spec

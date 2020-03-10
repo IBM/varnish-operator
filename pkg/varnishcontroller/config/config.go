@@ -11,7 +11,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/caarlos0/env"
+	"github.com/caarlos0/env/v6"
 	"github.com/pkg/errors"
 )
 
@@ -55,7 +55,7 @@ func Load() (*Config, error) {
 		return l, errors.Wrapf(err, "%s is not a zap level", v)
 	})
 
-	parsers := env.CustomParsers{
+	parsers := map[reflect.Type]env.ParserFunc{
 		int32Type:        int32Parse,
 		zapcoreLevelType: zapcoreLevelParse,
 	}

@@ -3,13 +3,13 @@ replicas: 1
 container:
   # path to image + tag
   image: us.icr.io/icm-varnish/varnish-operator:0.22.1
-  # If secret is needed, use the name of the imagePullSecret created in the Getting Access section of the README.md
+  # Image pull secret used to pull the operator image
 # imagePullSecret: docker-reg-secret
-  # imagePullPolicy is passed directly to the varnish deployment, that controls how the varnish image will be pulled for new containers
+  # imagePullPolicy for Varnish Operator image
   imagePullPolicy: Always
-  # restart policy used for Varnish containers
+  # restart policy for Varnish Operator containers
   restartPolicy: Always
-  # it is unlikely you will need to change the resources values of the operator
+  # resource limits and requests for Varnish Operator containers
   resources:
     limits:
       cpu: 500m

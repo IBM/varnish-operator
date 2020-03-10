@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/caarlos0/env"
+	"github.com/caarlos0/env/v6"
 	dockerref "github.com/docker/distribution/reference"
 	"github.com/pkg/errors"
 	"go.uber.org/zap/zapcore"

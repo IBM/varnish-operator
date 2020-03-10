@@ -84,6 +84,14 @@ The delay is counted from the time the pod is created in Kubernetes, not when it
 
 The operator respects Pods readiness and does not reload the next pod until all pods are ready, even if the delay time elapsed. 
 
+#### Forcefully restarting Varnish pods
+
+Sometimes it is necessary to purge the cluster cache. For example, when a backend with a bug produced a bad response that got cached. After the fix is deployed, we need to purge the cache. This can be achieved by simply restarting the pods. 
+
+If you need to control when the next pod should restart, you can simply delete pods one by one as necessary. A new pod will come up right after deletion (standard statefulset behavior).
+
+For more automated solution use `kubectl rollout restart statefulset <sts-name>` on the statefulset running your Varnish pods. It will recreate the pods with the current configuration using the configured update strategy. Keep in mind that if you use `OnDelete` update strategy, it doesn't make sense to use this approach as you still have to manually delete the pods to complete the update. Use it with `RollingUpdate` and `DelayedRollingUpdate` update strategies.
+
 ### Deleting a VarnishCluster Resource
 
 Simply calling `kubectl delete` on the `VarnishCluster` will recursively delete all dependent resources, so that is the only action you need to take. This includes a user-generated ConfigMap, as the VarnishCluster will take ownership of that ConfigMap after creation. Deleting any of the dependent resources will trigger the operator to recreate that resource, in the same way that deleting the Pod of a Deployment will trigger the recreation of that Pod.

@@ -1,5 +1,5 @@
 #!groovy
-@Library("icm-jenkins-common@0.112.1")
+@Library("icm-jenkins-common@0.114.0")
 import com.ibm.icm.*
 
 icmJenkinsProperties().
@@ -34,7 +34,7 @@ artifactoryUserPasswordId = 'TAAS-Artifactory-User-Password-Global'
 // For go modules download
 goVirtualProxyRepo = 'wcp-icm-go-virtual'
 
-node('icm_worker_go') {
+node('icm_agent_go') {
   GitInfo gitInfo = icmCheckoutStages(withTags: true) // By default the clone occurs without refs fetch
 
   runTests()

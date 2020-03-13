@@ -199,6 +199,13 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 						{
 							Name:  icmapiv1alpha1.VarnishControllerName,
 							Image: varnishControllerImage,
+							Ports: []v1.ContainerPort{
+								{
+									Name:          icmapiv1alpha1.VarnishControllerMetricsPortName,
+									Protocol:      v1.ProtocolTCP,
+									ContainerPort: icmapiv1alpha1.VarnishControllerMetricsPort,
+								},
+							},
 							Env: []v1.EnvVar{
 								{Name: "ENDPOINT_SELECTOR_STRING", Value: labels.SelectorFromSet(endpointSelector).String()},
 								{Name: "CONFIGMAP_NAME", Value: *instance.Spec.VCL.ConfigMapName},

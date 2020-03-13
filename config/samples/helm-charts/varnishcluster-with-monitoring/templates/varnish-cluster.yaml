@@ -14,5 +14,6 @@ spec:
   backend:
     selector:
       {{ toYaml .Values.varnish.backendsSelector | nindent 6 }}
+    port: {{ .Values.varnish.backendsPort }}
   service:
     port: 80

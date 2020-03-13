@@ -7,6 +7,7 @@ import (
 	"icm-varnish-k8s-operator/pkg/logger"
 	"icm-varnish-k8s-operator/pkg/varnishcontroller/config"
 	"icm-varnish-k8s-operator/pkg/varnishcontroller/events"
+	"icm-varnish-k8s-operator/pkg/varnishcontroller/metrics"
 	"icm-varnish-k8s-operator/pkg/varnishcontroller/predicates"
 	"icm-varnish-k8s-operator/pkg/varnishcontroller/varnishadm"
 	"strings"
@@ -41,7 +42,7 @@ type PodInfo struct {
 
 // SetupVarnishReconciler creates a new VarnishCluster Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func SetupVarnishReconciler(mgr manager.Manager, cfg *config.Config, varnish varnishadm.VarnishAdministrator, logr *logger.Logger) error {
+func SetupVarnishReconciler(mgr manager.Manager, cfg *config.Config, varnish varnishadm.VarnishAdministrator, metrics *metrics.VarnishControllerMetrics, logr *logger.Logger) error {
 	r := &ReconcileVarnish{
 		config:       cfg,
 		logger:       logr,
@@ -49,6 +50,7 @@ func SetupVarnishReconciler(mgr manager.Manager, cfg *config.Config, varnish var
 		scheme:       mgr.GetScheme(),
 		varnish:      varnish,
 		eventHandler: events.NewEventHandler(mgr.GetEventRecorderFor(events.EventRecorderName), cfg.PodName),
+		metrics:      metrics,
 	}
 
 	podMapFunc := &handler.EnqueueRequestsFromMapFunc{
@@ -102,6 +104,7 @@ type ReconcileVarnish struct {
 	scheme       *runtime.Scheme
 	eventHandler *events.EventHandler
 	varnish      varnishadm.VarnishAdministrator
+	metrics      *metrics.VarnishControllerMetrics
 }
 
 func (r *ReconcileVarnish) Reconcile(request reconcile.Request) (reconcile.Result, error) {

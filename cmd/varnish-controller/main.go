@@ -10,8 +10,10 @@ import (
 	"icm-varnish-k8s-operator/pkg/logger"
 	"icm-varnish-k8s-operator/pkg/varnishcontroller/config"
 	"icm-varnish-k8s-operator/pkg/varnishcontroller/controller"
+	varnishMetrics "icm-varnish-k8s-operator/pkg/varnishcontroller/metrics"
 	"icm-varnish-k8s-operator/pkg/varnishcontroller/varnishadm"
 	"log"
+	controllerMetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 
@@ -44,6 +46,7 @@ func main() {
 
 	logr.Infof("Version: %s", Version)
 	logr.Infof("Log level: %s", varnishControllerConfig.LogLevel.String())
+	logr.Infof("Prometheus metrics exporter port: %d", v1alpha1.VarnishControllerMetricsPort)
 
 	ctrl.SetLogger(zapr.NewLogger(logr.Desugar())) //set logger for controller-runtime to see internal library logs
 
@@ -64,10 +67,14 @@ func main() {
 		log.Fatalf("could not load rest client config. Error: %s", err)
 	}
 
+	vMetrics := varnishMetrics.NewVarnishControllerMetrics()
+	controllerMetrics.Registry.MustRegister(vMetrics.VCLCompilationError)
+
 	mgr, err := ctrl.NewManager(clientConfig, ctrl.Options{
 		Namespace:              varnishControllerConfig.Namespace,
 		Scheme:                 scheme,
 		HealthProbeBindAddress: fmt.Sprintf(":%d", v1alpha1.HealthCheckPort),
+		MetricsBindAddress:     fmt.Sprintf(":%d", v1alpha1.VarnishControllerMetricsPort),
 	})
 
 	if err != nil {
@@ -87,7 +94,7 @@ func main() {
 		config.VCLConfigDir,
 		varnishControllerConfig.VarnishAdmArgs)
 
-	if err = controller.SetupVarnishReconciler(mgr, varnishControllerConfig, varnishAdm, logr); err != nil {
+	if err = controller.SetupVarnishReconciler(mgr, varnishControllerConfig, varnishAdm, vMetrics, logr); err != nil {
 		logr.With(zap.Error(err)).Fatalw("could not setup controller")
 	}
 	logr.Infow("Looking up for a Varnish service")

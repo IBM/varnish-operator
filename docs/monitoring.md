@@ -41,6 +41,10 @@ The service port can be used to setup metrics scraping using [Prometheus Operato
 
 The pods itself also expose metrics on port `9131`.
 
+There are also metrics exposed by the Varnish controller on a different port. You'll have to setup your ServiceMonitor to scrape metrics from the port 8235 (or refer by its name `ctrl-metrics` 
+
+One of the metrics can be used to setup alerts when the provided VCL failed to compile. It's called `varnish_vcl_compilation_error` and has the value `0` if the last compilation attempt was successful or `1` in case of failure.
+
 ### VarnishCluster with Monitoring Stack Example
 
 The repo has a Helm chart example that installs a simple VarnishCluster with Prometheus and Grafana configured to monitor it. The chart depends on the Prometheus operator so it has to be installed first. 

@@ -35,18 +35,20 @@ const (
 	VarnishPort                   = 6081
 	VarnishAdminPort              = 6082
 	VarnishPrometheusExporterPort = 9131
+	VarnishControllerMetricsPort  = 8235
 	HealthCheckPort               = 8234
 
-	VarnishContainerName        = "varnish"
-	VarnishMetricsExporterName  = "metrics-exporter"
-	VarnishMetricsExporterImage = "-metrics-exporter"
-	VarnishControllerName       = "varnish-controller"
-	VarnishControllerImage      = "-controller"
-	VarnishMetricsPortName      = "metrics"
-	VarnishPortName             = "varnish"
-	VarnishSharedVolume         = "workdir"
-	VarnishSettingsVolume       = "settings"
-	VarnishSecretVolume         = "secret"
+	VarnishContainerName             = "varnish"
+	VarnishMetricsExporterName       = "metrics-exporter"
+	VarnishMetricsExporterImage      = "-metrics-exporter"
+	VarnishControllerName            = "varnish-controller"
+	VarnishControllerImage           = "-controller"
+	VarnishControllerMetricsPortName = "ctrl-metrics"
+	VarnishMetricsPortName           = "metrics"
+	VarnishPortName                  = "varnish"
+	VarnishSharedVolume              = "workdir"
+	VarnishSettingsVolume            = "settings"
+	VarnishSecretVolume              = "secret"
 
 	VarnishUpdateStrategyDelayedRollingUpdate = "DelayedRollingUpdate"
 )

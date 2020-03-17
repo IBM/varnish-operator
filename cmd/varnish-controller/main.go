@@ -13,6 +13,7 @@ import (
 	varnishMetrics "icm-varnish-k8s-operator/pkg/varnishcontroller/metrics"
 	"icm-varnish-k8s-operator/pkg/varnishcontroller/varnishadm"
 	"log"
+
 	controllerMetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 
 	"sigs.k8s.io/controller-runtime/pkg/healthz"

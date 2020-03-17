@@ -3,16 +3,17 @@ package controller
 import (
 	"context"
 	"errors"
-	"github.com/onsi/gomega"
-	prometheusClient "github.com/prometheus/client_model/go"
 	"icm-varnish-k8s-operator/api/v1alpha1"
 	varnishEvents "icm-varnish-k8s-operator/pkg/varnishcontroller/events"
 	"icm-varnish-k8s-operator/pkg/varnishcontroller/metrics"
+	"reflect"
+	"testing"
+
+	"github.com/onsi/gomega"
+	prometheusClient "github.com/prometheus/client_model/go"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"reflect"
-	"testing"
 )
 
 type varnishMock struct {

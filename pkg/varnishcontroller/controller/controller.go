@@ -67,15 +67,8 @@ func SetupVarnishReconciler(mgr manager.Manager, cfg *config.Config, varnish var
 	builder := ctrl.NewControllerManagedBy(mgr)
 	builder.Named("varnish-controller")
 
-	// Normally the `For` function receives the type the operator owns. For the operator it's the VarnishCluster.
-	// For varnish-controller we don't have such resource but still need to provide something for the `For` function, it will fail otherwise.
-	// For that reason we provide the v1alpha1.VarnishCluster resource but filter it all out. The operator will receive events from Kubernetes but won't react.
 	builder.For(&v1alpha1.VarnishCluster{})
-	builder.WithEventFilter(predicates.NewIgnoreVarnishClusterPredicate())
-
-	builder.Watches(&source.Kind{Type: &v1.ConfigMap{}}, podMapFunc)
-	builder.WithEventFilter(predicates.NewConfigMapNamePredicate(cfg.ConfigMapName, logr))
-
+	builder.WithEventFilter(predicates.NewVarnishClusterUIDPredicate(cfg.VarnishClusterUID, logr))
 	builder.Watches(&source.Kind{Type: &v1.Endpoints{}}, podMapFunc)
 
 	backendsLabels, err := labels.ConvertSelectorToLabelsMap(cfg.EndpointSelectorString)
@@ -160,7 +153,7 @@ func (r *ReconcileVarnish) reconcileWithContext(ctx context.Context, request rec
 		return reconcile.Result{}, errors.WithStack(err)
 	}
 
-	cm, err := r.getConfigMap(ctx, r.config.Namespace, r.config.ConfigMapName)
+	cm, err := r.getConfigMap(ctx, r.config.Namespace, *vc.Spec.VCL.ConfigMapName)
 	if err != nil {
 		return reconcile.Result{}, errors.WithStack(err)
 	}

@@ -119,7 +119,6 @@ var _ = Describe("statefulset", func() {
 				icmv1alpha1.LabelVarnishComponent: icmv1alpha1.VarnishComponentNoCacheService,
 				icmv1alpha1.LabelVarnishUID:       string(newVC.UID),
 			}).String()}))
-			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "CONFIGMAP_NAME", Value: *newVC.Spec.VCL.ConfigMapName}))
 			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "NAMESPACE", Value: vcNamespace}))
 			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "POD_NAME", ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{APIVersion: "v1", FieldPath: "metadata.name"}}}))
 			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "VARNISH_CLUSTER_NAME", Value: vcName}))

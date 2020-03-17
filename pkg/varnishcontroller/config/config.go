@@ -20,7 +20,6 @@ const VCLConfigDir = "/etc/varnish"
 // Config that reads in env variables
 type Config struct {
 	EndpointSelectorString string        `env:"ENDPOINT_SELECTOR_STRING,required"`
-	ConfigMapName          string        `env:"CONFIGMAP_NAME,required"`
 	Namespace              string        `env:"NAMESPACE,required"`
 	PodName                string        `env:"POD_NAME,required"`
 	VarnishClusterName     string        `env:"VARNISH_CLUSTER_NAME,required"`

@@ -49,7 +49,7 @@ func (ep *endpointSelectorPredicate) Create(e event.CreateEvent) bool {
 }
 
 func (ep *endpointSelectorPredicate) Delete(e event.DeleteEvent) bool {
-	return ep.shared(e.Object, e.Meta)
+	return false // happens only when the VarnishCluster is deleted. Don't do anything in that case.
 }
 
 func (ep *endpointSelectorPredicate) Update(e event.UpdateEvent) bool {

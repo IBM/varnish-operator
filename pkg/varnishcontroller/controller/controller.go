@@ -92,6 +92,9 @@ func SetupVarnishReconciler(mgr manager.Manager, cfg *config.Config, varnish var
 	endpointsSelectors := []labels.Selector{labels.SelectorFromSet(backendsLabels), varnishPodsSelector}
 	builder.WithEventFilter(predicates.NewEndpointsSelectors(endpointsSelectors, logr))
 
+	// uncomment the line below if you want to debug which events come to the controller
+	//builder.WithEventFilter(predicates.NewLoggingPredicate(logr))
+
 	return builder.Complete(r)
 }
 
@@ -132,9 +135,16 @@ func (r *ReconcileVarnish) Reconcile(request reconcile.Request) (reconcile.Resul
 }
 
 func (r *ReconcileVarnish) reconcileWithContext(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
+	logr := logger.FromContext(ctx)
 	vc := &v1alpha1.VarnishCluster{}
 	err := r.Get(ctx, types.NamespacedName{Namespace: request.Namespace, Name: r.config.VarnishClusterName}, vc)
 	if err != nil {
+		// Happens when VarnishCluster is already deleted but the pods are still alive.
+		// They are going to be deleted soon by the StatefulSet controller.
+		if apierrors.IsNotFound(err) {
+			logr.Infow("VarnishCluster is not found. Aborting, as the pod is going to be deleted soon.")
+			return reconcile.Result{}, nil
+		}
 		return reconcile.Result{}, errors.WithStack(err)
 	}
 

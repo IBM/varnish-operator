@@ -23,7 +23,7 @@ func (ep *configMapNamePredicate) Create(e event.CreateEvent) bool {
 }
 
 func (ep *configMapNamePredicate) Delete(e event.DeleteEvent) bool {
-	return ep.shared(e.Meta, e.Object)
+	return false // happens only when the VarnishCluster is deleted. Don't do anything in that case.
 }
 
 func (ep *configMapNamePredicate) Update(e event.UpdateEvent) bool {

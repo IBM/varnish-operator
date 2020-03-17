@@ -610,8 +610,8 @@ func TestEndpointsSharedPredicate(t *testing.T) {
 		if allowToProcess := epPredicate.Create(event.CreateEvent{Object: c.obj, Meta: c.obj}); allowToProcess != c.shouldBeProcessed {
 			t.Fatalf("Test %q failed for Create. Allowed to process %t, Should've been alllowed to process: %t", c.name, allowToProcess, c.shouldBeProcessed)
 		}
-		if allowToProcess := epPredicate.Delete(event.DeleteEvent{Object: c.obj, Meta: c.obj}); allowToProcess != c.shouldBeProcessed {
-			t.Fatalf("Test %q failed for Delete. Allowed to process %t, Should've been alllowed to process: %t", c.name, allowToProcess, c.shouldBeProcessed)
+		if allowToProcess := epPredicate.Delete(event.DeleteEvent{Object: c.obj, Meta: c.obj}); allowToProcess {
+			t.Fatalf("Test %q failed for Delete. Should not have been allowed to process.", c.name)
 		}
 		if allowToProcess := epPredicate.Generic(event.GenericEvent{Object: c.obj, Meta: c.obj}); allowToProcess != c.shouldBeProcessed {
 			t.Fatalf("Test %q failed for Generic. Allowed to process %t, Should've been alllowed to process: %t", c.name, allowToProcess, c.shouldBeProcessed)

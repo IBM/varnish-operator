@@ -1,5 +1,5 @@
 #!groovy
-@Library("icm-jenkins-common@0.114.0")
+@Library("icm-jenkins-common@0.117.0")
 import com.ibm.icm.*
 
 icmJenkinsProperties().
@@ -34,6 +34,12 @@ artifactoryUserPasswordId = 'TAAS-Artifactory-User-Password-Global'
 // For go modules download
 goVirtualProxyRepo = 'wcp-icm-go-virtual'
 
+dockerKeepDev = [
+        releases: 0,
+        days: 14,
+        tagEndsWith: '-dev'
+]
+
 node('icm_agent_go') {
   GitInfo gitInfo = icmCheckoutStages(withTags: true) // By default the clone occurs without refs fetch
 
@@ -58,7 +64,7 @@ node('icm_agent_go') {
       println 'This is a release branch. Preparing the build...'
       try {
         icmCloudCliSetupStages(ibmCloud.apiKeyId, ibmCloud.region, CloudCliPluginConsts.CONTAINER_PLUGINS)
-        def buildRes = dockerBuildPush(appVersion, gitInfo) //use var assignment here to avoid `unable to resolve class Gitinfo`
+        dockerBuildPush(appVersion)
         helmUtils.setChartVersion(helmChart, appVersion)
         icmWithArtifactoryConfig(artifactoryRoot, artifactoryRepo, artifactoryUserPasswordId) {
           icmHelmChartPackagePublishStage(helmChart, it.config.createHelmPublish())
@@ -81,8 +87,8 @@ node('icm_agent_go') {
   } else if (isUntaggedCommit) {
     println 'This is a feature branch. Preparing the build...'
     icmCloudCliSetupStages(ibmCloud.apiKeyId, ibmCloud.region, CloudCliPluginConsts.CONTAINER_PLUGINS)
-    appVersion += '-' + StringUtils.slugify(gitInfo.branch)
-    def buildRes = dockerBuildPush(appVersion, gitInfo) //use var assignment here to avoid `unable to resolve class Gitinfo`
+    appVersion = StringUtils.slugify("$appVersion-${gitInfo.branch}-dev", 128)
+    dockerBuildPush(appVersion)
     helmUtils.setChartVersion(helmChart, appVersion)
     icmWithArtifactoryConfig(artifactoryRoot, artifactoryRepo, artifactoryUserPasswordId) {
       icmHelmChartPackagePublishStage(helmChart, it.config.createHelmPublish())
@@ -90,25 +96,32 @@ node('icm_agent_go') {
   }
 }
 
-def dockerBuildPush(String appVersion, GitInfo gitinfo) {
+def dockerBuildPush(String appVersion) {
   stage('Docker build & push') {
 
     def stepsForParallel = [:]
 
     icmWithArtifactoryConfig(artifactoryRoot, goVirtualProxyRepo, artifactoryUserPasswordId) {
       stepsForParallel['Building varnish'] = {
-        icmDockerStages(new DockerImageInfo(docker.registry, docker.registryNamespace, 'varnish', appVersion, docker.isLatest), ['-f': 'Dockerfile.varnishd'])
+        DockerImageInfo dockerImageInfo = new DockerImageInfo(docker.registry, docker.registryNamespace, 'varnish', appVersion, docker.isLatest)
+        cleanupDockerImages(dockerImageInfo)
+        icmDockerStages(dockerImageInfo, ['-f': 'Dockerfile.varnishd'])
       }
       stepsForParallel['Building varnish-metrics-exporter'] = {
-        icmDockerStages(new DockerImageInfo(docker.registry, docker.registryNamespace, 'varnish-metrics-exporter', appVersion, docker.isLatest), ['-f': 'Dockerfile.exporter'])
+        DockerImageInfo dockerImageInfo = new DockerImageInfo(docker.registry, docker.registryNamespace, 'varnish-metrics-exporter', appVersion, docker.isLatest)
+        cleanupDockerImages(dockerImageInfo)
+        icmDockerStages(dockerImageInfo, ['-f': 'Dockerfile.exporter'])
       }
       stepsForParallel['Building varnish-controller'] = {
-        icmDockerStages(new DockerImageInfo(docker.registry, docker.registryNamespace, 'varnish-controller', appVersion, docker.isLatest), ['-f': 'Dockerfile.controller', '--build-arg': "GOPROXY=\"https://${ARTIFACTORY_USER}:${ARTIFACTORY_PASS}@na.artifactory.swg-devops.com/artifactory/${ARTIFACTORY_REPO}/\""])
+        DockerImageInfo dockerImageInfo = new DockerImageInfo(docker.registry, docker.registryNamespace, 'varnish-controller', appVersion, docker.isLatest)
+        cleanupDockerImages(dockerImageInfo)
+        icmDockerStages(dockerImageInfo, ['-f': 'Dockerfile.controller', '--build-arg': "GOPROXY=\"https://${ARTIFACTORY_USER}:${ARTIFACTORY_PASS}@na.artifactory.swg-devops.com/artifactory/${ARTIFACTORY_REPO}/\""])
       }
       stepsForParallel['Building varnish-operator'] = {
-        icmDockerStages(new DockerImageInfo(docker.registry, docker.registryNamespace, 'varnish-operator', appVersion, docker.isLatest), ['-f': 'Dockerfile', '--build-arg': "GOPROXY=\"https://${ARTIFACTORY_USER}:${ARTIFACTORY_PASS}@na.artifactory.swg-devops.com/artifactory/${ARTIFACTORY_REPO}/\""])
+        DockerImageInfo dockerImageInfo = new DockerImageInfo(docker.registry, docker.registryNamespace, 'varnish-operator', appVersion, docker.isLatest)
+        cleanupDockerImages(dockerImageInfo)
+        icmDockerStages(dockerImageInfo, ['-f': 'Dockerfile', '--build-arg': "GOPROXY=\"https://${ARTIFACTORY_USER}:${ARTIFACTORY_PASS}@na.artifactory.swg-devops.com/artifactory/${ARTIFACTORY_REPO}/\""])
       }
-
 
     parallel stepsForParallel
     }
@@ -153,4 +166,8 @@ def runTests() {
     """)
     }
   }
+}
+
+def cleanupDockerImages(DockerImageInfo dockerImageInfo) {
+  icmDockerCleanupStage(dockerImageInfo, dockerKeepDev['tagEndsWith'], dockerKeepDev['releases'], dockerKeepDev['days'], true, false)
 }

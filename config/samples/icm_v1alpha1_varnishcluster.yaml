@@ -12,7 +12,7 @@ spec:
 
   varnish:
     # path to image + tag
-    image: us.icr.io/icm-varnish/varnish:0.22.1
+    image: us.icr.io/icm-varnish/varnish:0.23.0
     imagePullSecret: docker-reg-secret
     # imagePullPolicy controls how the varnish image will be pulled for new containers
     imagePullPolicy: Always

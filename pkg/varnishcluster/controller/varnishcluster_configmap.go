@@ -98,7 +98,7 @@ func (r *ReconcileVarnishCluster) reconcileConfigMap(ctx context.Context, podsSe
 	for _, item := range pods.Items {
 		//do not count pods that are not updated with VCL version. Those are pods that are just created and not fully functional
 		if item.Annotations["configMapVersion"] == "" {
-			logr.Debugw(fmt.Sprintf("ConfigMapVersion annotation is not present. Skipping the pod."))
+			logr.Debugw("ConfigMapVersion annotation is not present. Skipping the pod.")
 		} else if item.Annotations["configMapVersion"] == instance.Status.VCL.ConfigMapVersion {
 			latest++
 		} else {

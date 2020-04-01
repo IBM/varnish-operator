@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
 	icmv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
 	vclabels "icm-varnish-k8s-operator/pkg/labels"
@@ -101,24 +102,31 @@ var _ = Describe("the ConfigMap", func() {
 				return k8sClient.Get(context.Background(), cmName, cm)
 			}, time.Second*5).Should(Succeed())
 
-			oldVersion := newVC.Status.VCL.ConfigMapVersion
+			newCMName := "newtest"
 			By("the ConfigMapVersion should be changed")
+			Eventually(func() error {
+				err := k8sClient.Get(context.Background(), types.NamespacedName{Name: vcName, Namespace: vcNamespace}, newVC)
+				if err != nil {
+					return err
+				}
+				newVC.Spec.VCL.ConfigMapName = &newCMName
+				err = k8sClient.Update(context.Background(), newVC)
+				return err
+			}, time.Second*10).Should(Succeed())
+
+			newCM := &v1.ConfigMap{}
+			Eventually(func() error {
+				return k8sClient.Get(context.Background(), types.NamespacedName{Name: newCMName, Namespace: vcNamespace}, newCM)
+			}, time.Second*5).Should(Succeed())
+
 			Eventually(func() string {
 				err := k8sClient.Get(context.Background(), types.NamespacedName{Name: vcName, Namespace: vcNamespace}, newVC)
-				Expect(err).ToNot(HaveOccurred())
-				updatedCmName := "newtest"
-				newVC.Spec.VCL.ConfigMapName = &updatedCmName
-				err = k8sClient.Update(context.Background(), newVC)
-				Expect(err).ToNot(HaveOccurred())
+				if err != nil {
+					return fmt.Sprintf("can't get the ConfigMap: %s", err.Error())
+				}
+
 				return newVC.Status.VCL.ConfigMapVersion
-			}, time.Second*10).ShouldNot(Equal(oldVersion))
-			newCmName := types.NamespacedName{Name: "newtest", Namespace: vcNamespace}
-			By("the new config map should be created")
-			Eventually(func() error {
-				updatedCm := &v1.ConfigMap{}
-				err = k8sClient.Get(context.Background(), newCmName, updatedCm)
-				return err
-			}, time.Second*5).Should(Succeed())
+			}, time.Second*10).Should(Equal(newCM.ResourceVersion))
 		})
 	})
 

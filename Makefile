@@ -10,7 +10,7 @@ VARNISH_CONTROLLER_IMG ?= ${VARNISH_CONTROLLER_PUBLISH_IMG}-dev
 VARNISH_METRICS_PUBLISH_IMG ?= varnish-metrics-exporter:${VERSION}
 VARNISH_METRICS_IMG ?= ${VARNISH_METRICS_PUBLISH_IMG}-dev
 NAMESPACE ?= "default"
-CRD_OPTIONS ?= "crd:trivialVersions=true"
+CRD_OPTIONS ?= "crd:crdVersions=v1,trivialVersions=false"
 
 # all: test varnish-operator
 all: test varnish-operator varnish-controller
@@ -40,8 +40,19 @@ uninstall:
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests:
+	# CRD apiextensions.k8s.io/v1
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=varnish-operator paths="./..." output:crd:artifacts:config=config/crd/bases
-	kustomize build ${ROOT_DIR}config/crd > $(ROOT_DIR)varnish-operator/templates/customresourcedefinition.yaml
+	echo '{{ if .Capabilities.APIVersions.Has "apiextensions.k8s.io/v1" }}' > $(ROOT_DIR)varnish-operator/templates/customresourcedefinition.yaml
+	kustomize build ${ROOT_DIR}config/crd >> $(ROOT_DIR)varnish-operator/templates/customresourcedefinition.yaml
+	echo '{{ end }}' >> $(ROOT_DIR)varnish-operator/templates/customresourcedefinition.yaml
+
+	# CRD apiextensions.k8s.io/v1beta1
+	$(CONTROLLER_GEN) crd:trivialVersions=false rbac:roleName=varnish-operator paths="./..." output:crd:artifacts:config=config/crdv1beta1/bases
+	echo '{{ if not (.Capabilities.APIVersions.Has "apiextensions.k8s.io/v1") }}' > $(ROOT_DIR)varnish-operator/templates/customresourcedefinition_v1beta1.yaml
+	kustomize build ${ROOT_DIR}config/crdv1beta1 >> $(ROOT_DIR)varnish-operator/templates/customresourcedefinition_v1beta1.yaml
+	echo '{{ end }}' >> $(ROOT_DIR)varnish-operator/templates/customresourcedefinition_v1beta1.yaml
+
+	# ClusterRole
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=varnish-operator paths="./..." output:crd:none output:rbac:stdout > $(ROOT_DIR)varnish-operator/templates/clusterrole.yaml
 
 # Run goimports against code

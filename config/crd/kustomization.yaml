@@ -1,5 +1,10 @@
 resources:
   - bases/icm.ibm.com_varnishclusters.yaml
 
-patchesStrategicMerge:
-  - patches/crd_patch.yaml
+patchesJson6902:
+  - target:
+      group: apiextensions.k8s.io
+      version: v1
+      kind: CustomResourceDefinition
+      name: varnishclusters.icm.ibm.com
+    path: patches/crd_patch.yaml

@@ -9,6 +9,7 @@ env:
   - KUBERNETES_VERSION=1.15.6 
   - KUBERNETES_VERSION=1.16.3 
   - KUBERNETES_VERSION=1.17.0 
+  - KUBERNETES_VERSION=1.18.0
 services:
 - docker
 before_script:

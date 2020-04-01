@@ -39,8 +39,8 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
     && mkdir -p /etc/varnish /var/lib/varnish \
     && chown -R varnish /etc/varnish /var/lib/varnish
 
-COPY --from=builder /go/src/icm-varnish-k8s-operator/varnish-controller /varnish-controller
 COPY --from=binary /usr/bin/varnishadm /usr/bin/varnishstat /usr/bin/
+COPY --from=builder /go/src/icm-varnish-k8s-operator/varnish-controller /varnish-controller
 
 USER varnish
 

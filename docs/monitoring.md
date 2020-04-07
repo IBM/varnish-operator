@@ -6,6 +6,8 @@ The operator is built using the [Kubebuilder SDK](https://github.com/kubernetes-
 
 A service, created by the operator's Helm chart, exposes the metrics on port `8329` (named `prometheus-metrics`) and can be used to scrape operator metrics.
 
+Additionally, the operator can install a ServiceMonitor configured to scrape operator metrics and a Grafana dashboard with prebuilt dashboard for the operator. The configuration options for them can be specified under `.monitoring` [values override](operator-configuration.md) field of the Helm chart.
+
 ### Monitoring Stack Example
 
 The repo includes an [example helm chart](https://github.ibm.com/TheWeatherCompany/icm-varnish-k8s-operator/tree/master/config/samples/helm-charts/varnish-operator-monitoring) for a Prometheus and Grafana installation that is configured to scrape metrics from the operator and display included dashboards. It depends on the [Prometheus Operator](https://github.com/coreos/prometheus-operator) so it has to be installed first.

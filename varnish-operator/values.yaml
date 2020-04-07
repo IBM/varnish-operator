@@ -21,3 +21,16 @@ container:
 logLevel: info
 # logging encoder: "json", "console"
 logFormat: json
+monitoring:
+  grafanaDashboard:
+    enabled: false
+    namespace: ""
+    labels:
+      grafana_dashboard: "1"
+    datasourceName: ""
+  prometheusServiceMonitor:
+    enabled: false
+    namespace: ""
+    labels:
+      operator: varnish-operator
+    scrapeInterval: 30s

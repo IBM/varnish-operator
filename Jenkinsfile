@@ -160,7 +160,7 @@ def runTests() {
       export GO111MODULE=on
       export GOPROXY="https://${ARTIFACTORY_USER}:${ARTIFACTORY_PASS}@na.artifactory.swg-devops.com/artifactory/${ARTIFACTORY_REPO}/"
       go mod download
-      golangci-lint run --verbose
+      golangci-lint run --timeout 2m --verbose
       go test ./pkg/... ./api/... -coverprofile=cover.out
       go tool cover -func=cover.out | tail -1 | awk '{print \"Total coverage: \" \$3}'
     """)

@@ -6,6 +6,7 @@ import (
 	"icm-varnish-k8s-operator/api/v1alpha1"
 	varnishEvents "icm-varnish-k8s-operator/pkg/varnishcontroller/events"
 	"icm-varnish-k8s-operator/pkg/varnishcontroller/metrics"
+	"icm-varnish-k8s-operator/pkg/varnishcontroller/varnishadm"
 	"reflect"
 	"testing"
 
@@ -19,8 +20,9 @@ import (
 type varnishMock struct {
 	reloadResponse       string
 	pingError            error
-	listResponse         []byte
+	listResponse         []varnishadm.VCLConfig
 	listError            error
+	discardError         error
 	reloadError          error
 	activeVCLConfigName  string
 	activeVCLConfigError error
@@ -30,7 +32,7 @@ func (v *varnishMock) Ping() error {
 	return v.pingError
 }
 
-func (v *varnishMock) List() ([]byte, error) {
+func (v *varnishMock) List() ([]varnishadm.VCLConfig, error) {
 	return v.listResponse, v.listError
 }
 
@@ -40,6 +42,10 @@ func (v *varnishMock) Reload(version, entry string) ([]byte, error) {
 
 func (v *varnishMock) GetActiveConfigurationName() (string, error) {
 	return v.activeVCLConfigName, v.activeVCLConfigError
+}
+
+func (v *varnishMock) Discard(vclConfigName string) error {
+	return v.discardError
 }
 
 type eventsObserver struct {

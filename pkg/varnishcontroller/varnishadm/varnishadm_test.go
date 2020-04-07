@@ -89,19 +89,19 @@ func TestReloadCommand(t *testing.T) {
 		{
 			nil,
 			mockSuccesResponse,
-			[]byte("A response from external programm"),
+			[]byte("A response from external program"),
 			"success",
 		},
 		{
 			errors.New("intermediate load err"),
 			mockLoadErrResponse,
-			[]byte("A response from external programm"),
+			[]byte("A response from external program"),
 			"errorOnLoad",
 		},
 		{
 			errors.New("use error"),
 			mockUseErrResponse,
-			[]byte("A response from external programm"),
+			[]byte("A response from external program"),
 			"errorOnUse",
 		},
 	}
@@ -125,19 +125,30 @@ func TestListCommand(t *testing.T) {
 	cases := []struct {
 		errExpected error
 		execute     executorProvider
-		response    []byte
+		response    []VCLConfig
 		desc        string
 	}{
 		{
 			nil,
-			mockSuccesResponse,
-			[]byte("A response from external programm"),
+			mockSuccesListResponse,
+			[]VCLConfig{
+				{
+					Status:      VCLStatusAvailable,
+					Name:        "boot",
+					Temperature: VCLTemperatureCold,
+				},
+				{
+					Status:      VCLStatusActive,
+					Name:        "v55329",
+					Temperature: VCLTemperatureWarm,
+				},
+			},
 			"success",
 		},
 		{
-			errors.New("some error"),
+			errors.Wrap(errors.New("some error"), "A response from external program"),
 			mockErrResponse,
-			[]byte("A response from external programm"),
+			[]VCLConfig{},
 			"error",
 		},
 	}
@@ -148,7 +159,7 @@ func TestListCommand(t *testing.T) {
 			}
 			data, err := p.List()
 			if !cmp.Equal(data, tc.response) {
-				tt.Errorf("Unexpected response %q\n Expected: %q", data, tc.response)
+				tt.Errorf("Unexpected response %v\n Expected: %v", data, tc.response)
 			}
 			if !cmp.Equal(err, tc.errExpected, equalError) {
 				tt.Errorf("Unexpected error return. %s", cmp.Diff(err, tc.errExpected))
@@ -207,13 +218,18 @@ func mockUseErrResponse(name string, args ...string) executor {
 func mockSuccesResponse(name string, args ...string) executor {
 	return &mockExecutor{response: response}
 }
+
+func mockSuccesListResponse(name string, args ...string) executor {
+	return &mockExecutor{response: []byte(simpleVCLconfig)}
+}
+
 func mockErrResponse(name string, args ...string) executor {
 	return &mockExecutor{response: response, err: errors.New("some error")}
 }
 
 var (
 	staticPingMock    = mockExecutor{count: 5, delay: 5 * time.Microsecond, intermediateErr: errors.New("intermediate err")}
-	response          = []byte("A response from external programm")
+	response          = []byte("A response from external program")
 	staticLoadErrMock = mockExecutor{count: 1, intermediateErr: errors.New("intermediate load err"), response: response}
 	staticUseErrMock  = mockExecutor{count: 1, err: errors.New("use error"), response: response}
 	simpleVCLconfig   = `
@@ -300,7 +316,7 @@ func TestParseConfigs(t *testing.T) {
 		{
 			input:       unknownVCLconfig,
 			expected:    nil,
-			expectedErr: errors.New("unknown VarnishClusterVCL config format"),
+			expectedErr: errors.New("unknown VCL config format"),
 		},
 	}
 
@@ -348,7 +364,7 @@ func TestGetActiveConfigurationName(t *testing.T) {
 			"active_labeled",
 		},
 		{
-			errors.Errorf("No active VarnishClusterVCL configuration found"),
+			errors.Errorf("No active VCL configuration found"),
 			func(name string, args ...string) executor {
 				return &mockExecutor{response: []byte(inactiveVCLconfig)}
 			},
@@ -356,7 +372,7 @@ func TestGetActiveConfigurationName(t *testing.T) {
 			"inactive",
 		},
 		{
-			errors.WithStack(errors.New("unknown VarnishClusterVCL config format")),
+			errors.WithStack(errors.New("unknown VCL config format")),
 			func(name string, args ...string) executor {
 				return &mockExecutor{response: []byte(unknownVCLconfig)}
 			},

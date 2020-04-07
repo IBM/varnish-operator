@@ -30,7 +30,8 @@ const (
 type Commander interface {
 	Ping() error
 	Reload(version, entry string) ([]byte, error)
-	List() ([]byte, error)
+	List() ([]VCLConfig, error)
+	Discard(vclConfigName string) error
 }
 
 // VarnishAdministrator the Commander interface extension by the funtcion which returns active configuration name.
@@ -120,11 +121,31 @@ func (v *VarnishAdm) Reload(version, entry string) ([]byte, error) {
 	return v.use(version)
 }
 
-// List returns a list of VCL names which had been load into the varnish instance.
+// List returns a list of VCL names which had been loaded into the varnish instance.
 // it is a wrapper over varnishadm vcl.list command
-func (v *VarnishAdm) List() ([]byte, error) {
-	args := append(v.varnishAdmArgs, "vcl.list")
-	return v.run(args)
+func (v *VarnishAdm) List() ([]VCLConfig, error) {
+	out, err := v.run(append(v.varnishAdmArgs, "vcl.list"))
+	if err != nil {
+		return []VCLConfig{}, errors.Wrap(err, string(out))
+	}
+
+	configs, err := parseVCLConfigsList(out)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return configs, nil
+}
+
+// Discard deletes an existing VCL from the Varnish instance
+// it is a wrapper over varnishadm vcl.discard command
+func (v *VarnishAdm) Discard(vclConfigName string) error {
+	out, err := v.run(append(v.varnishAdmArgs, "vcl.discard", vclConfigName))
+	if err != nil {
+		return errors.Wrap(err, string(out))
+	}
+
+	return nil
 }
 
 func (v *VarnishAdm) run(args []string) ([]byte, error) {
@@ -178,7 +199,7 @@ type VCLConfig struct {
 
 // getActiveVCLConfig returns the VarnishClusterVCL config currently used in VarnishClusterVarnish
 func (v *VarnishAdm) getActiveVCLConfig() (*VCLConfig, error) {
-	configsList, err := v.getVCLConfigsList()
+	configsList, err := v.List()
 	if err != nil {
 		return nil, err
 	}
@@ -188,20 +209,7 @@ func (v *VarnishAdm) getActiveVCLConfig() (*VCLConfig, error) {
 		}
 	}
 	// That means that VarnishClusterVarnish is in not started/invalid state. Return an error to trigger an another reconcile event
-	return nil, errors.Errorf("No active VarnishClusterVCL configuration found")
-}
-
-func (v *VarnishAdm) getVCLConfigsList() ([]VCLConfig, error) {
-	out, err := v.List()
-	if err != nil {
-		return nil, errors.Wrap(err, string(out))
-	}
-
-	configs, err := parseVCLConfigsList(out)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	return configs, nil
+	return nil, errors.Errorf("No active VCL configuration found")
 }
 
 func parseVCLConfigsList(commandOutput []byte) ([]VCLConfig, error) {
@@ -225,7 +233,7 @@ func parseVCLConfigsList(commandOutput []byte) ([]VCLConfig, error) {
 			config := VCLConfig{Status: columns[0], Name: columns[3], Label: isLabel, Temperature: temp[1], ReferencedVCL: refVCL}
 			configs = append(configs, config)
 		default:
-			return nil, errors.New("unknown VarnishClusterVCL config format")
+			return nil, errors.New("unknown VCL config format")
 		}
 	}
 	return configs, nil

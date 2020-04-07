@@ -6,6 +6,7 @@ import (
 	"icm-varnish-k8s-operator/api/v1alpha1"
 	"icm-varnish-k8s-operator/pkg/logger"
 	"icm-varnish-k8s-operator/pkg/varnishcontroller/events"
+	"icm-varnish-k8s-operator/pkg/varnishcontroller/varnishadm"
 	"strings"
 	"time"
 
@@ -17,7 +18,7 @@ const (
 	// For VCL version name we use config map resource version which is a number.
 	// Varnish doesn't accept config name that have numbers in the beginning. Even if it is disguised as strings (e.g. "1243").
 	// For that reasons we prepend this prefix.
-	VCLVersionPrefix = "v"
+	VCLVersionPrefix = "v-"
 )
 
 func (r *ReconcileVarnish) reconcileVarnish(ctx context.Context, vc *v1alpha1.VarnishCluster, pod *v1.Pod, cm *v1.ConfigMap) error {
@@ -42,12 +43,33 @@ func (r *ReconcileVarnish) reconcileVarnish(ctx context.Context, vc *v1alpha1.Va
 		r.eventHandler.Warning(vc, events.EventReasonReloadError, vcEventMsg)
 		return errors.Wrap(err, string(out))
 	}
+
 	r.metrics.VCLCompilationError.Set(0)
 	logr.Debugf("VarnishClusterVarnish successfully reloaded in %f seconds", time.Since(start).Seconds())
+
+	logr.Debugf("Cleaning up old VCL configs...")
+	cleanedUpVCLs := 0
+	configsList, err := r.varnish.List()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	// cleanup unused VCLs. It cleans up only VCLs created by varnish controller (those that start with our prefix)
+	for _, vclConfig := range configsList {
+		if vclConfig.Status != varnishadm.VCLStatusActive && strings.HasPrefix(vclConfig.Name, VCLVersionPrefix) {
+			err := r.varnish.Discard(vclConfig.Name)
+			if err != nil {
+				return errors.Wrapf(err, "Can't delete VCL config %q", vclConfig.Name)
+			}
+			cleanedUpVCLs++
+		}
+	}
+
+	logr.Debugf("Cleaned up %d VCL config(s)", cleanedUpVCLs)
 	return nil
 }
 
 // creates the VarnishClusterVCL config name from config map version
 func createVCLConfigName(configMapVersion string) string {
-	return fmt.Sprintf("%s-%s-%d", VCLVersionPrefix, configMapVersion, time.Now().Unix())
+	return fmt.Sprintf("%s%s-%d", VCLVersionPrefix, configMapVersion, time.Now().Unix())
 }

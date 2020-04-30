@@ -132,7 +132,7 @@ def buildPushDocs() {
   stage('Docs') {
     String url = steps.sh(returnStdout: true, script: "git remote get-url origin").replaceAll("https://", "").trim()
     sh(script: """
-      gitbook install
+      gitbook install ./docs
       gitbook build ./docs docs_generated --log=debug --debug
       cd docs_generated/
       git init

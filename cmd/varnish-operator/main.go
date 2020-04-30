@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"icm-varnish-k8s-operator/api/v1alpha1"
@@ -94,8 +95,9 @@ func main() {
 	logr.Infow("Setting up controller")
 	reconcileChan := make(chan event.GenericEvent)
 
+	ctx := logger.ToContext(context.Background(), logr)
 	vcCtrl := controller.NewVarnishReconciler(mgr, operatorConfig, logr, reconcileChan)
-	if err = controller.SetupVarnishReconciler(vcCtrl, mgr, reconcileChan); err != nil {
+	if err = controller.SetupVarnishReconciler(ctx, vcCtrl, mgr, reconcileChan); err != nil {
 		logr.With(zap.Error(err)).Fatalf("unable to setup controller")
 	}
 

@@ -679,6 +679,37 @@ spec:
               - panic
               - fatal
               type: string
+            monitoring:
+              properties:
+                grafanaDashboard:
+                  properties:
+                    datasourceName:
+                      type: string
+                    enabled:
+                      type: boolean
+                    labels:
+                      additionalProperties:
+                        type: string
+                      type: object
+                    namespace:
+                      type: string
+                  required:
+                  - datasourceName
+                  type: object
+                prometheusServiceMonitor:
+                  properties:
+                    enabled:
+                      type: boolean
+                    labels:
+                      additionalProperties:
+                        type: string
+                      type: object
+                    namespace:
+                      type: string
+                    scrapeInterval:
+                      type: string
+                  type: object
+              type: object
             podDisruptionBudget:
               description: PodDisruptionBudgetSpec is a description of a PodDisruptionBudget.
               properties:

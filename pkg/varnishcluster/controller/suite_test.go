@@ -125,7 +125,7 @@ var _ = BeforeSuite(func(done Done) {
 
 	testReconciler := SetupTestReconcile(vcCtrl)
 
-	err = SetupVarnishReconciler(testReconciler, mgr, reconcileChan)
+	err = SetupVarnishReconciler(context.Background(), testReconciler, mgr, reconcileChan)
 	Expect(err).ToNot(HaveOccurred())
 
 	mgrStopCh = StartTestManager(mgr)

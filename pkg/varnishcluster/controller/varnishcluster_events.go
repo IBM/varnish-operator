@@ -8,6 +8,9 @@ import (
 
 const (
 	EventRecorderNameVarnishCluster = "varnish-cluster" // appears in the 'From' column of the events list
+
+	EventReasonServiceMonitorKindNotFound = "servicemonitor-not-found"
+	EventReasonNamespaceNotFound          = "namespace-not-found"
 )
 
 // EventReason is the reason why the event was create. The value appears in the 'Reason' tab of the events list

@@ -133,6 +133,19 @@ spec:
   #podDisruptionBudget:
   #  maxUnavailable: 0
   #  minAvailable: 2
+  #monitoring:
+  #  prometheusServiceMonitor:
+  #    enabled: false
+  #    namespace: ""
+  #    labels:
+  #      foo: bar
+  #    scrapeInterval: 30s
+  #  grafanaDashboard:
+  #    enabled: false
+  #    namespace: ""
+  #    labels:
+  #      foo: bar
+  #    datasourceName: ""
 
   # logging level: "debug", "info", "warn", "error"
   #logLevel: info

@@ -61,6 +61,13 @@ var _ = Describe("Varnish Cluster", func() {
 						ConfigMapName:      proto.String("test"),
 						EntrypointFileName: proto.String("test.vcl"),
 					},
+					Monitoring: &icmv1alpha1.VarnishClusterMonitoring{
+						GrafanaDashboard: &icmv1alpha1.VarnishClusterMonitoringGrafanaDashboard{
+							Enabled:        true,
+							Namespace:      "",
+							DatasourceName: proto.String("Prometheus-datasource"),
+						},
+					},
 				},
 			}
 
@@ -69,6 +76,7 @@ var _ = Describe("Varnish Cluster", func() {
 
 			By("Checking if all resources are created")
 			expectResourceIsCreated(types.NamespacedName{Name: *vc.Spec.VCL.ConfigMapName, Namespace: vcNamespace}, &v1.ConfigMap{})
+			expectResourceIsCreated(types.NamespacedName{Name: names.GrafanaDashboard(vcName), Namespace: vcNamespace}, &v1.ConfigMap{})
 			expectResourceIsCreated(types.NamespacedName{Name: names.HeadlessService(vcName), Namespace: vcNamespace}, &v1.Service{})
 			expectResourceIsCreated(types.NamespacedName{Name: names.NoCacheService(vcName), Namespace: vcNamespace}, &v1.Service{})
 			expectResourceIsCreated(types.NamespacedName{Name: vcName, Namespace: vcNamespace}, &v1.Service{})
@@ -76,6 +84,8 @@ var _ = Describe("Varnish Cluster", func() {
 			expectResourceIsCreated(types.NamespacedName{Name: names.PodDisruptionBudget(vcName), Namespace: vcNamespace}, &policyv1beta1.PodDisruptionBudget{})
 			expectResourceIsCreated(types.NamespacedName{Name: names.Role(vcName), Namespace: vcNamespace}, &rbac.Role{})
 			expectResourceIsCreated(types.NamespacedName{Name: names.RoleBinding(vcName), Namespace: vcNamespace}, &rbac.RoleBinding{})
+			expectResourceIsCreated(types.NamespacedName{Name: names.ClusterRole(vcName, vcNamespace)}, &rbac.ClusterRole{})
+			expectResourceIsCreated(types.NamespacedName{Name: names.ClusterRoleBinding(vcName, vcNamespace)}, &rbac.ClusterRoleBinding{})
 			expectResourceIsCreated(types.NamespacedName{Name: names.ServiceAccount(vcName), Namespace: vcNamespace}, &v1.ServiceAccount{})
 			expectResourceIsCreated(types.NamespacedName{Name: names.StatefulSet(vcName), Namespace: vcNamespace}, &apps.StatefulSet{})
 
@@ -87,12 +97,15 @@ var _ = Describe("Varnish Cluster", func() {
 
 			By("Checking if all created resources are deleted")
 			expectResourceIsDeleted(types.NamespacedName{Name: *vc.Spec.VCL.ConfigMapName, Namespace: vcNamespace}, &v1.ConfigMap{})
+			expectResourceIsDeleted(types.NamespacedName{Name: names.GrafanaDashboard(vcName), Namespace: vcNamespace}, &v1.ConfigMap{})
 			expectResourceIsDeleted(types.NamespacedName{Name: names.HeadlessService(vcName), Namespace: vcNamespace}, &v1.Service{})
 			expectResourceIsDeleted(types.NamespacedName{Name: names.NoCacheService(vcName), Namespace: vcNamespace}, &v1.Service{})
 			expectResourceIsDeleted(types.NamespacedName{Name: vcName, Namespace: vcNamespace}, &v1.Service{})
 			expectResourceIsDeleted(types.NamespacedName{Name: names.PodDisruptionBudget(vcName), Namespace: vcNamespace}, &policyv1beta1.PodDisruptionBudget{})
 			expectResourceIsDeleted(types.NamespacedName{Name: names.Role(vcName), Namespace: vcNamespace}, &rbac.Role{})
 			expectResourceIsDeleted(types.NamespacedName{Name: names.RoleBinding(vcName), Namespace: vcNamespace}, &rbac.RoleBinding{})
+			expectResourceIsDeleted(types.NamespacedName{Name: names.ClusterRole(vcName, vcNamespace)}, &rbac.ClusterRole{})
+			expectResourceIsDeleted(types.NamespacedName{Name: names.ClusterRoleBinding(vcName, vcNamespace)}, &rbac.ClusterRoleBinding{})
 			expectResourceIsDeleted(types.NamespacedName{Name: names.ServiceAccount(vcName), Namespace: vcNamespace}, &v1.ServiceAccount{})
 			expectResourceIsDeleted(types.NamespacedName{Name: names.StatefulSet(vcName), Namespace: vcNamespace}, &apps.StatefulSet{})
 			expectResourceIsDeleted(types.NamespacedName{Name: names.VarnishSecret(vcName), Namespace: vcNamespace}, &v1.Secret{})

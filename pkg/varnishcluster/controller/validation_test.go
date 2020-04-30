@@ -704,4 +704,34 @@ var _ = Describe("Validation", func() {
 			Expect(err).To(BeNil())
 		})
 	})
+
+	Describe("grafana datasourceName field with dashboard enabled", func() {
+		It("should be required", func() {
+			backendPortStr := intstr.FromString("varnish")
+			vc := &icmv1alpha1.VarnishCluster{
+				ObjectMeta: objMeta,
+				Spec: icmv1alpha1.VarnishClusterSpec{
+					Backend: &icmv1alpha1.VarnishClusterBackend{
+						Selector: map[string]string{"app": "nginx"},
+						Port:     &backendPortStr,
+					},
+					Service: &icmv1alpha1.VarnishClusterService{
+						Port: proto.Int32(8081),
+					},
+					VCL: &icmv1alpha1.VarnishClusterVCL{
+						ConfigMapName:      proto.String("test"),
+						EntrypointFileName: proto.String("test.vcl"),
+					},
+					Monitoring: &icmv1alpha1.VarnishClusterMonitoring{
+						GrafanaDashboard: &icmv1alpha1.VarnishClusterMonitoringGrafanaDashboard{
+							Enabled: true,
+						},
+					},
+				},
+			}
+
+			err := k8sClient.Create(context.Background(), vc)
+			Expect(err).To(HaveOccurred())
+		})
+	})
 })

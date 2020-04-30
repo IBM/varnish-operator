@@ -39,3 +39,11 @@ func ServiceAccount(vcName string) string {
 func VarnishSecret(vcName string) string {
 	return vcName + "-varnish-secret"
 }
+
+func ServiceMonitor(vcName string) string {
+	return vcName + "-prometheus-servicemonitor"
+}
+
+func GrafanaDashboard(vcName string) string {
+	return vcName + "-grafana-dashboard"
+}

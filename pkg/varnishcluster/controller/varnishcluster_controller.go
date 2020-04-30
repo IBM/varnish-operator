@@ -10,6 +10,9 @@ import (
 	vcreconcile "icm-varnish-k8s-operator/pkg/varnishcluster/reconcile"
 	"time"
 
+	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
 	"k8s.io/apimachinery/pkg/labels"
 
 	"k8s.io/apimachinery/pkg/types"
@@ -39,7 +42,7 @@ const (
 	annotationVarnishClusterNamespace = "varnish-cluster-namespace"
 )
 
-func SetupVarnishReconciler(vcCtrl reconcile.Reconciler, mgr manager.Manager, reconcileChan chan event.GenericEvent) error {
+func SetupVarnishReconciler(ctx context.Context, vcCtrl reconcile.Reconciler, mgr manager.Manager, reconcileChan chan event.GenericEvent) error {
 	clusterRoleBindingEventHandler := &handler.EnqueueRequestsFromMapFunc{ToRequests: handler.ToRequestsFunc(
 		func(a handler.MapObject) []ctrl.Request {
 			cr, ok := a.Object.(*rbac.ClusterRoleBinding)
@@ -119,6 +122,22 @@ func SetupVarnishReconciler(vcCtrl reconcile.Reconciler, mgr manager.Manager, re
 	builder.Watches(&source.Channel{Source: reconcileChan}, &handler.EnqueueRequestForObject{})
 	builder.Watches(&source.Kind{Type: &v1.Pod{}}, varnishClusterPodsEventHandler)
 
+	serviceMonitorList := &unstructured.UnstructuredList{}
+	serviceMonitorList.SetGroupVersionKind(serviceMonitorListGVK)
+	err := mgr.GetClient().List(ctx, serviceMonitorList)
+	if err != nil {
+		if _, ok := errors.Cause(err).(*meta.NoKindMatchError); ok {
+			logger.FromContext(ctx).Warnf("Can't watch ServiceMonitor. ServiceMonitor Kind is not found. Prometheus operator needs to be installed first.", err)
+		} else {
+			logger.FromContext(ctx).Errorf("Can't watch ServiceMonitor: %s", err)
+			//the return is intentionally omitted. Better work without that watch than not at all
+		}
+	} else {
+		serviceMonitor := &unstructured.Unstructured{}
+		serviceMonitor.SetGroupVersionKind(serviceMonitorGVK)
+		builder.Owns(serviceMonitor)
+	}
+
 	return builder.Complete(vcCtrl)
 }
 
@@ -159,6 +178,7 @@ func NewVarnishReconciler(mgr manager.Manager, cfg *config.Config, logr *logger.
 // +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups=policy,resources=poddisruptionbudgets,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles;rolebindings;clusterroles;clusterrolebindings,verbs=list;watch;create;update;delete
+// +kubebuilder:rbac:groups=monitoring.coreos.com,resources=servicemonitors,verbs=list;watch;create;update;delete
 
 func (r *ReconcileVarnishCluster) Reconcile(request ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
@@ -279,6 +299,14 @@ func (r *ReconcileVarnishCluster) reconcileWithContext(ctx context.Context, requ
 	}
 
 	if err = r.reconcileDelayedRollingUpdate(ctx, instance, instanceStatus, sts); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if err = r.reconcileServiceMonitor(ctx, instance); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if err = r.reconcileGrafanaDashboard(ctx, instance); err != nil {
 		return ctrl.Result{}, err
 	}
 

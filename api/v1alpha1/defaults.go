@@ -1,6 +1,8 @@
 package v1alpha1
 
 import (
+	"time"
+
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -60,6 +62,19 @@ func defaultVarnishClusterSpec(in *VarnishClusterSpec) {
 		in.UpdateStrategy = &VarnishClusterUpdateStrategy{
 			Type: OnDeleteVarnishClusterStrategyType,
 		}
+	}
+
+	if in.Monitoring == nil {
+		in.Monitoring = &VarnishClusterMonitoring{}
+	}
+
+	if in.Monitoring.PrometheusServiceMonitor == nil {
+		in.Monitoring.PrometheusServiceMonitor = &VarnishClusterMonitoringPrometheusServiceMonitor{}
+	}
+
+	// set default if empty or invalid value get here
+	if _, err := time.ParseDuration(in.Monitoring.PrometheusServiceMonitor.ScrapeInterval); err != nil {
+		in.Monitoring.PrometheusServiceMonitor.ScrapeInterval = "30s"
 	}
 
 	if in.Service.MetricsPort == 0 {

@@ -17,20 +17,22 @@ const (
 	LabelVarnishComponent = "varnish-component"
 	LabelVarnishUID       = "varnish-uid"
 
-	VarnishComponentVarnish             = "varnish"
-	VarnishComponentCacheService        = "cache-service"
-	VarnishComponentNoCacheService      = "nocache-service"
-	VarnishComponentClusterRole         = "clusterrole"
-	VarnishComponentClusterRoleBinding  = "clusterrolebinding"
-	VarnishComponentRole                = "role"
-	VarnishComponentRoleBinding         = "rolebinding"
-	VarnishComponentVCLFileConfigMap    = "vcl-file-configmap"
-	VarnishComponentPodDisruptionBudget = "poddisruptionbudget"
-	VarnishComponentHeadlessService     = "headless-service"
-	VarnishComponentServiceAccount      = "serviceaccount"
-	VarnishComponentValidatingWebhook   = "validating-webhook"
-	VarnishComponentMutatingWebhook     = "mutating-webhook"
-	VarnishComponentSecret              = "secret"
+	VarnishComponentVarnish                  = "varnish"
+	VarnishComponentCacheService             = "cache-service"
+	VarnishComponentNoCacheService           = "nocache-service"
+	VarnishComponentClusterRole              = "clusterrole"
+	VarnishComponentClusterRoleBinding       = "clusterrolebinding"
+	VarnishComponentRole                     = "role"
+	VarnishComponentRoleBinding              = "rolebinding"
+	VarnishComponentVCLFileConfigMap         = "vcl-file-configmap"
+	VarnishComponentPodDisruptionBudget      = "poddisruptionbudget"
+	VarnishComponentHeadlessService          = "headless-service"
+	VarnishComponentServiceAccount           = "serviceaccount"
+	VarnishComponentValidatingWebhook        = "validating-webhook"
+	VarnishComponentMutatingWebhook          = "mutating-webhook"
+	VarnishComponentSecret                   = "secret"
+	VarnishComponentPrometheusServiceMonitor = "prometheus-servicemonitor"
+	VarnishComponentGrafanaDashboard         = "grafana-dashboard"
 
 	VarnishPort                   = 6081
 	VarnishAdminPort              = 6082
@@ -89,6 +91,7 @@ type VarnishClusterSpec struct {
 	PodDisruptionBudget *policyv1beta1.PodDisruptionBudgetSpec `json:"podDisruptionBudget,omitempty"`
 	Affinity            *v1.Affinity                           `json:"affinity,omitempty"`
 	Tolerations         []v1.Toleration                        `json:"tolerations,omitempty"`
+	Monitoring          *VarnishClusterMonitoring              `json:"monitoring,omitempty"`
 	// +kubebuilder:validation:Enum=debug;info;warn;error;dpanic;panic;fatal
 	LogLevel string `json:"logLevel,omitempty"`
 	// +kubebuilder:validation:Enum=json;console
@@ -202,6 +205,26 @@ type VarnishClusterService struct {
 	// +kubebuilder:validation:Enum=ClusterIP;LoadBalancer;NodePort
 	Type        v1.ServiceType    `json:"type,omitempty"`
 	Annotations map[string]string `json:"annotations,omitempty"`
+}
+
+type VarnishClusterMonitoring struct {
+	PrometheusServiceMonitor *VarnishClusterMonitoringPrometheusServiceMonitor `json:"prometheusServiceMonitor,omitempty"`
+	GrafanaDashboard         *VarnishClusterMonitoringGrafanaDashboard         `json:"grafanaDashboard,omitempty"`
+}
+
+type VarnishClusterMonitoringPrometheusServiceMonitor struct {
+	Enabled        bool              `json:"enabled"`
+	Namespace      string            `json:"namespace"`
+	Labels         map[string]string `json:"labels,omitempty"`
+	ScrapeInterval string            `json:"scrapeInterval,omitempty"`
+}
+
+type VarnishClusterMonitoringGrafanaDashboard struct {
+	Enabled   bool              `json:"enabled"`
+	Namespace string            `json:"namespace"`
+	Labels    map[string]string `json:"labels,omitempty"`
+	// +kubebuilder:validation:Required
+	DatasourceName *string `json:"datasourceName,omitempty"`
 }
 
 // VarnishClusterStatus defines the observed state of VarnishCluster

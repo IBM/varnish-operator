@@ -6,9 +6,13 @@ import (
 	"icm-varnish-k8s-operator/pkg/logger"
 	"icm-varnish-k8s-operator/pkg/names"
 
+	v1 "k8s.io/api/core/v1"
+
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
-	v1 "k8s.io/api/rbac/v1"
+	rbac "k8s.io/api/rbac/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -17,6 +21,8 @@ import (
 const (
 	finalizerClusterRole        = "clusterrole.finalizers.varnishcluster.icm.ibm.com"
 	finalizerClusterRoleBinding = "clusterrolebinding.finalizers.varnishcluster.icm.ibm.com"
+	finalizerServiceMonitor     = "prometheus-servicemonitor.finalizers.varnishcluster.icm.ibm.com"
+	finalizerGrafanaDashboard   = "grafana-dashboard.finalizers.varnishcluster.icm.ibm.com"
 )
 
 func (r *ReconcileVarnishCluster) reconcileFinalizers(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster) error {
@@ -30,6 +36,15 @@ func (r *ReconcileVarnishCluster) reconcileFinalizers(ctx context.Context, insta
 	desiredFinalizers := []string{finalizerClusterRole, finalizerClusterRoleBinding}
 	for _, desiredFinalizer := range desiredFinalizers {
 		controllerutil.AddFinalizer(instance, desiredFinalizer)
+	}
+
+	if instance.Spec.Monitoring.PrometheusServiceMonitor.Enabled && instance.Spec.Monitoring.PrometheusServiceMonitor.Namespace != "" {
+		controllerutil.AddFinalizer(instance, finalizerServiceMonitor)
+	}
+
+	grafanaDashboard := instance.Spec.Monitoring.GrafanaDashboard
+	if grafanaDashboard != nil && grafanaDashboard.Enabled && grafanaDashboard.Namespace != "" {
+		controllerutil.AddFinalizer(instance, finalizerServiceMonitor)
 	}
 
 	if !cmp.Equal(instance.Finalizers, existingFinalizers) {
@@ -60,11 +75,44 @@ func (r *ReconcileVarnishCluster) finalizerCleanUp(ctx context.Context, instance
 		return err
 	}
 
+	// delete only if the the servicemonitor was installed in a different namespace
+	// Otherwise it should be garbage collected by Kubernetes as the owner reference will be set
+	if instance.Spec.Monitoring.PrometheusServiceMonitor.Enabled && instance.Spec.Monitoring.PrometheusServiceMonitor.Namespace != "" {
+		serviceMonitorName := types.NamespacedName{
+			Namespace: instance.Spec.Monitoring.PrometheusServiceMonitor.Namespace,
+			Name:      names.ServiceMonitor(instance.Name),
+		}
+		if err := r.deleteServiceMonitor(ctx, serviceMonitorName); err != nil {
+			return err
+		}
+	}
+
+	if err := r.removeFinalizer(ctx, finalizerServiceMonitor, instance); err != nil {
+		return nil
+	}
+
+	// delete only if the the servicemonitor was installed in a different namespace
+	// Otherwise it should be garbage collected by Kubernetes as the owner reference will be set
+	grafanaDashboard := instance.Spec.Monitoring.GrafanaDashboard
+	if grafanaDashboard != nil && grafanaDashboard.Enabled && grafanaDashboard.Namespace != "" {
+		serviceMonitorName := types.NamespacedName{
+			Namespace: grafanaDashboard.Namespace,
+			Name:      names.GrafanaDashboard(instance.Name),
+		}
+		if err := r.deleteGrafanaDashboard(ctx, serviceMonitorName); err != nil {
+			return err
+		}
+	}
+
+	if err := r.removeFinalizer(ctx, finalizerGrafanaDashboard, instance); err != nil {
+		return nil
+	}
+
 	return nil
 }
 
 func (r *ReconcileVarnishCluster) deleteCR(ctx context.Context, ns types.NamespacedName) error {
-	cr := &v1.ClusterRole{}
+	cr := &rbac.ClusterRole{}
 	err := r.Get(ctx, ns, cr)
 	if kerrors.IsNotFound(err) {
 		return nil
@@ -80,7 +128,7 @@ func (r *ReconcileVarnishCluster) deleteCR(ctx context.Context, ns types.Namespa
 }
 
 func (r *ReconcileVarnishCluster) deleteCRB(ctx context.Context, ns types.NamespacedName) error {
-	crb := &v1.ClusterRoleBinding{}
+	crb := &rbac.ClusterRoleBinding{}
 	err := r.Get(ctx, ns, crb)
 	if kerrors.IsNotFound(err) {
 		return nil
@@ -93,6 +141,39 @@ func (r *ReconcileVarnishCluster) deleteCRB(ctx context.Context, ns types.Namesp
 	logr = logr.With(logger.FieldComponentName, crb.Name)
 	logr.Infoc("Deleting existing clusterrolebinding")
 	return r.Delete(ctx, crb)
+}
+
+func (r *ReconcileVarnishCluster) deleteServiceMonitor(ctx context.Context, ns types.NamespacedName) error {
+	serviceMonitor := &unstructured.Unstructured{}
+	serviceMonitor.SetGroupVersionKind(serviceMonitorGVK)
+	err := r.Get(ctx, ns, serviceMonitor)
+	if kerrors.IsNotFound(err) {
+		return nil
+	}
+	if err != nil {
+		return errors.Wrap(err, "could not get current state of servicemonitor")
+	}
+
+	logr := logger.FromContext(ctx).With(logger.FieldComponent, icmapiv1alpha1.VarnishComponentPrometheusServiceMonitor)
+	logr = logr.With(logger.FieldComponentName, serviceMonitor.GetName())
+	logr.Infoc("Deleting existing servicemonitor")
+	return r.Delete(ctx, serviceMonitor)
+}
+
+func (r *ReconcileVarnishCluster) deleteGrafanaDashboard(ctx context.Context, ns types.NamespacedName) error {
+	grafanaDashboard := &v1.ConfigMap{}
+	err := r.Get(ctx, ns, grafanaDashboard)
+	if kerrors.IsNotFound(err) {
+		return nil
+	}
+	if err != nil {
+		return errors.Wrap(err, "could not get current state of Grafana dashboard ConfigMap")
+	}
+
+	logr := logger.FromContext(ctx).With(logger.FieldComponent, icmapiv1alpha1.VarnishComponentGrafanaDashboard)
+	logr = logr.With(logger.FieldComponentName, grafanaDashboard.GetName())
+	logr.Infoc("Deleting existing Grafana dashboard ConfigMap")
+	return r.Delete(ctx, grafanaDashboard)
 }
 
 func (r *ReconcileVarnishCluster) removeFinalizer(ctx context.Context, finalizerName string, instance *icmapiv1alpha1.VarnishCluster) error {

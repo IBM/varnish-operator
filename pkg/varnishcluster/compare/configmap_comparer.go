@@ -15,5 +15,5 @@ func EqualConfigMap(found, desired *v1.ConfigMap) bool {
 }
 
 func DiffConfigMap(found, desired *v1.ConfigMap) string {
-	return cmp.Diff(found, desired, configMapOpts...)
+	return cmp.Diff(found, desired, append(configMapOpts, cmpopts.IgnoreFields(v1.ConfigMap{}, "Data"))...)
 }

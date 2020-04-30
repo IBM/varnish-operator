@@ -643,6 +643,38 @@ spec:
                     additionalProperties:
                       type: string
                     type: object
+                  zoneBalancing:
+                    description: Defines the type and parameters for backend traffic
+                      distribution in multi-zone clusters
+                    properties:
+                      thresholds:
+                        items:
+                          description: Defines one or more conditions and respective
+                            weights for backends located in the same or remote zone
+                          properties:
+                            local:
+                              minimum: 1
+                              type: integer
+                            remote:
+                              minimum: 1
+                              type: integer
+                            threshold:
+                              maximum: 100
+                              minimum: 1
+                              type: integer
+                          required:
+                          - local
+                          - remote
+                          - threshold
+                          type: object
+                        type: array
+                      type:
+                        enum:
+                        - auto
+                        - thresholds
+                        - disabled
+                        type: string
+                    type: object
                 required:
                 - port
                 - selector

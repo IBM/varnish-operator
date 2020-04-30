@@ -38,6 +38,7 @@ type PodInfo struct {
 	IP         string
 	NodeLabels map[string]string
 	PodName    string
+	Weight     float64
 }
 
 // SetupVarnishReconciler creates a new VarnishCluster Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
@@ -164,13 +165,13 @@ func (r *ReconcileVarnish) reconcileWithContext(ctx context.Context, request rec
 		return reconcile.Result{}, errors.WithStack(err)
 	}
 
-	bks, backendPortNumber, err := r.getPodInfo(ctx, r.config.Namespace, r.config.EndpointSelector, targetPort)
+	bks, backendPortNumber, localWeight, remoteWeight, err := r.getPodInfo(ctx, r.config.Namespace, r.config.EndpointSelector, targetPort, vc)
 	if err != nil {
 		return reconcile.Result{}, errors.WithStack(err)
 	}
 
 	varnishLabels := labels.SelectorFromSet(vclabels.CombinedComponentLabels(vc, v1alpha1.VarnishComponentCacheService))
-	varnishNodes, _, err := r.getPodInfo(ctx, r.config.Namespace, varnishLabels, intstr.FromString(v1alpha1.VarnishPortName))
+	varnishNodes, _, _, _, err := r.getPodInfo(ctx, r.config.Namespace, varnishLabels, intstr.FromString(v1alpha1.VarnishPortName), vc)
 	if err != nil {
 		return reconcile.Result{}, errors.WithStack(err)
 	}
@@ -204,7 +205,7 @@ func (r *ReconcileVarnish) reconcileWithContext(ctx context.Context, request rec
 		}
 	}
 
-	if err := r.reconcilePod(ctx, filesTouched, pod, cm); err != nil {
+	if err := r.reconcilePod(ctx, filesTouched, pod, cm, localWeight, remoteWeight); err != nil {
 		return reconcile.Result{}, errors.WithStack(err)
 	}
 

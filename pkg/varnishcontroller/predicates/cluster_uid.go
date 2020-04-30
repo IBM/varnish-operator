@@ -43,10 +43,14 @@ func (ep *varnishClusterUIDPredicate) Update(e event.UpdateEvent) bool {
 	}
 
 	if newCluster.Status.VCL.ConfigMapVersion != oldCluster.Status.VCL.ConfigMapVersion {
-		return false
+		return true
 	}
 
-	return true
+	if newCluster.Spec.Backend != oldCluster.Spec.Backend {
+		return true
+	}
+
+	return false
 }
 
 func (ep *varnishClusterUIDPredicate) Generic(e event.GenericEvent) bool {

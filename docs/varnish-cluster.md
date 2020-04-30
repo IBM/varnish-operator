@@ -95,3 +95,101 @@ For more automated solution use `kubectl rollout restart statefulset <sts-name>`
 ### Deleting a VarnishCluster Resource
 
 Simply calling `kubectl delete` on the `VarnishCluster` will recursively delete all dependent resources, so that is the only action you need to take. This includes a user-generated ConfigMap, as the VarnishCluster will take ownership of that ConfigMap after creation. Deleting any of the dependent resources will trigger the operator to recreate that resource, in the same way that deleting the Pod of a Deployment will trigger the recreation of that Pod.
+
+### Topology-aware load balancing
+
+The Varnish controller is capable of discovering the cluster's geographical topology by reading its node labels, specifically `topology.kubernetes.io/zone` (or `failure-domain.beta.kubernetes.io/zone` which deprecated but still may be in use). Knowing cluster topology empowers the operator to control how traffic to the application backends is distributed. Currently the topology information is used to change an application backend's priority by changing its weight, so **local** backends (located in the same zone as Varnish pod) can be preferred over **remote** backends (located in other zones related to Varnish pod location). Such a configuration may not only reduce cross-zone traffic and therefore its cost, but potentially can reduce Varnish to backend latency. However, this functionality have some limitations. At this moment, only the Random Director can accept weight as backend parameter.
+
+There are currently two zone balancing types available: `auto` and `thresholds`. Both are optional and can be configured in the `backend` section of [`VarnishCluster`](varnish-cluster-configuration.md) custom resource.
+
+Before configuring any of available zone-balancing methods, it crucial to understand how the Random Director calculates traffic flow based on backend weight. Each backend will receive approximately `100 * (weight / (sum(all_added_weights)))` percent of the traffic sent to the director. So given scenario with three backends having different weights:
+
+```vcl
+new real = directors.random();
+real.add_backend(backend1, 5.0);
+real.add_backend(backend2, 5.0);
+real.add_backend(backend3, 10.0);
+```
+The following demonstrates the formula's usage to calculate the traffic percentage to each backend:
+```
+backend1: 100 * (5 / (5 + 5 + 10)) = 25%
+backend2: 100 * (5 / (5 + 5 + 10)) = 25%
+backend3: 100 * (10 / (5 + 5 + 10)) = 50%
+```
+As seen from this example, not only raw backend weight affects traffic distribution, but also total number of backends and their weights.
+
+Following multi-zone cluster will be used in examples as the reference, however it is too busy when full traffic path is pictured. So some parts like external LB and Ingress will be omitted for clarity.
+
+<!-- [![](https://mermaid.ink/img/eyJjb2RlIjoiZ3JhcGggVEJcbiAgICBsYltMQl0gLS0-fFJSfCBpbjAgJiBpbjEgJiBpbjJcbiAgICBpbjBbaW5ncmVzc10gLS0-fFJSfCB2MCAmIHYxICYgdjJcbiAgICBpbjFbaW5ncmVzc10gLS0-fFJSfCB2MSAmIHYwICYgdjJcbiAgICBpbjJbaW5ncmVzc10gLS0-fFJSfCB2MiAmIHYxICYgdjBcbiAgICB2MCAmIHYxICYgdjIgLS0-IGIwICYgYjEgJiBiMiAmIGIzICYgYjQgJiBiNSAmIGI2ICYgYjcgJiBiOFxuICAgIHN1YmdyYXBoIHpvbmUxXG4gICAgICAgIGluMFtpbmdyZXNzXVxuICAgICAgICB2MFt2YXJuaXNoLTBdXG4gICAgICAgIGIwXG4gICAgICAgIGIxXG4gICAgICAgIGIyXG4gICAgZW5kXG4gICAgc3ViZ3JhcGggem9uZTJcbiAgICAgICAgaW4xW2luZ3Jlc3NdXG4gICAgICAgIHYxW3Zhcm5pc2gtMV1cbiAgICAgICAgYjNcbiAgICAgICAgYjRcbiAgICAgICAgYjVcbiAgICBlbmRcbiAgICBzdWJncmFwaCB6b25lM1xuICAgICAgICBpbjJbaW5ncmVzc11cbiAgICAgICAgdjJbdmFybmlzaC0yXVxuICAgICAgICBiNlxuICAgICAgICBiN1xuICAgICAgICBiOFxuICAgIGVuZCIsIm1lcm1haWQiOnsidGhlbWUiOiJkZWZhdWx0In19)](https://mermaid-js.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoiZ3JhcGggVEJcbiAgICBsYltMQl0gLS0-fFJSfCBpbjAgJiBpbjEgJiBpbjJcbiAgICBpbjBbaW5ncmVzc10gLS0-fFJSfCB2MCAmIHYxICYgdjJcbiAgICBpbjFbaW5ncmVzc10gLS0-fFJSfCB2MSAmIHYwICYgdjJcbiAgICBpbjJbaW5ncmVzc10gLS0-fFJSfCB2MiAmIHYxICYgdjBcbiAgICB2MCAmIHYxICYgdjIgLS0-IGIwICYgYjEgJiBiMiAmIGIzICYgYjQgJiBiNSAmIGI2ICYgYjcgJiBiOFxuICAgIHN1YmdyYXBoIHpvbmUxXG4gICAgICAgIGluMFtpbmdyZXNzXVxuICAgICAgICB2MFt2YXJuaXNoLTBdXG4gICAgICAgIGIwXG4gICAgICAgIGIxXG4gICAgICAgIGIyXG4gICAgZW5kXG4gICAgc3ViZ3JhcGggem9uZTJcbiAgICAgICAgaW4xW2luZ3Jlc3NdXG4gICAgICAgIHYxW3Zhcm5pc2gtMV1cbiAgICAgICAgYjNcbiAgICAgICAgYjRcbiAgICAgICAgYjVcbiAgICBlbmRcbiAgICBzdWJncmFwaCB6b25lM1xuICAgICAgICBpbjJbaW5ncmVzc11cbiAgICAgICAgdjJbdmFybmlzaC0yXVxuICAgICAgICBiNlxuICAgICAgICBiN1xuICAgICAgICBiOFxuICAgIGVuZCIsIm1lcm1haWQiOnsidGhlbWUiOiJkZWZhdWx0In19) -->
+
+![](images/mermaid-diagram-reference-cluster.svg)
+
+#### Automatic mode
+
+To enable `auto` zone balancing type it should be defined as `backend.zoneBalancing.type: auto` in the `VarnishCluster` CustomResource as follows:
+```
+  backend:
+    selector:
+      app: varnish-backend
+    port: 8081
+    zoneBalancing:
+      type: auto
+```
+It doesn't requires any additional configuration. 
+
+The main focus of automatic zone balancing mode is to keep most of the traffic passed through Varnish instance in the same zone. To achieve that, the Varnish controller will assign higher weights for the backends located in same zone as the Varnish pod. To figure out the backend location, the Varnish controller iterates through the list of available backends and finds where the pods are running by reading in the node topology labels. This allows the backends to be classified as `local` or `remote`.
+
+When the topology is discovered, the Varnish controller will apply weight to the backends. Under normal conditions, `local` backends will get a weight of `10`, while `remote` will have `1`.
+
+Following diagram displays simple scenario with 2 Varnish pods and 4 backends equally distributed across two zones:
+
+<!-- [![](https://mermaid.ink/img/eyJjb2RlIjoiZ3JhcGggVEJcbiAgICB2MCAtLT58MTB8IGIwICYgYjFcbiAgICB2MCAtLT58MXwgYjIgJiBiM1xuICAgIHYxIC0tPnwxMHwgYjIgJiBiM1xuICAgIHYxIC0tPnwxfCBiMCAmIGIxXG4gICAgc3ViZ3JhcGggem9uZTFcbiAgICB2MFt2YXJuaXNoLTBdXG4gICAgYjBcbiAgICBiMVxuICAgIGVuZFxuICAgIHN1YmdyYXBoIHpvbmUyXG4gICAgdjFbdmFybmlzaC0xXVxuICAgIGIyXG4gICAgYjNcbiAgICBlbmQiLCJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJ1cGRhdGVFZGl0b3IiOmZhbHNlfQ)](https://mermaid-js.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoiZ3JhcGggVEJcbiAgICB2MCAtLT58MTB8IGIwICYgYjFcbiAgICB2MCAtLT58MXwgYjIgJiBiM1xuICAgIHYxIC0tPnwxMHwgYjIgJiBiM1xuICAgIHYxIC0tPnwxfCBiMCAmIGIxXG4gICAgc3ViZ3JhcGggem9uZTFcbiAgICB2MFt2YXJuaXNoLTBdXG4gICAgYjBcbiAgICBiMVxuICAgIGVuZFxuICAgIHN1YmdyYXBoIHpvbmUyXG4gICAgdjFbdmFybmlzaC0xXVxuICAgIGIyXG4gICAgYjNcbiAgICBlbmQiLCJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJ1cGRhdGVFZGl0b3IiOmZhbHNlfQ) -->
+
+![](images/mermaid-diagram-auto-1.svg)
+
+Having very polar weight might be not the best option when zone becomes degraded. Routing too much traffic to decreased amount of available backends can create a *hotspot* and even DoS. To prevent such scenario, `auto` balancing will calculate the ratio of backend count to average backend count in other zones and reduce the weight by that ratio.
+
+Next diagram shows the same small topology as before, but now `zone1` lost one of the backends:
+
+<!-- [![](https://mermaid.ink/img/eyJjb2RlIjoiZ3JhcGggVEJcbiAgICB2MCAtLT58MTB8IGIwXG4gICAgdjAgLS0-fDF8IGIyICYgYjNcbiAgICB2MSAtLT58MTB8IGIyICYgYjNcbiAgICB2MSAtLT58MXwgYjBcbiAgICBzdWJncmFwaCB6b25lMVxuICAgIHYwW3Zhcm5pc2gtMF1cbiAgICBiMFxuICAgIGVuZFxuICAgIHN1YmdyYXBoIHpvbmUyXG4gICAgdjFbdmFybmlzaC0xXVxuICAgIGIyXG4gICAgYjNcbiAgICBlbmQiLCJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJ1cGRhdGVFZGl0b3IiOmZhbHNlfQ)](https://mermaid-js.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoiZ3JhcGggVEJcbiAgICB2MCAtLT58MTB8IGIwXG4gICAgdjAgLS0-fDF8IGIyICYgYjNcbiAgICB2MSAtLT58MTB8IGIyICYgYjNcbiAgICB2MSAtLT58MXwgYjBcbiAgICBzdWJncmFwaCB6b25lMVxuICAgIHYwW3Zhcm5pc2gtMF1cbiAgICBiMFxuICAgIGVuZFxuICAgIHN1YmdyYXBoIHpvbmUyXG4gICAgdjFbdmFybmlzaC0xXVxuICAgIGIyXG4gICAgYjNcbiAgICBlbmQiLCJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJ1cGRhdGVFZGl0b3IiOmZhbHNlfQ) -->
+![](images/mermaid-diagram-auto-2.svg)
+
+To eliminate a potential *hotspot* in `zone1`, the Varnish controller will change the local backend weight by `local_backends_count / (sum(remote_backends_count) / zone_count))`, so `1 / ( 2 / 1 ) = 0.5`. Which yields a `local` backend weight of `5`. With the same calculation applied to the healthy zone's backend weights, `local` backends in that zone will be changed by ratio `2 / ( 1 / 1 ) = 2` ending with weight of `20:`
+
+<!-- [![](https://mermaid.ink/img/eyJjb2RlIjoiZ3JhcGggVEJcbiAgICB2MCAtLT58NXwgYjBcbiAgICB2MCAtLT58MXwgYjIgJiBiM1xuICAgIHYxIC0tPnwyMHwgYjIgJiBiM1xuICAgIHYxIC0tPnwxfCBiMFxuICAgIHN1YmdyYXBoIHpvbmUxXG4gICAgdjBbdmFybmlzaC0wXVxuICAgIGIwXG4gICAgZW5kXG4gICAgc3ViZ3JhcGggem9uZTJcbiAgICB2MVt2YXJuaXNoLTFdXG4gICAgYjJcbiAgICBiM1xuICAgIGVuZCIsIm1lcm1haWQiOnsidGhlbWUiOiJkZWZhdWx0In0sInVwZGF0ZUVkaXRvciI6ZmFsc2V9)](https://mermaid-js.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoiZ3JhcGggVEJcbiAgICB2MCAtLT58NXwgYjBcbiAgICB2MCAtLT58MXwgYjIgJiBiM1xuICAgIHYxIC0tPnwyMHwgYjIgJiBiM1xuICAgIHYxIC0tPnwxfCBiMFxuICAgIHN1YmdyYXBoIHpvbmUxXG4gICAgdjBbdmFybmlzaC0wXVxuICAgIGIwXG4gICAgZW5kXG4gICAgc3ViZ3JhcGggem9uZTJcbiAgICB2MVt2YXJuaXNoLTFdXG4gICAgYjJcbiAgICBiM1xuICAgIGVuZCIsIm1lcm1haWQiOnsidGhlbWUiOiJkZWZhdWx0In0sInVwZGF0ZUVkaXRvciI6ZmFsc2V9) -->
+![](images/mermaid-diagram-auto-3.svg)
+
+All weight calculations are performed *in flight* and react to topology changes immediately as they occur.
+
+#### Manual mode with pre-defined thresholds
+
+Another zone-balancing method is `thresholds`, it gives all control of backend weights to user. To enable this balancing method, `backend.zoneBalancing.type` should be set to `thresholds`. It is also required to provide a set of thresholds and respective weights for local and remote backends.
+```
+  backend:
+    selector:
+      app: varnish-backend
+    port: 8081
+    zoneBalancing:
+      type: thresholds
+      thresholds: 
+      - threshold: 100
+        local: 10
+        remote: 1
+      - threshold: 50
+        local: 1
+        remote: 1
+```
+In the context of zone balancing, `threshold` is the percent representation of local backend count compared to average remote backend count per remote zone. Weight values defined for the threshold will be used when backend ratio is lower or equal given threshold, until next threshold condition is met. This way, if only one threshold is defined, weight values defined with it will be always applied to backends -- ignoring topology changes. This behavior allows to configure static weights for the backends.
+
+It is important to always specify the best case scenario as well as worst case scenario (filling in intermediate threshold values is optional and gives more flexibility for topology routing). Otherwise, the *highest* threshold will be treated as the best case scenario until lower threshold from the list is passed. Usually, the `100` threshold will be always defined. This provides weight values that will be used when cluster operates under normal conditions and when backends are equally distributed across zones. 
+
+The provided example below configures Varnish to prioritize local backends over remote backends under normal conditions by setting the local backends' weight to `10`, while remote backends will have the weight of `1`, (`100 * (2 / (2 / 1) = 100`):
+
+<!-- [![](https://mermaid.ink/img/eyJjb2RlIjoiZ3JhcGggVEJcbiAgICB2MCAtLT58MTB8IGIwICYgYjFcbiAgICB2MCAtLT58MXwgYjIgJiBiM1xuICAgIHYxIC0tPnwxMHwgYjIgJiBiM1xuICAgIHYxIC0tPnwxfCBiMCAmIGIxXG4gICAgc3ViZ3JhcGggem9uZTFcbiAgICB2MFt2YXJuaXNoLTBdXG4gICAgYjBcbiAgICBiMVxuICAgIGVuZFxuICAgIHN1YmdyYXBoIHpvbmUyXG4gICAgdjFbdmFybmlzaC0xXVxuICAgIGIyXG4gICAgYjNcbiAgICBlbmQiLCJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJ1cGRhdGVFZGl0b3IiOmZhbHNlfQ)](https://mermaid-js.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoiZ3JhcGggVEJcbiAgICB2MCAtLT58MTB8IGIwICYgYjFcbiAgICB2MCAtLT58MXwgYjIgJiBiM1xuICAgIHYxIC0tPnwxMHwgYjIgJiBiM1xuICAgIHYxIC0tPnwxfCBiMCAmIGIxXG4gICAgc3ViZ3JhcGggem9uZTFcbiAgICB2MFt2YXJuaXNoLTBdXG4gICAgYjBcbiAgICBiMVxuICAgIGVuZFxuICAgIHN1YmdyYXBoIHpvbmUyXG4gICAgdjFbdmFybmlzaC0xXVxuICAgIGIyXG4gICAgYjNcbiAgICBlbmQiLCJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJ1cGRhdGVFZGl0b3IiOmZhbHNlfQ) -->
+![](images/mermaid-diagram-thresholds-1.svg)
+
+Next condition, `50` will be met when number of local backends as compared to remote will be `50` percent or less. In that case, varnish will be configured to set equal weight for all available backends to `1`, equalizing traffic flow (`100 * (1 / (2 / 1) = 50`):
+
+<!-- [![](https://mermaid.ink/img/eyJjb2RlIjoiZ3JhcGggVEJcbiAgICB2MCAtLT58MXwgYjBcbiAgICB2MCAtLT58MXwgYjIgJiBiM1xuICAgIHYxIC0tPnwxMHwgYjIgJiBiM1xuICAgIHYxIC0tPnwxfCBiMFxuICAgIHN1YmdyYXBoIHpvbmUxXG4gICAgdjBbdmFybmlzaC0wXVxuICAgIGIwXG4gICAgZW5kXG4gICAgc3ViZ3JhcGggem9uZTJcbiAgICB2MVt2YXJuaXNoLTFdXG4gICAgYjJcbiAgICBiM1xuICAgIGVuZCIsIm1lcm1haWQiOnsidGhlbWUiOiJkZWZhdWx0In0sInVwZGF0ZUVkaXRvciI6ZmFsc2V9)](https://mermaid-js.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoiZ3JhcGggVEJcbiAgICB2MCAtLT58MXwgYjBcbiAgICB2MCAtLT58MXwgYjIgJiBiM1xuICAgIHYxIC0tPnwxMHwgYjIgJiBiM1xuICAgIHYxIC0tPnwxfCBiMFxuICAgIHN1YmdyYXBoIHpvbmUxXG4gICAgdjBbdmFybmlzaC0wXVxuICAgIGIwXG4gICAgZW5kXG4gICAgc3ViZ3JhcGggem9uZTJcbiAgICB2MVt2YXJuaXNoLTFdXG4gICAgYjJcbiAgICBiM1xuICAgIGVuZCIsIm1lcm1haWQiOnsidGhlbWUiOiJkZWZhdWx0In0sInVwZGF0ZUVkaXRvciI6ZmFsc2V9) -->
+![](images/mermaid-diagram-thresholds-2.svg)
+

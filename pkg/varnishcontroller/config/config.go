@@ -22,6 +22,7 @@ type Config struct {
 	EndpointSelectorString string        `env:"ENDPOINT_SELECTOR_STRING,required"`
 	Namespace              string        `env:"NAMESPACE,required"`
 	PodName                string        `env:"POD_NAME,required"`
+	NodeName               string        `env:"NODE_NAME,required"`
 	VarnishClusterName     string        `env:"VARNISH_CLUSTER_NAME,required"`
 	VarnishClusterUID      types.UID     `env:"VARNISH_CLUSTER_UID,required"`
 	VarnishClusterGroup    string        `env:"VARNISH_CLUSTER_GROUP,required"`

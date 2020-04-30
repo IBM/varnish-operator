@@ -1,4 +1,5 @@
 {
   "title": "Varnish Operator Docs",
-  "root": "."
+  "root": ".",
+  "plugins": ["hints"]
 }

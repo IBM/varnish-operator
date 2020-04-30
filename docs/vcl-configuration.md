@@ -76,13 +76,18 @@ These are the available fields in the template that can be used to build your VC
   * `.IP` - `string`: IP address of a backend
   * `.NodeLabels` - `map[string]string`: labels of the node on which the backend is deployed.
   * `.PodName` - `string`: name of the pod representing a backend
+  * `.Weight` - `float64`: backend weight
+  {% hint style="info" %}
+  Please note that only the Random director can accept Weight as backend parameter
+  [Random director documentation](https://varnish-cache.org/docs/6.1/reference/vmod_directors.generated.html?highlight=round%20robin#void-xrandom-add-backend-backend-real)
+  For more information regarding weight control see [VarnishCluster](varnish-cluster.md)
+  {% endhint %}
 * `.TargetPort` - `int`: port that is exposed on the backends
 * `.VarnishNodes` - `[]PodInfo`: array of varnish nodes. Can be used for configuration of shard director (can be ignored if using a simple round robin director)
   * `.IP` - `string`: IP address of a varnish node
   * `.NodeLabels` - `map[string]string`: labels of the node on which a varnish node is deployed.
   * `.PodName` - `string`: name of the pod representing a varnish node
 * `.VarnishPort` - `int`: port that is exposed on varnish nodes
-
 
 For example, to generate your `backend`'s definitions you can use the following template:
 

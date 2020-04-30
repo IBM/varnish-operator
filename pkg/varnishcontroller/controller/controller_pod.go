@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"icm-varnish-k8s-operator/pkg/logger"
 	"reflect"
 	"strings"
@@ -11,12 +12,14 @@ import (
 )
 
 const (
-	annotationConfigMapVersion    = "configMapVersion"
-	annotationVCLVersion          = "VCLVersion"
-	annotationActiveVCLConfigName = "activeVCLConfigName"
+	annotationConfigMapVersion     = "configMapVersion"
+	annotationVCLVersion           = "VCLVersion"
+	annotationActiveVCLConfigName  = "activeVCLConfigName"
+	annotationLocalBackendsWeight  = "localBackendsWeight"
+	annotationRemoteBackendsWeight = "remoteBackendsWeight"
 )
 
-func (r *ReconcileVarnish) reconcilePod(ctx context.Context, filesChanged bool, pod *v1.Pod, cm *v1.ConfigMap) error {
+func (r *ReconcileVarnish) reconcilePod(ctx context.Context, filesChanged bool, pod *v1.Pod, cm *v1.ConfigMap, localWeight float64, remoteWeight float64) error {
 	activeVCLName, err := r.varnish.GetActiveConfigurationName()
 	if err != nil {
 		return err
@@ -46,6 +49,10 @@ func (r *ReconcileVarnish) reconcilePod(ctx context.Context, filesChanged bool, 
 	}
 
 	podCopy.Annotations[annotationActiveVCLConfigName] = activeVCLName
+	podCopy.Annotations[annotationLocalBackendsWeight] = fmt.Sprintf("%f", localWeight)
+	podCopy.Annotations[annotationRemoteBackendsWeight] = fmt.Sprintf("%f", remoteWeight)
+	logger.FromContext(ctx).Debugf("Local backends weight: %f", localWeight)
+	logger.FromContext(ctx).Debugf("Remote backends weight: %f", remoteWeight)
 	if !reflect.DeepEqual(pod.Annotations, podCopy.Annotations) {
 		if err = r.Update(ctx, podCopy); err != nil {
 			return errors.Wrapf(err, "failed to update pod")

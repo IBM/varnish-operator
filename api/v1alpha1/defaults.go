@@ -69,6 +69,11 @@ func defaultVarnishClusterSpec(in *VarnishClusterSpec) {
 	if in.Service.Type == "" {
 		in.Service.Type = v1.ServiceTypeClusterIP
 	}
+
+	if in.Backend.ZoneBalancing == nil {
+		in.Backend.ZoneBalancing = &VarnishClusterBackendZoneBalancing{}
+	}
+	defaultVarnishZoneBalancingType(in.Backend.ZoneBalancing)
 }
 
 func defaultVarnish(in *VarnishClusterVarnish) {
@@ -100,5 +105,11 @@ func defaultVarnishController(in *VarnishClusterVarnishController) {
 func defaultVarnishMetricsExporter(in *VarnishClusterVarnishMetricsExporter) {
 	if in.ImagePullPolicy == "" {
 		in.ImagePullPolicy = v1.PullAlways
+	}
+}
+
+func defaultVarnishZoneBalancingType(in *VarnishClusterBackendZoneBalancing) {
+	if in.Type == "" {
+		in.Type = VarnishClusterBackendZoneBalancingTypeDisabled
 	}
 }

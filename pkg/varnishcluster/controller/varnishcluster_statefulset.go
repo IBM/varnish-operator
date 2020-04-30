@@ -210,6 +210,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 								{Name: "ENDPOINT_SELECTOR_STRING", Value: labels.SelectorFromSet(endpointSelector).String()},
 								{Name: "NAMESPACE", Value: instance.Namespace},
 								{Name: "POD_NAME", ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{APIVersion: "v1", FieldPath: "metadata.name"}}},
+								{Name: "NODE_NAME", ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{APIVersion: "v1", FieldPath: "spec.nodeName"}}},
 								{Name: "VARNISH_CLUSTER_NAME", Value: instance.Name},
 								{Name: "VARNISH_CLUSTER_UID", Value: string(instance.UID)},
 								{Name: "VARNISH_CLUSTER_GROUP", Value: gvk.Group},

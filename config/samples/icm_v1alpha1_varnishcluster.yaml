@@ -76,6 +76,16 @@ spec:
     selector:
       app: nginx
     port: web #can be port name or port number
+    # zoneBalancing: 
+    #   # thresholds | auto | disabled
+    #   type: auto
+    #   thresholds: 
+    #   - threshold: 50
+    #     local: 25
+    #     remote: 75
+    #   - threshold: 90
+    #     local: 90
+    #     remote: 10
 
   service:
     port: 80

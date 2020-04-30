@@ -18,7 +18,7 @@ The `VarnishCluster` resource contains a Kubernetes pod definition as a part. Th
 
 The containers share specific volumes for the varnish configuration and work directory. Only one container is configured to write to specific shared volume.
 
-![Varnish cluster pod](varnish-cluster.png)
+![Varnish cluster pod](images/varnish-cluster.png)
 
 ##### Varnish
 

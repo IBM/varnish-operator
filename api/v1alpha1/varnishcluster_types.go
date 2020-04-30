@@ -51,6 +51,10 @@ const (
 	VarnishSecretVolume              = "secret"
 
 	VarnishUpdateStrategyDelayedRollingUpdate = "DelayedRollingUpdate"
+
+	VarnishClusterBackendZoneBalancingTypeDisabled   = "disabled"
+	VarnishClusterBackendZoneBalancingTypeAuto       = "auto"
+	VarnishClusterBackendZoneBalancingTypeThresholds = "thresholds"
 )
 
 // +kubebuilder:object:root=true
@@ -147,11 +151,35 @@ type VarnishClusterVCL struct {
 	EntrypointFileName *string `json:"entrypointFileName,omitempty"`
 }
 
+// Defines the type and parameters for backend traffic distribution
+// in multi-zone clusters
+type VarnishClusterBackendZoneBalancing struct {
+	// +kubebuilder:validation:Enum=auto;thresholds;disabled
+	Type       string                                        `json:"type,omitempty"`
+	Thresholds []VarnishClusterBackendZoneBalancingThreshold `json:"thresholds,omitempty"`
+}
+
+// Defines one or more conditions and respective weights for backends
+// located in the same or remote zone
+type VarnishClusterBackendZoneBalancingThreshold struct {
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum=1
+	Local *int `json:"local"`
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum=1
+	Remote *int `json:"remote"`
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=100
+	Threshold *int `json:"threshold"`
+}
+
 type VarnishClusterBackend struct {
 	// +kubebuilder:validation:Required
 	Selector map[string]string `json:"selector,omitempty"`
 	// +kubebuilder:validation:Required
-	Port *intstr.IntOrString `json:"port,omitempty"`
+	Port          *intstr.IntOrString                 `json:"port,omitempty"`
+	ZoneBalancing *VarnishClusterBackendZoneBalancing `json:"zoneBalancing,omitempty"`
 }
 
 type VarnishClusterVarnishSecret struct {

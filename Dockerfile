@@ -1,4 +1,4 @@
-FROM golang:1.13-buster AS builder
+FROM golang:1.14-buster AS builder
 
 ARG GOPROXY=direct
 

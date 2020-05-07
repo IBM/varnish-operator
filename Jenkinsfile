@@ -1,22 +1,40 @@
 #!groovy
-@Library("icm-jenkins-common@0.117.0")
+@Library("icm-jenkins-common@0.130.0")
 import com.ibm.icm.*
 
 icmJenkinsProperties().
-    rotateBuilds(numToKeep: 30, daysToKeep: 45).
-    disableConcurrentBuilds().
-    apply()
+  rotateBuilds(numToKeep: 30, daysToKeep: 45).
+  disableConcurrentBuilds().
+  apply()
 
 ibmCloud = [
-    region: 'us-south',
-    apiKeyId: 'icm_bluemix_1638245'] // id of Jenkins credential secret text
+  region: 'us-south',
+  apiKeyId: 'icm_bluemix_1638245' // id of Jenkins credential secret text
+]
 
 // for Docker
 docker = [
-    registry: 'us.icr.io',
-    registryNamespace: 'icm-varnish',
-    isLatest: false
+  registry: 'us.icr.io',
+  registryNamespace: 'icm-varnish',
+  isLatest: false
 ]
+
+images = { user, pass, repo ->
+  return [
+    'varnish': [
+      buildArgs: ['-f': 'Dockerfile.varnishd']
+    ],
+    'varnish-operator': [
+      buildArgs: ['-f': 'Dockerfile', '--build-arg': "GOPROXY=https://${user}:${pass}@na.artifactory.swg-devops.com/artifactory/${repo}/"]
+    ],
+    'varnish-controller': [
+      buildArgs: ['-f': 'Dockerfile.controller', '--build-arg': "GOPROXY=https://${user}:${pass}@na.artifactory.swg-devops.com/artifactory/${repo}/"]
+    ],
+    'varnish-metrics-exporter': [
+      buildArgs: ['-f': 'Dockerfile.exporter']
+    ]
+  ]
+}
 
 releaseBranch = 'master'
 docsBranch = 'gh-pages'
@@ -35,9 +53,9 @@ artifactoryUserPasswordId = 'TAAS-Artifactory-User-Password-Global'
 goVirtualProxyRepo = 'wcp-icm-go-virtual'
 
 dockerKeepDev = [
-        releases: 0,
-        days: 14,
-        tagEndsWith: '-dev'
+  releases: 0,
+  days: 14,
+  tagEndsWith: '-dev'
 ]
 
 node('icm_agent_go') {
@@ -45,7 +63,7 @@ node('icm_agent_go') {
 
   runTests()
 
-  def appVersion = icmGetAppVersion() // Get the version from version.txt
+  appVersion = icmGetAppVersion() // Get the version from version.txt
   boolean isTaggedCommit = icmGetTagsOnCommit().size() > 0 //used to avoid build runs on tag push
   boolean isNewRelease = !isTaggedCommit && gitInfo.branch == releaseBranch
   boolean isUntaggedCommit = !isTaggedCommit && gitInfo.branch != releaseBranch
@@ -64,7 +82,7 @@ node('icm_agent_go') {
       println 'This is a release branch. Preparing the build...'
       try {
         icmCloudCliSetupStages(ibmCloud.apiKeyId, ibmCloud.region, CloudCliPluginConsts.CONTAINER_PLUGINS)
-        dockerBuildPush(appVersion)
+        dockerBuildPush()
         helmUtils.setChartVersion(helmChart, appVersion)
         icmWithArtifactoryConfig(artifactoryRoot, artifactoryRepo, artifactoryUserPasswordId) {
           icmHelmChartPackagePublishStage(helmChart, it.config.createHelmPublish())
@@ -74,7 +92,9 @@ node('icm_agent_go') {
 
         // Push the newly created release tag to origin
         gitUtils.setTag(appVersion, gitCredentialId)
-        slack.info("Varnish Operator: $appVersion has been released. See the <https://github.ibm.com/TheWeatherCompany/icm-varnish-k8s-operator/releases/tag/${appVersion}|release notes>. For more debug info see the <${env.BUILD_URL}|Jenkins logs>")
+        slack.info("Varnish Operator: $appVersion has been released. " +
+          "See the <https://github.ibm.com/TheWeatherCompany/icm-varnish-k8s-operator/releases/tag/${appVersion}|release notes>. " +
+          "For more debug info see the <${env.BUILD_URL}|Jenkins logs>")
       } catch (err) {
         String errorMessage = "Release $appVersion Failed! For more debug info see the <${env.BUILD_URL}|Jenkins logs>"
         slack.error(errorMessage)
@@ -83,12 +103,12 @@ node('icm_agent_go') {
     }
     // If it's master and version.txt haven't changed - do nothing.
 
-  // If it's a feature branch - push only artifacts (docker images, helm chart), but do not push a git tag
+    // If it's a feature branch - push only artifacts (docker images, helm chart), but do not push a git tag
   } else if (isUntaggedCommit) {
     println 'This is a feature branch. Preparing the build...'
     icmCloudCliSetupStages(ibmCloud.apiKeyId, ibmCloud.region, CloudCliPluginConsts.CONTAINER_PLUGINS)
-    appVersion = StringUtils.slugify("$appVersion-${gitInfo.branch}-dev", 128)
-    dockerBuildPush(appVersion)
+    appVersion += StringUtils.slugify("-${gitInfo.branch}-dev")
+    dockerBuildPush()
     helmUtils.setChartVersion(helmChart, appVersion)
     icmWithArtifactoryConfig(artifactoryRoot, artifactoryRepo, artifactoryUserPasswordId) {
       icmHelmChartPackagePublishStage(helmChart, it.config.createHelmPublish())
@@ -96,34 +116,20 @@ node('icm_agent_go') {
   }
 }
 
-def dockerBuildPush(String appVersion) {
-  stage('Docker build & push') {
-
-    def stepsForParallel = [:]
-
-    icmWithArtifactoryConfig(artifactoryRoot, goVirtualProxyRepo, artifactoryUserPasswordId) {
-      stepsForParallel['Building varnish'] = {
-        DockerImageInfo dockerImageInfo = new DockerImageInfo(docker.registry, docker.registryNamespace, 'varnish', appVersion, docker.isLatest)
+def dockerBuildPush() {
+  stepsForParallel = [:]
+  icmWithArtifactoryConfig(artifactoryRoot, goVirtualProxyRepo, artifactoryUserPasswordId) {
+    def imagesToIterate = images("$ARTIFACTORY_USER", "$ARTIFACTORY_PASS", "$ARTIFACTORY_REPO")
+    CollectionUtils.forEachMapKeyValue(imagesToIterate) { image, args ->
+      stepsForParallel["$image: $appVersion"] = {
+        DockerImageInfo dockerImageInfo = new DockerImageInfo(docker.registry, docker.registryNamespace, image, appVersion, docker.isLatest)
         cleanupDockerImages(dockerImageInfo)
-        icmDockerStages(dockerImageInfo, ['-f': 'Dockerfile.varnishd'])
+        icmDockerStages(dockerImageInfo, args.buildArgs)
       }
-      stepsForParallel['Building varnish-metrics-exporter'] = {
-        DockerImageInfo dockerImageInfo = new DockerImageInfo(docker.registry, docker.registryNamespace, 'varnish-metrics-exporter', appVersion, docker.isLatest)
-        cleanupDockerImages(dockerImageInfo)
-        icmDockerStages(dockerImageInfo, ['-f': 'Dockerfile.exporter'])
-      }
-      stepsForParallel['Building varnish-controller'] = {
-        DockerImageInfo dockerImageInfo = new DockerImageInfo(docker.registry, docker.registryNamespace, 'varnish-controller', appVersion, docker.isLatest)
-        cleanupDockerImages(dockerImageInfo)
-        icmDockerStages(dockerImageInfo, ['-f': 'Dockerfile.controller', '--build-arg': "GOPROXY=\"https://${ARTIFACTORY_USER}:${ARTIFACTORY_PASS}@na.artifactory.swg-devops.com/artifactory/${ARTIFACTORY_REPO}/\""])
-      }
-      stepsForParallel['Building varnish-operator'] = {
-        DockerImageInfo dockerImageInfo = new DockerImageInfo(docker.registry, docker.registryNamespace, 'varnish-operator', appVersion, docker.isLatest)
-        cleanupDockerImages(dockerImageInfo)
-        icmDockerStages(dockerImageInfo, ['-f': 'Dockerfile', '--build-arg': "GOPROXY=\"https://${ARTIFACTORY_USER}:${ARTIFACTORY_PASS}@na.artifactory.swg-devops.com/artifactory/${ARTIFACTORY_REPO}/\""])
-      }
-
-    parallel stepsForParallel
+    }
+    stage('Docker build & push') {
+      // Use parallel within a icmWithArtifactoryConfig, otherwise it wil leak the password
+      parallel stepsForParallel
     }
   }
 }
@@ -169,5 +175,6 @@ def runTests() {
 }
 
 def cleanupDockerImages(DockerImageInfo dockerImageInfo) {
+  // Last argument in icmDockerCleanupStage responsible for dry run
   icmDockerCleanupStage(dockerImageInfo, dockerKeepDev['tagEndsWith'], dockerKeepDev['releases'], dockerKeepDev['days'], true, false)
 }

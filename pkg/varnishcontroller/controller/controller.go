@@ -69,7 +69,6 @@ func SetupVarnishReconciler(mgr manager.Manager, cfg *config.Config, varnish var
 	builder.Named("varnish-controller")
 
 	builder.For(&v1alpha1.VarnishCluster{})
-	builder.WithEventFilter(predicates.NewVarnishClusterUIDPredicate(cfg.VarnishClusterUID, logr))
 	builder.Watches(&source.Kind{Type: &v1.Endpoints{}}, podMapFunc)
 
 	backendsLabels, err := labels.ConvertSelectorToLabelsMap(cfg.EndpointSelectorString)
@@ -84,10 +83,7 @@ func SetupVarnishReconciler(mgr manager.Manager, cfg *config.Config, varnish var
 	})
 
 	endpointsSelectors := []labels.Selector{labels.SelectorFromSet(backendsLabels), varnishPodsSelector}
-	builder.WithEventFilter(predicates.NewEndpointsSelectors(endpointsSelectors, logr))
-
-	// uncomment the line below if you want to debug which events come to the controller
-	//builder.WithEventFilter(predicates.NewLoggingPredicate(logr))
+	builder.WithEventFilter(predicates.NewVarnishControllerPredicate(cfg.VarnishClusterUID, endpointsSelectors, nil))
 
 	return builder.Complete(r)
 }

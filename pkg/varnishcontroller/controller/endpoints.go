@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"icm-varnish-k8s-operator/api/v1alpha1"
+	vclabels "icm-varnish-k8s-operator/pkg/labels"
 
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
@@ -13,17 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (r *ReconcileVarnish) getPodInfo(ctx context.Context, namespace string, labels labels.Selector, validPort intstr.IntOrString, vc *v1alpha1.VarnishCluster) ([]PodInfo, int32, float64, float64, error) {
-
-	found := &v1.EndpointsList{}
-	err := r.List(ctx, found, client.MatchingLabelsSelector{Selector: labels}, client.InNamespace(namespace))
-	if err != nil {
-		return nil, 0, 0, 0, errors.Wrapf(err, "could not retrieve backends from namespace %s with labels %s", namespace, labels.String())
-	}
-
-	if len(found.Items) == 0 {
-		return nil, 0, 0, 0, errors.Errorf("no endpoints from namespace %s matching labels %s", namespace, labels.String())
-	}
+func (r *ReconcileVarnish) getBackendEndpoints(ctx context.Context, vc *v1alpha1.VarnishCluster) ([]PodInfo, int32, float64, float64, error) {
 
 	varnishNodeLabels, err := r.getNodeLabels(ctx, r.config.NodeName)
 	if err != nil {
@@ -41,43 +32,12 @@ func (r *ReconcileVarnish) getPodInfo(ctx context.Context, namespace string, lab
 	actualLocalWeight := 1.0
 	actualRemoteWeight := 1.0
 
-	var backendList []PodInfo
-	var portNumber int32
-	var multiZone bool
-
-	for _, endpoints := range found.Items {
-		for _, endpoint := range endpoints.Subsets {
-			for _, address := range append(endpoint.Addresses, endpoint.NotReadyAddresses...) {
-				for _, port := range endpoint.Ports {
-					if port.Port == validPort.IntVal || port.Name == validPort.StrVal {
-						var backendWeight float64 = 1.0
-						portNumber = port.Port
-						nodeLabels, err := r.getNodeLabels(ctx, *address.NodeName)
-						if err != nil {
-							return nil, 0, 0, 0, errors.WithStack(err)
-						}
-						if _, ok := nodeLabels[zoneLabel]; ok {
-							if nodeLabels[zoneLabel] != currentZone {
-								multiZone = true
-							}
-						}
-						b := PodInfo{IP: address.IP, NodeLabels: nodeLabels, PodName: address.TargetRef.Name, Weight: backendWeight}
-						backendList = append(backendList, b)
-						break
-					}
-				}
-			}
-		}
+	backendList, portNumber, err := r.getPodsInfo(ctx, r.config.EndpointSelector, *vc.Spec.Backend.Port)
+	if err != nil {
+		return nil, 0, 0, 0, errors.WithStack(err)
 	}
 
-	// sort slices so they also look the same for the code using it
-	// prevents cases when generated VCL files change only because
-	// of order changes in the slice
-	sort.SliceStable(backendList, func(i, j int) bool {
-		return backendList[i].IP < backendList[j].IP
-	})
-
-	if !multiZone {
+	if !checkMultizone(backendList, zoneLabel, currentZone) {
 		return backendList, portNumber, actualLocalWeight, actualRemoteWeight, nil
 	}
 
@@ -134,6 +94,63 @@ func (r *ReconcileVarnish) getPodInfo(ctx context.Context, namespace string, lab
 	return backendList, portNumber, actualLocalWeight, actualRemoteWeight, nil
 }
 
+func (r *ReconcileVarnish) getVarnishEndpoints(ctx context.Context, vc *v1alpha1.VarnishCluster) ([]PodInfo, error) {
+
+	labels := labels.SelectorFromSet(vclabels.CombinedComponentLabels(vc, v1alpha1.VarnishComponentCacheService))
+	varnishPort := intstr.FromString(v1alpha1.VarnishPortName)
+
+	varnishEndpoints, _, err := r.getPodsInfo(ctx, labels, varnishPort)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return varnishEndpoints, nil
+}
+
+func (r *ReconcileVarnish) getPodsInfo(ctx context.Context, labels labels.Selector, validPort intstr.IntOrString) ([]PodInfo, int32, error) {
+
+	found := &v1.EndpointsList{}
+	err := r.List(ctx, found, client.MatchingLabelsSelector{Selector: labels}, client.InNamespace(r.config.Namespace))
+	if err != nil {
+		return nil, 0, errors.Wrapf(err, "could not retrieve endpoints from namespace %s with labels %s", r.config.Namespace, labels.String())
+	}
+
+	if len(found.Items) == 0 {
+		return nil, 0, errors.Errorf("no endpoints from namespace %s matching labels %s", r.config.Namespace, labels.String())
+	}
+
+	var portNumber int32
+	var podInfoList []PodInfo
+	for _, endpoints := range found.Items {
+		for _, endpoint := range endpoints.Subsets {
+			for _, address := range append(endpoint.Addresses, endpoint.NotReadyAddresses...) {
+				for _, port := range endpoint.Ports {
+					if port.Port == validPort.IntVal || port.Name == validPort.StrVal {
+						portNumber = port.Port
+						var backendWeight float64 = 1.0
+						nodeLabels, err := r.getNodeLabels(ctx, *address.NodeName)
+						if err != nil {
+							return nil, 0, errors.WithStack(err)
+						}
+						b := PodInfo{IP: address.IP, NodeLabels: nodeLabels, PodName: address.TargetRef.Name, Weight: backendWeight}
+						podInfoList = append(podInfoList, b)
+						break
+					}
+				}
+			}
+		}
+	}
+
+	// sort slices so they also look the same for the code using it
+	// prevents cases when generated VCL files change only because
+	// of order changes in the slice
+	sort.SliceStable(podInfoList, func(i, j int) bool {
+		return podInfoList[i].IP < podInfoList[j].IP
+	})
+
+	return podInfoList, portNumber, nil
+}
+
 func containsString(slice []string, s string) bool {
 	for _, item := range slice {
 		if item == s {
@@ -165,4 +182,16 @@ func calculateBackendRatio(backends []PodInfo, currentZone string, zoneLabel str
 	backendRatio := float64(localCount) / (float64(remoteCount) / float64(zoneCount-1))
 
 	return backendRatio
+}
+
+func checkMultizone(endpoints []PodInfo, zoneLabel string, currentZone string) bool {
+
+	for _, b := range endpoints {
+		if _, ok := b.NodeLabels[zoneLabel]; ok {
+			if b.NodeLabels[zoneLabel] != currentZone {
+				return true
+			}
+		}
+	}
+	return false
 }

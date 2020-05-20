@@ -3,7 +3,6 @@ package controller
 import (
 	"context"
 	"icm-varnish-k8s-operator/api/v1alpha1"
-	vclabels "icm-varnish-k8s-operator/pkg/labels"
 	"icm-varnish-k8s-operator/pkg/logger"
 	"icm-varnish-k8s-operator/pkg/varnishcontroller/config"
 	"icm-varnish-k8s-operator/pkg/varnishcontroller/events"
@@ -12,8 +11,6 @@ import (
 	"icm-varnish-k8s-operator/pkg/varnishcontroller/varnishadm"
 	"strings"
 	"time"
-
-	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -141,7 +138,6 @@ func (r *ReconcileVarnish) reconcileWithContext(ctx context.Context, request rec
 	r.scheme.Default(vc)
 
 	varnishPort := int32(v1alpha1.VarnishPort)
-	targetPort := *vc.Spec.Backend.Port
 	entrypointFileName := *vc.Spec.VCL.EntrypointFileName
 
 	pod := &v1.Pod{}
@@ -161,13 +157,12 @@ func (r *ReconcileVarnish) reconcileWithContext(ctx context.Context, request rec
 		return reconcile.Result{}, errors.WithStack(err)
 	}
 
-	bks, backendPortNumber, localWeight, remoteWeight, err := r.getPodInfo(ctx, r.config.Namespace, r.config.EndpointSelector, targetPort, vc)
+	bks, backendPortNumber, localWeight, remoteWeight, err := r.getBackendEndpoints(ctx, vc)
 	if err != nil {
 		return reconcile.Result{}, errors.WithStack(err)
 	}
 
-	varnishLabels := labels.SelectorFromSet(vclabels.CombinedComponentLabels(vc, v1alpha1.VarnishComponentCacheService))
-	varnishNodes, _, _, _, err := r.getPodInfo(ctx, r.config.Namespace, varnishLabels, intstr.FromString(v1alpha1.VarnishPortName), vc)
+	varnishNodes, err := r.getVarnishEndpoints(ctx, vc)
 	if err != nil {
 		return reconcile.Result{}, errors.WithStack(err)
 	}

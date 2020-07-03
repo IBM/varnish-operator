@@ -3,9 +3,9 @@ package tests
 import (
 	"context"
 	"github.com/gogo/protobuf/proto"
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	icmv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -23,26 +23,26 @@ var _ = Describe("Validating webhook", func() {
 	}
 
 	AfterEach(func() {
-		err := k8sClient.DeleteAllOf(context.Background(), &icmv1alpha1.VarnishCluster{}, client.InNamespace(vcNamespace))
+		err := k8sClient.DeleteAllOf(context.Background(), &vcapi.VarnishCluster{}, client.InNamespace(vcNamespace))
 		Expect(err).To(Succeed())
 		waitUntilVarnishClusterRemoved(vcName, vcNamespace)
 	})
 
 	It("is working", func() {
-		vc := &icmv1alpha1.VarnishCluster{
+		vc := &vcapi.VarnishCluster{
 			ObjectMeta: objMeta,
-			Spec: icmv1alpha1.VarnishClusterSpec{
-				Backend: &icmv1alpha1.VarnishClusterBackend{
+			Spec: vcapi.VarnishClusterSpec{
+				Backend: &vcapi.VarnishClusterBackend{
 					Selector: map[string]string{"app": "nginx"},
 					Port:     &validBackendPort,
 				},
-				Varnish: &icmv1alpha1.VarnishClusterVarnish{
+				Varnish: &vcapi.VarnishClusterVarnish{
 					Args: []string{"@$invalid", "argument"},
 				},
-				Service: &icmv1alpha1.VarnishClusterService{
+				Service: &vcapi.VarnishClusterService{
 					Port: proto.Int32(8081),
 				},
-				VCL: &icmv1alpha1.VarnishClusterVCL{
+				VCL: &vcapi.VarnishClusterVCL{
 					ConfigMapName:      proto.String("test"),
 					EntrypointFileName: proto.String("test.vcl"),
 				},
@@ -68,23 +68,23 @@ var _ = Describe("Mutating webhook", func() {
 	}
 
 	AfterEach(func() {
-		err := k8sClient.DeleteAllOf(context.Background(), &icmv1alpha1.VarnishCluster{}, client.InNamespace(vcNamespace))
+		err := k8sClient.DeleteAllOf(context.Background(), &vcapi.VarnishCluster{}, client.InNamespace(vcNamespace))
 		Expect(err).To(Succeed())
 		waitUntilVarnishClusterRemoved(vcName, vcNamespace)
 	})
 
 	It("is working", func() {
-		vc := &icmv1alpha1.VarnishCluster{
+		vc := &vcapi.VarnishCluster{
 			ObjectMeta: objMeta,
-			Spec: icmv1alpha1.VarnishClusterSpec{
-				Backend: &icmv1alpha1.VarnishClusterBackend{
+			Spec: vcapi.VarnishClusterSpec{
+				Backend: &vcapi.VarnishClusterBackend{
 					Selector: map[string]string{"app": "nginx"},
 					Port:     &validBackendPort,
 				},
-				Service: &icmv1alpha1.VarnishClusterService{
+				Service: &vcapi.VarnishClusterService{
 					Port: proto.Int32(8081),
 				},
-				VCL: &icmv1alpha1.VarnishClusterVCL{
+				VCL: &vcapi.VarnishClusterVCL{
 					ConfigMapName:      proto.String("test"),
 					EntrypointFileName: proto.String("test.vcl"),
 				},
@@ -94,7 +94,7 @@ var _ = Describe("Mutating webhook", func() {
 		err := k8sClient.Create(context.Background(), vc)
 		Expect(err).To(Succeed())
 
-		persistedVC := &icmv1alpha1.VarnishCluster{}
+		persistedVC := &vcapi.VarnishCluster{}
 		err = k8sClient.Get(context.Background(), types.NamespacedName{Name: vcName, Namespace: vcNamespace}, persistedVC)
 		Expect(err).To(Succeed())
 		Expect(persistedVC.Spec.Replicas).To(Equal(proto.Int(1)), "Replicas count should be set to 1 in mutating webhook")

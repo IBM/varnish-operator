@@ -2,7 +2,7 @@ package controller
 
 import (
 	"context"
-	"icm-varnish-k8s-operator/pkg/logger"
+	"github.com/ibm/varnish-operator/pkg/logger"
 	"io/ioutil"
 	"os"
 	"path/filepath"

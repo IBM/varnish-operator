@@ -2,11 +2,11 @@ package controller
 
 import (
 	"context"
-	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
-	"icm-varnish-k8s-operator/pkg/labels"
-	"icm-varnish-k8s-operator/pkg/logger"
-	"icm-varnish-k8s-operator/pkg/names"
-	"icm-varnish-k8s-operator/pkg/varnishcluster/compare"
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
+	"github.com/ibm/varnish-operator/pkg/labels"
+	"github.com/ibm/varnish-operator/pkg/logger"
+	"github.com/ibm/varnish-operator/pkg/names"
+	"github.com/ibm/varnish-operator/pkg/varnishcluster/compare"
 
 	"github.com/pkg/errors"
 
@@ -17,12 +17,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func (r *ReconcileVarnishCluster) reconcileRole(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster) error {
+func (r *ReconcileVarnishCluster) reconcileRole(ctx context.Context, instance *vcapi.VarnishCluster) error {
 	role := &rbac.Role{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      names.Role(instance.Name),
 			Namespace: instance.Namespace,
-			Labels:    labels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentRole),
+			Labels:    labels.CombinedComponentLabels(instance, vcapi.VarnishComponentRole),
 		},
 		Rules: []rbac.PolicyRule{
 			{
@@ -31,7 +31,7 @@ func (r *ReconcileVarnishCluster) reconcileRole(ctx context.Context, instance *i
 				Verbs:     []string{"list", "watch"},
 			},
 			{
-				APIGroups: []string{"icm.ibm.com"},
+				APIGroups: []string{"ibm.com"},
 				Resources: []string{"varnishclusters"},
 				Verbs:     []string{"list", "watch"},
 			},
@@ -53,7 +53,7 @@ func (r *ReconcileVarnishCluster) reconcileRole(ctx context.Context, instance *i
 		},
 	}
 
-	logr := logger.FromContext(ctx).With(logger.FieldComponent, icmapiv1alpha1.VarnishComponentRole)
+	logr := logger.FromContext(ctx).With(logger.FieldComponent, vcapi.VarnishComponentRole)
 	logr = logr.With(logger.FieldComponentName, role.Name)
 
 	// Set controller reference for role

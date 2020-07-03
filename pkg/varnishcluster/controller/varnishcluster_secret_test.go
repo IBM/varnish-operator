@@ -2,9 +2,8 @@ package controller
 
 import (
 	"context"
-	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
-	icmv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
-	"icm-varnish-k8s-operator/pkg/names"
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
+	"github.com/ibm/varnish-operator/pkg/names"
 	"testing"
 	"time"
 
@@ -27,17 +26,17 @@ var _ = Describe("the varnish secret", func() {
 		Name:      vcName,
 	}
 
-	vc := &icmv1alpha1.VarnishCluster{
+	vc := &vcapi.VarnishCluster{
 		ObjectMeta: objMeta,
-		Spec: icmv1alpha1.VarnishClusterSpec{
-			Backend: &icmv1alpha1.VarnishClusterBackend{
+		Spec: vcapi.VarnishClusterSpec{
+			Backend: &vcapi.VarnishClusterBackend{
 				Selector: map[string]string{"app": "nginx"},
 				Port:     &validBackendPort,
 			},
-			Service: &icmv1alpha1.VarnishClusterService{
+			Service: &vcapi.VarnishClusterService{
 				Port: proto.Int32(8081),
 			},
-			VCL: &icmv1alpha1.VarnishClusterVCL{
+			VCL: &vcapi.VarnishClusterVCL{
 				ConfigMapName:      proto.String("test"),
 				EntrypointFileName: proto.String("test.vcl"),
 			},
@@ -61,14 +60,14 @@ var _ = Describe("the varnish secret", func() {
 			}, time.Second*5).Should(Succeed())
 
 			Expect(secret.Labels).To(Equal(map[string]string{
-				icmv1alpha1.LabelVarnishComponent: "secret",
-				icmv1alpha1.LabelVarnishOwner:     vcName,
-				icmv1alpha1.LabelVarnishUID:       string(newVC.UID),
+				vcapi.LabelVarnishComponent: "secret",
+				vcapi.LabelVarnishOwner:     vcName,
+				vcapi.LabelVarnishUID:       string(newVC.UID),
 			}))
 
 			ownerReference := []metav1.OwnerReference{
 				{
-					APIVersion:         "icm.ibm.com/v1alpha1",
+					APIVersion:         "ibm.com/v1alpha1",
 					Kind:               "VarnishCluster",
 					Name:               newVC.Name,
 					UID:                newVC.UID,
@@ -205,7 +204,7 @@ var _ = Describe("the varnish secret", func() {
 func TestNamesForInstanceSecret(t *testing.T) {
 	cases := []struct {
 		desc     string
-		secret   *icmv1alpha1.VarnishClusterVarnishSecret
+		secret   *vcapi.VarnishClusterVarnishSecret
 		expected []string
 	}{
 		{
@@ -215,12 +214,12 @@ func TestNamesForInstanceSecret(t *testing.T) {
 		},
 		{
 			"empty",
-			&icmv1alpha1.VarnishClusterVarnishSecret{},
+			&vcapi.VarnishClusterVarnishSecret{},
 			[]string{"varnish-test-varnish-secret", "secret"},
 		},
 		{
 			"custom secret",
-			&icmv1alpha1.VarnishClusterVarnishSecret{
+			&vcapi.VarnishClusterVarnishSecret{
 				SecretName: proto.String("credentials"),
 				Key:        proto.String("varnish"),
 			},
@@ -228,7 +227,7 @@ func TestNamesForInstanceSecret(t *testing.T) {
 		},
 		{
 			"custom secret no key",
-			&icmv1alpha1.VarnishClusterVarnishSecret{
+			&vcapi.VarnishClusterVarnishSecret{
 				SecretName: proto.String("credentials"),
 			},
 			[]string{"credentials", "secret"},
@@ -237,10 +236,10 @@ func TestNamesForInstanceSecret(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(tt *testing.T) {
-			instance := &icmapiv1alpha1.VarnishCluster{}
+			instance := &vcapi.VarnishCluster{}
 			instance.Name = "varnish-test"
-			instance.Spec = icmapiv1alpha1.VarnishClusterSpec{
-				Varnish: &icmapiv1alpha1.VarnishClusterVarnish{
+			instance.Spec = vcapi.VarnishClusterSpec{
+				Varnish: &vcapi.VarnishClusterVarnish{
 					Secret: tc.secret,
 				},
 			}

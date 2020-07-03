@@ -1,8 +1,8 @@
 package predicates
 
 import (
-	"icm-varnish-k8s-operator/api/v1alpha1"
-	"icm-varnish-k8s-operator/pkg/logger"
+	"github.com/ibm/varnish-operator/api/v1alpha1"
+	"github.com/ibm/varnish-operator/pkg/logger"
 	"k8s.io/apimachinery/pkg/types"
 	"testing"
 

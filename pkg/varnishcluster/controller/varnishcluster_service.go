@@ -2,11 +2,11 @@ package controller
 
 import (
 	"context"
-	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
-	vclabels "icm-varnish-k8s-operator/pkg/labels"
-	"icm-varnish-k8s-operator/pkg/logger"
-	"icm-varnish-k8s-operator/pkg/names"
-	"icm-varnish-k8s-operator/pkg/varnishcluster/compare"
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
+	vclabels "github.com/ibm/varnish-operator/pkg/labels"
+	"github.com/ibm/varnish-operator/pkg/logger"
+	"github.com/ibm/varnish-operator/pkg/names"
+	"github.com/ibm/varnish-operator/pkg/varnishcluster/compare"
 
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -19,12 +19,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func (r *ReconcileVarnishCluster) reconcileServiceNoCache(ctx context.Context, instance, instanceStatus *icmapiv1alpha1.VarnishCluster) (map[string]string, error) {
+func (r *ReconcileVarnishCluster) reconcileServiceNoCache(ctx context.Context, instance, instanceStatus *vcapi.VarnishCluster) (map[string]string, error) {
 	selector := make(map[string]string, len(instance.Spec.Backend.Selector))
 	for k, v := range instance.Spec.Backend.Selector {
 		selector[k] = v
 	}
-	selectorLabels := vclabels.ComponentLabels(instance, icmapiv1alpha1.VarnishComponentNoCacheService)
+	selectorLabels := vclabels.ComponentLabels(instance, vcapi.VarnishComponentNoCacheService)
 	inheritedLabels := vclabels.InheritLabels(instance)
 	svcLabels := make(map[string]string, len(selectorLabels)+len(inheritedLabels))
 	for k, v := range inheritedLabels {
@@ -55,7 +55,7 @@ func (r *ReconcileVarnishCluster) reconcileServiceNoCache(ctx context.Context, i
 		},
 	}
 
-	logr := logger.FromContext(ctx).With(logger.FieldComponent, icmapiv1alpha1.VarnishComponentNoCacheService)
+	logr := logger.FromContext(ctx).With(logger.FieldComponent, vcapi.VarnishComponentNoCacheService)
 	logr = logr.With(logger.FieldComponent, serviceNoCache.Name)
 	ctx = logger.ToContext(ctx, logr)
 
@@ -65,40 +65,40 @@ func (r *ReconcileVarnishCluster) reconcileServiceNoCache(ctx context.Context, i
 	return selectorLabels, nil
 }
 
-func (r *ReconcileVarnishCluster) reconcileService(ctx context.Context, instance, instanceStatus *icmapiv1alpha1.VarnishCluster, varnishSelector map[string]string) error {
+func (r *ReconcileVarnishCluster) reconcileService(ctx context.Context, instance, instanceStatus *vcapi.VarnishCluster, varnishSelector map[string]string) error {
 	service := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        instance.Name,
 			Namespace:   instance.Namespace,
-			Labels:      vclabels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentCacheService),
+			Labels:      vclabels.CombinedComponentLabels(instance, vcapi.VarnishComponentCacheService),
 			Annotations: instance.Spec.Service.Annotations,
 		},
 	}
 
-	logr := logger.FromContext(ctx).With(logger.FieldComponent, icmapiv1alpha1.VarnishComponentCacheService)
+	logr := logger.FromContext(ctx).With(logger.FieldComponent, vcapi.VarnishComponentCacheService)
 	logr = logr.With(logger.FieldComponent, service.Name)
 	ctx = logger.ToContext(ctx, logr)
 
 	service.Spec = v1.ServiceSpec{
-		Selector: vclabels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentVarnish),
+		Selector: vclabels.CombinedComponentLabels(instance, vcapi.VarnishComponentVarnish),
 		Ports: []v1.ServicePort{
 			{
-				Name:       icmapiv1alpha1.VarnishPortName,
+				Name:       vcapi.VarnishPortName,
 				Protocol:   v1.ProtocolTCP,
 				Port:       *instance.Spec.Service.Port,
-				TargetPort: intstr.FromString(icmapiv1alpha1.VarnishPortName),
+				TargetPort: intstr.FromString(vcapi.VarnishPortName),
 			},
 			{
-				Name:       icmapiv1alpha1.VarnishMetricsPortName,
+				Name:       vcapi.VarnishMetricsPortName,
 				Protocol:   v1.ProtocolTCP,
-				Port:       icmapiv1alpha1.VarnishPrometheusExporterPort,
-				TargetPort: intstr.FromString(icmapiv1alpha1.VarnishMetricsPortName),
+				Port:       vcapi.VarnishPrometheusExporterPort,
+				TargetPort: intstr.FromString(vcapi.VarnishMetricsPortName),
 			},
 			{
-				Name:       icmapiv1alpha1.VarnishControllerMetricsPortName,
+				Name:       vcapi.VarnishControllerMetricsPortName,
 				Protocol:   v1.ProtocolTCP,
-				Port:       icmapiv1alpha1.VarnishControllerMetricsPort,
-				TargetPort: intstr.FromString(icmapiv1alpha1.VarnishControllerMetricsPortName),
+				Port:       vcapi.VarnishControllerMetricsPort,
+				TargetPort: intstr.FromString(vcapi.VarnishControllerMetricsPortName),
 			},
 		},
 		SessionAffinity: v1.ServiceAffinityNone,
@@ -113,7 +113,7 @@ func (r *ReconcileVarnishCluster) reconcileService(ctx context.Context, instance
 	return nil
 }
 
-func (r *ReconcileVarnishCluster) reconcileServiceGeneric(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster, desired *v1.Service) error {
+func (r *ReconcileVarnishCluster) reconcileServiceGeneric(ctx context.Context, instance *vcapi.VarnishCluster, desired *v1.Service) error {
 	logr := logger.FromContext(ctx)
 
 	// Set controller reference for desired object

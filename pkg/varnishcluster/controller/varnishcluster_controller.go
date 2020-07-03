@@ -2,12 +2,12 @@ package controller
 
 import (
 	"context"
-	icmv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
-	"icm-varnish-k8s-operator/pkg/logger"
-	"icm-varnish-k8s-operator/pkg/names"
-	"icm-varnish-k8s-operator/pkg/varnishcluster/compare"
-	"icm-varnish-k8s-operator/pkg/varnishcluster/config"
-	vcreconcile "icm-varnish-k8s-operator/pkg/varnishcluster/reconcile"
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
+	"github.com/ibm/varnish-operator/pkg/logger"
+	"github.com/ibm/varnish-operator/pkg/names"
+	"github.com/ibm/varnish-operator/pkg/varnishcluster/compare"
+	"github.com/ibm/varnish-operator/pkg/varnishcluster/config"
+	vcreconcile "github.com/ibm/varnish-operator/pkg/varnishcluster/reconcile"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -91,7 +91,7 @@ func SetupVarnishReconciler(ctx context.Context, vcCtrl reconcile.Reconciler, mg
 		}),
 	}
 
-	vcPodsSelector := labels.SelectorFromSet(map[string]string{icmv1alpha1.LabelVarnishComponent: icmv1alpha1.VarnishComponentVarnish})
+	vcPodsSelector := labels.SelectorFromSet(map[string]string{vcapi.LabelVarnishComponent: vcapi.VarnishComponentVarnish})
 	varnishClusterPodsEventHandler := &handler.EnqueueRequestsFromMapFunc{
 		ToRequests: handler.ToRequestsFunc(
 			func(a handler.MapObject) []ctrl.Request {
@@ -101,7 +101,7 @@ func SetupVarnishReconciler(ctx context.Context, vcCtrl reconcile.Reconciler, mg
 
 				return []ctrl.Request{
 					{NamespacedName: types.NamespacedName{
-						Name:      a.Meta.GetLabels()[icmv1alpha1.LabelVarnishOwner],
+						Name:      a.Meta.GetLabels()[vcapi.LabelVarnishOwner],
 						Namespace: a.Meta.GetNamespace(),
 					}},
 				}
@@ -110,7 +110,7 @@ func SetupVarnishReconciler(ctx context.Context, vcCtrl reconcile.Reconciler, mg
 
 	builder := ctrl.NewControllerManagedBy(mgr)
 	builder.Named("varnishcluster")
-	builder.For(&icmv1alpha1.VarnishCluster{})
+	builder.For(&vcapi.VarnishCluster{})
 	builder.Owns(&v1.ConfigMap{})
 	builder.Owns(&appsv1.StatefulSet{})
 	builder.Owns(&v1.Service{})
@@ -167,8 +167,8 @@ func NewVarnishReconciler(mgr manager.Manager, cfg *config.Config, logr *logger.
 // Reconcile reads that state of the cluster for a VarnishCluster object and makes changes based on the state read
 // and what is in the VarnishCluster.Spec
 // Automatically generate RBAC rules to allow the Controller to read and write StatefulSets
-// +kubebuilder:rbac:groups=icm.ibm.com,resources=varnishclusters,verbs=list;watch;create;update;delete
-// +kubebuilder:rbac:groups=icm.ibm.com,resources=varnishclusters/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=ibm.com,resources=varnishclusters,verbs=list;watch;create;update;delete
+// +kubebuilder:rbac:groups=ibm.com,resources=varnishclusters/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=configmaps;secrets,verbs=get;list;watch;create;update
 // +kubebuilder:rbac:groups="",resources=services;serviceaccounts,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups="",resources=endpoints,verbs=list;watch
@@ -205,7 +205,7 @@ func (r *ReconcileVarnishCluster) Reconcile(request ctrl.Request) (ctrl.Result, 
 
 func (r *ReconcileVarnishCluster) reconcileWithContext(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	// Fetch the VarnishCluster instance
-	instance := &icmv1alpha1.VarnishCluster{}
+	instance := &vcapi.VarnishCluster{}
 	err := r.Get(ctx, request.NamespacedName, instance)
 	if err != nil {
 		if kerrors.IsNotFound(err) {
@@ -229,7 +229,7 @@ func (r *ReconcileVarnishCluster) reconcileWithContext(ctx context.Context, requ
 	// For some reason, sometimes Kubernetes returns the object without apiVersion and kind
 	// Since the code below relies on that values we set them manually if they are empty
 	if instance.APIVersion == "" {
-		instance.APIVersion = "icm.ibm.com/v1alpha1"
+		instance.APIVersion = "ibm.com/v1alpha1"
 	}
 	if instance.Kind == "" {
 		instance.Kind = "VarnishCluster"
@@ -249,7 +249,7 @@ func (r *ReconcileVarnishCluster) reconcileWithContext(ctx context.Context, requ
 		return ctrl.Result{}, err
 	}
 
-	instanceStatus := &icmv1alpha1.VarnishCluster{}
+	instanceStatus := &vcapi.VarnishCluster{}
 	instance.ObjectMeta.DeepCopyInto(&instanceStatus.ObjectMeta)
 	instance.Status.DeepCopyInto(&instanceStatus.Status)
 

@@ -3,7 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
-	icmv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 	"time"
 
 	"k8s.io/apimachinery/pkg/labels"
@@ -28,17 +28,17 @@ var _ = Describe("statefulset", func() {
 		Labels:    map[string]string{"custom": "label"},
 	}
 
-	vc := &icmv1alpha1.VarnishCluster{
+	vc := &vcapi.VarnishCluster{
 		ObjectMeta: objMeta,
-		Spec: icmv1alpha1.VarnishClusterSpec{
-			Backend: &icmv1alpha1.VarnishClusterBackend{
+		Spec: vcapi.VarnishClusterSpec{
+			Backend: &vcapi.VarnishClusterBackend{
 				Selector: map[string]string{"app": "nginx"},
 				Port:     &validBackendPort,
 			},
-			Service: &icmv1alpha1.VarnishClusterService{
+			Service: &vcapi.VarnishClusterService{
 				Port: proto.Int32(8081),
 			},
-			VCL: &icmv1alpha1.VarnishClusterVCL{
+			VCL: &vcapi.VarnishClusterVCL{
 				ConfigMapName:      proto.String("test"),
 				EntrypointFileName: proto.String("test.vcl"),
 			},
@@ -58,10 +58,10 @@ var _ = Describe("statefulset", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			expectedLabels := map[string]string{
-				"custom":                          "label",
-				icmv1alpha1.LabelVarnishOwner:     vcName,
-				icmv1alpha1.LabelVarnishComponent: icmv1alpha1.VarnishComponentVarnish,
-				icmv1alpha1.LabelVarnishUID:       string(newVC.UID),
+				"custom":                    "label",
+				vcapi.LabelVarnishOwner:     vcName,
+				vcapi.LabelVarnishComponent: vcapi.VarnishComponentVarnish,
+				vcapi.LabelVarnishUID:       string(newVC.UID),
 			}
 
 			sts := &apps.StatefulSet{}
@@ -73,7 +73,7 @@ var _ = Describe("statefulset", func() {
 			Expect(sts.OwnerReferences[0].UID).To(Equal(newVC.UID))
 			Expect(sts.OwnerReferences[0].Controller).To(Equal(proto.Bool(true)))
 			Expect(sts.OwnerReferences[0].Kind).To(Equal("VarnishCluster"))
-			Expect(sts.OwnerReferences[0].APIVersion).To(Equal("icm.ibm.com/v1alpha1"))
+			Expect(sts.OwnerReferences[0].APIVersion).To(Equal("ibm.com/v1alpha1"))
 			Expect(sts.OwnerReferences[0].Name).To(Equal(newVC.Name))
 			Expect(sts.OwnerReferences[0].BlockOwnerDeletion).To(Equal(proto.Bool(true)))
 
@@ -95,7 +95,7 @@ var _ = Describe("statefulset", func() {
 			Expect(podSpec.Tolerations).To(BeNil())
 			Expect(podSpec.RestartPolicy).To(Equal(v1.RestartPolicyAlways))
 
-			varnishContainer, err := getContainerByName(podSpec, icmv1alpha1.VarnishContainerName)
+			varnishContainer, err := getContainerByName(podSpec, vcapi.VarnishContainerName)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(varnishContainer.Args).To(Equal([]string{
 				"-F",
@@ -106,35 +106,35 @@ var _ = Describe("statefulset", func() {
 			}))
 			Expect(varnishContainer.Image).To(Equal(testCoupledVarnishImage))
 			Expect(varnishContainer.Resources).ToNot(BeNil(), "kubernetes will set to empty struct if nil and we will infinitely fight with kubernetes by resetting it to nil")
-			varnishPort, err := getContainerPortByName(varnishContainer, icmv1alpha1.VarnishPortName)
+			varnishPort, err := getContainerPortByName(varnishContainer, vcapi.VarnishPortName)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(varnishPort.ContainerPort).To(Equal(int32(icmv1alpha1.VarnishPort)))
+			Expect(varnishPort.ContainerPort).To(Equal(int32(vcapi.VarnishPort)))
 			Expect(varnishPort.Protocol).To(Equal(v1.ProtocolTCP))
 
-			varnishControllerContainer, err := getContainerByName(podSpec, icmv1alpha1.VarnishControllerName)
+			varnishControllerContainer, err := getContainerByName(podSpec, vcapi.VarnishControllerName)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(varnishControllerContainer.Image).To(Equal("us.icr.io/icm-varnish/varnish-controller:test"))
 			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "ENDPOINT_SELECTOR_STRING", Value: labels.SelectorFromSet(map[string]string{
-				icmv1alpha1.LabelVarnishOwner:     vcName,
-				icmv1alpha1.LabelVarnishComponent: icmv1alpha1.VarnishComponentNoCacheService,
-				icmv1alpha1.LabelVarnishUID:       string(newVC.UID),
+				vcapi.LabelVarnishOwner:     vcName,
+				vcapi.LabelVarnishComponent: vcapi.VarnishComponentNoCacheService,
+				vcapi.LabelVarnishUID:       string(newVC.UID),
 			}).String()}))
 			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "NAMESPACE", Value: vcNamespace}))
 			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "POD_NAME", ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{APIVersion: "v1", FieldPath: "metadata.name"}}}))
 			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "VARNISH_CLUSTER_NAME", Value: vcName}))
 			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "VARNISH_CLUSTER_UID", Value: string(newVC.UID)}))
-			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "VARNISH_CLUSTER_GROUP", Value: "icm.ibm.com"}))
+			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "VARNISH_CLUSTER_GROUP", Value: "ibm.com"}))
 			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "VARNISH_CLUSTER_VERSION", Value: "v1alpha1"}))
 			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "VARNISH_CLUSTER_KIND", Value: "VarnishCluster"}))
 			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "LOG_FORMAT", Value: "json"}))
 			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "LOG_LEVEL", Value: "info"}))
 
-			metricsContainer, err := getContainerByName(podSpec, icmv1alpha1.VarnishMetricsExporterName)
+			metricsContainer, err := getContainerByName(podSpec, vcapi.VarnishMetricsExporterName)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(metricsContainer.Image).To(Equal("us.icr.io/icm-varnish/varnish-metrics-exporter:test"))
-			varnishMetricsExporterPort, err := getContainerPortByName(metricsContainer, icmv1alpha1.VarnishMetricsPortName)
+			varnishMetricsExporterPort, err := getContainerPortByName(metricsContainer, vcapi.VarnishMetricsPortName)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(varnishMetricsExporterPort.ContainerPort).To(Equal(int32(icmv1alpha1.VarnishPrometheusExporterPort)))
+			Expect(varnishMetricsExporterPort.ContainerPort).To(Equal(int32(vcapi.VarnishPrometheusExporterPort)))
 			Expect(varnishMetricsExporterPort.Protocol).To(Equal(v1.ProtocolTCP))
 		})
 	})
@@ -142,7 +142,7 @@ var _ = Describe("statefulset", func() {
 	Context("when varnishcluster is created with additional varnish args", func() {
 		It("should be created with additional varnish args included", func() {
 			newVC := vc.DeepCopy()
-			newVC.Spec.Varnish = &icmv1alpha1.VarnishClusterVarnish{
+			newVC.Spec.Varnish = &vcapi.VarnishClusterVarnish{
 				Args: []string{"-p", "default_ttl=3600", "-p", "default_grace=3600"},
 			}
 			err := k8sClient.Create(context.Background(), newVC)
@@ -153,7 +153,7 @@ var _ = Describe("statefulset", func() {
 				return k8sClient.Get(context.Background(), stsName, sts)
 			}, time.Second*5).Should(Succeed())
 
-			varnishContainer, err := getContainerByName(sts.Spec.Template.Spec, icmv1alpha1.VarnishContainerName)
+			varnishContainer, err := getContainerByName(sts.Spec.Template.Spec, vcapi.VarnishContainerName)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(varnishContainer.Args).To(Equal([]string{
 				"-F",
@@ -179,11 +179,11 @@ var _ = Describe("statefulset", func() {
 			varnishImage := "us.icr.io/different-location/varnish:test"
 			varnishControllerImage := "us.icr.io/other-location/varnish-controller:test"
 			varnishMetricsExporterImage := "us.icr.io/an-another-location/varnish-metrics-exporter:test"
-			newVC.Spec.Varnish = &icmv1alpha1.VarnishClusterVarnish{
+			newVC.Spec.Varnish = &vcapi.VarnishClusterVarnish{
 				Image: varnishImage,
 			}
-			newVC.Spec.Varnish.Controller = &icmv1alpha1.VarnishClusterVarnishController{Image: varnishControllerImage}
-			newVC.Spec.Varnish.MetricsExporter = &icmv1alpha1.VarnishClusterVarnishMetricsExporter{Image: varnishMetricsExporterImage}
+			newVC.Spec.Varnish.Controller = &vcapi.VarnishClusterVarnishController{Image: varnishControllerImage}
+			newVC.Spec.Varnish.MetricsExporter = &vcapi.VarnishClusterVarnishMetricsExporter{Image: varnishMetricsExporterImage}
 			err := k8sClient.Create(context.Background(), newVC)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -192,15 +192,15 @@ var _ = Describe("statefulset", func() {
 				return k8sClient.Get(context.Background(), stsName, sts)
 			}, time.Second*5).Should(Succeed())
 
-			varnishContainer, err := getContainerByName(sts.Spec.Template.Spec, icmv1alpha1.VarnishContainerName)
+			varnishContainer, err := getContainerByName(sts.Spec.Template.Spec, vcapi.VarnishContainerName)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(varnishContainer.Image).To(Equal(varnishImage))
 
-			varnishControllerContainer, err := getContainerByName(sts.Spec.Template.Spec, icmv1alpha1.VarnishControllerName)
+			varnishControllerContainer, err := getContainerByName(sts.Spec.Template.Spec, vcapi.VarnishControllerName)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(varnishControllerContainer.Image).To(Equal(varnishControllerImage))
 
-			metricsContainer, err := getContainerByName(sts.Spec.Template.Spec, icmv1alpha1.VarnishMetricsExporterName)
+			metricsContainer, err := getContainerByName(sts.Spec.Template.Spec, vcapi.VarnishMetricsExporterName)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(metricsContainer.Image).To(Equal(varnishMetricsExporterImage))
 		})
@@ -210,7 +210,7 @@ var _ = Describe("statefulset", func() {
 		It("should be created with overridden container images derived from varnish image", func() {
 			newVC := vc.DeepCopy()
 			varnishImage := "us.icr.io/different-location/varnish:test"
-			newVC.Spec.Varnish = &icmv1alpha1.VarnishClusterVarnish{
+			newVC.Spec.Varnish = &vcapi.VarnishClusterVarnish{
 				Image: varnishImage,
 			}
 			err := k8sClient.Create(context.Background(), newVC)
@@ -221,15 +221,15 @@ var _ = Describe("statefulset", func() {
 				return k8sClient.Get(context.Background(), stsName, sts)
 			}, time.Second*5).Should(Succeed())
 
-			varnishContainer, err := getContainerByName(sts.Spec.Template.Spec, icmv1alpha1.VarnishContainerName)
+			varnishContainer, err := getContainerByName(sts.Spec.Template.Spec, vcapi.VarnishContainerName)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(varnishContainer.Image).To(Equal(varnishImage))
 
-			varnishControllerContainer, err := getContainerByName(sts.Spec.Template.Spec, icmv1alpha1.VarnishControllerName)
+			varnishControllerContainer, err := getContainerByName(sts.Spec.Template.Spec, vcapi.VarnishControllerName)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(varnishControllerContainer.Image).To(Equal("us.icr.io/different-location/varnish-controller:test"))
 
-			metricsContainer, err := getContainerByName(sts.Spec.Template.Spec, icmv1alpha1.VarnishMetricsExporterName)
+			metricsContainer, err := getContainerByName(sts.Spec.Template.Spec, vcapi.VarnishMetricsExporterName)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(metricsContainer.Image).To(Equal("us.icr.io/different-location/varnish-metrics-exporter:test"))
 		})

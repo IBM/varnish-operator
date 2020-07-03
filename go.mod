@@ -1,4 +1,4 @@
-module icm-varnish-k8s-operator
+module github.com/ibm/varnish-operator
 
 go 1.13
 

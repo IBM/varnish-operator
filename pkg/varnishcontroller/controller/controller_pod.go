@@ -3,7 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
-	"icm-varnish-k8s-operator/pkg/logger"
+	"github.com/ibm/varnish-operator/pkg/logger"
 	"reflect"
 	"strings"
 

@@ -2,9 +2,9 @@ package controller
 
 import (
 	"context"
-	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
-	"icm-varnish-k8s-operator/pkg/labels"
-	"icm-varnish-k8s-operator/pkg/logger"
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
+	"github.com/ibm/varnish-operator/pkg/labels"
+	"github.com/ibm/varnish-operator/pkg/logger"
 	"time"
 
 	"github.com/pkg/errors"
@@ -14,13 +14,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (r *ReconcileVarnishCluster) reconcileDelayedRollingUpdate(ctx context.Context, instance, instanceStatus *icmapiv1alpha1.VarnishCluster, sts *appsv1.StatefulSet) error {
+func (r *ReconcileVarnishCluster) reconcileDelayedRollingUpdate(ctx context.Context, instance, instanceStatus *vcapi.VarnishCluster, sts *appsv1.StatefulSet) error {
 	logr := logger.FromContext(ctx)
 
-	if instance.Spec.UpdateStrategy.Type != icmapiv1alpha1.VarnishUpdateStrategyDelayedRollingUpdate {
+	if instance.Spec.UpdateStrategy.Type != vcapi.VarnishUpdateStrategyDelayedRollingUpdate {
 		// make sure there're no hanging timers.
 		// could happen if the update strategy changed from DelayedRollingUpdate to something else
-		r.reconcileTriggerer.Stop(icmapiv1alpha1.VarnishUpdateStrategyDelayedRollingUpdate, instance)
+		r.reconcileTriggerer.Stop(vcapi.VarnishUpdateStrategyDelayedRollingUpdate, instance)
 		return nil
 	}
 
@@ -30,7 +30,7 @@ func (r *ReconcileVarnishCluster) reconcileDelayedRollingUpdate(ctx context.Cont
 	}
 
 	stsPods := &v1.PodList{}
-	varnishPodLabels := klabels.SelectorFromSet(labels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentVarnish))
+	varnishPodLabels := klabels.SelectorFromSet(labels.CombinedComponentLabels(instance, vcapi.VarnishComponentVarnish))
 	if err := r.List(ctx, stsPods, &client.MatchingLabelsSelector{Selector: varnishPodLabels}); err != nil {
 		return errors.WithStack(err)
 	}
@@ -43,7 +43,7 @@ func (r *ReconcileVarnishCluster) reconcileDelayedRollingUpdate(ctx context.Cont
 	// an already existing timer means that we have already reloaded a pod and should wait for the timer to trigger the reconcile loop
 	// the obvious way of checking the statefulset status proved to be error prone as there is a delay between pod deletion and statefulset status update.
 	// During that time the operator thinks that we didn't reload a pod and will delete an another one by mistake.
-	if r.reconcileTriggerer.TimerExists(icmapiv1alpha1.VarnishUpdateStrategyDelayedRollingUpdate, instance) {
+	if r.reconcileTriggerer.TimerExists(vcapi.VarnishUpdateStrategyDelayedRollingUpdate, instance) {
 		logr.Debugf("Timer exists. Waiting for a reconcile loop to be triggered by the timer.")
 		return nil
 	}
@@ -89,7 +89,7 @@ func (r *ReconcileVarnishCluster) reconcileDelayedRollingUpdate(ctx context.Cont
 		}
 		// The pod's creation time will be later than the reconcile time
 		// This will be fixed during next reconcile
-		r.reconcileTriggerer.TriggerAfter(icmapiv1alpha1.VarnishUpdateStrategyDelayedRollingUpdate, rollingUpdateDelay, instance)
+		r.reconcileTriggerer.TriggerAfter(vcapi.VarnishUpdateStrategyDelayedRollingUpdate, rollingUpdateDelay, instance)
 		return nil
 	}
 
@@ -104,12 +104,12 @@ func (r *ReconcileVarnishCluster) reconcileDelayedRollingUpdate(ctx context.Cont
 		// this time will not be correct as Kubernetes will have a delay before it creates a new pod
 		// As we can't know when the pod will be created, set the timer delay based on the current time.
 		// Later, when the pod will be created, we will set the correct time
-		r.reconcileTriggerer.TriggerAfter(icmapiv1alpha1.VarnishUpdateStrategyDelayedRollingUpdate, rollingUpdateDelay, instance)
+		r.reconcileTriggerer.TriggerAfter(vcapi.VarnishUpdateStrategyDelayedRollingUpdate, rollingUpdateDelay, instance)
 		return nil
 	}
 
 	// make sure we have the correct time
-	r.reconcileTriggerer.TriggerAfter(icmapiv1alpha1.VarnishUpdateStrategyDelayedRollingUpdate, time.Until(nextUpdateTime), instance)
+	r.reconcileTriggerer.TriggerAfter(vcapi.VarnishUpdateStrategyDelayedRollingUpdate, time.Until(nextUpdateTime), instance)
 	logr.Debugf("DelayedRollingUpdate is in progress. Next pod update is in %s", time.Until(nextUpdateTime))
 	return nil
 }

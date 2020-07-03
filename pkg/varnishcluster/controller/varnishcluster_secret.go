@@ -3,10 +3,10 @@ package controller
 import (
 	"context"
 	"crypto/rand"
-	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
-	vclabels "icm-varnish-k8s-operator/pkg/labels"
-	"icm-varnish-k8s-operator/pkg/logger"
-	"icm-varnish-k8s-operator/pkg/names"
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
+	vclabels "github.com/ibm/varnish-operator/pkg/labels"
+	"github.com/ibm/varnish-operator/pkg/logger"
+	"github.com/ibm/varnish-operator/pkg/names"
 
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
@@ -21,16 +21,16 @@ const (
 	varnishSecretSize           = 512
 )
 
-func (r *ReconcileVarnishCluster) reconcileVarnishSecret(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster) error {
+func (r *ReconcileVarnishCluster) reconcileVarnishSecret(ctx context.Context, instance *vcapi.VarnishCluster) error {
 	secretName, secretKey := namesForInstanceSecret(instance)
-	logr := logger.FromContext(ctx).With(logger.FieldComponent, icmapiv1alpha1.VarnishComponentSecret)
+	logr := logger.FromContext(ctx).With(logger.FieldComponent, vcapi.VarnishComponentSecret)
 	logr = logr.With(logger.FieldComponent, secretName)
 
 	secret := &v1.Secret{}
 	err := r.Get(ctx, types.NamespacedName{Name: secretName, Namespace: instance.Namespace}, secret)
 	if err != nil && kerrors.IsNotFound(err) {
 		logr.Info("Creating Varnish Secret")
-		secretLabels := vclabels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentSecret)
+		secretLabels := vclabels.CombinedComponentLabels(instance, vcapi.VarnishComponentSecret)
 		err = createNewSecret(
 			secret,
 			secretName,
@@ -109,7 +109,7 @@ func generateSecretData() ([]byte, error) {
 	return data, err
 }
 
-func namesForInstanceSecret(instance *icmapiv1alpha1.VarnishCluster) (secretName, secretKey string) {
+func namesForInstanceSecret(instance *vcapi.VarnishCluster) (secretName, secretKey string) {
 	secretName, secretKey = names.VarnishSecret(instance.Name), varnishDefaultSecretKeyName
 	spec := instance.Spec.Varnish.Secret
 	if spec != nil && notEmptyString(spec.SecretName) {

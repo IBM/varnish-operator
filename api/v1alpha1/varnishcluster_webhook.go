@@ -2,7 +2,7 @@ package v1alpha1
 
 import (
 	"fmt"
-	"icm-varnish-k8s-operator/pkg/logger"
+	"github.com/ibm/varnish-operator/pkg/logger"
 	"regexp"
 	"strings"
 
@@ -49,7 +49,7 @@ func (in *VarnishCluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-// +kubebuilder:webhook:path=/mutate-icm-ibm-com-v1alpha1-varnishcluster,mutating=true,failurePolicy=fail,groups=icm.ibm.com,resources=varnishclusters,verbs=create;update,versions=v1alpha1,name=mvarnishcluster.kb.io
+// +kubebuilder:webhook:path=/mutate-ibm-com-v1alpha1-varnishcluster,mutating=true,failurePolicy=fail,groups=icm.ibm.com,resources=varnishclusters,verbs=create;update,versions=v1alpha1,name=mvarnishcluster.kb.io
 
 var _ webhook.Defaulter = &VarnishCluster{}
 
@@ -67,7 +67,7 @@ func (in *VarnishCluster) Default() {
 }
 
 // note: change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-// +kubebuilder:webhook:verbs=create;update,path=/validate-icm-ibm-com-v1alpha1-varnishcluster,mutating=false,failurePolicy=fail,groups=icm.ibm.com,resources=varnishclusters,versions=v1alpha1,name=vvarnishcluster.kb.io
+// +kubebuilder:webhook:verbs=create;update,path=/validate-ibm-com-v1alpha1-varnishcluster,mutating=false,failurePolicy=fail,groups=ibm.com,resources=varnishclusters,versions=v1alpha1,name=vvarnishcluster.kb.io
 
 var _ webhook.Validator = &VarnishCluster{}
 

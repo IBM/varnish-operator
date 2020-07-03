@@ -4,7 +4,7 @@ import (
 	"context"
 	"sort"
 
-	"icm-varnish-k8s-operator/api/v1alpha1"
+	"github.com/ibm/varnish-operator/api/v1alpha1"
 	vclabels "icm-varnish-k8s-operator/pkg/labels"
 
 	"github.com/pkg/errors"

@@ -1,8 +1,8 @@
 package reconcile
 
 import (
-	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
-	"icm-varnish-k8s-operator/pkg/logger"
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
+	"github.com/ibm/varnish-operator/pkg/logger"
 	"sync"
 	"time"
 
@@ -24,7 +24,7 @@ type ReconcileTriggerer struct {
 	sync.Mutex
 }
 
-func (q *ReconcileTriggerer) TriggerAfter(key string, triggerAfter time.Duration, instance *icmapiv1alpha1.VarnishCluster) {
+func (q *ReconcileTriggerer) TriggerAfter(key string, triggerAfter time.Duration, instance *vcapi.VarnishCluster) {
 	namespacedName := instance.Namespace + "/" + instance.Name
 	q.logger.Debugf("Setting timer to trigger in %s", triggerAfter)
 	timer := time.AfterFunc(triggerAfter, func() {
@@ -52,7 +52,7 @@ func (q *ReconcileTriggerer) TriggerAfter(key string, triggerAfter time.Duration
 	q.timetable[namespacedName][key] = timer
 }
 
-func (q *ReconcileTriggerer) Stop(key string, instance *icmapiv1alpha1.VarnishCluster) {
+func (q *ReconcileTriggerer) Stop(key string, instance *vcapi.VarnishCluster) {
 	namespacedName := instance.Namespace + "/" + instance.Name
 	if timers, exists := q.timetable[namespacedName]; exists {
 		if timer, exists := timers[key]; exists {
@@ -64,7 +64,7 @@ func (q *ReconcileTriggerer) Stop(key string, instance *icmapiv1alpha1.VarnishCl
 	}
 }
 
-func (q *ReconcileTriggerer) TimerExists(key string, service *icmapiv1alpha1.VarnishCluster) bool {
+func (q *ReconcileTriggerer) TimerExists(key string, service *vcapi.VarnishCluster) bool {
 	namespacedName := service.Namespace + "/" + service.Name
 	q.Lock()
 	defer q.Unlock()

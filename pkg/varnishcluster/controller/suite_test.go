@@ -17,10 +17,10 @@ package controller
 
 import (
 	"context"
-	"icm-varnish-k8s-operator/pkg/logger"
-	"icm-varnish-k8s-operator/pkg/names"
-	"icm-varnish-k8s-operator/pkg/varnishcluster/config"
-	vcreconcile "icm-varnish-k8s-operator/pkg/varnishcluster/reconcile"
+	"github.com/ibm/varnish-operator/pkg/logger"
+	"github.com/ibm/varnish-operator/pkg/names"
+	"github.com/ibm/varnish-operator/pkg/varnishcluster/config"
+	vcreconcile "github.com/ibm/varnish-operator/pkg/varnishcluster/reconcile"
 	"path/filepath"
 	"sync"
 	"testing"
@@ -47,7 +47,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	icmv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -103,7 +103,7 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cfg).ToNot(BeNil())
 
-	err = icmv1alpha1.AddToScheme(scheme.Scheme)
+	err = vcapi.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
@@ -165,7 +165,7 @@ func StartTestManager(mgr manager.Manager) chan struct{} {
 // As the test control plane doesn't support garbage collection, this function is used to clean up resources
 // Designed to not fail if the resource is not found
 func CleanUpCreatedResources(vcName, vcNamespace string) {
-	err := k8sClient.DeleteAllOf(context.Background(), &icmv1alpha1.VarnishCluster{}, client.InNamespace(vcNamespace))
+	err := k8sClient.DeleteAllOf(context.Background(), &vcapi.VarnishCluster{}, client.InNamespace(vcNamespace))
 	Expect(err).To(BeNil())
 	// clusterrole and clusterrolebinding are exceptions as they should be deleted by the operator using finalizers
 	// so make sure they are deleted by the operator instead of deleting them manually
@@ -194,7 +194,7 @@ func CleanUpCreatedResources(vcName, vcNamespace string) {
 
 	// Make sure all finalizers are deleted by checking if the apiserver deleted the VarnishCluster object
 	Eventually(func() metav1.StatusReason {
-		vc := &icmv1alpha1.VarnishCluster{}
+		vc := &vcapi.VarnishCluster{}
 		err := k8sClient.Get(context.Background(), types.NamespacedName{Name: vcName, Namespace: vcNamespace}, vc)
 		if err != nil {
 			if statusErr, ok := err.(*errors.StatusError); ok {

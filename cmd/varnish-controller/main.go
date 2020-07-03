@@ -6,12 +6,12 @@ package main
 import (
 	"flag"
 	"fmt"
-	"icm-varnish-k8s-operator/api/v1alpha1"
-	"icm-varnish-k8s-operator/pkg/logger"
-	"icm-varnish-k8s-operator/pkg/varnishcontroller/config"
-	"icm-varnish-k8s-operator/pkg/varnishcontroller/controller"
-	varnishMetrics "icm-varnish-k8s-operator/pkg/varnishcontroller/metrics"
-	"icm-varnish-k8s-operator/pkg/varnishcontroller/varnishadm"
+	"github.com/ibm/varnish-operator/api/v1alpha1"
+	"github.com/ibm/varnish-operator/pkg/logger"
+	"github.com/ibm/varnish-operator/pkg/varnishcontroller/config"
+	"github.com/ibm/varnish-operator/pkg/varnishcontroller/controller"
+	varnishMetrics "github.com/ibm/varnish-operator/pkg/varnishcontroller/metrics"
+	"github.com/ibm/varnish-operator/pkg/varnishcontroller/varnishadm"
 	"log"
 
 	controllerMetrics "sigs.k8s.io/controller-runtime/pkg/metrics"

@@ -3,10 +3,10 @@ package controller
 import (
 	"context"
 	"errors"
-	"icm-varnish-k8s-operator/api/v1alpha1"
-	varnishEvents "icm-varnish-k8s-operator/pkg/varnishcontroller/events"
-	"icm-varnish-k8s-operator/pkg/varnishcontroller/metrics"
-	"icm-varnish-k8s-operator/pkg/varnishcontroller/varnishadm"
+	"github.com/ibm/varnish-operator/api/v1alpha1"
+	varnishEvents "github.com/ibm/varnish-operator/pkg/varnishcontroller/events"
+	"github.com/ibm/varnish-operator/pkg/varnishcontroller/metrics"
+	"github.com/ibm/varnish-operator/pkg/varnishcontroller/varnishadm"
 	"reflect"
 	"testing"
 

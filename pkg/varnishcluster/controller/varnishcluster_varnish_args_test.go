@@ -2,7 +2,7 @@ package controller
 
 import (
 	"fmt"
-	"icm-varnish-k8s-operator/api/v1alpha1"
+	"github.com/ibm/varnish-operator/api/v1alpha1"
 	"testing"
 
 	"github.com/gogo/protobuf/proto"

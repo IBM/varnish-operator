@@ -2,11 +2,11 @@ package controller
 
 import (
 	"context"
-	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
-	vclabels "icm-varnish-k8s-operator/pkg/labels"
-	"icm-varnish-k8s-operator/pkg/logger"
-	"icm-varnish-k8s-operator/pkg/names"
-	"icm-varnish-k8s-operator/pkg/varnishcluster/compare"
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
+	vclabels "github.com/ibm/varnish-operator/pkg/labels"
+	"github.com/ibm/varnish-operator/pkg/logger"
+	"github.com/ibm/varnish-operator/pkg/names"
+	"github.com/ibm/varnish-operator/pkg/varnishcluster/compare"
 	"strings"
 
 	"github.com/gogo/protobuf/proto"
@@ -23,8 +23,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, instance, instanceStatus *icmapiv1alpha1.VarnishCluster, endpointSelector map[string]string) (*appsv1.StatefulSet, map[string]string, error) {
-	varnishLabels := vclabels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentVarnish)
+func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, instance, instanceStatus *vcapi.VarnishCluster, endpointSelector map[string]string) (*appsv1.StatefulSet, map[string]string, error) {
+	varnishLabels := vclabels.CombinedComponentLabels(instance, vcapi.VarnishComponentVarnish)
 	gvk := instance.GroupVersionKind()
 	var varnishImage string
 	if instance.Spec.Varnish.Image == "" {
@@ -42,16 +42,16 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 
 	var updateStrategy appsv1.StatefulSetUpdateStrategy
 	switch instance.Spec.UpdateStrategy.Type {
-	case icmapiv1alpha1.OnDeleteVarnishClusterStrategyType,
-		icmapiv1alpha1.DelayedRollingUpdateVarnishClusterStrategyType:
+	case vcapi.OnDeleteVarnishClusterStrategyType,
+		vcapi.DelayedRollingUpdateVarnishClusterStrategyType:
 		updateStrategy.Type = appsv1.OnDeleteStatefulSetStrategyType
-	case icmapiv1alpha1.RollingUpdateVarnishClusterStrategyType:
+	case vcapi.RollingUpdateVarnishClusterStrategyType:
 		updateStrategy.Type = appsv1.RollingUpdateStatefulSetStrategyType
 		updateStrategy.RollingUpdate = instance.Spec.UpdateStrategy.RollingUpdate
 	}
 
-	varnishControllerImage := imageNameGenerate(instance.Spec.Varnish.Controller.Image, varnishImage, icmapiv1alpha1.VarnishControllerImage)
-	varnishMetricsImage := imageNameGenerate(instance.Spec.Varnish.MetricsExporter.Image, varnishImage, icmapiv1alpha1.VarnishMetricsExporterImage)
+	varnishControllerImage := imageNameGenerate(instance.Spec.Varnish.Controller.Image, varnishImage, vcapi.VarnishControllerImage)
+	varnishMetricsImage := imageNameGenerate(instance.Spec.Varnish.MetricsExporter.Image, varnishImage, vcapi.VarnishMetricsExporterImage)
 
 	desired := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
@@ -80,19 +80,19 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 					ShareProcessNamespace: proto.Bool(true),
 					Volumes: []v1.Volume{
 						{
-							Name: icmapiv1alpha1.VarnishSharedVolume,
+							Name: vcapi.VarnishSharedVolume,
 							VolumeSource: v1.VolumeSource{
 								EmptyDir: &v1.EmptyDirVolumeSource{},
 							},
 						},
 						{
-							Name: icmapiv1alpha1.VarnishSettingsVolume,
+							Name: vcapi.VarnishSettingsVolume,
 							VolumeSource: v1.VolumeSource{
 								EmptyDir: &v1.EmptyDirVolumeSource{},
 							},
 						},
 						{
-							Name: icmapiv1alpha1.VarnishSecretVolume,
+							Name: vcapi.VarnishSecretVolume,
 							VolumeSource: v1.VolumeSource{
 								Secret: &v1.SecretVolumeSource{
 									Items: []v1.KeyToPath{
@@ -112,27 +112,27 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 					Containers: []v1.Container{
 						//Varnish container
 						{
-							Name:  icmapiv1alpha1.VarnishContainerName,
+							Name:  vcapi.VarnishContainerName,
 							Image: varnishImage,
 							Ports: []v1.ContainerPort{
 								{
-									Name:          icmapiv1alpha1.VarnishPortName,
-									ContainerPort: icmapiv1alpha1.VarnishPort,
+									Name:          vcapi.VarnishPortName,
+									ContainerPort: vcapi.VarnishPort,
 									Protocol:      v1.ProtocolTCP,
 								},
 							},
 							VolumeMounts: []v1.VolumeMount{
 								{
-									Name:      icmapiv1alpha1.VarnishSharedVolume,
+									Name:      vcapi.VarnishSharedVolume,
 									MountPath: "/var/lib/varnish",
 								},
 								{
-									Name:      icmapiv1alpha1.VarnishSettingsVolume,
+									Name:      vcapi.VarnishSettingsVolume,
 									MountPath: "/etc/varnish",
 									ReadOnly:  true,
 								},
 								{
-									Name:      icmapiv1alpha1.VarnishSecretVolume,
+									Name:      vcapi.VarnishSecretVolume,
 									MountPath: "/etc/varnish-secret",
 									ReadOnly:  true,
 								},
@@ -156,23 +156,23 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 						},
 						//Varnish metrics
 						{
-							Name:  icmapiv1alpha1.VarnishMetricsExporterName,
+							Name:  vcapi.VarnishMetricsExporterName,
 							Image: varnishMetricsImage,
 							Ports: []v1.ContainerPort{
 								{
-									Name:          icmapiv1alpha1.VarnishMetricsPortName,
-									ContainerPort: icmapiv1alpha1.VarnishPrometheusExporterPort,
+									Name:          vcapi.VarnishMetricsPortName,
+									ContainerPort: vcapi.VarnishPrometheusExporterPort,
 									Protocol:      v1.ProtocolTCP,
 								},
 							},
 							VolumeMounts: []v1.VolumeMount{
 								{
-									Name:      icmapiv1alpha1.VarnishSharedVolume,
+									Name:      vcapi.VarnishSharedVolume,
 									MountPath: "/var/lib/varnish",
 									ReadOnly:  true,
 								},
 								{
-									Name:      icmapiv1alpha1.VarnishSettingsVolume,
+									Name:      vcapi.VarnishSettingsVolume,
 									MountPath: "/etc/varnish",
 									ReadOnly:  true,
 								},
@@ -181,7 +181,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 							ReadinessProbe: &v1.Probe{
 								Handler: v1.Handler{
 									HTTPGet: &v1.HTTPGetAction{
-										Port:   intstr.FromInt(icmapiv1alpha1.VarnishPrometheusExporterPort),
+										Port:   intstr.FromInt(vcapi.VarnishPrometheusExporterPort),
 										Scheme: v1.URISchemeHTTP,
 										Path:   "/",
 									},
@@ -197,13 +197,13 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 						},
 						//Varnish controller
 						{
-							Name:  icmapiv1alpha1.VarnishControllerName,
+							Name:  vcapi.VarnishControllerName,
 							Image: varnishControllerImage,
 							Ports: []v1.ContainerPort{
 								{
-									Name:          icmapiv1alpha1.VarnishControllerMetricsPortName,
+									Name:          vcapi.VarnishControllerMetricsPortName,
 									Protocol:      v1.ProtocolTCP,
-									ContainerPort: icmapiv1alpha1.VarnishControllerMetricsPort,
+									ContainerPort: vcapi.VarnishControllerMetricsPort,
 								},
 							},
 							Env: []v1.EnvVar{
@@ -221,16 +221,16 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 							},
 							VolumeMounts: []v1.VolumeMount{
 								{
-									Name:      icmapiv1alpha1.VarnishSettingsVolume,
+									Name:      vcapi.VarnishSettingsVolume,
 									MountPath: "/etc/varnish",
 								},
 								{
-									Name:      icmapiv1alpha1.VarnishSharedVolume,
+									Name:      vcapi.VarnishSharedVolume,
 									MountPath: "/var/lib/varnish",
 									ReadOnly:  true,
 								},
 								{
-									Name:      icmapiv1alpha1.VarnishSecretVolume,
+									Name:      vcapi.VarnishSecretVolume,
 									MountPath: "/etc/varnish-secret",
 									ReadOnly:  true,
 								},
@@ -238,7 +238,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 							ReadinessProbe: &v1.Probe{
 								Handler: v1.Handler{
 									HTTPGet: &v1.HTTPGetAction{
-										Port:   intstr.FromInt(icmapiv1alpha1.HealthCheckPort),
+										Port:   intstr.FromInt(vcapi.HealthCheckPort),
 										Path:   "/readyz",
 										Scheme: v1.URISchemeHTTP,
 									},
@@ -267,7 +267,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 		},
 	}
 
-	logr := logger.FromContext(ctx).With(logger.FieldComponent, icmapiv1alpha1.VarnishComponentVarnish)
+	logr := logger.FromContext(ctx).With(logger.FieldComponent, vcapi.VarnishComponentVarnish)
 	logr = logr.With(logger.FieldComponentName, desired.Name)
 
 	if err := controllerutil.SetControllerReference(instance, desired, r.scheme); err != nil {

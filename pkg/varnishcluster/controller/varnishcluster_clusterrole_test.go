@@ -2,8 +2,8 @@ package controller
 
 import (
 	"context"
-	icmv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
-	"icm-varnish-k8s-operator/pkg/names"
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
+	"github.com/ibm/varnish-operator/pkg/names"
 	"time"
 
 	rbac "k8s.io/api/rbac/v1"
@@ -25,17 +25,17 @@ var _ = Describe("the clusterrole", func() {
 		Name:      vcName,
 	}
 
-	vc := &icmv1alpha1.VarnishCluster{
+	vc := &vcapi.VarnishCluster{
 		ObjectMeta: objMeta,
-		Spec: icmv1alpha1.VarnishClusterSpec{
-			Backend: &icmv1alpha1.VarnishClusterBackend{
+		Spec: vcapi.VarnishClusterSpec{
+			Backend: &vcapi.VarnishClusterBackend{
 				Selector: map[string]string{"app": "nginx"},
 				Port:     &validBackendPort,
 			},
-			Service: &icmv1alpha1.VarnishClusterService{
+			Service: &vcapi.VarnishClusterService{
 				Port: proto.Int32(8081),
 			},
-			VCL: &icmv1alpha1.VarnishClusterVCL{
+			VCL: &vcapi.VarnishClusterVCL{
 				ConfigMapName:      proto.String("test"),
 				EntrypointFileName: proto.String("test.vcl"),
 			},
@@ -60,9 +60,9 @@ var _ = Describe("the clusterrole", func() {
 			}, time.Second*5).Should(Succeed())
 
 			Expect(cr.Labels).To(Equal(map[string]string{
-				icmv1alpha1.LabelVarnishOwner:     vcName,
-				icmv1alpha1.LabelVarnishComponent: icmv1alpha1.VarnishComponentClusterRole,
-				icmv1alpha1.LabelVarnishUID:       string(newVC.UID),
+				vcapi.LabelVarnishOwner:     vcName,
+				vcapi.LabelVarnishComponent: vcapi.VarnishComponentClusterRole,
+				vcapi.LabelVarnishUID:       string(newVC.UID),
 			}))
 			Expect(cr.Annotations).To(Equal(map[string]string{
 				"varnish-cluster-name":      vcName,

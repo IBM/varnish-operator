@@ -2,11 +2,11 @@ package controller
 
 import (
 	"context"
-	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
-	"icm-varnish-k8s-operator/pkg/labels"
-	"icm-varnish-k8s-operator/pkg/logger"
-	"icm-varnish-k8s-operator/pkg/names"
-	"icm-varnish-k8s-operator/pkg/varnishcluster/compare"
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
+	"github.com/ibm/varnish-operator/pkg/labels"
+	"github.com/ibm/varnish-operator/pkg/logger"
+	"github.com/ibm/varnish-operator/pkg/names"
+	"github.com/ibm/varnish-operator/pkg/varnishcluster/compare"
 
 	"github.com/pkg/errors"
 	policyv1beta1 "k8s.io/api/policy/v1beta1"
@@ -16,10 +16,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func (r *ReconcileVarnishCluster) reconcilePodDisruptionBudget(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster, podSelector map[string]string) error {
+func (r *ReconcileVarnishCluster) reconcilePodDisruptionBudget(ctx context.Context, instance *vcapi.VarnishCluster, podSelector map[string]string) error {
 	namespacedName := types.NamespacedName{Namespace: instance.Namespace, Name: names.PodDisruptionBudget(instance.Name)}
 	logr := logger.FromContext(ctx)
-	logr = logr.With(logger.FieldComponent, icmapiv1alpha1.VarnishComponentPodDisruptionBudget)
+	logr = logr.With(logger.FieldComponent, vcapi.VarnishComponentPodDisruptionBudget)
 	logr = logr.With(logger.FieldComponentName, namespacedName.Name)
 	ctx = logger.ToContext(ctx, logr)
 
@@ -36,7 +36,7 @@ func (r *ReconcileVarnishCluster) reconcilePodDisruptionBudget(ctx context.Conte
 	desired := &policyv1beta1.PodDisruptionBudget{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      namespacedName.Name,
-			Labels:    labels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentPodDisruptionBudget),
+			Labels:    labels.CombinedComponentLabels(instance, vcapi.VarnishComponentPodDisruptionBudget),
 			Namespace: namespacedName.Namespace,
 		},
 		Spec: pdbs,

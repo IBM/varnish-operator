@@ -23,6 +23,8 @@ jobs:
       run: go mod download
 
     - name: Run golangci-lint
+      env:
+        GO111MODULE: on
       uses: actions-contrib/golangci-lint@v1
 
     - name: Unit tests

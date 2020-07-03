@@ -23,4 +23,9 @@ jobs:
       run: go mod download
 
     - name: Test
-      run: go test github.com/ibm/varnish-operator/pkg/... github.com/ibm/varnish-operator/cmd/... github.com/ibm/varnish-operator/api/... -coverprofile cover.out
+      run: |
+        wget -O kubebuilder.tgz https://go.kubebuilder.io/dl/2.3.1/linux/amd64;
+        tar -C /tmp/ -xzf kubebuilder.tgz;
+        rm kubebuilder.tgz;
+        mv /tmp/kubebuilder_2.3.1_linux_amd64 /usr/local/kubebuilder;
+        go test github.com/ibm/varnish-operator/pkg/... github.com/ibm/varnish-operator/cmd/... github.com/ibm/varnish-operator/api/... -coverprofile cover.out

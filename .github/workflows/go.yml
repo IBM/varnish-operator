@@ -23,4 +23,4 @@ jobs:
       run: go mod download
 
     - name: Test
-      run: go test -v .
+      run: go test github.com/ibm/varnish-operator/pkg/... github.com/ibm/varnish-operator/cmd/... github.com/ibm/varnish-operator/api/... -coverprofile cover.out

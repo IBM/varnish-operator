@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"crypto/rand"
+
 	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 	vclabels "github.com/ibm/varnish-operator/pkg/labels"
 	"github.com/ibm/varnish-operator/pkg/logger"

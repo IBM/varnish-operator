@@ -3,10 +3,11 @@ package controller
 import (
 	"context"
 	"fmt"
-	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
-	vclabels "github.com/ibm/varnish-operator/pkg/labels"
 	"strings"
 	"time"
+
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
+	vclabels "github.com/ibm/varnish-operator/pkg/labels"
 
 	"github.com/gogo/protobuf/proto"
 	. "github.com/onsi/ginkgo"

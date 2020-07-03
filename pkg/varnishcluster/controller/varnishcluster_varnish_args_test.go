@@ -2,8 +2,9 @@ package controller
 
 import (
 	"fmt"
-	"github.com/ibm/varnish-operator/api/v1alpha1"
 	"testing"
+
+	"github.com/ibm/varnish-operator/api/v1alpha1"
 
 	"github.com/gogo/protobuf/proto"
 

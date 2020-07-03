@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"text/template"
+
 	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 	"github.com/ibm/varnish-operator/pkg/labels"
 	"github.com/ibm/varnish-operator/pkg/logger"
 	"github.com/ibm/varnish-operator/pkg/names"
 	"github.com/ibm/varnish-operator/pkg/varnishcluster/compare"
-	"text/template"
 
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 

@@ -2,9 +2,10 @@ package v1alpha1
 
 import (
 	"fmt"
-	"github.com/ibm/varnish-operator/pkg/logger"
 	"regexp"
 	"strings"
+
+	"github.com/ibm/varnish-operator/pkg/logger"
 
 	"go.uber.org/zap"
 

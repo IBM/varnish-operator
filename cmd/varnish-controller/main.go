@@ -6,13 +6,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
+
 	"github.com/ibm/varnish-operator/api/v1alpha1"
 	"github.com/ibm/varnish-operator/pkg/logger"
 	"github.com/ibm/varnish-operator/pkg/varnishcontroller/config"
 	"github.com/ibm/varnish-operator/pkg/varnishcontroller/controller"
 	varnishMetrics "github.com/ibm/varnish-operator/pkg/varnishcontroller/metrics"
 	"github.com/ibm/varnish-operator/pkg/varnishcontroller/varnishadm"
-	"log"
 
 	controllerMetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 

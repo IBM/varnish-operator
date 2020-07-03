@@ -3,12 +3,13 @@ package controller
 import (
 	"context"
 	"errors"
+	"reflect"
+	"testing"
+
 	"github.com/ibm/varnish-operator/api/v1alpha1"
 	varnishEvents "github.com/ibm/varnish-operator/pkg/varnishcontroller/events"
 	"github.com/ibm/varnish-operator/pkg/varnishcontroller/metrics"
 	"github.com/ibm/varnish-operator/pkg/varnishcontroller/varnishadm"
-	"reflect"
-	"testing"
 
 	"github.com/onsi/gomega"
 	prometheusClient "github.com/prometheus/client_model/go"

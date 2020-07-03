@@ -2,9 +2,10 @@ package controller
 
 import (
 	"context"
+	"time"
+
 	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 	"github.com/ibm/varnish-operator/pkg/names"
-	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 

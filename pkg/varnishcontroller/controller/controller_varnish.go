@@ -3,12 +3,13 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/ibm/varnish-operator/api/v1alpha1"
 	"github.com/ibm/varnish-operator/pkg/logger"
 	"github.com/ibm/varnish-operator/pkg/varnishcontroller/events"
 	"github.com/ibm/varnish-operator/pkg/varnishcontroller/varnishadm"
-	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"

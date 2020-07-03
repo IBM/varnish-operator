@@ -2,16 +2,16 @@ package controller
 
 import (
 	"context"
+	"strings"
+	"time"
+
 	"github.com/ibm/varnish-operator/api/v1alpha1"
-	vclabels "github.com/ibm/varnish-operator/pkg/labels"
 	"github.com/ibm/varnish-operator/pkg/logger"
 	"github.com/ibm/varnish-operator/pkg/varnishcontroller/config"
 	"github.com/ibm/varnish-operator/pkg/varnishcontroller/events"
 	"github.com/ibm/varnish-operator/pkg/varnishcontroller/metrics"
 	"github.com/ibm/varnish-operator/pkg/varnishcontroller/predicates"
 	"github.com/ibm/varnish-operator/pkg/varnishcontroller/varnishadm"
-	"strings"
-	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/source"

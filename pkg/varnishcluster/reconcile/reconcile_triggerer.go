@@ -1,10 +1,11 @@
 package reconcile
 
 import (
-	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
-	"github.com/ibm/varnish-operator/pkg/logger"
 	"sync"
 	"time"
+
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
+	"github.com/ibm/varnish-operator/pkg/logger"
 
 	"sigs.k8s.io/controller-runtime/pkg/event"
 )

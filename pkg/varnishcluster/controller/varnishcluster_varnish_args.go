@@ -2,10 +2,11 @@ package controller
 
 import (
 	"fmt"
-	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 	"regexp"
 	"sort"
 	"strings"
+
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 )
 
 var (

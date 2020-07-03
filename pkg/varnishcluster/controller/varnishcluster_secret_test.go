@@ -2,10 +2,11 @@ package controller
 
 import (
 	"context"
-	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
-	"github.com/ibm/varnish-operator/pkg/names"
 	"testing"
 	"time"
+
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
+	"github.com/ibm/varnish-operator/pkg/names"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/google/go-cmp/cmp"

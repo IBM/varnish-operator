@@ -17,14 +17,15 @@ package controller
 
 import (
 	"context"
-	"github.com/ibm/varnish-operator/pkg/logger"
-	"github.com/ibm/varnish-operator/pkg/names"
-	"github.com/ibm/varnish-operator/pkg/varnishcluster/config"
-	vcreconcile "github.com/ibm/varnish-operator/pkg/varnishcluster/reconcile"
 	"path/filepath"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/ibm/varnish-operator/pkg/logger"
+	"github.com/ibm/varnish-operator/pkg/names"
+	"github.com/ibm/varnish-operator/pkg/varnishcluster/config"
+	vcreconcile "github.com/ibm/varnish-operator/pkg/varnishcluster/reconcile"
 
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"

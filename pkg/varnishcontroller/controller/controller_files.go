@@ -2,11 +2,12 @@ package controller
 
 import (
 	"context"
-	"github.com/ibm/varnish-operator/pkg/logger"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/ibm/varnish-operator/pkg/logger"
 
 	"github.com/pkg/errors"
 )

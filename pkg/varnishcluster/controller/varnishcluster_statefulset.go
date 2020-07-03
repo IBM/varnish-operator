@@ -2,12 +2,13 @@ package controller
 
 import (
 	"context"
+	"strings"
+
 	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 	vclabels "github.com/ibm/varnish-operator/pkg/labels"
 	"github.com/ibm/varnish-operator/pkg/logger"
 	"github.com/ibm/varnish-operator/pkg/names"
 	"github.com/ibm/varnish-operator/pkg/varnishcluster/compare"
-	"strings"
 
 	"github.com/gogo/protobuf/proto"
 

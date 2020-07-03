@@ -3,8 +3,9 @@ package controller
 import (
 	"context"
 	"fmt"
-	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 	"time"
+
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 
 	"k8s.io/apimachinery/pkg/labels"
 

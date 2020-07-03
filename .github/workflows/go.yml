@@ -22,7 +22,10 @@ jobs:
     - name: Get dependencies
       run: go mod download
 
-    - name: Test
+    - name: Run golangci-lint
+      uses: actions-contrib/golangci-lint@v1
+
+    - name: Unit tests
       run: |
         wget -O kubebuilder.tgz https://go.kubebuilder.io/dl/2.3.1/linux/amd64;
         tar -C /tmp/ -xzf kubebuilder.tgz;

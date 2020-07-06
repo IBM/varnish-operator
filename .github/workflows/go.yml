@@ -54,6 +54,8 @@ jobs:
     container:
       image: node:10.16-jessie
     steps:
+      - name: Check out code
+        uses: actions/checkout@v2
       - name: install gitbook
         run: npm install -g gitbook-cli@2.3.2
       - name: build docs

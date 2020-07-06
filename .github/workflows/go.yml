@@ -47,3 +47,23 @@ jobs:
         rm kubebuilder.tgz;
         export KUBEBUILDER_ASSETS=/tmp/kubebuilder_2.3.1_linux_amd64/bin
         go test github.com/ibm/varnish-operator/pkg/... github.com/ibm/varnish-operator/cmd/... github.com/ibm/varnish-operator/api/... -coverprofile cover.out
+
+  docs:
+    name: Docs
+    runs-on: ubuntu-latest
+    container:
+      image: node:10.16-jessie
+    steps:
+      - name: install gitbook
+        run: npm install -g gitbook-cli@2.3.2
+      - name: build docs
+        run: |
+          gitbook install ./docs
+          gitbook build ./docs docs_generated --log=debug --debug
+          cd docs_generated/
+          git init
+          git add .
+          git config --local user.name \"Tomash Sidei\"
+          git config --local user.email \"tomash.sidei@ibm.com\"
+          git commit -m "Deploy Docs from Actions"
+          git push --force --quiet https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:gh-pages

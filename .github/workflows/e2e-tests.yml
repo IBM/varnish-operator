@@ -47,5 +47,3 @@ jobs:
         run: helm install varnish-operator --namespace=varnish-operator varnish-operator --wait --set container.imagePullSecret=docker-reg-secret --set container.imagePullPolicy=Never --set container.image=us.icr.io/icm-varnish/varnish-operator:local
       - name: run tests
         run: go test ./tests
-        env:
-          KUBECONFIG: e2e-tests-kubeconfig

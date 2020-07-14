@@ -29,6 +29,8 @@ jobs:
         uses: helm/kind-action@v1.0.0-rc.1
         with:
           cluster_name: e2e-tests
+      - name: create namespace
+        run: kubectl create namespace varnish-operator
       - name: build images
         run: |
           docker build -f Dockerfile -t us.icr.io/icm-varnish/varnish-operator:local .

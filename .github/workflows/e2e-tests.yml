@@ -42,7 +42,7 @@ jobs:
           kind load --name e2e-tests docker-image us.icr.io/icm-varnish/varnish-controller:local
           kind load --name e2e-tests docker-image us.icr.io/icm-varnish/varnish-metrics-exporter:local
       - name: install operator
-        run: helm install --name=varnish-operator --namespace=varnish-operator varnish-operator --wait --set container.imagePullSecret=docker-reg-secret --set container.imagePullPolicy=Never --set container.image=us.icr.io/icm-varnish/varnish-operator:local
+        run: helm install varnish-operator --namespace=varnish-operator varnish-operator --wait --set container.imagePullSecret=docker-reg-secret --set container.imagePullPolicy=Never --set container.image=us.icr.io/icm-varnish/varnish-operator:local
       - name: run tests
         run: go test ./tests
         env:

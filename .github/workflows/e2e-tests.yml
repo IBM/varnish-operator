@@ -27,18 +27,20 @@ jobs:
         run: go mod download
       - name: Create k8s Kind Cluster
         uses: helm/kind-action@v1.0.0-rc.1
+        with:
+          cluster_name: e2e-tests
       - name: build images
         run: |
-          docker build -f Dockerfile  -t us.icr.io/icm-varnish/varnish-operator:local .
-          docker build -f Dockerfile.varnishd  -t us.icr.io/icm-varnish/varnish:local .
-          docker build -f Dockerfile.controller  -t us.icr.io/icm-varnish/varnish-controller:local .
-          docker build -f Dockerfile.exporter  -t us.icr.io/icm-varnish/varnish-metrics-exporter:local .
+          docker build -f Dockerfile -t us.icr.io/icm-varnish/varnish-operator:local .
+          docker build -f Dockerfile.varnishd -t us.icr.io/icm-varnish/varnish:local .
+          docker build -f Dockerfile.controller -t us.icr.io/icm-varnish/varnish-controller:local .
+          docker build -f Dockerfile.exporter -t us.icr.io/icm-varnish/varnish-metrics-exporter:local .
       - name: load images
         run: |
-          kind load docker-image us.icr.io/icm-varnish/varnish-operator:local
-          kind load docker-image us.icr.io/icm-varnish/varnish:local
-          kind load docker-image us.icr.io/icm-varnish/varnish-controller:local
-          kind load docker-image us.icr.io/icm-varnish/varnish-metrics-exporter:local
+          kind load --name e2e-tests docker-image us.icr.io/icm-varnish/varnish-operator:local
+          kind load --name e2e-tests docker-image us.icr.io/icm-varnish/varnish:local
+          kind load --name e2e-tests docker-image us.icr.io/icm-varnish/varnish-controller:local
+          kind load --name e2e-tests docker-image us.icr.io/icm-varnish/varnish-metrics-exporter:local
       - name: install operator
         run: helm install --name=varnish-operator --namespace=varnish-operator varnish-operator --wait --set container.imagePullSecret=docker-reg-secret --set container.imagePullPolicy=Never --set container.image=us.icr.io/icm-varnish/varnish-operator:local
       - name: run tests

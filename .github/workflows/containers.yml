@@ -1,4 +1,4 @@
-name: containers
+name: Containers
 
 on:
   push:
@@ -13,6 +13,6 @@ jobs:
           username: test
           password: test
           repository: us.icr.io/icm-varnish/varnish-operator
-          tag_with_ref: refs/tags/{git-tag}
-          dockerfile: {path}/Dockerfile
+          tag_with_ref: "refs/tags/{git-tag}"
+          dockerfile: "{path}/Dockerfile"
           push: false

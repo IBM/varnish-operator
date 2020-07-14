@@ -28,7 +28,7 @@ jobs:
       - name: Create k8s Kind Cluster
         uses: helm/kind-action@v1.0.0-rc.1
         with:
-          - config: e2e-tests-kubeconfig
+          config: e2e-tests-kubeconfig
       - name: build images
         run: |
           docker build -f Dockerfile  -t us.icr.io/icm-varnish/varnish-operator:local .

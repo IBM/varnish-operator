@@ -19,8 +19,12 @@ jobs:
       - name: Check out helm releases
         uses: actions/checkout@v2
         with:
-          ref: helm-releases
           path: helm-releases
+      - name: Prepare helm-releases repo
+        run: |
+          cd helm-releases
+          mkdir -p helm-releases
+          find . -mindepth 1 -name helm-releases -prune -o -exec rm -rf {} \;
       - name: Get tag
         run: echo ::set-output name=GIT_TAG::${GITHUB_REF/refs\/tags\//}
       - name: Get Helm

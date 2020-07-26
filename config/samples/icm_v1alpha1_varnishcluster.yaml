@@ -9,10 +9,9 @@ spec:
   # updateStrategy can be used to control the way Varnish pods will be updated. "OnDelete" is by default.
   updateStrategy:
     type: "OnDelete" #can be "OnDelete", "RollingUpdate" and "DelayedRollingUpdate"
-
   varnish:
     # path to image + tag
-    image: us.icr.io/icm-varnish/varnish:0.24.1
+    image: us.icr.io/icm-varnish/varnish:${GIT_TAG}
     imagePullSecret: docker-reg-secret
     # imagePullPolicy controls how the varnish image will be pulled for new containers
     imagePullPolicy: Always
@@ -30,12 +29,11 @@ spec:
     # Additional args that will be passed to the varnishd command line. For more information, run `varnishd "-?"`
     # some args are used for setting up Varnish to work with operator and are not allowed to be specified by the user
     args: ["-p", "default_ttl=3600", "-p", "default_grace=3600"]
-
     # varnish's controller - an optional definiton for the pod. It allows override default image name and pull policy
     # and defines the container's resources allocation.
-    #controller:
+    controller:
     #  # path to image + tag to override, by default it refers to varnish.image with "-controller" suffix image.
-    #  image: us.icr.io/icm-varnish/varnish-controller:0.22.1
+      image: us.icr.io/icm-varnish/varnish-controller:0.22.1
     #  # imagePullPolicy controls how the varnish-controller image will be pulled for new containers
     #  imagePullPolicy: Always
     #  # Resources allocated to the Varnish controller container through Kubernetes.
@@ -46,22 +44,21 @@ spec:
     #  #  requests:
     #  #    cpu: 1
     #  #    memory: 2040Mi
-    
-    # varnish's metrics exporter - an optional definiton for the pod. It allows override default image name and pull policy
-    # and defines the container's resources allocation.
-    #metricsExporter:
-    #  # path to image + tag to override, by default it refers to varnish.image with "-metrics-exporter" suffix image.
-    #  image: us.icr.io/icm-varnish/varnish-metrics-exporter:0.22.1
-    #  # imagePullPolicy controls how the varnish-metrics-exporter image will be pulled for new containers
-    #  imagePullPolicy: Always
-    #  # Resources allocated to the Varnish metrics exporter container through Kubernetes.
-    #  #resources:
-    #  #  limits:
-    #  #    cpu: 1
-    #  #    memory: 2040Mi
-    #  #  requests:
-    #  #    cpu: 1
-    #  #    memory: 2040Mi
+  # varnish's metrics exporter - an optional definiton for the pod. It allows override default image name and pull policy
+  # and defines the container's resources allocation.
+  metricsExporter:
+  #  # path to image + tag to override, by default it refers to varnish.image with "-metrics-exporter" suffix image.
+    image: us.icr.io/icm-varnish/varnish-metrics-exporter:0.22.1
+  #  # imagePullPolicy controls how the varnish-metrics-exporter image will be pulled for new containers
+  #  imagePullPolicy: Always
+  #  # Resources allocated to the Varnish metrics exporter container through Kubernetes.
+  #  #resources:
+  #  #  limits:
+  #  #    cpu: 1
+  #  #    memory: 2040Mi
+  #  #  requests:
+  #  #    cpu: 1
+  #  #    memory: 2040Mi
 
   vcl:
     # the name given to the configMap that contains the contents of the vcl.
@@ -70,7 +67,6 @@ spec:
     configMapName: vcl-files
     # the name of the base VCL file
     entrypointFileName: entrypoint.vcl
-
   backend:
     # pod selector to identify the pods being cached
     selector:
@@ -86,14 +82,12 @@ spec:
     #   - threshold: 90
     #     local: 90
     #     remote: 10
-
   service:
     port: 80
     metricsPort: 8080
     type: ClusterIP # ClusterIP, LoadBalancer and NodePort are supported
     annotations:
       example: annotation
-
   # Affinity configuration to apply to Varnish pods.
   # For more on affinity, see https://kubernetes.io/docs/concepts/configuration/assign-pod-node#affinity-and-anti-affinity
   #affinity:

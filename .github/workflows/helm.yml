@@ -9,36 +9,28 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v2
-        with:
-          path: src
-      - name: Check out gh-pages
-        uses: actions/checkout@v2
-        with:
-          ref: gh-pages
-          path: gh-pages
-      - name: Check out helm releases
-        uses: actions/checkout@v2
-        with:
-          path: helm-releases
-      - name: Prepare helm-releases repo
-        run: |
-          cd helm-releases
-          mkdir -p helm-releases
-          find . -mindepth 1 -name helm-releases -prune -o -exec rm -rf {} \;
       - name: Get tag
         run: echo ::set-output name=GIT_TAG::${GITHUB_REF/refs\/tags\//}
       - name: Get Helm
         run: |
           curl -Lo ./helm.tar.gz https://get.helm.sh/helm-v2.16.9-linux-amd64.tar.gz
           tar -zxvf ./helm.tar.gz && mv linux-amd64/helm bin/
-      - name: package chart & push
+      - name: Helm lint
+        run: helm lint varnish-operator
+      - name: Ensure helm-releases folder exists
+        run: mkdir -p helm-releases
+      - name: Change versions
+        uses: mikefarah/yq@3.3.2
         run: |
-          ./bin/linux-amd64/helm package src/varnish-operator --app-version ${GIT_TAG} --version ${GIT_TAG} --destination helm-releases
-          helm repo index helm-releases --url https://theweathercompany.github.io/helm-releases
-          cd helm-releases
-          git commit -a -m "releases ${GIT_TAG}"
-          git push origin helm-releases:helm-releases
-          cd ../docs
-          cp -f ../helm-releases .
-          git commit -a -m "add helm chart for release ${GIT_TAG}
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} gh-pages:gh-pages
+          yq w -i varnish-operator/Chart.yaml 'appVersion' ${GIT_TAG}
+          yq w -i varnish-operator/Chart.yaml 'version' ${GIT_TAG}
+          yq w -i varnish-operator/values.yaml 'container.image' $(yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'container.image' | sed 's/:.*/:${GIT_TAG}/')
+          yq w -i config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.image' $(yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.image' | sed 's/:.*/:${GIT_TAG}/')
+          yq w -i config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' $(yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' | sed 's/:.*/:${GIT_TAG}/')
+          yq w -i config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' $(yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' | sed 's/:.*/:${GIT_TAG}/')
+      - name: Package chart
+        run: |
+          ./bin/linux-amd64/helm package varnish-operator --app-version ${GIT_TAG} --version ${GIT_TAG} --destination helm-releases
+          helm repo index helm-releases --url https://ibm.github.io/varnish-operator/master/helm-releases
+          git commit -a -m "Release ${GIT_TAG}"
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} master:release

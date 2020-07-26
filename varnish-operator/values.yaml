@@ -4,7 +4,8 @@ container:
   # path to image + tag
   image: us.icr.io/icm-varnish/varnish-operator:0.24.1
   # Image pull secret used to pull the operator image
-# imagePullSecret: docker-reg-secret
+
+  # imagePullSecret: docker-reg-secret
   # imagePullPolicy for Varnish Operator image
   imagePullPolicy: Always
   # restart policy for Varnish Operator containers

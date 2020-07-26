@@ -32,22 +32,22 @@ spec:
     # varnish's controller - an optional definiton for the pod. It allows override default image name and pull policy
     # and defines the container's resources allocation.
     controller:
-    #  # path to image + tag to override, by default it refers to varnish.image with "-controller" suffix image.
+      #  # path to image + tag to override, by default it refers to varnish.image with "-controller" suffix image.
       image: us.icr.io/icm-varnish/varnish-controller:0.22.1
-    #  # imagePullPolicy controls how the varnish-controller image will be pulled for new containers
-    #  imagePullPolicy: Always
-    #  # Resources allocated to the Varnish controller container through Kubernetes.
-    #  #resources:
-    #  #  limits:
-    #  #    cpu: 1
-    #  #    memory: 2040Mi
-    #  #  requests:
-    #  #    cpu: 1
-    #  #    memory: 2040Mi
+      #  # imagePullPolicy controls how the varnish-controller image will be pulled for new containers
+      #  imagePullPolicy: Always
+      #  # Resources allocated to the Varnish controller container through Kubernetes.
+      #  #resources:
+      #  #  limits:
+      #  #    cpu: 1
+      #  #    memory: 2040Mi
+      #  #  requests:
+      #  #    cpu: 1
+      #  #    memory: 2040Mi
   # varnish's metrics exporter - an optional definiton for the pod. It allows override default image name and pull policy
   # and defines the container's resources allocation.
   metricsExporter:
-  #  # path to image + tag to override, by default it refers to varnish.image with "-metrics-exporter" suffix image.
+    #  # path to image + tag to override, by default it refers to varnish.image with "-metrics-exporter" suffix image.
     image: us.icr.io/icm-varnish/varnish-metrics-exporter:0.22.1
   #  # imagePullPolicy controls how the varnish-metrics-exporter image will be pulled for new containers
   #  imagePullPolicy: Always

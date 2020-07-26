@@ -34,6 +34,7 @@ jobs:
           ./bin/yq w -i config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' $(yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' | sed 's/:.*/:${GIT_TAG}/')
       - name: Package chart
         run: |
+          ./bin/helm init --client-only
           ./bin/helm package varnish-operator --app-version ${GIT_TAG} --version ${GIT_TAG} --destination helm-releases
           helm repo index helm-releases --url https://ibm.github.io/varnish-operator/master/helm-releases
           git commit -a -m "Release ${GIT_TAG}"

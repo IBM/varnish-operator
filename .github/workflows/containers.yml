@@ -1,8 +1,9 @@
 name: Containers
 
 on:
-  push:
-    branches: [ open-source ]
+  release:
+    types:
+      - created
 
 jobs:
 #  operator:

@@ -1,8 +1,10 @@
 name: Helm chart
 
 on:
-  push:
-    branches: [ open-source ]
+  release:
+    types:
+      - created
+
 jobs:
   helm-chart:
     runs-on: ubuntu-latest

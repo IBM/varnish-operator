@@ -1,8 +1,7 @@
 name: Tests
 
-on:
-  push:
-    branches: [ open-source ]
+on: push
+
 jobs:
 
   tests:

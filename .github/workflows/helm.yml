@@ -22,13 +22,13 @@ jobs:
         run: mkdir -p helm-releases
       - name: Change versions
         run: |
-          snap install yq
-          yq w -i varnish-operator/Chart.yaml 'appVersion' ${GIT_TAG}
-          yq w -i varnish-operator/Chart.yaml 'version' ${GIT_TAG}
-          yq w -i varnish-operator/values.yaml 'container.image' $(yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'container.image' | sed 's/:.*/:${GIT_TAG}/')
-          yq w -i config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.image' $(yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.image' | sed 's/:.*/:${GIT_TAG}/')
-          yq w -i config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' $(yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' | sed 's/:.*/:${GIT_TAG}/')
-          yq w -i config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' $(yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' | sed 's/:.*/:${GIT_TAG}/')
+          curl -Lo ./bin/yq https://github.com/mikefarah/yq/releases/download/3.3.2/yq_linux_amd64
+          ./bin/yq w -i varnish-operator/Chart.yaml 'appVersion' ${GIT_TAG}
+          ./bin/yq w -i varnish-operator/Chart.yaml 'version' ${GIT_TAG}
+          ./bin/yq w -i varnish-operator/values.yaml 'container.image' $(yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'container.image' | sed 's/:.*/:${GIT_TAG}/')
+          ./bin/yq w -i config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.image' $(yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.image' | sed 's/:.*/:${GIT_TAG}/')
+          ./bin/yq w -i config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' $(yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' | sed 's/:.*/:${GIT_TAG}/')
+          ./bin/yq w -i config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' $(yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' | sed 's/:.*/:${GIT_TAG}/')
       - name: Package chart
         run: |
           ./bin/linux-amd64/helm package varnish-operator --app-version ${GIT_TAG} --version ${GIT_TAG} --destination helm-releases

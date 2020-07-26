@@ -16,6 +16,8 @@ jobs:
           curl -Lo ./helm.tar.gz https://get.helm.sh/helm-v2.16.9-linux-amd64.tar.gz
           mkdir -p bin
           tar -zxvf ./helm.tar.gz && mv linux-amd64/helm bin/
+          rm helm.tar.gz
+          rm -rf linux-amd64
       - name: Helm lint
         run: helm lint varnish-operator
       - name: Ensure helm-releases folder exists
@@ -32,7 +34,7 @@ jobs:
           ./bin/yq w -i config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' $(yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' | sed 's/:.*/:${GIT_TAG}/')
       - name: Package chart
         run: |
-          ./bin/linux-amd64/helm package varnish-operator --app-version ${GIT_TAG} --version ${GIT_TAG} --destination helm-releases
+          ./bin/helm package varnish-operator --app-version ${GIT_TAG} --version ${GIT_TAG} --destination helm-releases
           helm repo index helm-releases --url https://ibm.github.io/varnish-operator/master/helm-releases
           git commit -a -m "Release ${GIT_TAG}"
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} master:release

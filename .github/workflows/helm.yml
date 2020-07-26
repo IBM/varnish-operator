@@ -19,8 +19,9 @@ jobs:
         run: helm lint varnish-operator
       - name: Ensure helm-releases folder exists
         run: mkdir -p helm-releases
-      - name: Change versions
+      - name: Get yq
         uses: mikefarah/yq@3.3.2
+      - name: Change versions
         run: |
           yq w -i varnish-operator/Chart.yaml 'appVersion' ${GIT_TAG}
           yq w -i varnish-operator/Chart.yaml 'version' ${GIT_TAG}

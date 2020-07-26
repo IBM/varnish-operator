@@ -81,6 +81,14 @@ rules:
 - apiGroups:
   - ibm.com
   resources:
+  - varnishclusters/finalizers
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - ibm.com
+  resources:
   - varnishclusters/status
   verbs:
   - get

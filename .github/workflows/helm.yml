@@ -40,4 +40,4 @@ jobs:
           ./bin/helm package varnish-operator --app-version ${GIT_TAG} --version ${GIT_TAG} --destination helm-releases
           helm repo index helm-releases --url https://ibm.github.io/varnish-operator/master/helm-releases
           git commit -a -m "Release ${GIT_TAG}"
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} master:release
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:release

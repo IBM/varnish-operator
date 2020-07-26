@@ -28,4 +28,3 @@ spec:
       serviceAccountName: varnish-operator-webhooks-cert-patch
       securityContext:
         runAsNonRoot: true
-        runAsUser: 2000

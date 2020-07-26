@@ -3,8 +3,8 @@ package tests
 import (
 	"context"
 	"fmt"
-	icmv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
-	"icm-varnish-k8s-operator/pkg/names"
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
+	"github.com/ibm/varnish-operator/pkg/names"
 	"time"
 
 	apps "k8s.io/api/apps/v1"
@@ -35,7 +35,7 @@ var _ = Describe("Varnish Cluster", func() {
 	}
 
 	AfterEach(func() {
-		err := k8sClient.DeleteAllOf(context.Background(), &icmv1alpha1.VarnishCluster{}, client.InNamespace(vcNamespace))
+		err := k8sClient.DeleteAllOf(context.Background(), &vcapi.VarnishCluster{}, client.InNamespace(vcNamespace))
 		Expect(err).To(Succeed())
 		waitUntilVarnishClusterRemoved(vcName, vcNamespace)
 	})
@@ -43,26 +43,26 @@ var _ = Describe("Varnish Cluster", func() {
 	Context("when deleted", func() {
 		It("should also garbage collect created resources", func() {
 			minAvailabe := intstr.FromInt(1)
-			vc := &icmv1alpha1.VarnishCluster{
+			vc := &vcapi.VarnishCluster{
 				ObjectMeta: objMeta,
-				Spec: icmv1alpha1.VarnishClusterSpec{
-					Backend: &icmv1alpha1.VarnishClusterBackend{
+				Spec: vcapi.VarnishClusterSpec{
+					Backend: &vcapi.VarnishClusterBackend{
 						Selector: map[string]string{"app": "nginx"},
 						Port:     &validBackendPort,
 					},
-					Varnish: &icmv1alpha1.VarnishClusterVarnish{},
+					Varnish: &vcapi.VarnishClusterVarnish{},
 					PodDisruptionBudget: &policyv1beta1.PodDisruptionBudgetSpec{
 						MinAvailable: &minAvailabe,
 					},
-					Service: &icmv1alpha1.VarnishClusterService{
+					Service: &vcapi.VarnishClusterService{
 						Port: proto.Int32(8081),
 					},
-					VCL: &icmv1alpha1.VarnishClusterVCL{
+					VCL: &vcapi.VarnishClusterVCL{
 						ConfigMapName:      proto.String("test"),
 						EntrypointFileName: proto.String("test.vcl"),
 					},
-					Monitoring: &icmv1alpha1.VarnishClusterMonitoring{
-						GrafanaDashboard: &icmv1alpha1.VarnishClusterMonitoringGrafanaDashboard{
+					Monitoring: &vcapi.VarnishClusterMonitoring{
+						GrafanaDashboard: &vcapi.VarnishClusterMonitoringGrafanaDashboard{
 							Enabled:        true,
 							Namespace:      "",
 							DatasourceName: proto.String("Prometheus-datasource"),

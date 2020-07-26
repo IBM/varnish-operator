@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	icmv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 	"net/http"
 	"net/url"
 	"strings"
@@ -92,7 +92,7 @@ func waitForPodsReadiness(namespace string, selector map[string]string) {
 
 func waitUntilVarnishClusterRemoved(name, namespace string) {
 	Eventually(func() metav1.StatusReason {
-		err := k8sClient.Get(context.Background(), types.NamespacedName{Name: name, Namespace: namespace}, &icmv1alpha1.VarnishCluster{})
+		err := k8sClient.Get(context.Background(), types.NamespacedName{Name: name, Namespace: namespace}, &vcapi.VarnishCluster{})
 		if err != nil {
 			if statusErr, ok := err.(*errors.StatusError); ok {
 				return statusErr.ErrStatus.Reason

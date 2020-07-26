@@ -3,9 +3,10 @@ package controller
 import (
 	"context"
 	"fmt"
-	"icm-varnish-k8s-operator/pkg/logger"
 	"reflect"
 	"strings"
+
+	"github.com/ibm/varnish-operator/pkg/logger"
 
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"

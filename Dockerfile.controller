@@ -6,7 +6,7 @@ ENV DEBIAN_FRONTEND=noninteractive INSTALL_DIRECTORY=/usr/local/bin
 
 RUN apt-get update && apt-get install -y --no-install-recommends git curl
 
-WORKDIR /go/src/icm-varnish-k8s-operator
+WORKDIR /go/src/github.com/ibm/varnish-operator
 
 COPY go.mod go.sum ./
 RUN go mod download
@@ -30,7 +30,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends varnish
 
 # Build Final Varnish image
 FROM debian:buster-slim
-LABEL maintainer="Alex Lytvynenko <oleksandr.lytvynenko@ibm.com>, Tomash Sidei <tomash.sidei@ibm.com>, Oleksandr Ohurtsov <oleksandr.ohurtsov@ibm.com>"
+LABEL maintainer="Alex Lytvynenko <oleksandr.lytvynenko@ibm.com>, Tomash Sidei <tomash.sidei@ibm.com>"
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends libc6 libedit2 libncursesw6 libtinfo6 libvarnishapi2 \
     && rm -rf /var/lib/apt/lists/* \
@@ -40,7 +40,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
     && chown -R varnish /etc/varnish /var/lib/varnish
 
 COPY --from=binary /usr/bin/varnishadm /usr/bin/varnishstat /usr/bin/
-COPY --from=builder /go/src/icm-varnish-k8s-operator/varnish-controller /varnish-controller
+COPY --from=builder /go/src/github.com/ibm/varnish-operator/varnish-controller /varnish-controller
 
 USER varnish
 

@@ -3,11 +3,11 @@ package controller
 import (
 	"context"
 	"fmt"
-	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
-	icmv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
-	vclabels "icm-varnish-k8s-operator/pkg/labels"
 	"strings"
 	"time"
+
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
+	vclabels "github.com/ibm/varnish-operator/pkg/labels"
 
 	"github.com/gogo/protobuf/proto"
 	. "github.com/onsi/ginkgo"
@@ -27,17 +27,17 @@ var _ = Describe("the ConfigMap", func() {
 		Name:      vcName,
 	}
 
-	vc := &icmv1alpha1.VarnishCluster{
+	vc := &vcapi.VarnishCluster{
 		ObjectMeta: objMeta,
-		Spec: icmv1alpha1.VarnishClusterSpec{
-			Backend: &icmv1alpha1.VarnishClusterBackend{
+		Spec: vcapi.VarnishClusterSpec{
+			Backend: &vcapi.VarnishClusterBackend{
 				Selector: map[string]string{"app": "nginx"},
 				Port:     &validBackendPort,
 			},
-			Service: &icmv1alpha1.VarnishClusterService{
+			Service: &vcapi.VarnishClusterService{
 				Port: proto.Int32(8081),
 			},
-			VCL: &icmv1alpha1.VarnishClusterVCL{
+			VCL: &vcapi.VarnishClusterVCL{
 				ConfigMapName:      proto.String("test"),
 				EntrypointFileName: proto.String("test.vcl"),
 			},
@@ -60,7 +60,7 @@ var _ = Describe("the ConfigMap", func() {
 			Eventually(func() error {
 				return k8sClient.Get(context.Background(), cmName, cm)
 			}, time.Second*5).Should(Succeed())
-			cmLabels := vclabels.CombinedComponentLabels(newVC, icmapiv1alpha1.VarnishComponentVCLFileConfigMap)
+			cmLabels := vclabels.CombinedComponentLabels(newVC, vcapi.VarnishComponentVCLFileConfigMap)
 
 			Expect(cm.Labels).To(Equal(cmLabels))
 		})

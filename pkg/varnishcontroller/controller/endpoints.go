@@ -4,8 +4,8 @@ import (
 	"context"
 	"sort"
 
-	"icm-varnish-k8s-operator/api/v1alpha1"
-	vclabels "icm-varnish-k8s-operator/pkg/labels"
+	"github.com/ibm/varnish-operator/api/v1alpha1"
+	vclabels "github.com/ibm/varnish-operator/pkg/labels"
 
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"

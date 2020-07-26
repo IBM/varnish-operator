@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         curl \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /go/src/icm-varnish-k8s-operator
+WORKDIR /go/src/github.com/ibm/varnish-operator
 
 COPY go.mod go.sum ./
 RUN go mod download
@@ -25,7 +25,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     -ldflags "-X main.Version=$(cat ./version.txt)" \
     -a \
     -o varnish-operator \
-    icm-varnish-k8s-operator/cmd/varnish-operator
+    github.com/ibm/varnish-operator/cmd/varnish-operator
 
 
 FROM debian:buster-slim
@@ -41,7 +41,7 @@ RUN apt-get update && apt-get upgrade -y \
 
 RUN addgroup --gid 901 varnish-operator && adduser --uid 901 --gid 901 varnish-operator
 
-COPY --from=builder /go/src/icm-varnish-k8s-operator/varnish-operator .
+COPY --from=builder /go/src/github.com/ibm/varnish-operator/varnish-operator .
 
 USER varnish-operator
 

@@ -1,8 +1,8 @@
 package tests
 
 import (
-	icmv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
-	"icm-varnish-k8s-operator/pkg/logger"
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
+	"github.com/ibm/varnish-operator/pkg/logger"
 	"k8s.io/client-go/rest"
 	"testing"
 
@@ -36,7 +36,7 @@ var _ = BeforeSuite(func(done Done) {
 	By("bootstrapping test environment")
 
 	var err error
-	err = icmv1alpha1.AddToScheme(scheme.Scheme)
+	err = vcapi.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	restConfig, err = ctrl.GetConfig()

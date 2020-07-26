@@ -2,9 +2,10 @@ package controller
 
 import (
 	"context"
-	icmv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
-	"icm-varnish-k8s-operator/pkg/names"
 	"time"
+
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
+	"github.com/ibm/varnish-operator/pkg/names"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 
@@ -27,22 +28,22 @@ var _ = Describe("grafana dashboard", func() {
 		Name:      vcName,
 	}
 
-	vc := &icmv1alpha1.VarnishCluster{
+	vc := &vcapi.VarnishCluster{
 		ObjectMeta: objMeta,
-		Spec: icmv1alpha1.VarnishClusterSpec{
-			Backend: &icmv1alpha1.VarnishClusterBackend{
+		Spec: vcapi.VarnishClusterSpec{
+			Backend: &vcapi.VarnishClusterBackend{
 				Selector: map[string]string{"app": "nginx"},
 				Port:     &validBackendPort,
 			},
-			Service: &icmv1alpha1.VarnishClusterService{
+			Service: &vcapi.VarnishClusterService{
 				Port: proto.Int32(8081),
 			},
-			VCL: &icmv1alpha1.VarnishClusterVCL{
+			VCL: &vcapi.VarnishClusterVCL{
 				ConfigMapName:      proto.String("test"),
 				EntrypointFileName: proto.String("test.vcl"),
 			},
-			Monitoring: &icmv1alpha1.VarnishClusterMonitoring{
-				GrafanaDashboard: &icmv1alpha1.VarnishClusterMonitoringGrafanaDashboard{
+			Monitoring: &vcapi.VarnishClusterMonitoring{
+				GrafanaDashboard: &vcapi.VarnishClusterMonitoringGrafanaDashboard{
 					Enabled:        true,
 					Namespace:      "",
 					Labels:         map[string]string{"foo": "bar"},
@@ -71,16 +72,16 @@ var _ = Describe("grafana dashboard", func() {
 
 			By("Labels should consist of standard component labels and additional user specified labels")
 			Expect(dashboardCM.Labels).To(Equal(map[string]string{
-				icmv1alpha1.LabelVarnishOwner:     vcName,
-				icmv1alpha1.LabelVarnishComponent: icmv1alpha1.VarnishComponentGrafanaDashboard,
-				icmv1alpha1.LabelVarnishUID:       string(newVC.UID),
-				"foo":                             "bar",
+				vcapi.LabelVarnishOwner:     vcName,
+				vcapi.LabelVarnishComponent: vcapi.VarnishComponentGrafanaDashboard,
+				vcapi.LabelVarnishUID:       string(newVC.UID),
+				"foo":                       "bar",
 			}))
 
 			By("Owner reference should be set if the dashboard installed in the same namespace as VarnishCluster")
 			ownerReference := []metav1.OwnerReference{
 				{
-					APIVersion:         "icm.ibm.com/v1alpha1",
+					APIVersion:         "ibm.com/v1alpha1",
 					Kind:               "VarnishCluster",
 					Name:               newVC.Name,
 					UID:                newVC.UID,

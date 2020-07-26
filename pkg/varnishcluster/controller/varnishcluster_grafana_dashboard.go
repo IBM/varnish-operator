@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
-	"icm-varnish-k8s-operator/pkg/labels"
-	"icm-varnish-k8s-operator/pkg/logger"
-	"icm-varnish-k8s-operator/pkg/names"
-	"icm-varnish-k8s-operator/pkg/varnishcluster/compare"
 	"text/template"
+
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
+	"github.com/ibm/varnish-operator/pkg/labels"
+	"github.com/ibm/varnish-operator/pkg/logger"
+	"github.com/ibm/varnish-operator/pkg/names"
+	"github.com/ibm/varnish-operator/pkg/varnishcluster/compare"
 
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
@@ -21,8 +22,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (r *ReconcileVarnishCluster) reconcileGrafanaDashboard(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster) error {
-	logr := logger.FromContext(ctx).With(logger.FieldComponent, icmapiv1alpha1.VarnishComponentGrafanaDashboard)
+func (r *ReconcileVarnishCluster) reconcileGrafanaDashboard(ctx context.Context, instance *vcapi.VarnishCluster) error {
+	logr := logger.FromContext(ctx).With(logger.FieldComponent, vcapi.VarnishComponentGrafanaDashboard)
 	logr = logr.With(logger.FieldComponentName, names.GrafanaDashboard(instance.Name))
 	ctx = logger.ToContext(ctx, logr)
 
@@ -62,7 +63,7 @@ func (r *ReconcileVarnishCluster) reconcileGrafanaDashboard(ctx context.Context,
 	return nil
 }
 
-func (r *ReconcileVarnishCluster) applyGrafanaDashboardConfigMap(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster, grafanaDashboard *v1.ConfigMap) error {
+func (r *ReconcileVarnishCluster) applyGrafanaDashboardConfigMap(ctx context.Context, instance *vcapi.VarnishCluster, grafanaDashboard *v1.ConfigMap) error {
 	logr := logger.FromContext(ctx)
 	found := &v1.ConfigMap{}
 	err := r.Get(ctx, types.NamespacedName{Namespace: grafanaDashboard.GetNamespace(), Name: names.GrafanaDashboard(instance.Name)}, found)
@@ -89,7 +90,7 @@ func (r *ReconcileVarnishCluster) applyGrafanaDashboardConfigMap(ctx context.Con
 
 // Deletes Grafana dashboards that are no longer needed. For example if the namespace is changed, the ConfigMap from the previous namespace should be deleted.
 // Also if the dashboard installation is disabled through the spec we also need to delete the ConfigMap.
-func (r *ReconcileVarnishCluster) garbageCollectGrafanaDashboards(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster) error {
+func (r *ReconcileVarnishCluster) garbageCollectGrafanaDashboards(ctx context.Context, instance *vcapi.VarnishCluster) error {
 	grafanaDashboardSpec := instance.Spec.Monitoring.GrafanaDashboard
 
 	//delete all of them if Grafana dashboard installation is disabled
@@ -114,9 +115,9 @@ func (r *ReconcileVarnishCluster) garbageCollectGrafanaDashboards(ctx context.Co
 
 // removePreviousDashboards removes ConfigMaps that are left as a result of config change.
 // For example, if the user deployed the dashboards to namespace foo and then decided to move it back to namespace bar, we need to delete the one created in foo.
-func (r *ReconcileVarnishCluster) removePreviouslyCreatedDashboards(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster, grafanaDashboardToBeLeftNamespace string) error {
+func (r *ReconcileVarnishCluster) removePreviouslyCreatedDashboards(ctx context.Context, instance *vcapi.VarnishCluster, grafanaDashboardToBeLeftNamespace string) error {
 	dashboardsList := &v1.ConfigMapList{}
-	err := r.List(ctx, dashboardsList, client.MatchingLabels(labels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentGrafanaDashboard)))
+	err := r.List(ctx, dashboardsList, client.MatchingLabels(labels.CombinedComponentLabels(instance, vcapi.VarnishComponentGrafanaDashboard)))
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -132,9 +133,9 @@ func (r *ReconcileVarnishCluster) removePreviouslyCreatedDashboards(ctx context.
 	return nil
 }
 
-func (r *ReconcileVarnishCluster) removeAllGrafanaDashboards(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster) error {
+func (r *ReconcileVarnishCluster) removeAllGrafanaDashboards(ctx context.Context, instance *vcapi.VarnishCluster) error {
 	dashboardsList := &v1.ConfigMapList{}
-	err := r.List(ctx, dashboardsList, client.MatchingLabels(labels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentGrafanaDashboard)))
+	err := r.List(ctx, dashboardsList, client.MatchingLabels(labels.CombinedComponentLabels(instance, vcapi.VarnishComponentGrafanaDashboard)))
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -149,7 +150,7 @@ func (r *ReconcileVarnishCluster) removeAllGrafanaDashboards(ctx context.Context
 	return nil
 }
 
-func (r *ReconcileVarnishCluster) createGrafanaDashboardConfigMap(instance *icmapiv1alpha1.VarnishCluster) (*v1.ConfigMap, error) {
+func (r *ReconcileVarnishCluster) createGrafanaDashboardConfigMap(instance *vcapi.VarnishCluster) (*v1.ConfigMap, error) {
 	grafanaDashboard := &v1.ConfigMap{}
 	grafanaDashboard.SetName(names.GrafanaDashboard(instance.Name))
 	grafanaDashboard.SetNamespace(instance.Namespace)
@@ -158,7 +159,7 @@ func (r *ReconcileVarnishCluster) createGrafanaDashboardConfigMap(instance *icma
 
 	}
 
-	cmLabels := labels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentGrafanaDashboard)
+	cmLabels := labels.CombinedComponentLabels(instance, vcapi.VarnishComponentGrafanaDashboard)
 	additionalLabels := instance.Spec.Monitoring.GrafanaDashboard.Labels
 	if len(additionalLabels) > 0 {
 		for key, value := range additionalLabels {

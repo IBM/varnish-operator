@@ -2,11 +2,12 @@ package controller
 
 import (
 	"context"
-	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
-	"icm-varnish-k8s-operator/pkg/labels"
-	"icm-varnish-k8s-operator/pkg/logger"
-	"icm-varnish-k8s-operator/pkg/names"
-	"icm-varnish-k8s-operator/pkg/varnishcluster/compare"
+
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
+	"github.com/ibm/varnish-operator/pkg/labels"
+	"github.com/ibm/varnish-operator/pkg/logger"
+	"github.com/ibm/varnish-operator/pkg/names"
+	"github.com/ibm/varnish-operator/pkg/varnishcluster/compare"
 
 	"github.com/pkg/errors"
 
@@ -16,11 +17,11 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func (r *ReconcileVarnishCluster) reconcileClusterRoleBinding(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster) error {
+func (r *ReconcileVarnishCluster) reconcileClusterRoleBinding(ctx context.Context, instance *vcapi.VarnishCluster) error {
 	clusterRoleBinding := &rbac.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   names.ClusterRoleBinding(instance.Name, instance.Namespace),
-			Labels: labels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentClusterRoleBinding),
+			Labels: labels.CombinedComponentLabels(instance, vcapi.VarnishComponentClusterRoleBinding),
 			Annotations: map[string]string{
 				annotationVarnishClusterNamespace: instance.Namespace,
 				annotationVarnishClusterName:      instance.Name,
@@ -40,7 +41,7 @@ func (r *ReconcileVarnishCluster) reconcileClusterRoleBinding(ctx context.Contex
 		},
 	}
 
-	logr := logger.FromContext(ctx).With(logger.FieldComponent, icmapiv1alpha1.VarnishComponentClusterRoleBinding)
+	logr := logger.FromContext(ctx).With(logger.FieldComponent, vcapi.VarnishComponentClusterRoleBinding)
 	logr = logr.With(logger.FieldComponentName, clusterRoleBinding.Name)
 
 	found := &rbac.ClusterRoleBinding{}

@@ -2,12 +2,13 @@ package controller
 
 import (
 	"context"
-	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
-	"icm-varnish-k8s-operator/pkg/labels"
-	vclabels "icm-varnish-k8s-operator/pkg/labels"
-	"icm-varnish-k8s-operator/pkg/logger"
-	"icm-varnish-k8s-operator/pkg/names"
-	"icm-varnish-k8s-operator/pkg/varnishcluster/compare"
+
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
+	"github.com/ibm/varnish-operator/pkg/labels"
+	vclabels "github.com/ibm/varnish-operator/pkg/labels"
+	"github.com/ibm/varnish-operator/pkg/logger"
+	"github.com/ibm/varnish-operator/pkg/names"
+	"github.com/ibm/varnish-operator/pkg/varnishcluster/compare"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -20,17 +21,17 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func (r *ReconcileVarnishCluster) reconcileHeadlessService(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster) error {
+func (r *ReconcileVarnishCluster) reconcileHeadlessService(ctx context.Context, instance *vcapi.VarnishCluster) error {
 	namespacedName := types.NamespacedName{Namespace: instance.Namespace, Name: names.HeadlessService(instance.Name)}
 	logr := logger.FromContext(ctx)
 
-	logr = logr.With(logger.FieldComponent, icmapiv1alpha1.VarnishComponentHeadlessService)
+	logr = logr.With(logger.FieldComponent, vcapi.VarnishComponentHeadlessService)
 	logr = logr.With(logger.FieldComponentName, namespacedName.Name)
 
 	desired := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      namespacedName.Name,
-			Labels:    labels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentHeadlessService),
+			Labels:    labels.CombinedComponentLabels(instance, vcapi.VarnishComponentHeadlessService),
 			Namespace: namespacedName.Namespace,
 		},
 		Spec: v1.ServiceSpec{
@@ -38,15 +39,15 @@ func (r *ReconcileVarnishCluster) reconcileHeadlessService(ctx context.Context, 
 				{
 					Name:       "varnish",
 					Protocol:   v1.ProtocolTCP,
-					Port:       icmapiv1alpha1.VarnishPort,
-					TargetPort: intstr.FromInt(icmapiv1alpha1.VarnishPort),
+					Port:       vcapi.VarnishPort,
+					TargetPort: intstr.FromInt(vcapi.VarnishPort),
 					NodePort:   0,
 				},
 			},
 			ClusterIP:       v1.ClusterIPNone,
 			Type:            v1.ServiceTypeClusterIP,
 			SessionAffinity: v1.ServiceAffinityNone,
-			Selector:        vclabels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentVarnish),
+			Selector:        vclabels.CombinedComponentLabels(instance, vcapi.VarnishComponentVarnish),
 		},
 	}
 

@@ -3,11 +3,12 @@ package controller
 import (
 	"context"
 	"fmt"
-	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
-	"icm-varnish-k8s-operator/pkg/labels"
-	"icm-varnish-k8s-operator/pkg/logger"
-	"icm-varnish-k8s-operator/pkg/names"
-	"icm-varnish-k8s-operator/pkg/varnishcluster/compare"
+
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
+	"github.com/ibm/varnish-operator/pkg/labels"
+	"github.com/ibm/varnish-operator/pkg/logger"
+	"github.com/ibm/varnish-operator/pkg/names"
+	"github.com/ibm/varnish-operator/pkg/varnishcluster/compare"
 
 	v1 "k8s.io/api/core/v1"
 
@@ -33,8 +34,8 @@ var serviceMonitorListGVK = schema.GroupVersionKind{
 	Kind:    "ServiceMonitorList",
 }
 
-func (r *ReconcileVarnishCluster) reconcileServiceMonitor(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster) error {
-	logr := logger.FromContext(ctx).With(logger.FieldComponent, icmapiv1alpha1.VarnishComponentPrometheusServiceMonitor)
+func (r *ReconcileVarnishCluster) reconcileServiceMonitor(ctx context.Context, instance *vcapi.VarnishCluster) error {
+	logr := logger.FromContext(ctx).With(logger.FieldComponent, vcapi.VarnishComponentPrometheusServiceMonitor)
 	logr = logr.With(logger.FieldComponentName, names.ServiceMonitor(instance.Name))
 	ctx = logger.ToContext(ctx, logr)
 
@@ -73,7 +74,7 @@ func (r *ReconcileVarnishCluster) reconcileServiceMonitor(ctx context.Context, i
 	return nil
 }
 
-func (r *ReconcileVarnishCluster) applyServiceMonitor(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster, serviceMonitor *unstructured.Unstructured) error {
+func (r *ReconcileVarnishCluster) applyServiceMonitor(ctx context.Context, instance *vcapi.VarnishCluster, serviceMonitor *unstructured.Unstructured) error {
 	logr := logger.FromContext(ctx)
 	found := &unstructured.Unstructured{}
 	found.SetGroupVersionKind(serviceMonitorGVK)
@@ -104,7 +105,7 @@ func (r *ReconcileVarnishCluster) applyServiceMonitor(ctx context.Context, insta
 
 // Deletes ServiceMonitors that are no longer needed. For example if the namespace is changed, the resource from the previous namespace should be deleted.
 // Also if the ServiceMonitor installation is disabled through the spec we also need to delete the ServiceMonitor.
-func (r *ReconcileVarnishCluster) cleanupNotNeededServiceMonitors(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster) error {
+func (r *ReconcileVarnishCluster) cleanupNotNeededServiceMonitors(ctx context.Context, instance *vcapi.VarnishCluster) error {
 	//delete all of them if ServiceMonitor installation is disabled
 	if !instance.Spec.Monitoring.PrometheusServiceMonitor.Enabled {
 		if err := r.removeAllServiceMonitors(ctx, instance); err != nil {
@@ -125,10 +126,10 @@ func (r *ReconcileVarnishCluster) cleanupNotNeededServiceMonitors(ctx context.Co
 	return nil
 }
 
-func (r *ReconcileVarnishCluster) removePreviouslyCreatedServiceMonitors(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster, serviceMonitorToBeLeftNamespace string) error {
+func (r *ReconcileVarnishCluster) removePreviouslyCreatedServiceMonitors(ctx context.Context, instance *vcapi.VarnishCluster, serviceMonitorToBeLeftNamespace string) error {
 	serviceMonitorList := &unstructured.UnstructuredList{}
 	serviceMonitorList.SetGroupVersionKind(serviceMonitorListGVK)
-	err := r.List(ctx, serviceMonitorList, client.MatchingLabels(labels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentPrometheusServiceMonitor)))
+	err := r.List(ctx, serviceMonitorList, client.MatchingLabels(labels.CombinedComponentLabels(instance, vcapi.VarnishComponentPrometheusServiceMonitor)))
 	if err != nil {
 		if _, ok := errors.Cause(err).(*meta.NoKindMatchError); ok { //if no such kind then no such resources as well
 			return nil
@@ -147,10 +148,10 @@ func (r *ReconcileVarnishCluster) removePreviouslyCreatedServiceMonitors(ctx con
 	return nil
 }
 
-func (r *ReconcileVarnishCluster) removeAllServiceMonitors(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster) error {
+func (r *ReconcileVarnishCluster) removeAllServiceMonitors(ctx context.Context, instance *vcapi.VarnishCluster) error {
 	serviceMonitorList := &unstructured.UnstructuredList{}
 	serviceMonitorList.SetGroupVersionKind(serviceMonitorListGVK)
-	err := r.List(ctx, serviceMonitorList, client.MatchingLabels(labels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentPrometheusServiceMonitor)))
+	err := r.List(ctx, serviceMonitorList, client.MatchingLabels(labels.CombinedComponentLabels(instance, vcapi.VarnishComponentPrometheusServiceMonitor)))
 	if err != nil {
 		if _, ok := errors.Cause(err).(*meta.NoKindMatchError); ok { //if no such kind then no such resources as well
 			return nil
@@ -169,11 +170,11 @@ func (r *ReconcileVarnishCluster) removeAllServiceMonitors(ctx context.Context, 
 	return nil
 }
 
-func (r *ReconcileVarnishCluster) createServiceMonitorObject(instance *icmapiv1alpha1.VarnishCluster) (*unstructured.Unstructured, error) {
+func (r *ReconcileVarnishCluster) createServiceMonitorObject(instance *vcapi.VarnishCluster) (*unstructured.Unstructured, error) {
 	serviceMonitor := &unstructured.Unstructured{}
 	serviceMonitor.SetGroupVersionKind(serviceMonitorGVK)
 	serviceMonitor.SetName(names.ServiceMonitor(instance.Name))
-	serviceMonitor.SetLabels(labels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentPrometheusServiceMonitor))
+	serviceMonitor.SetLabels(labels.CombinedComponentLabels(instance, vcapi.VarnishComponentPrometheusServiceMonitor))
 
 	serviceMonitor.SetNamespace(instance.Namespace)
 	if instance.Spec.Monitoring.PrometheusServiceMonitor.Namespace != "" {
@@ -190,7 +191,7 @@ func (r *ReconcileVarnishCluster) createServiceMonitorObject(instance *icmapiv1a
 	}
 
 	matchLabels := map[string]interface{}{}
-	componentLabels := labels.ComponentLabels(instance, icmapiv1alpha1.VarnishComponentVarnish)
+	componentLabels := labels.ComponentLabels(instance, vcapi.VarnishComponentVarnish)
 	for key, value := range componentLabels {
 		matchLabels[key] = value
 	}

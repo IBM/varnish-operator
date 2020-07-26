@@ -2,11 +2,12 @@ package controller
 
 import (
 	"context"
-	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
-	vclabels "icm-varnish-k8s-operator/pkg/labels"
-	"icm-varnish-k8s-operator/pkg/logger"
-	"icm-varnish-k8s-operator/pkg/names"
-	"icm-varnish-k8s-operator/pkg/varnishcluster/compare"
+
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
+	vclabels "github.com/ibm/varnish-operator/pkg/labels"
+	"github.com/ibm/varnish-operator/pkg/logger"
+	"github.com/ibm/varnish-operator/pkg/names"
+	"github.com/ibm/varnish-operator/pkg/varnishcluster/compare"
 
 	"github.com/pkg/errors"
 
@@ -17,12 +18,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func (r *ReconcileVarnishCluster) reconcileRoleBinding(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster) error {
+func (r *ReconcileVarnishCluster) reconcileRoleBinding(ctx context.Context, instance *vcapi.VarnishCluster) error {
 	roleBinding := &rbac.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      names.RoleBinding(instance.Name),
 			Namespace: instance.Namespace,
-			Labels:    vclabels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentRoleBinding),
+			Labels:    vclabels.CombinedComponentLabels(instance, vcapi.VarnishComponentRoleBinding),
 		},
 		Subjects: []rbac.Subject{
 			{
@@ -38,7 +39,7 @@ func (r *ReconcileVarnishCluster) reconcileRoleBinding(ctx context.Context, inst
 		},
 	}
 
-	logr := logger.FromContext(ctx).With(logger.FieldComponent, icmapiv1alpha1.VarnishComponentRoleBinding)
+	logr := logger.FromContext(ctx).With(logger.FieldComponent, vcapi.VarnishComponentRoleBinding)
 	logr = logr.With(logger.FieldComponentName, roleBinding.Name)
 
 	// Set controller reference for roleBinding

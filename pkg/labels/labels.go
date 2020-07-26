@@ -1,11 +1,11 @@
 package labels
 
 import (
-	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 )
 
 // CombinedComponentLabels create labels for a component and inherits VarnishCluster object labels
-func CombinedComponentLabels(instance *icmapiv1alpha1.VarnishCluster, componentName string) (m map[string]string) {
+func CombinedComponentLabels(instance *vcapi.VarnishCluster, componentName string) (m map[string]string) {
 	inherited := InheritLabels(instance)
 	generated := ComponentLabels(instance, componentName)
 
@@ -20,15 +20,15 @@ func CombinedComponentLabels(instance *icmapiv1alpha1.VarnishCluster, componentN
 }
 
 // CombinedComponentLabels create labels for a component
-func ComponentLabels(instance *icmapiv1alpha1.VarnishCluster, componentName string) map[string]string {
+func ComponentLabels(instance *vcapi.VarnishCluster, componentName string) map[string]string {
 	return map[string]string{
-		icmapiv1alpha1.LabelVarnishOwner:     instance.Name,
-		icmapiv1alpha1.LabelVarnishComponent: componentName,
-		icmapiv1alpha1.LabelVarnishUID:       string(instance.UID),
+		vcapi.LabelVarnishOwner:     instance.Name,
+		vcapi.LabelVarnishComponent: componentName,
+		vcapi.LabelVarnishUID:       string(instance.UID),
 	}
 }
 
-func InheritLabels(instance *icmapiv1alpha1.VarnishCluster) (m map[string]string) {
+func InheritLabels(instance *vcapi.VarnishCluster) (m map[string]string) {
 	m = make(map[string]string, len(instance.Labels))
 	for k, v := range instance.Labels {
 		m[k] = v

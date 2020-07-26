@@ -4,11 +4,12 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"icm-varnish-k8s-operator/api/v1alpha1"
-	"icm-varnish-k8s-operator/pkg/logger"
-	vccfg "icm-varnish-k8s-operator/pkg/varnishcluster/config"
-	"icm-varnish-k8s-operator/pkg/varnishcluster/controller"
 	"log"
+
+	"github.com/ibm/varnish-operator/api/v1alpha1"
+	"github.com/ibm/varnish-operator/pkg/logger"
+	vccfg "github.com/ibm/varnish-operator/pkg/varnishcluster/config"
+	"github.com/ibm/varnish-operator/pkg/varnishcluster/controller"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"

@@ -3,10 +3,11 @@ package controller
 import (
 	"context"
 	"fmt"
-	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
-	vclabels "icm-varnish-k8s-operator/pkg/labels"
-	"icm-varnish-k8s-operator/pkg/logger"
-	"icm-varnish-k8s-operator/pkg/varnishcluster/compare"
+
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
+	vclabels "github.com/ibm/varnish-operator/pkg/labels"
+	"github.com/ibm/varnish-operator/pkg/logger"
+	"github.com/ibm/varnish-operator/pkg/varnishcluster/compare"
 
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
@@ -22,12 +23,12 @@ const (
 	annotationVCLVersion = "VCLVersion"
 )
 
-func (r *ReconcileVarnishCluster) reconcileConfigMap(ctx context.Context, podsSelector map[string]string, instance, instanceStatus *icmapiv1alpha1.VarnishCluster) (*v1.ConfigMap, error) {
-	logr := logger.FromContext(ctx).With(logger.FieldComponent, icmapiv1alpha1.VarnishComponentVCLFileConfigMap)
+func (r *ReconcileVarnishCluster) reconcileConfigMap(ctx context.Context, podsSelector map[string]string, instance, instanceStatus *vcapi.VarnishCluster) (*v1.ConfigMap, error) {
+	logr := logger.FromContext(ctx).With(logger.FieldComponent, vcapi.VarnishComponentVCLFileConfigMap)
 	logr = logr.With(logger.FieldComponentName, instance.Spec.VCL.ConfigMapName)
 
 	cm := &v1.ConfigMap{}
-	cmLabels := vclabels.CombinedComponentLabels(instance, icmapiv1alpha1.VarnishComponentVCLFileConfigMap)
+	cmLabels := vclabels.CombinedComponentLabels(instance, vcapi.VarnishComponentVCLFileConfigMap)
 	err := r.Get(ctx, types.NamespacedName{Name: *instance.Spec.VCL.ConfigMapName, Namespace: instance.Namespace}, cm)
 	// if the ConfigMap does not exist, create it and set it with the default VCL files
 	// Else if there was a problem doing the Get, just return an error

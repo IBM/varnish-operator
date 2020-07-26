@@ -3,7 +3,7 @@ package tests
 import (
 	"context"
 	"fmt"
-	icmv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -32,7 +32,7 @@ var _ = Describe("Varnish cluster", func() {
 	backendResponse := "TEST"
 	backendLabels := map[string]string{"app": "test-backend"}
 	backendDeploymentName := "test-backend"
-	varnishPodLabels := map[string]string{icmv1alpha1.LabelVarnishComponent: icmv1alpha1.VarnishComponentVarnish}
+	varnishPodLabels := map[string]string{vcapi.LabelVarnishComponent: vcapi.VarnishComponentVarnish}
 
 	backendsDeployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -70,26 +70,26 @@ var _ = Describe("Varnish cluster", func() {
 	}
 
 	backendPort := intstr.FromInt(5678)
-	vc := &icmv1alpha1.VarnishCluster{
+	vc := &vcapi.VarnishCluster{
 		ObjectMeta: objMeta,
-		Spec: icmv1alpha1.VarnishClusterSpec{
-			Backend: &icmv1alpha1.VarnishClusterBackend{
+		Spec: vcapi.VarnishClusterSpec{
+			Backend: &vcapi.VarnishClusterBackend{
 				Selector: backendLabels,
 				Port:     &backendPort,
 			},
-			Service: &icmv1alpha1.VarnishClusterService{
+			Service: &vcapi.VarnishClusterService{
 				Port: proto.Int32(9090),
 			},
-			Varnish: &icmv1alpha1.VarnishClusterVarnish{
+			Varnish: &vcapi.VarnishClusterVarnish{
 				ImagePullPolicy: v1.PullNever,
-				Controller: &icmv1alpha1.VarnishClusterVarnishController{
+				Controller: &vcapi.VarnishClusterVarnishController{
 					ImagePullPolicy: v1.PullNever,
 				},
-				MetricsExporter: &icmv1alpha1.VarnishClusterVarnishMetricsExporter{
+				MetricsExporter: &vcapi.VarnishClusterVarnishMetricsExporter{
 					ImagePullPolicy: v1.PullNever,
 				},
 			},
-			VCL: &icmv1alpha1.VarnishClusterVCL{
+			VCL: &vcapi.VarnishClusterVCL{
 				ConfigMapName:      proto.String("test"),
 				EntrypointFileName: proto.String("test.vcl"),
 			},
@@ -98,7 +98,7 @@ var _ = Describe("Varnish cluster", func() {
 
 	AfterEach(func() {
 		By("deleting created resources")
-		Expect(k8sClient.DeleteAllOf(context.Background(), &icmv1alpha1.VarnishCluster{}, client.InNamespace(vcNamespace))).To(Succeed())
+		Expect(k8sClient.DeleteAllOf(context.Background(), &vcapi.VarnishCluster{}, client.InNamespace(vcNamespace))).To(Succeed())
 		Expect(k8sClient.DeleteAllOf(context.Background(), &appsv1.Deployment{}, client.InNamespace(vcNamespace), client.MatchingLabels(backendLabels))).To(Succeed())
 		waitForPodsTermination(vcNamespace, varnishPodLabels)
 		waitForPodsTermination(vcNamespace, backendLabels)

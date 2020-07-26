@@ -43,7 +43,7 @@ $ make install
 kustomize build <path>/<to>/<repo>/config/crd > <path>/<to>/<repo>/varnish-operator/templates/customresourcedefinition.yaml
 <path>/<to>/<controller-gen>/controller-gen "crd:trivialVersions=true" rbac:roleName=varnish-operator paths="./..." output:crd:none output:rbac:stdout > <path>/<to>/<repo>/varnish-operator/templates/clusterrole.yaml
 kustomize build <path>/<to>/<repo>/config/crd | kubectl apply -f -
-customresourcedefinition.apiextensions.k8s.io/varnishclusters.icm.ibm.com created
+customresourcedefinition.apiextensions.k8s.io/varnishclusters.ibm.com created
 ```
 
 You should see the created CRD in your cluster:
@@ -51,7 +51,7 @@ You should see the created CRD in your cluster:
 ```bash
 $ kubectl get customresourcedefinitions.apiextensions.k8s.io
  NAME                          CREATED AT
- varnishclusters.icm.ibm.com   2019-06-05T09:53:26Z
+ varnishclusters.ibm.com       2019-06-05T09:53:26Z
 ```
 
 `make install` should be run only for the first time and after changes in the CRD schema because it is only responsible for installing and updating the CRD for the `VarnishCluster` resource.

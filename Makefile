@@ -17,7 +17,7 @@ all: test varnish-operator varnish-controller
 
 # Run tests
 test: generate fmt vet manifests
-	go test icm-varnish-k8s-operator/pkg/... icm-varnish-k8s-operator/cmd/... icm-varnish-k8s-operator/api/... -coverprofile cover.out
+	go test github.com/ibm/varnish-operator/pkg/... github.com/ibm/varnish-operator/cmd/... github.com/ibm/varnish-operator/api/... -coverprofile cover.out
 
 # Run lint tools
 lint:
@@ -25,7 +25,7 @@ lint:
 
 # Build varnish-operator binary
 varnish-operator: generate fmt vet
-	go build -o ${ROOT_DIR}bin/varnish-operator icm-varnish-k8s-operator/cmd/varnish-operator
+	go build -o ${ROOT_DIR}bin/varnish-operator github.com/ibm/varnish-operator/cmd/varnish-operator
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet

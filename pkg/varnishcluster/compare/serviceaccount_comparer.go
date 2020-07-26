@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	serviceAccountOpts = []cmp.Option{cmpopts.IgnoreFields(v1.ServiceAccount{}, sharedIgnoreMetadata...)}
+	serviceAccountOpts = []cmp.Option{cmpopts.IgnoreFields(v1.ServiceAccount{}, append(sharedIgnoreMetadata, "ImagePullSecrets")...)}
 )
 
 func withServiceAccountInheritance(found, desired *v1.ServiceAccount) {

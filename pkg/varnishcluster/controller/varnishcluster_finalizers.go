@@ -2,9 +2,10 @@ package controller
 
 import (
 	"context"
-	icmapiv1alpha1 "icm-varnish-k8s-operator/api/v1alpha1"
-	"icm-varnish-k8s-operator/pkg/logger"
-	"icm-varnish-k8s-operator/pkg/names"
+
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
+	"github.com/ibm/varnish-operator/pkg/logger"
+	"github.com/ibm/varnish-operator/pkg/names"
 
 	v1 "k8s.io/api/core/v1"
 
@@ -19,13 +20,13 @@ import (
 )
 
 const (
-	finalizerClusterRole        = "clusterrole.finalizers.varnishcluster.icm.ibm.com"
-	finalizerClusterRoleBinding = "clusterrolebinding.finalizers.varnishcluster.icm.ibm.com"
-	finalizerServiceMonitor     = "prometheus-servicemonitor.finalizers.varnishcluster.icm.ibm.com"
-	finalizerGrafanaDashboard   = "grafana-dashboard.finalizers.varnishcluster.icm.ibm.com"
+	finalizerClusterRole        = "clusterrole.finalizers.varnishcluster.ibm.com"
+	finalizerClusterRoleBinding = "clusterrolebinding.finalizers.varnishcluster.ibm.com"
+	finalizerServiceMonitor     = "prometheus-servicemonitor.finalizers.varnishcluster.ibm.com"
+	finalizerGrafanaDashboard   = "grafana-dashboard.finalizers.varnishcluster.ibm.com"
 )
 
-func (r *ReconcileVarnishCluster) reconcileFinalizers(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster) error {
+func (r *ReconcileVarnishCluster) reconcileFinalizers(ctx context.Context, instance *vcapi.VarnishCluster) error {
 	if !instance.ObjectMeta.DeletionTimestamp.IsZero() { //object is being deleted, don't set finalizers
 		return nil
 	}
@@ -58,7 +59,7 @@ func (r *ReconcileVarnishCluster) reconcileFinalizers(ctx context.Context, insta
 	return nil
 }
 
-func (r *ReconcileVarnishCluster) finalizerCleanUp(ctx context.Context, instance *icmapiv1alpha1.VarnishCluster) error {
+func (r *ReconcileVarnishCluster) finalizerCleanUp(ctx context.Context, instance *vcapi.VarnishCluster) error {
 	if err := r.deleteCR(ctx, types.NamespacedName{Name: names.ClusterRole(instance.Name, instance.Namespace)}); err != nil {
 		return errors.WithStack(err)
 	}
@@ -121,7 +122,7 @@ func (r *ReconcileVarnishCluster) deleteCR(ctx context.Context, ns types.Namespa
 		return errors.Wrap(err, "could not get current state of clusterrole")
 	}
 
-	logr := logger.FromContext(ctx).With(logger.FieldComponent, icmapiv1alpha1.VarnishComponentClusterRole)
+	logr := logger.FromContext(ctx).With(logger.FieldComponent, vcapi.VarnishComponentClusterRole)
 	logr = logr.With(logger.FieldComponentName, cr.Name)
 	logr.Infoc("Deleting existing clusterrole")
 	return r.Delete(ctx, cr)
@@ -137,7 +138,7 @@ func (r *ReconcileVarnishCluster) deleteCRB(ctx context.Context, ns types.Namesp
 		return errors.Wrap(err, "could not get current state of clusterrolebinding")
 	}
 
-	logr := logger.FromContext(ctx).With(logger.FieldComponent, icmapiv1alpha1.VarnishComponentClusterRoleBinding)
+	logr := logger.FromContext(ctx).With(logger.FieldComponent, vcapi.VarnishComponentClusterRoleBinding)
 	logr = logr.With(logger.FieldComponentName, crb.Name)
 	logr.Infoc("Deleting existing clusterrolebinding")
 	return r.Delete(ctx, crb)
@@ -154,7 +155,7 @@ func (r *ReconcileVarnishCluster) deleteServiceMonitor(ctx context.Context, ns t
 		return errors.Wrap(err, "could not get current state of servicemonitor")
 	}
 
-	logr := logger.FromContext(ctx).With(logger.FieldComponent, icmapiv1alpha1.VarnishComponentPrometheusServiceMonitor)
+	logr := logger.FromContext(ctx).With(logger.FieldComponent, vcapi.VarnishComponentPrometheusServiceMonitor)
 	logr = logr.With(logger.FieldComponentName, serviceMonitor.GetName())
 	logr.Infoc("Deleting existing servicemonitor")
 	return r.Delete(ctx, serviceMonitor)
@@ -170,13 +171,13 @@ func (r *ReconcileVarnishCluster) deleteGrafanaDashboard(ctx context.Context, ns
 		return errors.Wrap(err, "could not get current state of Grafana dashboard ConfigMap")
 	}
 
-	logr := logger.FromContext(ctx).With(logger.FieldComponent, icmapiv1alpha1.VarnishComponentGrafanaDashboard)
+	logr := logger.FromContext(ctx).With(logger.FieldComponent, vcapi.VarnishComponentGrafanaDashboard)
 	logr = logr.With(logger.FieldComponentName, grafanaDashboard.GetName())
 	logr.Infoc("Deleting existing Grafana dashboard ConfigMap")
 	return r.Delete(ctx, grafanaDashboard)
 }
 
-func (r *ReconcileVarnishCluster) removeFinalizer(ctx context.Context, finalizerName string, instance *icmapiv1alpha1.VarnishCluster) error {
+func (r *ReconcileVarnishCluster) removeFinalizer(ctx context.Context, finalizerName string, instance *vcapi.VarnishCluster) error {
 	if containsString(instance.Finalizers, finalizerName) {
 		controllerutil.RemoveFinalizer(instance, finalizerName)
 		if err := r.Update(ctx, instance); err != nil {

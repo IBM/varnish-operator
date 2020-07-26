@@ -14,6 +14,7 @@ jobs:
       - name: Get Helm
         run: |
           curl -Lo ./helm.tar.gz https://get.helm.sh/helm-v2.16.9-linux-amd64.tar.gz
+          mkdir -p bin
           tar -zxvf ./helm.tar.gz && mv linux-amd64/helm bin/
       - name: Helm lint
         run: helm lint varnish-operator

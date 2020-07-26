@@ -23,6 +23,7 @@ jobs:
       - name: Change versions
         run: |
           curl -Lo ./bin/yq https://github.com/mikefarah/yq/releases/download/3.3.2/yq_linux_amd64
+          chmod +x ./bin/yq
           ./bin/yq w -i varnish-operator/Chart.yaml 'appVersion' ${GIT_TAG}
           ./bin/yq w -i varnish-operator/Chart.yaml 'version' ${GIT_TAG}
           ./bin/yq w -i varnish-operator/values.yaml 'container.image' $(yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'container.image' | sed 's/:.*/:${GIT_TAG}/')

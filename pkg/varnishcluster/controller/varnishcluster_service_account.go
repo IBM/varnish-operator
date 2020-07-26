@@ -52,7 +52,6 @@ func (r *ReconcileVarnishCluster) reconcileServiceAccount(ctx context.Context, i
 		return errors.Wrap(err, "Could not get Service account")
 	} else if !compare.EqualServiceAccount(found, serviceAccount) {
 		logr.Infoc("Updating Service account", "diff", compare.DiffServiceAccount(found, serviceAccount))
-		found.ImagePullSecrets = serviceAccount.ImagePullSecrets
 		found.Labels = serviceAccount.Labels
 		if err = r.Update(ctx, found); err != nil {
 			return errors.Wrap(err, "Unable to update service account")

@@ -20,10 +20,9 @@ jobs:
         run: helm lint varnish-operator
       - name: Ensure helm-releases folder exists
         run: mkdir -p helm-releases
-      - name: Get yq
-        uses: mikefarah/yq@3.3.2
       - name: Change versions
         run: |
+          snap install yq
           yq w -i varnish-operator/Chart.yaml 'appVersion' ${GIT_TAG}
           yq w -i varnish-operator/Chart.yaml 'version' ${GIT_TAG}
           yq w -i varnish-operator/values.yaml 'container.image' $(yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'container.image' | sed 's/:.*/:${GIT_TAG}/')

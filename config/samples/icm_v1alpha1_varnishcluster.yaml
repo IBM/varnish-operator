@@ -44,8 +44,6 @@ spec:
       #  #  requests:
       #  #    cpu: 1
       #  #    memory: 2040Mi
-    metricsExporter:
-      image:
   # varnish's metrics exporter - an optional definiton for the pod. It allows override default image name and pull policy
   # and defines the container's resources allocation.
     metricsExporter:

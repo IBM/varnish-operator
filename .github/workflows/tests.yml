@@ -22,6 +22,10 @@ jobs:
         echo "::set-env name=KUBEBUILDER_ASSETS::/tmp/kubebuilder_2.3.1_linux_amd64/bin"
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
+    - name: get tag
+      run: |
+        GITTAG=${GITHUB_REF##*/}
+        echo $GITTAG
     - name: Cache Go dependencies
       uses: actions/cache@v2
       with:

@@ -24,14 +24,15 @@ jobs:
         run: mkdir -p helm-releases
       - name: Change versions
         run: |
+          GITTAG=${GITHUB_REF##*/}
           curl -Lo ./bin/yq https://github.com/mikefarah/yq/releases/download/3.3.2/yq_linux_amd64
           chmod +x ./bin/yq
-          ./bin/yq w -i varnish-operator/Chart.yaml 'appVersion' ${GITHUB_REF##*/}
-          ./bin/yq w -i varnish-operator/Chart.yaml 'version' ${GITHUB_REF##*/}
-          ./bin/yq w -i varnish-operator/values.yaml 'container.image' $(./bin/yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'container.image' | sed 's/:.*/:${GITHUB_REF##*/}/')
-          ./bin/yq w -i config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.image' $(./bin/yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.image' | sed 's/:.*/:${GITHUB_REF##*/}/')
-          ./bin/yq w -i config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' $(./bin/yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' | sed 's/:.*/:${GITHUB_REF##*/}/')
-          ./bin/yq w -i config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' $(./bin/yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' | sed 's/:.*/:${GITHUB_REF##*/}/')
+          ./bin/yq w -i varnish-operator/Chart.yaml 'appVersion' $GITTAG}
+          ./bin/yq w -i varnish-operator/Chart.yaml 'version' $GITTAG}
+          ./bin/yq w -i varnish-operator/values.yaml 'container.image' $(./bin/yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'container.image' | sed 's/:.*/:$GITTAG/')
+          ./bin/yq w -i config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.image' $(./bin/yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.image' | sed 's/:.*/:$GITTAG/')
+          ./bin/yq w -i config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' $(./bin/yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' | sed 's/:.*/:$GITTAG/')
+          ./bin/yq w -i config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' $(./bin/yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' | sed 's/:.*/:$GITTAG/')
       - name: Package chart
         run: |
           git config --global user.email ""

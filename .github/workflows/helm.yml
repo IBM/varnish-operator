@@ -28,10 +28,10 @@ jobs:
           chmod +x ./bin/yq
           ./bin/yq w -i varnish-operator/Chart.yaml 'appVersion' ${GITHUB_REF##*/}
           ./bin/yq w -i varnish-operator/Chart.yaml 'version' ${GITHUB_REF##*/}
-          ./bin/yq w -i varnish-operator/values.yaml 'container.image' $(yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'container.image' | sed 's/:.*/:${GITHUB_REF##*/}/')
-          ./bin/yq w -i config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.image' $(yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.image' | sed 's/:.*/:${GITHUB_REF##*/}/')
-          ./bin/yq w -i config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' $(yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' | sed 's/:.*/:${GITHUB_REF##*/}/')
-          ./bin/yq w -i config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' $(yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' | sed 's/:.*/:${GITHUB_REF##*/}/')
+          ./bin/yq w -i varnish-operator/values.yaml 'container.image' $(./bin/yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'container.image' | sed 's/:.*/:${GITHUB_REF##*/}/')
+          ./bin/yq w -i config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.image' $(./bin/yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.image' | sed 's/:.*/:${GITHUB_REF##*/}/')
+          ./bin/yq w -i config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' $(./bin/yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' | sed 's/:.*/:${GITHUB_REF##*/}/')
+          ./bin/yq w -i config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' $(./bin/yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' | sed 's/:.*/:${GITHUB_REF##*/}/')
       - name: Package chart
         run: |
           git config --global user.email ""

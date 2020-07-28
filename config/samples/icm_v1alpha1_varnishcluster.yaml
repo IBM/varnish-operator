@@ -11,7 +11,7 @@ spec:
     type: "OnDelete" #can be "OnDelete", "RollingUpdate" and "DelayedRollingUpdate"
   varnish:
     # path to image + tag
-    image: us.icr.io/icm-varnish/varnish:0.25.8
+    image: us.icr.io/icm-varnish/varnish:0.25.9
     imagePullSecret: docker-reg-secret
     # imagePullPolicy controls how the varnish image will be pulled for new containers
     imagePullPolicy: Always
@@ -33,7 +33,7 @@ spec:
     # and defines the container's resources allocation.
     controller:
       #  # path to image + tag to override, by default it refers to varnish.image with "-controller" suffix image.
-      image: us.icr.io/icm-varnish/varnish-controller:0.25.8
+      image: us.icr.io/icm-varnish/varnish-controller:0.25.9
       #  # imagePullPolicy controls how the varnish-controller image will be pulled for new containers
       #  imagePullPolicy: Always
       #  # Resources allocated to the Varnish controller container through Kubernetes.
@@ -44,11 +44,12 @@ spec:
       #  #  requests:
       #  #    cpu: 1
       #  #    memory: 2040Mi
-  # varnish's metrics exporter - an optional definiton for the pod. It allows override default image name and pull policy
-  # and defines the container's resources allocation.
+    # varnish's metrics exporter - an optional definiton for the pod. It allows override default image name and pull policy
+    # and defines the container's resources allocation.
+
     metricsExporter:
-    #  # path to image + tag to override, by default it refers to varnish.image with "-metrics-exporter" suffix image.
-      image: us.icr.io/icm-varnish/varnish-metrics-exporter:0.22.1
+      #  # path to image + tag to override, by default it refers to varnish.image with "-metrics-exporter" suffix image.
+      image: us.icr.io/icm-varnish/varnish-metrics-exporter:0.25.9
   #  # imagePullPolicy controls how the varnish-metrics-exporter image will be pulled for new containers
   #  imagePullPolicy: Always
   #  # Resources allocated to the Varnish metrics exporter container through Kubernetes.

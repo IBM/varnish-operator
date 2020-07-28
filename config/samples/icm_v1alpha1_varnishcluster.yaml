@@ -11,7 +11,7 @@ spec:
     type: "OnDelete" #can be "OnDelete", "RollingUpdate" and "DelayedRollingUpdate"
   varnish:
     # path to image + tag
-    image: us.icr.io/icm-varnish/varnish:$GITTAG
+    image: us.icr.io/icm-varnish/varnish:0.25.7
     imagePullSecret: docker-reg-secret
     # imagePullPolicy controls how the varnish image will be pulled for new containers
     imagePullPolicy: Always
@@ -33,7 +33,7 @@ spec:
     # and defines the container's resources allocation.
     controller:
       #  # path to image + tag to override, by default it refers to varnish.image with "-controller" suffix image.
-      image: us.icr.io/icm-varnish/varnish-controller:$GITTAG
+      image: us.icr.io/icm-varnish/varnish-controller:0.25.7
       #  # imagePullPolicy controls how the varnish-controller image will be pulled for new containers
       #  imagePullPolicy: Always
       #  # Resources allocated to the Varnish controller container through Kubernetes.

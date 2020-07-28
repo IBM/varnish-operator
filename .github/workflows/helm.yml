@@ -32,7 +32,7 @@ jobs:
           ./bin/yq w -i varnish-operator/values.yaml 'container.image' $(./bin/yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'container.image' | sed "s/:.*/:$GITTAG/")
           ./bin/yq w -i config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.image' $(./bin/yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.image' | sed "s/:.*/:$GITTAG/")
           ./bin/yq w -i config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' $(./bin/yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' | sed "s/:.*/:$GITTAG/")
-          ./bin/yq w -i config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' $(./bin/yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.controller.image' | sed "s/:.*/:$GITTAG/")
+          ./bin/yq w -i config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.metricsExporter.image' $(./bin/yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'spec.varnish.metricsExporter.image' | sed "s/:.*/:$GITTAG/")
       - name: Package chart
         run: |
           git config --global user.email ""

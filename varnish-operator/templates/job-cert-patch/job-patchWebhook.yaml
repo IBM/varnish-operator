@@ -26,5 +26,3 @@ spec:
             - --patch-failure-policy=Fail
       restartPolicy: OnFailure
       serviceAccountName: varnish-operator-webhooks-cert-patch
-      securityContext:
-        runAsNonRoot: true

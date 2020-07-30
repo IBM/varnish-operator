@@ -1,7 +1,5 @@
 FROM golang:1.14-buster AS builder
 
-ARG GOPROXY=direct
-
 ENV DEBIAN_FRONTEND=noninteractive INSTALL_DIRECTORY=/usr/local/bin
 
 RUN apt-get update && apt-get install -y --no-install-recommends git curl
@@ -13,11 +11,12 @@ RUN go mod download
 COPY cmd ./cmd
 COPY pkg ./pkg
 COPY api/ api/
-COPY version.txt ./
+
+ARG VERSION=undefined
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     go build \
-    -ldflags "-X main.Version=$(cat ./version.txt)" \
+    -ldflags "-X main.Version=$VERSION" \
     -a \
     -o varnish-controller \
     ./cmd/varnish-controller/

@@ -2,7 +2,7 @@
 
 Requirements:
 
-* Kubernetes 1.12 or newer. You can use [minikube](https://kubernetes.io/docs/setup/minikube/) for local development.
+* Kubernetes 1.16 or newer. You can use [minikube](https://kubernetes.io/docs/setup/minikube/) for local development.
 * Go 1.12+ with enabled go modules
 * [Kubebuilder](https://kubebuilder.io/quick-start.html#installation) 2.0.0+
 * [kustomize](https://github.com/kubernetes-sigs/kustomize) 3.1.0+

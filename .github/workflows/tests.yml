@@ -26,13 +26,6 @@ jobs:
       run: |
         GITTAG=${GITHUB_REF##*/}
         echo $GITTAG
-    - name: Cache Go dependencies
-      uses: actions/cache@v2
-      with:
-        path: ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
     - name: Get dependencies
       run: go mod download
 

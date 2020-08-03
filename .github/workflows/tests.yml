@@ -3,12 +3,18 @@ name: Tests
 on: push
 
 jobs:
-
+  lint:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v1
+        with:
+          version: v1.26
   tests:
     name: Tests
     runs-on: ubuntu-latest
     steps:
-
     - name: Set up Go 1.x
       uses: actions/setup-go@v2
       with:
@@ -24,12 +30,6 @@ jobs:
       uses: actions/checkout@v2
     - name: Get dependencies
       run: go mod download
-
-    - name: Run golangci-lint
-      uses: golangci/golangci-lint-action@v1
-      with:
-        version: v1.26
-
     - name: Unit tests
       run: |
         go test github.com/ibm/varnish-operator/pkg/... github.com/ibm/varnish-operator/cmd/... github.com/ibm/varnish-operator/api/... -coverprofile cover.out

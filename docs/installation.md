@@ -19,27 +19,14 @@ Helm charts [are hosted in private Artifactory](https://pages.github.ibm.com/The
     $ helm repo add icm https://na.artifactory.swg-devops.com/artifactory/wcp-icm-helm-virtual --username=<your-email> --password=<api-key>
     $ helm repo update
     ```
-    
-### Configure image pull secret
+
+### Install Varnish Operator
 
 Create a namespace for the operator:
 
 ```bash
 $ kubectl create ns varnish-operator
 ```
-
-Images are located in a private IBM cloud registry. You need to [create an image pull secret](https://pages.github.ibm.com/TheWeatherCompany/icm-docs/managed-kubernetes/container-registry.html#pulling-an-image-in-kubernetes) in your namespace to be able to pull images in the cluster.
-
-```bash
-$ kubectl create secret docker-registry container-reg-secret \
-    --namespace varnish-operator \
-    --docker-server us.icr.io \
-    --docker-username <user-name> \
-    --docker-password=<password> \
-    --docker-email=<email>
-```
-
-### Install Varnish Operator
 
 Use the image pull secret created in the previous step to install the operator:
 

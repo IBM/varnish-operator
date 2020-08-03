@@ -32,17 +32,17 @@ jobs:
         run: kubectl create namespace varnish-operator
       - name: build images
         run: |
-          docker build -f Dockerfile -t us.icr.io/icm-varnish/varnish-operator:local .
-          docker build -f Dockerfile.varnishd -t us.icr.io/icm-varnish/varnish:local .
-          docker build -f Dockerfile.controller -t us.icr.io/icm-varnish/varnish-controller:local .
-          docker build -f Dockerfile.exporter -t us.icr.io/icm-varnish/varnish-metrics-exporter:local .
+          docker build -f Dockerfile -t ibmcom/varnish-operator:local .
+          docker build -f Dockerfile.varnishd -t ibmcom/varnish:local .
+          docker build -f Dockerfile.controller -t ibmcom/varnish-controller:local .
+          docker build -f Dockerfile.exporter -t ibmcom/varnish-metrics-exporter:local .
       - name: load images
         run: |
-          kind load --name e2e-tests docker-image us.icr.io/icm-varnish/varnish-operator:local
-          kind load --name e2e-tests docker-image us.icr.io/icm-varnish/varnish:local
-          kind load --name e2e-tests docker-image us.icr.io/icm-varnish/varnish-controller:local
-          kind load --name e2e-tests docker-image us.icr.io/icm-varnish/varnish-metrics-exporter:local
+          kind load --name e2e-tests docker-image ibmcom/varnish-operator:local
+          kind load --name e2e-tests docker-image ibmcom/varnish:local
+          kind load --name e2e-tests docker-image ibmcom/varnish-controller:local
+          kind load --name e2e-tests docker-image ibmcom/varnish-metrics-exporter:local
       - name: install operator
-        run: helm install varnish-operator --namespace=varnish-operator varnish-operator --wait --set container.imagePullSecret=docker-reg-secret --set container.imagePullPolicy=Never --set container.image=us.icr.io/icm-varnish/varnish-operator:local
+        run: helm install varnish-operator --namespace=varnish-operator varnish-operator --wait --set container.imagePullSecret=docker-reg-secret --set container.imagePullPolicy=Never --set container.image=ibmcom/varnish-operator:local
       - name: run tests
         run: go test ./tests

@@ -114,7 +114,7 @@ var _ = Describe("statefulset", func() {
 
 			varnishControllerContainer, err := getContainerByName(podSpec, vcapi.VarnishControllerName)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(varnishControllerContainer.Image).To(Equal("us.icr.io/icm-varnish/varnish-controller:test"))
+			Expect(varnishControllerContainer.Image).To(Equal("ibmcom/varnish-controller:test"))
 			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "ENDPOINT_SELECTOR_STRING", Value: labels.SelectorFromSet(map[string]string{
 				vcapi.LabelVarnishOwner:     vcName,
 				vcapi.LabelVarnishComponent: vcapi.VarnishComponentNoCacheService,
@@ -132,7 +132,7 @@ var _ = Describe("statefulset", func() {
 
 			metricsContainer, err := getContainerByName(podSpec, vcapi.VarnishMetricsExporterName)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(metricsContainer.Image).To(Equal("us.icr.io/icm-varnish/varnish-metrics-exporter:test"))
+			Expect(metricsContainer.Image).To(Equal("ibmcom/varnish-metrics-exporter:test"))
 			varnishMetricsExporterPort, err := getContainerPortByName(metricsContainer, vcapi.VarnishMetricsPortName)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(varnishMetricsExporterPort.ContainerPort).To(Equal(int32(vcapi.VarnishPrometheusExporterPort)))

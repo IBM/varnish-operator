@@ -63,7 +63,7 @@ import (
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
 const (
-	testCoupledVarnishImage = "us.icr.io/icm-varnish/varnish:test"
+	testCoupledVarnishImage = "ibmcom/varnish:test"
 )
 
 var cfg *rest.Config                              //config for the rest client

@@ -27,8 +27,8 @@ The main packages for both components can be found in the `cmd/` folder.
 
 ### Developing the operator
 ```bash
-$ git clone git@github.ibm.com:TheWeatherCompany/icm-varnish-k8s-operator.git
-$ cd icm-varnish-k8s-operator
+$ git clone https://github.com/ibm/varnish-operator.git
+$ cd varnish-operator
 $ go mod download
 ```
 
@@ -63,10 +63,10 @@ After that you're ready to run the operator:
 $ make run
 make run                                                                                                              
 <path>/<to>/<controller-gen>/controller-gen object:headerFile=./hack/boilerplate.go.txt paths="./..."
-cd <path>/<to>/<repo>/icm-varnish-k8s-operator/ && go generate ./pkg/... ./cmd/...
-cd <path>/<to>/<repo>/icm-varnish-k8s-operator/ && goimports -w ./pkg ./cmd
-cd <path>/<to>/<repo>/icm-varnish-k8s-operator/ && go vet ./pkg/... ./cmd/...
-NAMESPACE="default" LOGLEVEL=debug LOGFORMAT=console CONTAINER_IMAGE=us.icr.io/icm-varnish/varnish:0.20.0-dev LEADERELECTION_ENABLED=false WEBHOOKS_ENABLED=false go run <path>/<to>/<repo>/icm-varnish-k8s-operator/cmd/manager/main.go...
+cd <path>/<to>/<repo>/varnish-operator/ && go generate ./pkg/... ./cmd/...
+cd <path>/<to>/<repo>/varnish-operator/ && goimports -w ./pkg ./cmd
+cd <path>/<to>/<repo>/varnish-operator/ && go vet ./pkg/... ./cmd/...
+NAMESPACE="default" LOGLEVEL=debug LOGFORMAT=console CONTAINER_IMAGE=ibmcom/varnish:0.20.0-dev LEADERELECTION_ENABLED=false WEBHOOKS_ENABLED=false go run <path>/<to>/<repo>/varnish-operator/cmd/manager/main.go...
 ```
 
 By default the operator will work in the `default` namespace. You can override that behaviour by setting the `NAMESPACE` env var:
@@ -94,8 +94,6 @@ make manifests #make sure your helm charts are in sync with current CRD and RBAC
 helm install --name varnish-operator --namespace varnish-operator-system --set container.image=<image-name> ./varnish-operator
 ``` 
 
-If your docker image is located in a private container registry, you'll need to [create an image pull secret](https://pages.github.ibm.com/TheWeatherCompany/icm-docs/managed-kubernetes/container-registry.html#creating-an-image-pull-secret) and reference it by adding `--set container.imagePullSecret=<image-pull-secret>` to the `helm install` command.
-
 Check the operator pod logs to make sure all works as expected:
 
 ```bash
@@ -120,7 +118,7 @@ docker push <image-name>
 Then, in your `VarnishCluster`, specify your image:
 
 ```yaml
-apiVersion: icm.ibm.com/v1alpha1
+apiVersion: ibm.com/v1alpha1
 kind: VarnishCluster
 ...
 spec:
@@ -133,7 +131,7 @@ spec:
 
 The StatefulSet will reload the pods with new image. If you're reusing the same image name, make sure `spec.statefulSet.container.imagePullPolicy` is set to `Always` and reload the pods manually by deleting them or recreating the `VarnishCluster`. 
 
-For images uploaded to a private registry, [create an image pull secret](https://pages.github.ibm.com/TheWeatherCompany/icm-docs/managed-kubernetes/container-registry.html#creating-an-image-pull-secret) and set the name of it in the `spec.varnish.imagePullSecret` field.
+For images uploaded to a private registry, [create an image pull secret](https://pages.github.com/IBM/varnish-operator/managed-kubernetes/container-registry.html#creating-an-image-pull-secret) and set the name of it in the `spec.varnish.imagePullSecret` field.
 
 To change varnishd - varnish daemon or varnish metrics exporter containers refer to appropriate Docker files configurations. Update `VarnishCluster` and specify your images same way as it is described for varnish controller above.
 

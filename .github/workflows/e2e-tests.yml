@@ -4,7 +4,7 @@ on: pull_request
 
 jobs:
 
-  kube-1.18:
+  kube1_18:
     name: End to end tests
     runs-on: ubuntu-latest
     steps:

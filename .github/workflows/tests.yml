@@ -4,7 +4,7 @@ on: push
 
 jobs:
   lint:
-    name: Tests
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - name: Check out code into the Go module directory

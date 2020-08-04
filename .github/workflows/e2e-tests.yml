@@ -46,7 +46,7 @@ jobs:
           cluster_name: e2e-tests
           node_image: v1.17.5
       - name: create namespace
-          run: kubectl create namespace varnish-operator
+        run: kubectl create namespace varnish-operator
       - name: build images
         run: |
           docker build -f Dockerfile -t ibmcom/varnish-operator:local .

@@ -39,3 +39,27 @@ jobs:
         run: helm install varnish-operator --namespace=varnish-operator varnish-operator --wait --set container.imagePullSecret=docker-reg-secret --set container.imagePullPolicy=Never --set container.image=ibmcom/varnish-operator:local
       - name: run tests
         run: go test ./tests
+
+      - name: Create k8s Kind Cluster 1.17.5
+        uses: helm/kind-action@v1.0.0-rc.1
+        with:
+          cluster_name: e2e-tests
+          node_image: v1.17.5
+      - name: create namespace
+          run: kubectl create namespace varnish-operator
+      - name: build images
+        run: |
+          docker build -f Dockerfile -t ibmcom/varnish-operator:local .
+          docker build -f Dockerfile.varnishd -t ibmcom/varnish:local .
+          docker build -f Dockerfile.controller -t ibmcom/varnish-controller:local .
+          docker build -f Dockerfile.exporter -t ibmcom/varnish-metrics-exporter:local .
+      - name: load images
+        run: |
+          kind load --name e2e-tests docker-image ibmcom/varnish-operator:local
+          kind load --name e2e-tests docker-image ibmcom/varnish:local
+          kind load --name e2e-tests docker-image ibmcom/varnish-controller:local
+          kind load --name e2e-tests docker-image ibmcom/varnish-metrics-exporter:local
+      - name: install operator
+        run: helm install varnish-operator --namespace=varnish-operator varnish-operator --wait --set container.imagePullSecret=docker-reg-secret --set container.imagePullPolicy=Never --set container.image=ibmcom/varnish-operator:local
+      - name: run tests
+        run: go test ./tests

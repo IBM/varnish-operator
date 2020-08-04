@@ -38,8 +38,8 @@ jobs:
           git config --global user.email ""
           git config --global user.name "Github Actions CI"
           ./bin/helm init --client-only
-          mkdir -p helm-releases
           ./bin/helm package varnish-operator --app-version ${GITHUB_REF##*/} --version ${GITHUB_REF##*/} --destination helm-releases
           helm repo index helm-releases --url https://ibm.github.io/varnish-operator/master/helm-releases
+          git add helm-releases/*
           git commit -a -m "Release ${GITHUB_REF##*/}"
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:master

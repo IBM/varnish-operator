@@ -1,25 +1,8 @@
-name: Containers
+name: Build containers
 
-on:
-  release:
-    types:
-      - created
+on: pull_request
 
 jobs:
-#  operator:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Check out code
-#        uses: actions/checkout@v2
-#      - uses: docker/build-push-action@v1
-#        with:
-#          username: test
-#          password: test
-#          repository: ibmcom/varnish-operator
-#          always_pull: false
-#          tag_with_ref: "refs/tags/{git-tag}"
-#          dockerfile: "{path}/Dockerfile"
-#          push: false
   operator:
     runs-on: ubuntu-latest
     steps:
@@ -27,7 +10,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Build image
         run: |
-          docker build -t ibmcom/varnish-operator:${GITHUB_REF##*/} -f Dockerfile .
+          docker build -f Dockerfile .
   varnishd:
     runs-on: ubuntu-latest
     steps:
@@ -35,7 +18,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Build image
         run: |
-          docker build -t ibmcom/varnish-operator-varnish:${GITHUB_REF##*/} -f Dockerfile.varnishd .
+          docker build -f Dockerfile.varnishd .
   varnish-controller:
     runs-on: ubuntu-latest
     steps:
@@ -43,7 +26,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Build image
         run: |
-          docker build -t ibmcom/varnish-controller:${GITHUB_REF##*/} -f Dockerfile.controller .
+          docker build -f Dockerfile.controller .
   varnish-metrics-exporter:
     runs-on: ubuntu-latest
     steps:
@@ -51,4 +34,4 @@ jobs:
         uses: actions/checkout@v2
       - name: Build image
         run: |
-          docker build -t ibmcom/varnish-operator-varnish:${GITHUB_REF##*/} -f Dockerfile.varnishd .
+          docker build -f Dockerfile.exporter .

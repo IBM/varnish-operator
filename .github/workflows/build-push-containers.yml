@@ -1,6 +1,9 @@
-name: Build Containers
+name: Build & Push Containers
 
-on: pull_request
+on:
+  release:
+    types:
+      - created
 
 jobs:
   operator:

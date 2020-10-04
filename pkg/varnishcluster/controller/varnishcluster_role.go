@@ -32,7 +32,7 @@ func (r *ReconcileVarnishCluster) reconcileRole(ctx context.Context, instance *v
 				Verbs:     []string{"list", "watch"},
 			},
 			{
-				APIGroups: []string{"ibm.com"},
+				APIGroups: []string{"caching.ibm.com"},
 				Resources: []string{"varnishclusters"},
 				Verbs:     []string{"list", "watch"},
 			},

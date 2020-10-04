@@ -9,12 +9,12 @@ webhooks:
       service:
         name: varnish-operator-service
         namespace: {{ .Release.Namespace }}
-        path: /mutate-ibm-com-v1alpha1-varnishcluster
+        path: /mutate-caching-ibm-com-v1alpha1-varnishcluster
     failurePolicy: Fail
     name: mvarnishcluster.kb.io
     rules:
     - apiGroups:
-      - ibm.com
+      - caching.ibm.com
       apiVersions:
       - v1alpha1
       operations:

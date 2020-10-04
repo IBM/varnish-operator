@@ -74,7 +74,7 @@ var _ = Describe("statefulset", func() {
 			Expect(sts.OwnerReferences[0].UID).To(Equal(newVC.UID))
 			Expect(sts.OwnerReferences[0].Controller).To(Equal(proto.Bool(true)))
 			Expect(sts.OwnerReferences[0].Kind).To(Equal("VarnishCluster"))
-			Expect(sts.OwnerReferences[0].APIVersion).To(Equal("ibm.com/v1alpha1"))
+			Expect(sts.OwnerReferences[0].APIVersion).To(Equal("caching.ibm.com/v1alpha1"))
 			Expect(sts.OwnerReferences[0].Name).To(Equal(newVC.Name))
 			Expect(sts.OwnerReferences[0].BlockOwnerDeletion).To(Equal(proto.Bool(true)))
 
@@ -124,7 +124,7 @@ var _ = Describe("statefulset", func() {
 			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "POD_NAME", ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{APIVersion: "v1", FieldPath: "metadata.name"}}}))
 			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "VARNISH_CLUSTER_NAME", Value: vcName}))
 			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "VARNISH_CLUSTER_UID", Value: string(newVC.UID)}))
-			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "VARNISH_CLUSTER_GROUP", Value: "ibm.com"}))
+			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "VARNISH_CLUSTER_GROUP", Value: "caching.ibm.com"}))
 			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "VARNISH_CLUSTER_VERSION", Value: "v1alpha1"}))
 			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "VARNISH_CLUSTER_KIND", Value: "VarnishCluster"}))
 			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "LOG_FORMAT", Value: "json"}))

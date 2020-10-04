@@ -81,7 +81,7 @@ var _ = Describe("grafana dashboard", func() {
 			By("Owner reference should be set if the dashboard installed in the same namespace as VarnishCluster")
 			ownerReference := []metav1.OwnerReference{
 				{
-					APIVersion:         "ibm.com/v1alpha1",
+					APIVersion:         "caching.ibm.com/v1alpha1",
 					Kind:               "VarnishCluster",
 					Name:               newVC.Name,
 					UID:                newVC.UID,

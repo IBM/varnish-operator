@@ -168,9 +168,9 @@ func NewVarnishReconciler(mgr manager.Manager, cfg *config.Config, logr *logger.
 // Reconcile reads that state of the cluster for a VarnishCluster object and makes changes based on the state read
 // and what is in the VarnishCluster.Spec
 // Automatically generate RBAC rules to allow the Controller to read and write StatefulSets
-// +kubebuilder:rbac:groups=ibm.com,resources=varnishclusters,verbs=list;watch;create;update;delete
-// +kubebuilder:rbac:groups=ibm.com,resources=varnishclusters/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=ibm.com,resources=varnishclusters/finalizers,verbs=get;update;patch
+// +kubebuilder:rbac:groups=caching.ibm.com,resources=varnishclusters,verbs=list;watch;create;update;delete
+// +kubebuilder:rbac:groups=caching.ibm.com,resources=varnishclusters/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=caching.ibm.com,resources=varnishclusters/finalizers,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=configmaps;secrets,verbs=get;list;watch;create;update
 // +kubebuilder:rbac:groups="",resources=services;serviceaccounts,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups="",resources=endpoints,verbs=list;watch
@@ -231,7 +231,7 @@ func (r *ReconcileVarnishCluster) reconcileWithContext(ctx context.Context, requ
 	// For some reason, sometimes Kubernetes returns the object without apiVersion and kind
 	// Since the code below relies on that values we set them manually if they are empty
 	if instance.APIVersion == "" {
-		instance.APIVersion = "ibm.com/v1alpha1"
+		instance.APIVersion = "caching.ibm.com/v1alpha1"
 	}
 	if instance.Kind == "" {
 		instance.Kind = "VarnishCluster"

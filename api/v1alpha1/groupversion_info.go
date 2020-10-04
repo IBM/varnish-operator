@@ -6,7 +6,7 @@
 // +k8s:conversion-gen=github.com/ibm/varnish-operator/api/v1alpha1
 // +k8s:defaulter-gen=TypeMeta
 // +kubebuilder:object:generate=true
-// +groupName=ibm.com
+// +groupName=caching.ibm.com
 package v1alpha1
 
 import (
@@ -17,7 +17,7 @@ import (
 
 var (
 	// SchemeGroupVersion is group version used to register these objects
-	SchemeGroupVersion = schema.GroupVersion{Group: "ibm.com", Version: "v1alpha1"}
+	SchemeGroupVersion = schema.GroupVersion{Group: "caching.ibm.com", Version: "v1alpha1"}
 
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
 	SchemeBuilder = &scheme.Builder{GroupVersion: SchemeGroupVersion}

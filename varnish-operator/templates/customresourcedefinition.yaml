@@ -4,9 +4,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.2.8
   creationTimestamp: null
-  name: varnishclusters.ibm.com
+  name: varnishclusters.caching.ibm.com
 spec:
-  group: ibm.com
+  group: caching.ibm.com
   names:
     kind: VarnishCluster
     listKind: VarnishClusterList

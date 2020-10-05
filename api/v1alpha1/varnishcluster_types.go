@@ -128,6 +128,7 @@ type VarnishClusterVarnish struct {
 	Controller      *VarnishClusterVarnishController      `json:"controller,omitempty"`
 	MetricsExporter *VarnishClusterVarnishMetricsExporter `json:"metricsExporter,omitempty"`
 	Secret          *VarnishClusterVarnishSecret          `json:"admAuth,omitempty"`
+	EnvFrom         []v1.EnvFromSource                    `json:"envFrom,omitempty"`
 }
 
 type VarnishClusterVarnishController struct {

@@ -23,6 +23,14 @@
 | `varnish.admAuth                                 ` | An object that defines custom [kubernetes secret](https://kubernetes.io/docs/concepts/configuration/secret/) to keep a Varnish authentication data to secure communication for `varnishadm` utility. Cluster creates its own if omitted. | `optional`  |
 | `varnish.admAuth.secretName                      ` | The name of kubernetes secret which keeps auth data for `varnishadm`.                                                                                                                           | `required`  |
 | `varnish.admAuth.key                             ` | The key from kubernetes secret which to use to collect data credentials for `varnishadm`. If the key is omitted, the cluster will use "secret" as the key. If the value associated to the key is empty, the cluster will generate a secret. | `optional`  |
+| `varnish.envFrom                                 ` | Injects an env var into the Varnish container from a ConfigMap or Secret. Useful if a value needs to be passed (securely in case of Secret) to the VCL files. So it can be read using [std.getenv()](https://varnish-cache.org/docs/trunk/reference/vmod_std.html#string-getenv-string-name).                                   | `optional`  |
+| `varnish.envFrom.configMapRef                    ` | The ConfigMap to select from                                   | `optional`  |
+| `varnish.envFrom.configMapRef.name               ` | Name of the ConfigMap | `optional`  |
+| `varnish.envFrom.configMapRef.optional           ` | Specify whether the ConfigMap must be defined | `optional`  |
+| `varnish.envFrom.prefix                          ` | An optional identifier to prepend to each key. Must be a C_IDENTIFIER | `optional`  |
+| `varnish.envFrom.secretRef                       ` | The Secret to select from | `optional`  |
+| `varnish.envFrom.secretRef.name                  ` | Name of the Secret | `optional`  |
+| `varnish.envFrom.secretRef.optional              ` | Specify whether the Secret must be defined | `optional`  |
 | `updateStrategy                                  ` | Allows to control the way Varnish pods will be [updated](https://kubernetes.io/docs/tutorials/stateful-application/basic-stateful-set/#updating-statefulsets).                                  | `optional`  |
 | `updateStrategy.type                             ` | Defines the type of the update strategy. Default: `OnDelete`                                                                                                                                    | `optional`  |
 | `updateStrategy.rollingUpdate                    ` | Used to communicate parameters when type is `RollingUpdate`                                                                                                                                     | `optional`  |

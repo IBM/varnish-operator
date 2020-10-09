@@ -149,6 +149,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 							TerminationMessagePath:   "/dev/termination-log",
 							TerminationMessagePolicy: v1.TerminationMessageReadFile,
 							ImagePullPolicy:          instance.Spec.Varnish.ImagePullPolicy,
+							EnvFrom:                  instance.Spec.Varnish.EnvFrom,
 						},
 						//Varnish metrics
 						{

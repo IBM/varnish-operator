@@ -9,6 +9,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /go/src/github.com/ibm/varnish-operator
 
+ENV GOPROXY=https://proxy.golang.org
+
 COPY go.mod go.sum ./
 RUN go mod download
 

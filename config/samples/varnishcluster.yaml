@@ -57,6 +57,10 @@ spec:
   #  #  requests:
   #  #    cpu: 1
   #  #    memory: 2040Mi
+    # use to inject additional parameters into your Varnish container
+    #envFrom:
+    #  secretRef:
+    #    name: vcl-secrets
 
   vcl:
     # the name given to the configMap that contains the contents of the vcl.

@@ -123,7 +123,6 @@ type VarnishClusterVarnish struct {
 	// +kubebuilder:validation:Enum=Always;Never;IfNotPresent
 	ImagePullPolicy v1.PullPolicy                         `json:"imagePullPolicy,omitempty"`
 	Resources       *v1.ResourceRequirements              `json:"resources,omitempty"`
-	ImagePullSecret *string                               `json:"imagePullSecret,omitempty"`
 	Args            []string                              `json:"args,omitempty"`
 	Controller      *VarnishClusterVarnishController      `json:"controller,omitempty"`
 	MetricsExporter *VarnishClusterVarnishMetricsExporter `json:"metricsExporter,omitempty"`

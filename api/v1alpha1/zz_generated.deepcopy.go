@@ -432,11 +432,6 @@ func (in *VarnishClusterVarnish) DeepCopyInto(out *VarnishClusterVarnish) {
 		*out = new(v1.ResourceRequirements)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.ImagePullSecret != nil {
-		in, out := &in.ImagePullSecret, &out.ImagePullSecret
-		*out = new(string)
-		**out = **in
-	}
 	if in.Args != nil {
 		in, out := &in.Args, &out.Args
 		*out = make([]string, len(*in))

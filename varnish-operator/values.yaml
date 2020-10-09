@@ -3,9 +3,6 @@ replicas: 1
 container:
   # path to image + tag
   image: ibmcom/varnish-operator:0.24.1
-  # Image pull secret used to pull the operator image
-
-  # imagePullSecret: docker-reg-secret
   # imagePullPolicy for Varnish Operator image
   imagePullPolicy: Always
   # restart policy for Varnish Operator containers

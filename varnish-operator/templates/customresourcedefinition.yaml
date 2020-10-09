@@ -990,8 +990,6 @@ spec:
                     - Never
                     - IfNotPresent
                     type: string
-                  imagePullSecret:
-                    type: string
                   metricsExporter:
                     properties:
                       image:

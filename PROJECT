@@ -1,7 +1,7 @@
 version: "2"
 domain: ibm.com
-repo: icm-varnish-operator
+repo: github.com/ibm/varnish-operator
 resources:
-- group:
+- group: caching
   version: v1alpha1
   kind: VarnishCluster

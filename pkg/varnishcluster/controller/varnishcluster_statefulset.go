@@ -36,11 +36,6 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 	varnishSecretName, varnishSecretKeyName := namesForInstanceSecret(instance)
 	varnishdArgs := getSanitizedVarnishArgs(&instance.Spec)
 
-	var imagePullSecrets []v1.LocalObjectReference
-	if instance.Spec.Varnish.ImagePullSecret != nil {
-		imagePullSecrets = []v1.LocalObjectReference{{Name: *instance.Spec.Varnish.ImagePullSecret}}
-	}
-
 	var updateStrategy appsv1.StatefulSetUpdateStrategy
 	switch instance.Spec.UpdateStrategy.Type {
 	case vcapi.OnDeleteVarnishClusterStrategyType,
@@ -261,7 +256,6 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 					ServiceAccountName:            names.ServiceAccount(instance.Name),
 					Affinity:                      instance.Spec.Affinity,
 					Tolerations:                   instance.Spec.Tolerations,
-					ImagePullSecrets:              imagePullSecrets,
 					RestartPolicy:                 v1.RestartPolicyAlways,
 				},
 			},

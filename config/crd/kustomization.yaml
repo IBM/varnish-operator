@@ -1,10 +1,10 @@
 resources:
-  - bases/ibm.com_varnishclusters.yaml
+  - bases/caching.ibm.com_varnishclusters.yaml
 
 patchesJson6902:
   - target:
       group: apiextensions.k8s.io
       version: v1
       kind: CustomResourceDefinition
-      name: varnishclusters.ibm.com
+      name: varnishclusters.caching.ibm.com
     path: patches/crd_patch.yaml

@@ -1,4 +1,4 @@
-apiVersion: ibm.com/v1alpha1
+apiVersion: caching.ibm.com/v1alpha1
 kind: VarnishCluster
 metadata:
   labels:

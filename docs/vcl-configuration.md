@@ -210,6 +210,44 @@ Command failed with error code 106
 
 As the logs indicate, the issue here is the invalid VCL syntax.
 
+### Passing additional information into VCL
+
+The `VarnishCluster` spec has a field `.spec.varnish.envFrom` that allows injecting custom values into env vars. After defining, in VCL files you can read them using [std.getenv()](https://varnish-cache.org/docs/5.1/reference/vmod_std.generated.html#func-getenv) function. Bot Secrets and ConfigMaps can be used to do it.
+
+Example of injecting values from a Secret:
+
+1. Create a secret: `kubectl create secret generic vcl-secrets --from-literal=secret-cookie=secret-cookie-value ` 
+
+2. Use it by specifying it in the `VarnishCluster` spec
+
+```yaml
+apiVersion: icm.ibm.com/v1alpha1
+kind: VarnishCluster
+metadata:
+  name: example
+spec:
+  varnish:
+    envFrom:
+    - secretRef:
+        name: vcl-secrets
+```
+
+3. Read the injected env var in you VCL code
+
+```c
+   ...
+    sub vcl_recv {
+      // validate cookie
+      if (!req.http.Cookie ~ std.getenv("secret-cookie")) {
+          return (synth(401));
+      }
+   ... 
+```
+
+That way, your secret value can be stored a separately from VCL and used securely.
+
+Note that since those values passed using env vars, if a value changes, a reload of a pod needed to pass the new value to Varnish. Which means cache loss.
+
 ### Advanced VCL with Varnish sharding
 
 Starting from Varnish 5.0 directors VMOD were extended by adding new director - shard director. It's basically a better hash director. The shard director selects backends by a key, which can be provided directly or derived from strings. For the same key, the shard director will always return the same backend, unless the backend configuration or health state changes. For differing keys, the shard director will likely choose different backends. In the default configuration, unhealthy backends are not selected.

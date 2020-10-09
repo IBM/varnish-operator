@@ -6,7 +6,7 @@ package v1alpha1
 
 import (
 	appsv1 "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
+	"k8s.io/api/core/v1"
 	"k8s.io/api/policy/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -432,11 +432,6 @@ func (in *VarnishClusterVarnish) DeepCopyInto(out *VarnishClusterVarnish) {
 		*out = new(v1.ResourceRequirements)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.ImagePullSecret != nil {
-		in, out := &in.ImagePullSecret, &out.ImagePullSecret
-		*out = new(string)
-		**out = **in
-	}
 	if in.Args != nil {
 		in, out := &in.Args, &out.Args
 		*out = make([]string, len(*in))
@@ -456,6 +451,13 @@ func (in *VarnishClusterVarnish) DeepCopyInto(out *VarnishClusterVarnish) {
 		in, out := &in.Secret, &out.Secret
 		*out = new(VarnishClusterVarnishSecret)
 		(*in).DeepCopyInto(*out)
+	}
+	if in.EnvFrom != nil {
+		in, out := &in.EnvFrom, &out.EnvFrom
+		*out = make([]v1.EnvFromSource, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
 	}
 }
 

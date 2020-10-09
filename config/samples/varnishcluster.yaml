@@ -1,8 +1,7 @@
-apiVersion: ibm.com/v1alpha1
+apiVersion: caching.ibm.com/v1alpha1
 kind: VarnishCluster
 metadata:
   name: varnishcluster-sample
-  namespace: varnish-ns
 spec:
   # The number of varnish instances to run. Default: 1
   replicas: 1
@@ -12,8 +11,6 @@ spec:
   varnish:
     # path to image + tag
     image: ibmcom/varnish:0.25.11
-    imagePullSecret: docker-reg-secret
-    # imagePullPolicy controls how the varnish image will be pulled for new containers
     imagePullPolicy: Always
     # restart policy used for Varnish containers
     restartPolicy: Always

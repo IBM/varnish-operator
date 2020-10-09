@@ -6,9 +6,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.2.8
   creationTimestamp: null
-  name: varnishclusters.ibm.com
+  name: varnishclusters.caching.ibm.com
 spec:
-  group: ibm.com
+  group: caching.ibm.com
   names:
     kind: VarnishCluster
     listKind: VarnishClusterList
@@ -945,6 +945,39 @@ spec:
                             type: object
                         type: object
                     type: object
+                  envFrom:
+                    items:
+                      description: EnvFromSource represents the source of a set of
+                        ConfigMaps
+                      properties:
+                        configMapRef:
+                          description: The ConfigMap to select from
+                          properties:
+                            name:
+                              description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                TODO: Add other useful fields. apiVersion, kind, uid?'
+                              type: string
+                            optional:
+                              description: Specify whether the ConfigMap must be defined
+                              type: boolean
+                          type: object
+                        prefix:
+                          description: An optional identifier to prepend to each key
+                            in the ConfigMap. Must be a C_IDENTIFIER.
+                          type: string
+                        secretRef:
+                          description: The Secret to select from
+                          properties:
+                            name:
+                              description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                TODO: Add other useful fields. apiVersion, kind, uid?'
+                              type: string
+                            optional:
+                              description: Specify whether the Secret must be defined
+                              type: boolean
+                          type: object
+                      type: object
+                    type: array
                   image:
                     type: string
                   imagePullPolicy:
@@ -954,8 +987,6 @@ spec:
                     - Always
                     - Never
                     - IfNotPresent
-                    type: string
-                  imagePullSecret:
                     type: string
                   metricsExporter:
                     properties:

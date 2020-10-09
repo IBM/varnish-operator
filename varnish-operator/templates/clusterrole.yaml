@@ -69,7 +69,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - ibm.com
+  - caching.ibm.com
   resources:
   - varnishclusters
   verbs:
@@ -79,7 +79,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - ibm.com
+  - caching.ibm.com
   resources:
   - varnishclusters/finalizers
   verbs:
@@ -87,7 +87,7 @@ rules:
   - patch
   - update
 - apiGroups:
-  - ibm.com
+  - caching.ibm.com
   resources:
   - varnishclusters/status
   verbs:

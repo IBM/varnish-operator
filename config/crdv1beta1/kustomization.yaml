@@ -1,5 +1,0 @@
-resources:
-  - bases/ibm.com_varnishclusters.yaml
-
-patchesStrategicMerge:
-  - patches/crd_patch.yaml

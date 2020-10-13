@@ -27,7 +27,7 @@ jobs:
         with:
           tags: ibmcom/varnish-operator:${{ steps.get_version.outputs.VERSION }}
           file: ./Dockerfile
-          push: github.event_name == 'release' && github.event.action == 'created' #push only on release
+          push: ${{ github.event_name == 'release' && github.event.action == 'created' }} #push only on release
   varnishd:
     runs-on: ubuntu-latest
     steps:
@@ -46,7 +46,7 @@ jobs:
         with:
           tags: ibmcom/varnish:${{ steps.get_version.outputs.VERSION }}
           file: ./Dockerfile.varnishd
-          push: github.event_name == 'release' && github.event.action == 'created'
+          push: ${{ github.event_name == 'release' && github.event.action == 'created' }}
   varnish-controller:
     runs-on: ubuntu-latest
     steps:
@@ -65,7 +65,7 @@ jobs:
         with:
           tags: ibmcom/varnish-controller:${{ steps.get_version.outputs.VERSION }}
           file: ./Dockerfile.controller
-          push: github.event_name == 'release' && github.event.action == 'created'
+          push: ${{ github.event_name == 'release' && github.event.action == 'created' }}
   varnish-metrics-exporter:
     runs-on: ubuntu-latest
     steps:
@@ -84,4 +84,4 @@ jobs:
         with:
           tags: ibmcom/varnish-metrics-exporter:${{ steps.get_version.outputs.VERSION }}
           file: ./Dockerfile.exporter
-          push: github.event_name == 'release' && github.event.action == 'created'
+          push: ${{ github.event_name == 'release' && github.event.action == 'created' }}

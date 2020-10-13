@@ -42,4 +42,4 @@ jobs:
           helm repo index helm-releases --url https://ibm.github.io/varnish-operator/master/helm-releases
           git add helm-releases/*
           git commit -a -m "Release ${GITHUB_REF##*/}"
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:head
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:main

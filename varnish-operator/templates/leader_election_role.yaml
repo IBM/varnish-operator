@@ -1,9 +1,9 @@
-# permissions to do leader election.
 {{ if gt .Values.replicas 1.0 }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: varnish-operator-leader-election-role
+  namespace: {{ .Release.Namespace }}
 rules:
 - apiGroups:
   - ""

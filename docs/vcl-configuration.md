@@ -144,7 +144,7 @@ data:
 After setting the annotation, that version can be seen at `.status.vcl.version`. This field is optional and will only appear if the annotation is set.
 
 ```yaml
-apiVersion: icm.ibm.com/v1alpha1
+apiVersion: caching.ibm.com/v1alpha1
 kind: VarnishCluster
 metadata:
     ...
@@ -160,7 +160,7 @@ After the VCL in the ConfigMap has been changed, the associated status fields wi
 For better observability about currently running VCL versions, see `.status.vcl.availability`, which indicates how many pods have the latest version and how many of them are outdated. 
 
 ```yaml
-apiVersion: icm.ibm.com/v1alpha1
+apiVersion: caching.ibm.com/v1alpha1
 kind: VarnishCluster
 metadata:
     ...
@@ -216,12 +216,12 @@ The `VarnishCluster` spec has a field `.spec.varnish.envFrom` that allows inject
 
 Example of injecting values from a Secret:
 
-1. Create a secret: `kubectl create secret generic vcl-secrets --from-literal=secret-cookie=secret-cookie-value ` 
+1. Create a secret: `kubectl create secret generic vcl-secrets --from-literal=secret-cookie=secret-cookie-value` 
 
 2. Use it by specifying it in the `VarnishCluster` spec
 
 ```yaml
-apiVersion: icm.ibm.com/v1alpha1
+apiVersion: caching.ibm.com/v1alpha1
 kind: VarnishCluster
 metadata:
   name: example

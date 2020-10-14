@@ -32,8 +32,6 @@ spec:
     configMapName: vcl-files
     entrypointFileName: entrypoint.vcl
   replicas: 3
-  varnish:
-    imagePullSecret: docker-reg-secret
   backend:  
     selector:
       app: nginx

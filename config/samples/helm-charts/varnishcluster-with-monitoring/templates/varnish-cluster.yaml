@@ -9,8 +9,6 @@ spec:
   vcl:
     configMapName: {{ .Release.Name }}-vcl-files
     entrypointFileName: entrypoint.vcl
-  varnish:
-    imagePullSecret: {{ .Values.varnish.imagePullSecret }}
   backend:
     selector:
       {{ toYaml .Values.varnish.backendsSelector | nindent 6 }}

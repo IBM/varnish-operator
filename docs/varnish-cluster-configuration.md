@@ -62,4 +62,4 @@
 | `logLevel                                        ` | The minimum enabled logging level. Allowed values: `debug`, `info`, `warn`, `error`, `dpanic`, `panic`, `fatal`. Default: `info`                                                                | `optional`  |
 | `logFormat                                       ` | Format of the logs. Can be `json` and `console`. Default: `json`                                                                                                                                | `optional`  |
 
-You can also find an example of `VarnishCluster` with detailed comments [here](https://github.ibm.com/TheWeatherCompany/icm-varnish-k8s-operator/blob/master/config/samples/icm_v1alpha1_varnishcluster.yaml). 
+You can also find an example of `VarnishCluster` with detailed comments [here](https://github.com/IBM/varnish-operator/blob/master/config/samples/varnishcluster.yaml). 

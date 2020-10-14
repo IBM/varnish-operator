@@ -13,13 +13,13 @@ The example is not a complete solution and does not include PV/PVC creation, sec
 
 ## Installation
 
-[Install the operator](https://pages.github.ibm.com/TheWeatherCompany/icm-varnish-k8s-operator/installation.html) if you haven't yet.
+[Install the operator](https://ibm.github.io/varnish-operator/installation.html) if you haven't yet.
 
 Clone the repo and install the chart using the local path to the chart:
 
 ```bash
-$ git clone git@github.ibm.com:TheWeatherCompany/icm-varnish-k8s-operator.git
-$ cd icm-varnish-k8s-operator
+$ git clone https://github.com/IBM/varnish-operator.git
+$ cd varnish-operator
 $ helm install --name varnish-operator-monitoring config/samples/helm-charts/varnish-operator-monitoring
 ```
 

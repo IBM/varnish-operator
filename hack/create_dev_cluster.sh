@@ -46,4 +46,4 @@ kind load --name $cluster_name docker-image ibmcom/varnish:local
 kind load --name $cluster_name docker-image ibmcom/varnish-controller:local
 kind load --name $cluster_name docker-image ibmcom/varnish-metrics-exporter:local
 
-helm install --name=varnish-operator --namespace=$varnish_namespace varnish-operator --wait --set container.imagePullSecret=docker-reg-secret --set container.imagePullPolicy=Never --set container.image=ibmcom/varnish-operator:local
+helm install --name=varnish-operator --namespace=$varnish_namespace varnish-operator --wait --set container.imagePullPolicy=Never --set container.image=ibmcom/varnish-operator:local

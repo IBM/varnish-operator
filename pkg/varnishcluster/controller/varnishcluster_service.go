@@ -142,7 +142,6 @@ func (r *ReconcileVarnishCluster) reconcileServiceGeneric(ctx context.Context, i
 		desired.Spec.ClusterIP = found.Spec.ClusterIP
 
 		// use nodePort from the spec or the one allocated by Kubernetes
-		// https://github.ibm.com/TheWeatherCompany/icm-varnish-k8s-operator/issues/129
 		if desired.Spec.Type == v1.ServiceTypeLoadBalancer || desired.Spec.Type == v1.ServiceTypeNodePort {
 			inheritNodePorts(desired.Spec.Ports, found.Spec.Ports)
 		}

@@ -157,12 +157,12 @@ References:
     
 5. Apply your configuration.
 
-    This step assumes you have varnish operator [installed](#installation) and the namespace has the necessary secret [installed](#configuring-access).
+    This step assumes you have varnish operator [installed](#installation).
     
     Complete VarnishCluster configuration example:
     
     ```yaml
-    apiVersion: icm.ibm.com/v1alpha1
+    apiVersion: caching.ibm.com/v1alpha1
     kind: VarnishCluster
     metadata:
       labels:
@@ -182,7 +182,6 @@ References:
             requests:
               cpu: 100m
               memory: 256Mi
-          imagePullSecret: docker-reg-secret
         affinity:
           podAntiAffinity:
             requiredDuringSchedulingIgnoredDuringExecution:
@@ -219,7 +218,7 @@ References:
     Apply your configuration:
     ```bash
     $ kubectl apply -f varnish-in-worker-pool.yaml
-    varnishcluster.icm.ibm.com/varnish-in-worker-pool created
+    varnishcluster.caching.ibm.com/varnish-in-worker-pool created
     ```
     Here the operator will create all pods with specified configuration
 6. See your pods being scheduled strictly on your worker pool and spread across different nodes.

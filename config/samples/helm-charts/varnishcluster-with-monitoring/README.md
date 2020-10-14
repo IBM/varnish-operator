@@ -2,7 +2,7 @@
 
 This chart's purpose is to show an example of how a `VarnishCluster` can be packaged into a Helm chart with the monitoring stack included. Feel free to copy the chart and modify it to your needs.
 
-The monitoring stack is built using [Prometheus operator](https://github.com/helm/charts/tree/master/stable/prometheus-operator) and assumes it is installed already in the cluster. The Varnish operator should [be installed](https://pages.github.ibm.com/TheWeatherCompany/icm-varnish-k8s-operator/installation.html) as well.
+The monitoring stack is built using [Prometheus operator](https://github.com/helm/charts/tree/master/stable/prometheus-operator) and assumes it is installed already in the cluster. The Varnish operator should [be installed](https://ibm.github.io/varnish-operator/installation.html) as well.
 
 The chart does the following:
 
@@ -20,14 +20,12 @@ You will need a backend to actually test if Varnish is working correctly. Use yo
 $ kubectl create deployment nginx --image nginx
 ``` 
 
-Make sure you have the [imagePullSecret created](https://pages.github.ibm.com/TheWeatherCompany/icm-docs/managed-kubernetes/container-registry.html#pulling-an-image-in-kubernetes) to be able to pull Varnish images.
-
 Clone the repo and install the chart using the local path to the chart:
 
 ```bash
-$ git clone git@github.ibm.com:TheWeatherCompany/icm-varnish-k8s-operator.git
-$ cd icm-varnish-k8s-operator
-$ helm install --name varnish-test config/samples/helm-charts/varnishcluster-with-monitoring --set varnish.imagePullSecret=docker-reg-secret --set varnish.backendsSelector.app=nginx --set varnish.backendsPort=80
+$ git clone https://github.com/IBM/varnish-operator.git
+$ cd varnish-operator
+$ helm install --name varnish-test config/samples/helm-charts/varnishcluster-with-monitoring --set varnish.backendsSelector.app=nginx --set varnish.backendsPort=80
 ```
 
 Note that we've specified the selector for our backends (`--set backendsSelector.app=nginx`) and the port they are listening on (`--set backendsPort=80`)

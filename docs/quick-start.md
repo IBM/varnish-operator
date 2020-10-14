@@ -5,44 +5,17 @@
 * Kubernetes v1.16 or newer and `kubectl` configured to communicate with your cluster
 * Helm
 
-### Configure Helm repo
-
-Helm charts [are hosted in private Artifactory](https://pages.github.ibm.com/TheWeatherCompany/icm-docs/helm/chart-repositories.html#using-artifactory-as-a-helm-chart-repository) so you need to configure repo access first.
-
-1. Get access to [Artifactory](https://na.artifactory.swg-devops.com)
-1. Generate an API Key on the Artifactory website in your profile settings (click on your email in the top right corner)
-1. Add the repo and update your local list of charts: 
-
-    ```bash
-    $ helm repo add icm https://na.artifactory.swg-devops.com/artifactory/wcp-icm-helm-virtual --username=<your-email> --password=<api-key>
-    $ helm repo update
-    ```
-    
-### Configure image pull secret
-
-Create a namespace for the operator:
+### Configure Helm repo 
 
 ```bash
-$ kubectl create ns varnish-operator
-```
-
-Images are located in a private IBM cloud registry. You need to [create an image pull secret](https://pages.github.ibm.com/TheWeatherCompany/icm-docs/managed-kubernetes/container-registry.html#pulling-an-image-in-kubernetes) in your namespace to be able to pull images in the cluster.
-
-```bash
-$ kubectl create secret docker-registry container-reg-secret \
-    --namespace varnish-operator \
-    --docker-server us.icr.io \
-    --docker-username <user-name> \
-    --docker-password=<password> \
-    --docker-email=<email>
+$ helm repo add varnish-operator https://raw.githubusercontent.com/IBM/varnish-operator/main/helm-releases
+$ helm repo update
 ```
 
 ### Install Varnish Operator
 
-Use the image pull secret created in the previous step to install your operator:
-
 ```bash
-$ helm install --name varnish-operator --namespace varnish-operator --set container.imagePullSecret=container-reg-secret icm/varnish-operator
+$ helm install --name varnish-operator --namespace varnish-operator varnish-operator/varnish-operator
 ```                                                                                                                        
 
 You should see your operator pod up and running:
@@ -61,16 +34,6 @@ varnish-operator-fd96f48f-gn6mc   1/1     Running             0          40s
     $ kubectl create ns varnish-cluster
     ```
 
-1. Create the same image pull secret there. It will be used to pull Varnish images.
-
-    ```bash
-    $ kubectl create secret docker-registry container-reg-secret \
-        --namespace varnish-cluster \
-        --docker-server us.icr.io \
-        --docker-username <user-name> \
-        --docker-password=<password> \
-        --docker-email=<email>
-    ```
 1. Create a simple backend that will be cached by Varnish:
 
     ```bash
@@ -85,7 +48,7 @@ varnish-operator-fd96f48f-gn6mc   1/1     Running             0          40s
 
     ```bash
     $ cat <<EOF | kubectl create -f -
-    apiVersion: icm.ibm.com/v1alpha1
+    apiVersion: caching.ibm.com/v1alpha1
     kind: VarnishCluster
     metadata:
       name: varnishcluster-example
@@ -95,8 +58,6 @@ varnish-operator-fd96f48f-gn6mc   1/1     Running             0          40s
         configMapName: vcl-config # name of the config map that will store your VCL files. Will be created if doesn't exist.
         entrypointFileName: entrypoint.vcl # main file used by Varnish to compile the VCL code.
       replicas: 3 # run 3 replicas of Varnish
-      varnish:
-        imagePullSecret: container-reg-secret # the image pull secret created above
       backend:
         selector:
           app: nginx-backend # labels that identify your backend pods
@@ -104,10 +65,10 @@ varnish-operator-fd96f48f-gn6mc   1/1     Running             0          40s
         port: 80 # Varnish pods will be exposed on that port
     EOF
  
-    varnishcluster.icm.ibm.com/varnishcluster-example created  
+    varnishcluster.ibm.com/varnishcluster-example created  
     ```
 
-Step 3 and 4 can be executed in any order. If the backend doesn't exist on `VarnishCluster` creation, Varnish will still work but won't cache any backends responding with 504 response code. Once the backend pods are up and running, Varnish will automatically pick up the changes, reload the VCL and start serving and caching the requests.
+Step 2 and 3 can be executed in any order. If the backend doesn't exist on `VarnishCluster` creation, Varnish will still work but won't cache any backends responding with 504 response code. Once the backend pods are up and running, Varnish will automatically pick up the changes, reload the VCL and start serving and caching the requests.
 
 ## What You Should See
 

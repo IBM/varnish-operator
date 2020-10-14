@@ -1,8 +1,5 @@
 # Varnish Operator
 
-#### Build Status
-[![Build Status](https://wcp-twc-icmkube-jenkins.swg-devops.com/job/TheWeatherCompany%20ICM/job/icm-varnish-k8s-operator/job/master/badge/icon)](https://wcp-twc-icmkube-jenkins.swg-devops.com/job/TheWeatherCompany%20ICM/job/icm-varnish-k8s-operator/job/master/)
-
 ### Project status: alpha
 The project is in development and breaking changes can be introduced.
 
@@ -12,7 +9,7 @@ Kubernetes version `>=1.16.0` is supported.
 
 Varnish version 6.1.1 is supported.
 
-Full documentation can be found [here](https://pages.github.ibm.com/TheWeatherCompany/icm-varnish-k8s-operator/)
+Full documentation can be found [here](https://ibm.github.io/varnish-operator/)
 
 ### Overview
 
@@ -33,5 +30,5 @@ The operator manages the whole lifecycle of the cluster: creating, deleting and 
 
 ### Further reading
 
-* [QuickStart](https://pages.github.ibm.com/TheWeatherCompany/icm-varnish-k8s-operator/quick-start.html)
-* [Contributing](https://pages.github.ibm.com/TheWeatherCompany/icm-varnish-k8s-operator/development.html)
+* [QuickStart](https://ibm.github.io/varnish-operator/quick-start.html)
+* [Contributing](https://ibm.github.io/varnish-operator/development.html)

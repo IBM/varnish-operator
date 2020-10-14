@@ -29,7 +29,7 @@ jobs:
           chmod +x ./bin/yq
           ./bin/yq w -i varnish-operator/Chart.yaml 'appVersion' $GITTAG
           ./bin/yq w -i varnish-operator/Chart.yaml 'version' $GITTAG
-          ./bin/yq w -i varnish-operator/values.yaml 'container.image' $(./bin/yq r config/samples/icm_v1alpha1_varnishcluster.yaml 'container.image' | sed "s/:.*/:$GITTAG/")
+          ./bin/yq w -i varnish-operator/values.yaml 'container.image' $(./bin/yq r varnish-operator/values.yaml 'container.image' | sed "s/:.*/:$GITTAG/")
           ./bin/yq w -i config/samples/varnishcluster.yaml 'spec.varnish.image' $(./bin/yq r config/samples/varnishcluster.yaml 'spec.varnish.image' | sed "s/:.*/:$GITTAG/")
           ./bin/yq w -i config/samples/varnishcluster.yaml 'spec.varnish.controller.image' $(./bin/yq r config/samples/varnishcluster.yaml 'spec.varnish.controller.image' | sed "s/:.*/:$GITTAG/")
           ./bin/yq w -i config/samples/varnishcluster.yaml 'spec.varnish.metricsExporter.image' $(./bin/yq r config/samples/varnishcluster.yaml 'spec.varnish.metricsExporter.image' | sed "s/:.*/:$GITTAG/")

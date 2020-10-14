@@ -9,16 +9,10 @@
 
 ### Configure Helm repo
 
-Helm charts [are hosted in private Artifactory](https://pages.github.ibm.com/TheWeatherCompany/icm-docs/helm/chart-repositories.html#using-artifactory-as-a-helm-chart-repository) so you need to configure repo access first.
-
-1. Get access to [Artifactory](https://na.artifactory.swg-devops.com)
-1. Generate an API Key on the Artifactory website in your profile settings (click on your email in the top right corner)
-1. Add the repo and update your local list of charts: 
-
-    ```bash
-    $ helm repo add icm https://na.artifactory.swg-devops.com/artifactory/wcp-icm-helm-virtual --username=<your-email> --password=<api-key>
-    $ helm repo update
-    ```
+```bash
+$ helm repo add varnish-operator https://raw.githubusercontent.com/IBM/varnish-operator/main/helm-releases
+$ helm repo update
+```
 
 ### Install Varnish Operator
 
@@ -28,10 +22,10 @@ Create a namespace for the operator:
 $ kubectl create ns varnish-operator
 ```
 
-Use the image pull secret created in the previous step to install the operator:
+Install the operator:
 
 ```bash
-$ helm install --name varnish-operator --namespace varnish-operator --set container.imagePullSecret=container-reg-secret icm/varnish-operator
+$ helm install --name varnish-operator --namespace varnish-operator varnish-operator/varnish-operator
 ```                                                                                                                        
 
 You should see your operator pod up and running:

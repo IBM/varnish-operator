@@ -131,8 +131,6 @@ spec:
 
 The StatefulSet will reload the pods with new image. If you're reusing the same image name, make sure `spec.statefulSet.container.imagePullPolicy` is set to `Always` and reload the pods manually by deleting them or recreating the `VarnishCluster`. 
 
-For images uploaded to a private registry, [create an image pull secret](https://pages.github.com/IBM/varnish-operator/managed-kubernetes/container-registry.html#creating-an-image-pull-secret) and set the name of it in the `spec.varnish.imagePullSecret` field.
-
 To change varnishd - varnish daemon or varnish metrics exporter containers refer to appropriate Docker files configurations. Update `VarnishCluster` and specify your images same way as it is described for varnish controller above.
 
 To build new varnishd use:
@@ -145,7 +143,7 @@ docker push <image-name>
 Then, in your `VarnishCluster`, specify your image for varnishd:
 
 ```yaml
-apiVersion: icm.ibm.com/v1alpha1
+apiVersion: caching.ibm.com/v1alpha1
 kind: VarnishCluster
 ...
 spec:
@@ -164,7 +162,7 @@ docker push <image-name>
 Then, in your `VarnishCluster`, specify your image for varnish metrics exporter:
 
 ```yaml
-apiVersion: icm.ibm.com/v1alpha1
+apiVersion: caching.ibm.com/v1alpha1
 kind: VarnishCluster
 ...
 spec:
@@ -183,7 +181,7 @@ There is `PROMETHEUS_VARNISH_EXPORTER_VERSION` docker's build argument available
 
 To run tests simply run `make test` in repo's root directory. 
 
-Tests depend on binaries provided by Kubebuilder so it has to be [installed](https://kubebuilder.io/quick-start.html#installation) first.
+Tests depend on binaries provided by Kubebuilder, so it has to be [installed](https://kubebuilder.io/quick-start.html#installation) first.
 
 ### End to End tests
 

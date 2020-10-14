@@ -9,7 +9,7 @@ As with any other Kubernetes resource, simply `kubectl apply -f <varnish-cluster
 Here's an example of a simple `VarnishCluster`:
 
 ```yaml
-apiVersion: icm.ibm.com/v1alpha1
+apiVersion: caching.ibm.com/v1alpha1
 kind: VarnishCluster
 metadata:
   labels:
@@ -19,16 +19,12 @@ spec:
   vcl:
     configMapName: vcl-config
     entrypointFileName: entrypoint.vcl
-  varnish:
-    imagePullSecret: docker-reg-secret
   backend:
     selector:
       app: nginx
   service:
     port: 8080
 ``` 
-
-Make sure you've [created the image pull secret](https://pages.github.ibm.com/TheWeatherCompany/icm-docs/managed-kubernetes/container-registry.html#pulling-an-image-in-kubernetes) required to pull images from the private container registry.
  
 Once the `VarnishCluster` is created, you should see:
 
@@ -63,7 +59,7 @@ The `varnish-component` could have the following values:
  * `role` - The role defining the namespaced permissions for a particular `VarnishCluster`
  * `rolebinding` - Binds the role to the serviceaccount used by a particular `VarnishCluster`
  * `vcl-file-configmap` - The ConfigMap that stores the VCL files
-* `secret` - The Secret to keep `varnishadm` auth credentials
+ * `secret` - The Secret to keep `varnishadm` auth credentials
  * `headless-service` - A headless service that backs the StatefulSet
  * `poddisruptionbudget` - PodDisruptionBudget configuration for a particular `VarnishCluster`
  * `serviceaccount` - A serviceaccount used by the Varnish pods

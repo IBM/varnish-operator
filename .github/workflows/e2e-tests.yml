@@ -36,7 +36,7 @@ jobs:
           kind load --name e2e-tests docker-image ibmcom/varnish-controller:local
           kind load --name e2e-tests docker-image ibmcom/varnish-metrics-exporter:local
       - name: install operator
-        run: helm install varnish-operator --namespace=varnish-operator varnish-operator --wait --set container.imagePullSecret=docker-reg-secret --set container.imagePullPolicy=Never --set container.image=ibmcom/varnish-operator:local
+        run: helm install varnish-operator --namespace=varnish-operator varnish-operator --wait --set container.imagePullPolicy=Never --set container.image=ibmcom/varnish-operator:local
       - name: run tests
         run: go test -count=1 ./tests #-count=1 is to disable tests caching.
       - name: delete cluster
@@ -55,7 +55,7 @@ jobs:
           kind load --name e2e-tests docker-image ibmcom/varnish-controller:local
           kind load --name e2e-tests docker-image ibmcom/varnish-metrics-exporter:local
       - name: install operator
-        run: helm install varnish-operator --namespace=varnish-operator varnish-operator --wait --set container.imagePullSecret=docker-reg-secret --set container.imagePullPolicy=Never --set container.image=ibmcom/varnish-operator:local
+        run: helm install varnish-operator --namespace=varnish-operator varnish-operator --wait --set container.imagePullPolicy=Never --set container.image=ibmcom/varnish-operator:local
       - name: run tests
         run: go test -count=1 ./tests
       - name: delete cluster
@@ -74,6 +74,6 @@ jobs:
           kind load --name e2e-tests docker-image ibmcom/varnish-controller:local
           kind load --name e2e-tests docker-image ibmcom/varnish-metrics-exporter:local
       - name: install operator
-        run: helm install varnish-operator --namespace=varnish-operator varnish-operator --wait --set container.imagePullSecret=docker-reg-secret --set container.imagePullPolicy=Never --set container.image=ibmcom/varnish-operator:local
+        run: helm install varnish-operator --namespace=varnish-operator varnish-operator --wait --set container.imagePullPolicy=Never --set container.image=ibmcom/varnish-operator:local
       - name: run tests
         run: go test -count=1 ./tests

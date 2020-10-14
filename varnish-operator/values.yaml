@@ -2,7 +2,7 @@
 replicas: 1
 container:
   # path to image + tag
-  image: ibmcom/varnish-operator:0.24.1
+  image: ibmcom/varnish-operator:0.26.0
   # imagePullPolicy for Varnish Operator image
   imagePullPolicy: Always
   # restart policy for Varnish Operator containers

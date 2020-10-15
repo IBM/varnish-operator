@@ -20,7 +20,7 @@ The operator works based on a CustomResourceDefinition that manages the Varnish 
 Example of a simple `VarnishCluster`:
 
 ```yaml
-apiVersion: ibm.com/v1alpha1
+apiVersion: caching.ibm.com/v1alpha1
 kind: VarnishCluster
 metadata:
   labels:

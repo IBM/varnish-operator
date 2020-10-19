@@ -118,7 +118,7 @@ docker push <image-name>
 Then, in your `VarnishCluster`, specify your image:
 
 ```yaml
-apiVersion: ibm.com/v1alpha1
+apiVersion: caching.ibm.com/v1alpha1
 kind: VarnishCluster
 ...
 spec:

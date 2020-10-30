@@ -121,6 +121,8 @@ backend nginx-backend-6f4c6cbc6c-ckqmv {
 }
 ```
 
+The `.Backends` array includes all backend nodes, no matter if the instance is ready or not. For that reason, it is strongly recommended to set [health checks](https://varnish-cache.org/docs/3.0/tutorial/advanced_backend_servers.html#health-checks) in your VCL configuration. Otherwise, Varnish could send traffic to not yet ready backends.
+
 ### Using User Defined VCL Code Versions
 
 VCL related status information is available at field `.status.vcl`. 
@@ -207,7 +209,7 @@ No VCL named v-20861922-1561381196 known.
 Command failed with error code 106
 	{"varnish_controller_version": "0.21.0", "varnish_service": "my-varnish", "pod_name": "my-varnish-varnish-0", "namespace": "my-varnish"}
 ```
-
+#TODO document not ready addresses behavior. Also propably add probes to examples as well
 As the logs indicate, the issue here is the invalid VCL syntax.
 
 ### Passing additional information into VCL

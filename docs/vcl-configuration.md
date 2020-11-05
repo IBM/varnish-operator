@@ -209,7 +209,7 @@ No VCL named v-20861922-1561381196 known.
 Command failed with error code 106
 	{"varnish_controller_version": "0.21.0", "varnish_service": "my-varnish", "pod_name": "my-varnish-varnish-0", "namespace": "my-varnish"}
 ```
-#TODO document not ready addresses behavior. Also propably add probes to examples as well
+
 As the logs indicate, the issue here is the invalid VCL syntax.
 
 ### Passing additional information into VCL

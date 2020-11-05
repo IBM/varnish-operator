@@ -121,6 +121,8 @@ backend nginx-backend-6f4c6cbc6c-ckqmv {
 }
 ```
 
+The `.Backends` array includes all backend nodes, no matter if the instance is ready or not. For that reason, it is strongly recommended to set [health checks](https://varnish-cache.org/docs/3.0/tutorial/advanced_backend_servers.html#health-checks) in your VCL configuration. Otherwise, Varnish could send traffic to not yet ready backends.
+
 ### Using User Defined VCL Code Versions
 
 VCL related status information is available at field `.status.vcl`. 

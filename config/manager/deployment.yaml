@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: controller
+  namespace: system
+  labels:
+    operator: varnish-operator
+spec:
+  selector:
+    matchLabels:
+      operator: varnish-operator
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        operator: varnish-operator
+    spec:
+      serviceAccountName: varnish-operator
+      securityContext:
+        runAsUser: 65532
+      containers:
+        - image: controller:latest
+          name: varnish-operator
+          securityContext:
+            allowPrivilegeEscalation: false
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8234
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            limits:
+              cpu: 500m
+              memory: 200Mi
+            requests:
+              cpu: 500m
+              memory: 200Mi
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: LEADERELECTION_ENABLED
+              value: "false"
+            - name: CONTAINER_IMAGE
+              value: ibmcom/varnish-operator:0.26.0
+            - name: WEBHOOKS_ENABLED
+              value: "false"
+            - name: LOGLEVEL
+              value: info
+            - name: LOGFORMAT
+              value: json
+          ports:
+            - containerPort: 8329
+              name: metrics
+            - containerPort: 7340
+              name: webhook
+            - containerPort: 8234
+              name: healthz
+      terminationGracePeriodSeconds: 10

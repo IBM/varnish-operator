@@ -1,7 +1,13 @@
-version: "2"
 domain: ibm.com
+layout: go.kubebuilder.io/v3
+projectName: varnish-operator
 repo: github.com/ibm/varnish-operator
 resources:
-- group: caching
-  version: v1alpha1
+- crdVersion: v1
+  group: caching
   kind: VarnishCluster
+  version: v1alpha1
+version: 3-alpha
+plugins:
+  manifests.sdk.operatorframework.io/v2: {}
+  scorecard.sdk.operatorframework.io/v2: {}

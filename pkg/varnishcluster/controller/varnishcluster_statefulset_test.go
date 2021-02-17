@@ -174,6 +174,36 @@ var _ = Describe("statefulset", func() {
 		})
 	})
 
+	Context("when varnishcluster is created with additional varnish args for control port", func() {
+		It("should be created with additional varnish args included", func() {
+			newVC := vc.DeepCopy()
+			newVC.Spec.Varnish = &vcapi.VarnishClusterVarnish{
+				Args: []string{"-T", "0.0.0.0:6082"},
+			}
+			err := k8sClient.Create(context.Background(), newVC)
+			Expect(err).ToNot(HaveOccurred())
+
+			sts := &apps.StatefulSet{}
+			Eventually(func() error {
+				return k8sClient.Get(context.Background(), stsName, sts)
+			}, time.Second*5).Should(Succeed())
+
+			varnishContainer, err := getContainerByName(sts.Spec.Template.Spec, vcapi.VarnishContainerName)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(varnishContainer.Args).To(Equal([]string{
+				"-F",
+				"-S",
+				"/etc/varnish-secret/secret",
+				"-T",
+				"0.0.0.0:6082",
+				"-a",
+				"0.0.0.0:6081",
+				"-b",
+				"127.0.0.1:0",
+			}))
+		})
+	})
+
 	Context("when varnishcluster is created with non default container images", func() {
 		It("should be created with overridden container images", func() {
 			newVC := vc.DeepCopy()

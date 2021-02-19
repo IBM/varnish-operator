@@ -1,11 +1,11 @@
 package config
 
 import (
+	"github.com/caarlos0/env/v6"
 	"reflect"
 	"strconv"
 	"strings"
 
-	"github.com/caarlos0/env/v6"
 	dockerref "github.com/docker/distribution/reference"
 	"github.com/pkg/errors"
 	"go.uber.org/zap/zapcore"

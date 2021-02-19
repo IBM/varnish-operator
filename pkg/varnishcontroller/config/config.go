@@ -11,7 +11,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/caarlos0/env/v6"
 	"github.com/pkg/errors"
 )
 

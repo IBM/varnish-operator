@@ -44,70 +44,63 @@ const (
 )
 
 func SetupVarnishReconciler(ctx context.Context, vcCtrl reconcile.Reconciler, mgr manager.Manager, reconcileChan chan event.GenericEvent) error {
-	clusterRoleBindingEventHandler := &handler.EnqueueRequestsFromMapFunc{ToRequests: handler.ToRequestsFunc(
-		func(a handler.MapObject) []ctrl.Request {
-			cr, ok := a.Object.(*rbac.ClusterRoleBinding)
-			if !ok {
-				return nil
-			}
+	clusterRoleBindingEventHandler := handler.EnqueueRequestsFromMapFunc(func(a client.Object) []ctrl.Request {
+		cr, ok := a.(*rbac.ClusterRoleBinding)
+		if !ok {
+			return nil
+		}
 
-			if cr.Annotations[annotationVarnishClusterNamespace] == "" {
-				return nil
-			}
+		if cr.Annotations[annotationVarnishClusterNamespace] == "" {
+			return nil
+		}
 
-			if cr.Annotations[annotationVarnishClusterName] == "" {
-				return nil
-			}
+		if cr.Annotations[annotationVarnishClusterName] == "" {
+			return nil
+		}
 
-			return []ctrl.Request{
-				{NamespacedName: types.NamespacedName{
-					Name:      cr.Annotations[annotationVarnishClusterName],
-					Namespace: cr.Annotations[annotationVarnishClusterNamespace],
-				}},
-			}
-		}),
-	}
+		return []ctrl.Request{
+			{NamespacedName: types.NamespacedName{
+				Name:      cr.Annotations[annotationVarnishClusterName],
+				Namespace: cr.Annotations[annotationVarnishClusterNamespace],
+			}},
+		}
+	})
 
-	clusterRoleEventHandler := &handler.EnqueueRequestsFromMapFunc{ToRequests: handler.ToRequestsFunc(
-		func(a handler.MapObject) []ctrl.Request {
-			cr, ok := a.Object.(*rbac.ClusterRole)
-			if !ok {
-				return nil
-			}
+	clusterRoleEventHandler := handler.EnqueueRequestsFromMapFunc(func(a client.Object) []ctrl.Request {
+		cr, ok := a.(*rbac.ClusterRole)
+		if !ok {
+			return nil
+		}
 
-			if cr.Annotations[annotationVarnishClusterNamespace] == "" {
-				return nil
-			}
+		if cr.Annotations[annotationVarnishClusterNamespace] == "" {
+			return nil
+		}
 
-			if cr.Annotations[annotationVarnishClusterName] == "" {
-				return nil
-			}
+		if cr.Annotations[annotationVarnishClusterName] == "" {
+			return nil
+		}
 
-			return []ctrl.Request{
-				{NamespacedName: types.NamespacedName{
-					Name:      cr.Annotations[annotationVarnishClusterName],
-					Namespace: cr.Annotations[annotationVarnishClusterNamespace],
-				}},
-			}
-		}),
-	}
+		return []ctrl.Request{
+			{NamespacedName: types.NamespacedName{
+				Name:      cr.Annotations[annotationVarnishClusterName],
+				Namespace: cr.Annotations[annotationVarnishClusterNamespace],
+			}},
+		}
+	})
 
 	vcPodsSelector := labels.SelectorFromSet(map[string]string{vcapi.LabelVarnishComponent: vcapi.VarnishComponentVarnish})
-	varnishClusterPodsEventHandler := &handler.EnqueueRequestsFromMapFunc{
-		ToRequests: handler.ToRequestsFunc(
-			func(a handler.MapObject) []ctrl.Request {
-				if !vcPodsSelector.Matches(labels.Set(a.Meta.GetLabels())) {
-					return nil
-				}
+	varnishClusterPodsEventHandler := handler.EnqueueRequestsFromMapFunc(func(a client.Object) []ctrl.Request {
+		if !vcPodsSelector.Matches(labels.Set(a.GetLabels())) {
+			return nil
+		}
 
-				return []ctrl.Request{
-					{NamespacedName: types.NamespacedName{
-						Name:      a.Meta.GetLabels()[vcapi.LabelVarnishOwner],
-						Namespace: a.Meta.GetNamespace(),
-					}},
-				}
-			}),
-	}
+		return []ctrl.Request{
+			{NamespacedName: types.NamespacedName{
+				Name:      a.GetLabels()[vcapi.LabelVarnishOwner],
+				Namespace: a.GetNamespace(),
+			}},
+		}
+	})
 
 	builder := ctrl.NewControllerManagedBy(mgr)
 	builder.Named("varnishcluster")

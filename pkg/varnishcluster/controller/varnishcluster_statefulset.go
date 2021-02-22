@@ -263,6 +263,14 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 		},
 	}
 
+	if instance.Spec.Varnish.ImagePullSecret != "" {
+		desired.Spec.Template.Spec.ImagePullSecrets = []v1.LocalObjectReference{
+			{
+				Name: instance.Spec.Varnish.ImagePullSecret,
+			},
+		}
+	}
+
 	logr := logger.FromContext(ctx).With(logger.FieldComponent, vcapi.VarnishComponentVarnish)
 	logr = logr.With(logger.FieldComponentName, desired.Name)
 

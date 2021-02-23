@@ -26,9 +26,10 @@ jobs:
       - name: Get version
         id: get_version
         run: |
-          if ${{ github.event_name == 'release' }}; then
+          if (( ${{ github.event_name == 'release' }} )); then
             echo "VERSION=${GITHUB_REF##*/" >> $GITHUB_ENV
           else
+            echo "VERSION=v0.0.0-${GITHUB_REF##*/}"
             echo "VERSION=v0.0.0-${GITHUB_REF##*/}" >> $GITHUB_ENV
           fi
       - name: Change versions

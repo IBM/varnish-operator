@@ -1,5 +1,10 @@
 name: Helm Chart
 
+env:
+  HELM2_BIN_VERSION: "v2.17.0"
+  HELM3_BIN_VERSION: "v3.4.1"
+
+
 on:
   release:
     types:
@@ -11,9 +16,24 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v2
-      - name: Get Helm
+      - name: Install Helm3
         run: |
-          curl -Lo ./helm.tar.gz https://get.helm.sh/helm-v2.16.9-linux-amd64.tar.gz
+          curl -Lo ./helm.tar.gz https://get.helm.sh/helm-$HELM3_BIN_VERSION-linux-amd64.tar.gz
+          mkdir -p bin
+          tar -zxvf ./helm.tar.gz
+          sudo mv linux-amd64/helm /usr/local/bin/helm
+          sudo chmod +x /usr/local/bin/helm
+          rm -rf helm.tar.gz linux-amd64/
+      - name: Helm3 lint
+        run: |
+          helm lint varnish-operator
+      - name: Helm3 Uninstall
+        run: |
+          helm reset
+          rm -rf /usr/local/bin/helm
+      - name: Install Helm2
+        run: |
+          curl -Lo ./helm.tar.gz https://get.helm.sh/helm-$HELM2_BIN_VERSION-linux-amd64.tar.gz
           mkdir -p bin
           tar -zxvf ./helm.tar.gz && mv linux-amd64/helm bin/
           rm helm.tar.gz
@@ -25,7 +45,7 @@ jobs:
       - name: Change versions
         run: |
           GITTAG=${GITHUB_REF##*/}
-          curl -Lo ./bin/yq https://github.com/mikefarah/yq/releases/download/3.4.0/yq_linux_amd64
+          curl -Lo ./bin/yq https://github.com/mikefarah/yq/releases/download/4.6.0/yq_linux_amd64
           chmod +x ./bin/yq
           ./bin/yq w -i varnish-operator/Chart.yaml 'appVersion' $GITTAG
           ./bin/yq w -i varnish-operator/Chart.yaml 'version' $GITTAG

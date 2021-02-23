@@ -26,11 +26,12 @@ jobs:
       - name: Get version
         id: get_version
         run: |
-          if (( ${{ github.event_name == 'release' }} )); then
-            echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
-          else
-            echo "VERSION=v0.0.0-${GITHUB_REF##*/}" >> $GITHUB_ENV
-          fi
+#          if (( ${{ github.event_name == 'release' }} )); then
+#            echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
+#          else
+#            echo "VERSION=v0.0.0-${GITHUB_REF##*/}" >> $GITHUB_ENV
+#          fi
+          echo "VERSION=0.27.0" >> $GITHUB_ENV
       - name: Change versions
         run: |
           curl -Lo ./bin/yq https://github.com/mikefarah/yq/releases/download/3.4.0/yq_linux_amd64
@@ -51,5 +52,5 @@ jobs:
           git add helm-releases/*
           git commit -a -m "Release $VERSION"
       - name: Push chart
-        if: ${{ github.event_name == 'release' && github.event.action == 'created' }}
-        run: git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:main
+#        if: ${{ github.event_name == 'release' && github.event.action == 'created' }}
+        run: git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:test

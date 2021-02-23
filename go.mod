@@ -1,10 +1,11 @@
 module github.com/ibm/varnish-operator
 
-go 1.16
+go 1.15
 
 require (
 	github.com/caarlos0/env/v6 v6.5.0
 	github.com/docker/distribution v2.7.1+incompatible
+	github.com/go-logr/logr v0.4.0 // indirect
 	github.com/go-logr/zapr v0.4.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/go-cmp v0.5.4

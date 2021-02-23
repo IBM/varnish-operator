@@ -52,16 +52,15 @@ func SetupVarnishReconciler(mgr manager.Manager, cfg *config.Config, varnish var
 		metrics:      metrics,
 	}
 
-	podMapFunc := &handler.EnqueueRequestsFromMapFunc{
-		ToRequests: handler.ToRequestsFunc(
-			func(a handler.MapObject) []reconcile.Request {
-				return []reconcile.Request{
-					{NamespacedName: types.NamespacedName{
-						Namespace: cfg.Namespace,
-						Name:      cfg.PodName,
-					}},
-				}
-			})}
+	podMapFunc := handler.EnqueueRequestsFromMapFunc(
+		func(a client.Object) []reconcile.Request {
+			return []reconcile.Request{
+				{NamespacedName: types.NamespacedName{
+					Namespace: cfg.Namespace,
+					Name:      cfg.PodName,
+				}},
+			}
+		})
 
 	builder := ctrl.NewControllerManagedBy(mgr)
 	builder.Named("varnish-controller")
@@ -86,7 +85,8 @@ func SetupVarnishReconciler(mgr manager.Manager, cfg *config.Config, varnish var
 	return builder.Complete(r)
 }
 
-var _ reconcile.Reconciler = &ReconcileVarnish{}
+// TODO: is this safe to remove?
+//var _ reconcile.Reconciler = &ReconcileVarnish{}
 
 type ReconcileVarnish struct {
 	client.Client
@@ -98,9 +98,7 @@ type ReconcileVarnish struct {
 	metrics      *metrics.VarnishControllerMetrics
 }
 
-func (r *ReconcileVarnish) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	ctx := context.Background()
-
+func (r *ReconcileVarnish) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	logr := r.logger.With(logger.FieldVarnishCluster, r.config.VarnishClusterName)
 	logr = logr.With(logger.FieldPodName, r.config.PodName)
 	logr = logr.With(logger.FieldNamespace, r.config.Namespace)

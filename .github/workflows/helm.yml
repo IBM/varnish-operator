@@ -4,6 +4,7 @@ on:
   release:
     types:
       - created
+  push: {}
 
 jobs:
   helm-chart:
@@ -13,7 +14,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Get Helm
         run: |
-          curl -Lo ./helm.tar.gz https://get.helm.sh/helm-v2.16.9-linux-amd64.tar.gz
+          curl -Lo ./helm.tar.gz https://get.helm.sh/helm-v2.17.0-linux-amd64.tar.gz
           mkdir -p bin
           tar -zxvf ./helm.tar.gz && mv linux-amd64/helm bin/
           rm helm.tar.gz
@@ -22,24 +23,33 @@ jobs:
         run: helm lint varnish-operator
       - name: Ensure helm-releases folder exists
         run: mkdir -p helm-releases
+      - name: Get version
+        id: get_version
+        run: |
+          if (( ${{ github.event_name == 'release' }} )); then
+            echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
+          else
+            echo "VERSION=v0.0.0-${GITHUB_REF##*/}" >> $GITHUB_ENV
+          fi
       - name: Change versions
         run: |
-          GITTAG=${GITHUB_REF##*/}
           curl -Lo ./bin/yq https://github.com/mikefarah/yq/releases/download/3.4.0/yq_linux_amd64
           chmod +x ./bin/yq
-          ./bin/yq w -i varnish-operator/Chart.yaml 'appVersion' $GITTAG
-          ./bin/yq w -i varnish-operator/Chart.yaml 'version' $GITTAG
-          ./bin/yq w -i varnish-operator/values.yaml 'container.image' $(./bin/yq r varnish-operator/values.yaml 'container.image' | sed "s/:.*/:$GITTAG/")
-          ./bin/yq w -i config/samples/varnishcluster.yaml 'spec.varnish.image' $(./bin/yq r config/samples/varnishcluster.yaml 'spec.varnish.image' | sed "s/:.*/:$GITTAG/")
-          ./bin/yq w -i config/samples/varnishcluster.yaml 'spec.varnish.controller.image' $(./bin/yq r config/samples/varnishcluster.yaml 'spec.varnish.controller.image' | sed "s/:.*/:$GITTAG/")
-          ./bin/yq w -i config/samples/varnishcluster.yaml 'spec.varnish.metricsExporter.image' $(./bin/yq r config/samples/varnishcluster.yaml 'spec.varnish.metricsExporter.image' | sed "s/:.*/:$GITTAG/")
+          ./bin/yq w -i varnish-operator/Chart.yaml 'appVersion' $VERSION
+          ./bin/yq w -i varnish-operator/Chart.yaml 'version' $VERSION
+          ./bin/yq w -i varnish-operator/values.yaml 'container.image' $(./bin/yq r varnish-operator/values.yaml 'container.image' | sed "s/:.*/:$VERSION/")
+          ./bin/yq w -i config/samples/varnishcluster.yaml 'spec.varnish.image' $(./bin/yq r config/samples/varnishcluster.yaml 'spec.varnish.image' | sed "s/:.*/:$VERSION/")
+          ./bin/yq w -i config/samples/varnishcluster.yaml 'spec.varnish.controller.image' $(./bin/yq r config/samples/varnishcluster.yaml 'spec.varnish.controller.image' | sed "s/:.*/:$VERSION/")
+          ./bin/yq w -i config/samples/varnishcluster.yaml 'spec.varnish.metricsExporter.image' $(./bin/yq r config/samples/varnishcluster.yaml 'spec.varnish.metricsExporter.image' | sed "s/:.*/:$VERSION/")
       - name: Package chart
         run: |
           git config --global user.email ""
           git config --global user.name "Github Actions CI"
           ./bin/helm init --client-only
-          ./bin/helm package varnish-operator --app-version ${GITHUB_REF##*/} --version ${GITHUB_REF##*/} --destination helm-releases
+          ./bin/helm package varnish-operator --app-version $VERSION --version $VERSION --destination helm-releases
           helm repo index helm-releases --url https://raw.githubusercontent.com/IBM/varnish-operator/main/helm-releases
           git add helm-releases/*
-          git commit -a -m "Release ${GITHUB_REF##*/}"
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:main
+          git commit -a -m "Release $VERSION"
+      - name: Push chart
+        if: ${{ github.event_name == 'release' && github.event.action == 'created' }}
+        run: git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:main

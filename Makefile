@@ -49,7 +49,7 @@ manifests:
 
 # Run goimports against code
 fmt:
-	#cd ${ROOT_DIR} && goimports -w ./pkg ./cmd ./api
+	cd ${ROOT_DIR} && goimports -w ./pkg ./cmd ./api
 
 # Run go vet against code
 vet:

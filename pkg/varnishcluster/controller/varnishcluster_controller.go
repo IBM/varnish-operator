@@ -135,8 +135,7 @@ func SetupVarnishReconciler(ctx context.Context, vcCtrl reconcile.Reconciler, mg
 	return builder.Complete(vcCtrl)
 }
 
-// TODO: is this safe to remove
-//var _ reconcile.Reconciler = &ReconcileVarnishCluster{}
+var _ reconcile.Reconciler = &ReconcileVarnishCluster{}
 
 // ReconcileVarnishCluster reconciles a VarnishCluster object
 type ReconcileVarnishCluster struct {

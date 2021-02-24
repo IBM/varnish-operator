@@ -85,8 +85,7 @@ func SetupVarnishReconciler(mgr manager.Manager, cfg *config.Config, varnish var
 	return builder.Complete(r)
 }
 
-// TODO: is this safe to remove?
-//var _ reconcile.Reconciler = &ReconcileVarnish{}
+var _ reconcile.Reconciler = &ReconcileVarnish{}
 
 type ReconcileVarnish struct {
 	client.Client

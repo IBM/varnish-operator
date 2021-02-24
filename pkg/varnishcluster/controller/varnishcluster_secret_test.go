@@ -20,7 +20,7 @@ import (
 
 var _ = Describe("the varnish secret", func() {
 	validBackendPort := intstr.FromInt(8080)
-	vcNamespace := "varnish-secret"
+	vcNamespace := "default" // TODO: how to create varnish-secret keyspace in mock?
 	vcName := "test-secret"
 	objMeta := metav1.ObjectMeta{
 		Namespace: vcNamespace,

@@ -29,7 +29,6 @@ jobs:
           helm lint varnish-operator
       - name: Helm3 Uninstall
         run: |
-          helm reset
           rm -rf /usr/local/bin/helm
       - name: Install Helm2
         run: |

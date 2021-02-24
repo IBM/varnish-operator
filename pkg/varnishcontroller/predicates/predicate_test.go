@@ -37,7 +37,7 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectOld: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
-						Name: "epName",
+						Name:      "epName",
 						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"app": "nginx",
@@ -76,7 +76,7 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectNew: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
-						Name: "epName",
+						Name:      "epName",
 						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"app": "nginx",
@@ -121,7 +121,7 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectOld: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
-						Name: "epName",
+						Name:      "epName",
 						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"varnish-component": "varnish-service",
@@ -162,7 +162,7 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectNew: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
-						Name: "epName",
+						Name:      "epName",
 						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"varnish-component": "varnish-service",
@@ -209,7 +209,7 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectOld: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
-						Name: "epName",
+						Name:      "epName",
 						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"app": "nginx",
@@ -248,7 +248,7 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectNew: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
-						Name: "epName",
+						Name:      "epName",
 						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"app": "nginx",
@@ -293,7 +293,7 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectOld: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
-						Name: "epName",
+						Name:      "epName",
 						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"app": "nginx",
@@ -332,7 +332,7 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectNew: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
-						Name: "epName",
+						Name:      "epName",
 						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"app": "nginx",
@@ -372,7 +372,7 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectOld: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
-						Name: "epName",
+						Name:      "epName",
 						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"app": "nginx",
@@ -411,7 +411,7 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectNew: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
-						Name: "epName",
+						Name:      "epName",
 						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"app": "nginx",
@@ -457,7 +457,7 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectOld: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
-						Name: "epName",
+						Name:      "epName",
 						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"app": "nginx",
@@ -496,7 +496,7 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectNew: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
-						Name: "epName",
+						Name:      "epName",
 						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"app": "nginx",
@@ -536,7 +536,7 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectNew: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
-						Name: "epName",
+						Name:      "epName",
 						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"app": "not-nginx",
@@ -546,7 +546,7 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectOld: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
-						Name: "epName",
+						Name:      "epName",
 						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"app": "not-nginx",
@@ -735,14 +735,14 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 			event: event.UpdateEvent{
 				ObjectOld: &v1.Pod{
 					ObjectMeta: v12.ObjectMeta{
-						Name: "epName",
+						Name:      "epName",
 						Namespace: "epNamespace",
 					},
 				},
 				ObjectNew: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
-						Name: "epName",
+						Name:      "epName",
 						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"app": "nginx",

@@ -16,7 +16,7 @@ CRD_OPTIONS ?= "crd:crdVersions=v1,trivialVersions=false"
 all: test varnish-operator varnish-controller
 
 # Run tests
-test: generate vet manifests
+test: generate fmt vet manifests
 	go test github.com/ibm/varnish-operator/pkg/... github.com/ibm/varnish-operator/cmd/... github.com/ibm/varnish-operator/api/... -coverprofile cover.out
 
 # Run lint tools
@@ -24,11 +24,11 @@ lint:
 	golangci-lint run
 
 # Build varnish-operator binary
-varnish-operator: generate vet
+varnish-operator: generate fmt vet
 	go build -o ${ROOT_DIR}bin/varnish-operator github.com/ibm/varnish-operator/cmd/varnish-operator
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
-run: generate vet
+run: generate fmt vet
 	NAMESPACE=${NAMESPACE} LOGLEVEL=debug LOGFORMAT=console CONTAINER_IMAGE=ibmcom/${VARNISH_IMG} LEADERELECTION_ENABLED=false WEBHOOKS_ENABLED=false go run ${ROOT_DIR}cmd/varnish-operator/main.go
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
@@ -48,8 +48,8 @@ manifests:
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=varnish-operator paths="./..." output:crd:none output:rbac:stdout > $(ROOT_DIR)varnish-operator/templates/clusterrole.yaml
 
 # Run goimports against code
-# fmt:
-# 	cd ${ROOT_DIR} && goimports -w ./pkg ./cmd ./api
+fmt:
+	#cd ${ROOT_DIR} && goimports -w ./pkg ./cmd ./api
 
 # Run go vet against code
 vet:
@@ -80,7 +80,7 @@ else
 	docker push ${REPO_PATH}/${PUBLISH_IMG}
 endif
 
-varnish-controller: vet
+varnish-controller: fmt vet
 	go build -o ${ROOT_DIR}bin/varnish-controller ${ROOT_DIR}cmd/varnish-controller/
 
 # Build the docker image with varnishd itself and varnish modules
@@ -100,7 +100,7 @@ else
 endif
 
 # Build the docker image with varnish controller
-docker-build-varnish-controller: vet
+docker-build-varnish-controller: fmt vet
 	docker build ${ROOT_DIR} -t ${VARNISH_CONTROLLER_IMG} -f Dockerfile.controller
 
 docker-tag-push-varnish-controller:

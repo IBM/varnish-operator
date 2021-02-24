@@ -2,7 +2,7 @@ name: Helm Chart
 
 env:
   HELM2_VERSION: "v2.17.0"
-  HELM3_VERSION: "v3.4.1"
+  HELM3_VERSION: "v3.5.2"
 
 on:
   release:

@@ -34,7 +34,7 @@ jobs:
           tar -zxvf ./helm.tar.gz && sudo mv linux-amd64/helm /usr/local/bin/helm
           sudo chmod +x /usr/local/bin/helm
           sudo rm -rf helm.tar.gz linux-amd64
-      - name: Helm lint
+      - name: Helm2 lint
         run: helm lint varnish-operator
       - name: Ensure helm-releases folder exists
         run: mkdir -p helm-releases

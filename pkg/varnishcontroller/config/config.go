@@ -1,7 +1,6 @@
 package config
 
 import (
-	"github.com/caarlos0/env/v6"
 	"reflect"
 	"strconv"
 	"time"
@@ -9,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 
+	"github.com/caarlos0/env/v6"
 	"github.com/pkg/errors"
 	"go.uber.org/zap/zapcore"
 )

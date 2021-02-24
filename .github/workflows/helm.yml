@@ -51,7 +51,7 @@ jobs:
           fi
       - name: Change versions
         run: |
-          curl -Lo ./bin/yq https://github.com/mikefarah/yq/releases/download/v4.6.0/yq_linux_amd64
+          curl -Lo ./bin/yq https://github.com/mikefarah/yq/releases/download/3.4.1/yq_linux_amd64
           chmod +x ./bin/yq
           ./bin/yq w -i varnish-operator/Chart.yaml 'appVersion' $VERSION
           ./bin/yq w -i varnish-operator/Chart.yaml 'version' $VERSION

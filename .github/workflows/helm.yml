@@ -63,8 +63,8 @@ jobs:
         run: |
           git config --global user.email ""
           git config --global user.name "Github Actions CI"
-          ./bin/helm init --client-only
-          ./bin/helm package varnish-operator --app-version $VERSION --version $VERSION --destination helm-releases
+          helm init --client-only
+          helm package varnish-operator --app-version $VERSION --version $VERSION --destination helm-releases
           helm repo index helm-releases --url https://raw.githubusercontent.com/IBM/varnish-operator/main/helm-releases
           git add helm-releases/*
           git commit -a -m "Release $VERSION"

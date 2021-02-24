@@ -18,9 +18,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Install Helm3
         run: |
-          echo "$(pwd)"
           curl -Lo ./helm.tar.gz https://get.helm.sh/helm-$HELM3_VERSION-linux-amd64.tar.gz
-          mkdir -p bin
           tar -zxvf ./helm.tar.gz && sudo mv linux-amd64/helm /usr/local/bin/helm
           sudo chmod +x /usr/local/bin/helm
           rm -rf helm.tar.gz linux-amd64/
@@ -33,7 +31,6 @@ jobs:
       - name: Install Helm2
         run: |
           curl -Lo ./helm.tar.gz https://get.helm.sh/helm-$HELM2_VERSION-linux-amd64.tar.gz
-          mkdir -p bin
           tar -zxvf ./helm.tar.gz && sudo mv linux-amd64/helm /usr/local/bin/helm
           sudo chmod +x /usr/local/bin/helm
           sudo rm -rf helm.tar.gz linux-amd64
@@ -51,6 +48,7 @@ jobs:
           fi
       - name: Change versions
         run: |
+          mkdir -p bin
           curl -Lo ./bin/yq https://github.com/mikefarah/yq/releases/download/3.4.1/yq_linux_amd64
           chmod +x ./bin/yq
           ./bin/yq w -i varnish-operator/Chart.yaml 'appVersion' $VERSION

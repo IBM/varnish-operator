@@ -29,7 +29,7 @@ jobs:
           helm lint varnish-operator
       - name: Helm3 Uninstall
         run: |
-          rm -rf /usr/local/bin/helm
+          sudo rm -rf /usr/local/bin/helm
       - name: Install Helm2
         run: |
           curl -Lo ./helm.tar.gz https://get.helm.sh/helm-$HELM2_VERSION-linux-amd64.tar.gz

@@ -326,7 +326,7 @@ var _ = Describe("Validation", func() {
 					},
 					Service: &vcapi.VarnishClusterService{
 						Port:        proto.Int32(80),
-						MetricsPort: -1,
+						MetricsPort: proto.Int32(-1),
 					},
 					VCL: &vcapi.VarnishClusterVCL{
 						ConfigMapName:      proto.String("test"),
@@ -352,7 +352,7 @@ var _ = Describe("Validation", func() {
 					},
 					Service: &vcapi.VarnishClusterService{
 						Port:        proto.Int32(80),
-						MetricsPort: 65536,
+						MetricsPort: proto.Int32(65536),
 					},
 					VCL: &vcapi.VarnishClusterVCL{
 						ConfigMapName:      proto.String("test"),

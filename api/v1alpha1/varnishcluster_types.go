@@ -193,7 +193,7 @@ type VarnishClusterVarnishSecret struct {
 type VarnishClusterService struct {
 	// +kubebuilder:validation:Required
 	Port        *int32 `json:"port,omitempty"`
-	MetricsPort int32  `json:"metricsPort,omitempty"`
+	MetricsPort *int32 `json:"metricsPort,omitempty"`
 	// +kubebuilder:validation:Enum=ClusterIP;LoadBalancer;NodePort
 	Type        v1.ServiceType    `json:"type,omitempty"`
 	Annotations map[string]string `json:"annotations,omitempty"`

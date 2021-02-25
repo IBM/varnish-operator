@@ -115,8 +115,10 @@ func validateCreateUpdate(in *VarnishCluster) error {
 		}
 	}
 
-	if err := inAllowedRange(int64(in.Spec.Service.MetricsPort), 1, 65535); err != nil {
-		return fieldError(".spec.service.metricsPort", err)
+	if in.Spec.Service.MetricsPort != nil {
+		if err := inAllowedRange(int64(*in.Spec.Service.MetricsPort), 1, 65535); err != nil {
+			return fieldError(".spec.service.metricsPort", err)
+		}
 	}
 
 	if in.Spec.Backend.ZoneBalancing != nil {

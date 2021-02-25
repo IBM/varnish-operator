@@ -122,27 +122,29 @@ func validateCreateUpdate(in *VarnishCluster) error {
 		}
 	}
 
-	if in.Spec.Backend.ZoneBalancing != nil {
-		for _, threshold := range in.Spec.Backend.ZoneBalancing.Thresholds {
-			if threshold.Local != nil {
-				if err := min(int64(*threshold.Local), 1); err != nil {
-					return fieldError(".spec.backend.zoneBalancing.thresholds[].local", err)
+	if in.Spec.Backend != nil {
+		if in.Spec.Backend.ZoneBalancing != nil {
+			for _, threshold := range in.Spec.Backend.ZoneBalancing.Thresholds {
+				if threshold.Local != nil {
+					if err := min(int64(*threshold.Local), 1); err != nil {
+						return fieldError(".spec.backend.zoneBalancing.thresholds[].local", err)
+					}
+				}
+				if threshold.Remote != nil {
+					if err := min(int64(*threshold.Remote), 1); err != nil {
+						return fieldError(".spec.backend.zoneBalancing.thresholds[].remote", err)
+					}
+				}
+				if threshold.Local != nil {
+					if err := inAllowedRange(int64(*threshold.Threshold), 1, 100); err != nil {
+						return fieldError(".spec.backend.zoneBalancing.thresholds[].threshold", err)
+					}
 				}
 			}
-			if threshold.Remote != nil {
-				if err := min(int64(*threshold.Remote), 1); err != nil {
-					return fieldError(".spec.backend.zoneBalancing.thresholds[].remote", err)
-				}
-			}
-			if threshold.Local != nil {
-				if err := inAllowedRange(int64(*threshold.Threshold), 1, 100); err != nil {
-					return fieldError(".spec.backend.zoneBalancing.thresholds[].threshold", err)
-				}
-			}
-		}
 
-		if err := inAllowedRange(int64(*in.Spec.Service.Port), 1, 65535); err != nil {
-			return fieldError(".spec.service.port", err)
+			if err := inAllowedRange(int64(*in.Spec.Service.Port), 1, 65535); err != nil {
+				return fieldError(".spec.service.port", err)
+			}
 		}
 	}
 

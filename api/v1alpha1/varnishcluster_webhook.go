@@ -79,14 +79,7 @@ func (in *VarnishCluster) ValidateCreate() error {
 	logr = logr.With(logger.FieldVarnishCluster, in.Name)
 
 	logr.Debug("Validating webhook has been called on create request")
-	if in.Spec.Varnish == nil {
-		return nil
-	}
-	if err := validVarnishArgs(in.Spec.Varnish.Args); err != nil {
-		return err
-	}
-
-	return nil
+	return validateCreateUpdate(in)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
@@ -96,13 +89,7 @@ func (in *VarnishCluster) ValidateUpdate(old runtime.Object) error {
 	logr = logr.With(logger.FieldVarnishCluster, in.Name)
 
 	logr.Debug("Validating webhook has been called on update request")
-	if in.Spec.Varnish == nil {
-		return nil
-	}
-	if err := validVarnishArgs(in.Spec.Varnish.Args); err != nil {
-		return err
-	}
-	return nil
+	return validateCreateUpdate(in)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
@@ -115,17 +102,21 @@ func (in *VarnishCluster) ValidateDelete() error {
 	return nil
 }
 
-func ValidateCreateUpdate(in *VarnishCluster) error {
+func validateCreateUpdate(in *VarnishCluster) error {
 	if in.Spec.Varnish != nil {
 		if err := validVarnishArgs(in.Spec.Varnish.Args); err != nil {
-			return err
+			return fieldError(".spec.varnish.args", err)
 		}
 	}
 
 	if in.Spec.Service.Port != nil {
 		if err := inAllowedRange(int64(*in.Spec.Service.Port), 1, 65535); err != nil {
-			return err
+			return fieldError(".spec.service.port", err)
 		}
+	}
+
+	if err := inAllowedRange(int64(in.Spec.Service.MetricsPort), 1, 65535); err != nil {
+		return fieldError(".spec.service.metricsPort", err)
 	}
 
 	if in.Spec.Backend.ZoneBalancing != nil {
@@ -158,16 +149,12 @@ func ValidateCreateUpdate(in *VarnishCluster) error {
 		}
 	}
 
-	if err := inAllowedRange(int64(in.Spec.Service.MetricsPort), 1, 65535); err != nil {
-		return fieldError(".spec.service.metricsPort", err)
-	}
-
 	return nil
 }
 
 func inAllowedRange(port int64, min, max int64) error {
 	if port < min || port > max {
-		return errors.Errorf("Value should be between %d and %d", min, max)
+		return errors.Errorf("value should be between %d and %d", min, max)
 	}
 
 	return nil
@@ -175,14 +162,14 @@ func inAllowedRange(port int64, min, max int64) error {
 
 func min(value int64, minimum int64) error {
 	if value < minimum {
-		return errors.Errorf("Value should be more than %d", minimum)
+		return errors.Errorf("value should be more than %d", minimum)
 	}
 	return nil
 }
 
 func max(value int64, maximum int64) error {
 	if value > maximum {
-		return errors.Errorf("Value should be less than %d", maximum)
+		return errors.Errorf("value should be less than %d", maximum)
 	}
 	return nil
 }
@@ -207,5 +194,8 @@ func validVarnishArgs(args []string) error {
 }
 
 func fieldError(fieldName string, err error) error {
+	if err == nil {
+		return nil
+	}
 	return errors.Errorf("field %q is invalid: %s", fieldName, err.Error())
 }

@@ -652,14 +652,10 @@ spec:
                             weights for backends located in the same or remote zone
                           properties:
                             local:
-                              minimum: 1
                               type: integer
                             remote:
-                              minimum: 1
                               type: integer
                             threshold:
-                              maximum: 100
-                              minimum: 1
                               type: integer
                           required:
                           - local
@@ -804,13 +800,9 @@ spec:
                     type: object
                   metricsPort:
                     format: int32
-                    maximum: 65535
-                    minimum: 1
                     type: integer
                   port:
                     format: int32
-                    maximum: 65535
-                    minimum: 1
                     type: integer
                   type:
                     description: Service Type string describes ingress methods for
@@ -868,7 +860,6 @@ spec:
                     properties:
                       delaySeconds:
                         format: int32
-                        minimum: 1
                         type: integer
                     type: object
                   rollingUpdate:

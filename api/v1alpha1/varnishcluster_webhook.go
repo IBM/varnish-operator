@@ -169,13 +169,6 @@ func min(value int64, minimum int64) error {
 	return nil
 }
 
-func max(value int64, maximum int64) error {
-	if value > maximum {
-		return errors.Errorf("value should be less than %d", maximum)
-	}
-	return nil
-}
-
 func validVarnishArgs(args []string) error {
 	for i := 0; i < len(args); {
 		if !varnishArgsKeyRegexp.MatchString(args[i]) {

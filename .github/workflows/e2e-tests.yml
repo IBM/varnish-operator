@@ -65,8 +65,8 @@ jobs:
         with:
           cluster_name: e2e-tests
           node_image: kindest/node:v1.18.6
-        - name: create namespace
-          run: kubectl create namespace varnish-operator
+      - name: create namespace
+        run: kubectl create namespace varnish-operator
       - name: load images
         run: |
           kind load --name e2e-tests docker-image ibmcom/varnish-operator:local

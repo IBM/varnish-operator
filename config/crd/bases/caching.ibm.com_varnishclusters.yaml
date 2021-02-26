@@ -705,6 +705,8 @@ spec:
                         type: object
                       namespace:
                         type: string
+                      title:
+                        type: string
                     required:
                     - datasourceName
                     type: object

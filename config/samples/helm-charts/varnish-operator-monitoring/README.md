@@ -20,7 +20,7 @@ Clone the repo and install the chart using the local path to the chart:
 ```bash
 $ git clone https://github.com/IBM/varnish-operator.git
 $ cd varnish-operator
-$ helm install --name varnish-operator-monitoring config/samples/helm-charts/varnish-operator-monitoring
+$ helm install varnish-operator-monitoring config/samples/helm-charts/varnish-operator-monitoring
 ```
 
 Make sure to install the chart in the same namespaces as your operator.
@@ -61,5 +61,5 @@ You can see your dashboard at `localhost:3000`. The login is `admin`, password i
 To uninstall the chart simply delete the chart:
 
 ```bash
-helm delete --purge varnish-operator-monitoring
+helm uninstall varnish-operator-monitoring
 ```

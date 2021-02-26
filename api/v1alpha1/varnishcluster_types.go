@@ -114,7 +114,6 @@ type VarnishClusterUpdateStrategy struct {
 }
 
 type UpdateStrategyDelayedRollingUpdate struct {
-	// +kubebuilder:validation:Minimum=1
 	DelaySeconds int32 `json:"delaySeconds,omitempty"`
 }
 
@@ -167,14 +166,10 @@ type VarnishClusterBackendZoneBalancing struct {
 // located in the same or remote zone
 type VarnishClusterBackendZoneBalancingThreshold struct {
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Minimum=1
 	Local *int `json:"local"`
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Minimum=1
 	Remote *int `json:"remote"`
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:validation:Maximum=100
 	Threshold *int `json:"threshold"`
 }
 
@@ -197,12 +192,8 @@ type VarnishClusterVarnishSecret struct {
 
 type VarnishClusterService struct {
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:validation:Maximum=65535
-	Port *int32 `json:"port,omitempty"`
-	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:validation:Maximum=65535
-	MetricsPort int32 `json:"metricsPort,omitempty"`
+	Port        *int32 `json:"port,omitempty"`
+	MetricsPort *int32 `json:"metricsPort,omitempty"`
 	// +kubebuilder:validation:Enum=ClusterIP;LoadBalancer;NodePort
 	Type        v1.ServiceType    `json:"type,omitempty"`
 	Annotations map[string]string `json:"annotations,omitempty"`

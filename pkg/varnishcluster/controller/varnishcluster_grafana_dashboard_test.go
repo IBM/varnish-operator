@@ -80,6 +80,12 @@ var _ = Describe("grafana dashboard", func() {
 				"foo":                       "bar",
 			}))
 
+			By("Dashboard title should default to <cluster name> varnish")
+			dashboardString := dashboardCM.Data[names.GrafanaDashboardJson(newVC.Name)]
+			var data map[string]interface{}
+			_ = json.Unmarshal([]byte(dashboardString), &data)
+			Expect(data["title"].(string)).To(Equal(fmt.Sprintf("%s varnish", newVC.Name)))
+
 			By("Owner reference should be set if the dashboard installed in the same namespace as VarnishCluster")
 			ownerReference := []metav1.OwnerReference{
 				{
@@ -140,13 +146,13 @@ var _ = Describe("grafana dashboard", func() {
 
 			dashboardCM = &v1.ConfigMap{}
 			Eventually(func() error {
-				return k8sClient.Get(context.Background(), dashboardName, dashboardCM)
+				return k8sClient.Get(context.Background(), types.NamespacedName{Name: names.GrafanaDashboard(vc.Name), Namespace: overrideNamespace.Name}, dashboardCM)
 			}, time.Second*5).Should(Succeed())
 
-			dashboardString := dashboardCM.Data[fmt.Sprintf("%s-dashboard.json", newVC.Name)]
-			var result map[string]interface{}
-			_ = json.Unmarshal([]byte(dashboardString), &result)
-			Expect(result["title"].(string)).To(Equal(newVC.Spec.Monitoring.GrafanaDashboard.Title))
+			dashboardString = dashboardCM.Data[names.GrafanaDashboardJson(newVC.Name)]
+			data = map[string]interface{}{}
+			_ = json.Unmarshal([]byte(dashboardString), &data)
+			Expect(data["title"].(string)).To(Equal(newVC.Spec.Monitoring.GrafanaDashboard.Title))
 
 			By("Disabling the dashboard")
 			Eventually(func() error {

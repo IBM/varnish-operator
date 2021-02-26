@@ -206,7 +206,7 @@ func generateGrafanaDashboardData(instance *vcapi.VarnishCluster) (map[string]st
 		return nil, errors.WithStack(err)
 	}
 
-	dashboardData := map[string]string{fmt.Sprintf("%s-dashboard.json", instance.Name): b.String()}
+	dashboardData := map[string]string{names.GrafanaDashboardJson(instance.Name): b.String()}
 
 	return dashboardData, nil
 }

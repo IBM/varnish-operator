@@ -6,7 +6,7 @@ package v1alpha1
 
 import (
 	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/policy/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -269,6 +269,11 @@ func (in *VarnishClusterService) DeepCopyInto(out *VarnishClusterService) {
 	*out = *in
 	if in.Port != nil {
 		in, out := &in.Port, &out.Port
+		*out = new(int32)
+		**out = **in
+	}
+	if in.MetricsPort != nil {
+		in, out := &in.MetricsPort, &out.MetricsPort
 		*out = new(int32)
 		**out = **in
 	}

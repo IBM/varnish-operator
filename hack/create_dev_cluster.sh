@@ -29,11 +29,6 @@ kind create cluster --name $cluster_name --image kindest/node:v$kube_version --k
 
 export KUBECONFIG=./e2e-tests-kubeconfig
 
-kubectl create serviceaccount tiller -n kube-system
-kubectl create clusterrolebinding tiller --serviceaccount=kube-system:tiller --clusterrole=cluster-admin
-
-helm init --service-account=tiller --upgrade --wait
-
 kubectl create ns $varnish_namespace
 
 docker build -f Dockerfile  -t ibmcom/varnish-operator:local .
@@ -41,9 +36,9 @@ docker build -f Dockerfile.varnishd  -t ibmcom/varnish:local .
 docker build -f Dockerfile.controller  -t ibmcom/varnish-controller:local .
 docker build -f Dockerfile.exporter  -t ibmcom/varnish-metrics-exporter:local .
 
-kind load --name $cluster_name docker-image ibmcom/varnish-operator:local
-kind load --name $cluster_name docker-image ibmcom/varnish:local
-kind load --name $cluster_name docker-image ibmcom/varnish-controller:local
-kind load --name $cluster_name docker-image ibmcom/varnish-metrics-exporter:local
+kind load  docker-image ibmcom/varnish-operator:local
+kind load  docker-image ibmcom/varnish:local
+kind load docker-image ibmcom/varnish-controller:local
+kind load  docker-image ibmcom/varnish-metrics-exporter:local
 
-helm install --name=varnish-operator --namespace=$varnish_namespace varnish-operator --wait --set container.imagePullPolicy=Never --set container.image=ibmcom/varnish-operator:local
+helm install --namespace=$varnish_namespace varnish-operator --wait --set container.imagePullPolicy=Never --set container.image=ibmcom/varnish-operator:local

@@ -3,6 +3,8 @@ package v1alpha1
 import (
 	"time"
 
+	"github.com/gogo/protobuf/proto"
+
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -77,8 +79,8 @@ func defaultVarnishClusterSpec(in *VarnishClusterSpec) {
 		in.Monitoring.PrometheusServiceMonitor.ScrapeInterval = "30s"
 	}
 
-	if in.Service.MetricsPort == 0 {
-		in.Service.MetricsPort = VarnishPrometheusExporterPort
+	if in.Service.MetricsPort == nil {
+		in.Service.MetricsPort = proto.Int32(VarnishPrometheusExporterPort)
 	}
 
 	if in.Service.Type == "" {

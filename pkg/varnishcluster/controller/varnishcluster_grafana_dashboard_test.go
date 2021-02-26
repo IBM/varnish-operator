@@ -62,7 +62,7 @@ var _ = Describe("grafana dashboard", func() {
 	})
 
 	Context("when varnishcluster is created and dashboard is enabled", func() {
-		It("should be created", func() {
+		It("should be created with default config", func() {
 			newVC := vc.DeepCopy()
 			err := k8sClient.Create(context.Background(), newVC)
 			Expect(err).ToNot(HaveOccurred())
@@ -133,26 +133,7 @@ var _ = Describe("grafana dashboard", func() {
 				return "Found"
 			}, time.Second*10).Should(Equal(metav1.StatusReasonNotFound), "The dashboard in default namespace should be deleted")
 
-			By("Overriding the dashboard title")
-			Eventually(func() error {
-				err := k8sClient.Get(context.Background(), types.NamespacedName{Name: vcName, Namespace: vcNamespace}, newVC)
-				if err != nil {
-					return err
-				}
-				newVC.Spec.Monitoring.GrafanaDashboard.Title = "Test Varnish Dashboard"
-				err = k8sClient.Update(context.Background(), newVC)
-				return err
-			}, time.Second*10).Should(Succeed())
 
-			dashboardCM = &v1.ConfigMap{}
-			Eventually(func() error {
-				return k8sClient.Get(context.Background(), types.NamespacedName{Name: names.GrafanaDashboard(vc.Name), Namespace: overrideNamespace.Name}, dashboardCM)
-			}, time.Second*5).Should(Succeed())
-
-			dashboardString = dashboardCM.Data[names.GrafanaDashboardJson(newVC.Name)]
-			data = map[string]interface{}{}
-			_ = json.Unmarshal([]byte(dashboardString), &data)
-			Expect(data["title"].(string)).To(Equal(newVC.Spec.Monitoring.GrafanaDashboard.Title))
 
 			By("Disabling the dashboard")
 			Eventually(func() error {
@@ -175,6 +156,24 @@ var _ = Describe("grafana dashboard", func() {
 
 				return "Found"
 			}, time.Second*10).Should(Equal(metav1.StatusReasonNotFound), "The dashboard should be deleted")
+		})
+
+		It("should be created with title override", func() {
+			newVC := vc.DeepCopy()
+			newVC.Spec.Monitoring.GrafanaDashboard.Title = "Test Varnish Dashboard"
+			err := k8sClient.Create(context.Background(), newVC)
+			Expect(err).ToNot(HaveOccurred())
+
+			dashboardCM := &v1.ConfigMap{}
+			Eventually(func() error {
+				return k8sClient.Get(context.Background(), dashboardName, dashboardCM)
+			}, time.Second*5).Should(Succeed())
+
+			By("Dashboard title should default to <cluster name> varnish")
+			dashboardString := dashboardCM.Data[names.GrafanaDashboardJson(newVC.Name)]
+			var data map[string]interface{}
+			_ = json.Unmarshal([]byte(dashboardString), &data)
+			Expect(data["title"].(string)).To(Equal(newVC.Spec.Monitoring.GrafanaDashboard.Title))
 		})
 	})
 })

@@ -133,8 +133,6 @@ var _ = Describe("grafana dashboard", func() {
 				return "Found"
 			}, time.Second*10).Should(Equal(metav1.StatusReasonNotFound), "The dashboard in default namespace should be deleted")
 
-
-
 			By("Disabling the dashboard")
 			Eventually(func() error {
 				err := k8sClient.Get(context.Background(), types.NamespacedName{Name: vcName, Namespace: vcNamespace}, newVC)
@@ -158,7 +156,7 @@ var _ = Describe("grafana dashboard", func() {
 			}, time.Second*10).Should(Equal(metav1.StatusReasonNotFound), "The dashboard should be deleted")
 		})
 
-		It("should be created with title override", func() {
+		It("should be created if dashboard title override specified", func() {
 			newVC := vc.DeepCopy()
 			newVC.Spec.Monitoring.GrafanaDashboard.Title = "Test Varnish Dashboard"
 			err := k8sClient.Create(context.Background(), newVC)
@@ -169,7 +167,7 @@ var _ = Describe("grafana dashboard", func() {
 				return k8sClient.Get(context.Background(), dashboardName, dashboardCM)
 			}, time.Second*5).Should(Succeed())
 
-			By("Dashboard title should default to <cluster name> varnish")
+			By("Dashboard title should be overridden")
 			dashboardString := dashboardCM.Data[names.GrafanaDashboardJson(newVC.Name)]
 			var data map[string]interface{}
 			_ = json.Unmarshal([]byte(dashboardString), &data)

@@ -44,9 +44,9 @@ func init() {
 	disallowedVarnishArgsAsString = fmt.Sprintf(`"%s"`, strings.Join(disallowedVarnishArgsAsArr, `", "`))
 }
 
-func (in *VarnishCluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
+func (vc *VarnishCluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
-		For(in).
+		For(vc).
 		Complete()
 }
 
@@ -55,15 +55,15 @@ func (in *VarnishCluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
 var _ webhook.Defaulter = &VarnishCluster{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type
-func (in *VarnishCluster) Default() {
+func (vc *VarnishCluster) Default() {
 	logr := webhookLogger.With(logger.FieldComponent, VarnishComponentMutatingWebhook)
-	logr = logr.With(logger.FieldNamespace, in.Namespace)
-	logr = logr.With(logger.FieldVarnishCluster, in.Name)
+	logr = logr.With(logger.FieldNamespace, vc.Namespace)
+	logr = logr.With(logger.FieldVarnishCluster, vc.Name)
 	logr.Debug("Mutating webhook has been called")
 
 	var defaultReplicasNumber int32 = 1
-	if in.Spec.Replicas == nil {
-		in.Spec.Replicas = &defaultReplicasNumber
+	if vc.Spec.Replicas == nil {
+		vc.Spec.Replicas = &defaultReplicasNumber
 	}
 }
 
@@ -73,58 +73,58 @@ func (in *VarnishCluster) Default() {
 var _ webhook.Validator = &VarnishCluster{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (in *VarnishCluster) ValidateCreate() error {
+func (vc *VarnishCluster) ValidateCreate() error {
 	logr := webhookLogger.With(logger.FieldComponent, VarnishComponentValidatingWebhook)
-	logr = logr.With(logger.FieldNamespace, in.Namespace)
-	logr = logr.With(logger.FieldVarnishCluster, in.Name)
+	logr = logr.With(logger.FieldNamespace, vc.Namespace)
+	logr = logr.With(logger.FieldVarnishCluster, vc.Name)
 
 	logr.Debug("Validating webhook has been called on create request")
-	return validateCreateUpdate(in)
+	return validateCreateUpdate(vc)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (in *VarnishCluster) ValidateUpdate(old runtime.Object) error {
+func (vc *VarnishCluster) ValidateUpdate(old runtime.Object) error {
 	logr := webhookLogger.With(logger.FieldComponent, VarnishComponentValidatingWebhook)
-	logr = logr.With(logger.FieldNamespace, in.Namespace)
-	logr = logr.With(logger.FieldVarnishCluster, in.Name)
+	logr = logr.With(logger.FieldNamespace, vc.Namespace)
+	logr = logr.With(logger.FieldVarnishCluster, vc.Name)
 
 	logr.Debug("Validating webhook has been called on update request")
-	return validateCreateUpdate(in)
+	return validateCreateUpdate(vc)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (in *VarnishCluster) ValidateDelete() error {
+func (vc *VarnishCluster) ValidateDelete() error {
 	logr := webhookLogger.With(logger.FieldComponent, VarnishComponentValidatingWebhook)
-	logr = logr.With(logger.FieldNamespace, in.Namespace)
-	logr = logr.With(logger.FieldVarnishCluster, in.Name)
+	logr = logr.With(logger.FieldNamespace, vc.Namespace)
+	logr = logr.With(logger.FieldVarnishCluster, vc.Name)
 
 	logr.Debug("Validating webhook has been called on delete request")
 	return nil
 }
 
-func validateCreateUpdate(in *VarnishCluster) error {
-	if in.Spec.Varnish != nil {
-		if err := validVarnishArgs(in.Spec.Varnish.Args); err != nil {
+func validateCreateUpdate(vc *VarnishCluster) error {
+	if vc.Spec.Varnish != nil {
+		if err := validVarnishArgs(vc.Spec.Varnish.Args); err != nil {
 			return fieldError(".spec.varnish.args", err)
 		}
 	}
 
-	if in.Spec.Service != nil {
-		if in.Spec.Service.Port != nil {
-			if err := inAllowedRange(int64(*in.Spec.Service.Port), 1, 65535); err != nil {
+	if vc.Spec.Service != nil {
+		if vc.Spec.Service.Port != nil {
+			if err := inAllowedRange(int64(*vc.Spec.Service.Port), 1, 65535); err != nil {
 				return fieldError(".spec.service.port", err)
 			}
 		}
-		if in.Spec.Service.MetricsPort != nil {
-			if err := inAllowedRange(int64(*in.Spec.Service.MetricsPort), 1, 65535); err != nil {
+		if vc.Spec.Service.MetricsPort != nil {
+			if err := inAllowedRange(int64(*vc.Spec.Service.MetricsPort), 1, 65535); err != nil {
 				return fieldError(".spec.service.metricsPort", err)
 			}
 		}
 	}
 
-	if in.Spec.Backend != nil {
-		if in.Spec.Backend.ZoneBalancing != nil {
-			for _, threshold := range in.Spec.Backend.ZoneBalancing.Thresholds {
+	if vc.Spec.Backend != nil {
+		if vc.Spec.Backend.ZoneBalancing != nil {
+			for _, threshold := range vc.Spec.Backend.ZoneBalancing.Thresholds {
 				if threshold.Local != nil {
 					if err := min(int64(*threshold.Local), 1); err != nil {
 						return fieldError(".spec.backend.zoneBalancing.thresholds[].local", err)
@@ -142,14 +142,14 @@ func validateCreateUpdate(in *VarnishCluster) error {
 				}
 			}
 
-			if err := inAllowedRange(int64(*in.Spec.Service.Port), 1, 65535); err != nil {
+			if err := inAllowedRange(int64(*vc.Spec.Service.Port), 1, 65535); err != nil {
 				return fieldError(".spec.service.port", err)
 			}
 		}
 	}
 
-	if in.Spec.UpdateStrategy != nil && in.Spec.UpdateStrategy.DelayedRollingUpdate != nil {
-		if err := min(int64(in.Spec.UpdateStrategy.DelayedRollingUpdate.DelaySeconds), 1); err != nil {
+	if vc.Spec.UpdateStrategy != nil && vc.Spec.UpdateStrategy.DelayedRollingUpdate != nil {
+		if err := min(int64(vc.Spec.UpdateStrategy.DelayedRollingUpdate.DelaySeconds), 1); err != nil {
 			return fieldError(".spec.updateStrategy.delayedRollingUpdate.delaySeconds", err)
 		}
 	}

@@ -64,6 +64,7 @@ var _ = Describe("Varnish Cluster", func() {
 					Monitoring: &vcapi.VarnishClusterMonitoring{
 						GrafanaDashboard: &vcapi.VarnishClusterMonitoringGrafanaDashboard{
 							Enabled:        true,
+							Title:          "",
 							Namespace:      "",
 							DatasourceName: proto.String("Prometheus-datasource"),
 						},

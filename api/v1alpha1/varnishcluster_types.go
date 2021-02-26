@@ -222,6 +222,7 @@ type VarnishClusterMonitoringPrometheusServiceMonitor struct {
 
 type VarnishClusterMonitoringGrafanaDashboard struct {
 	Enabled   bool              `json:"enabled"`
+	Title     string            `json:"title,omitempty"`
 	Namespace string            `json:"namespace"`
 	Labels    map[string]string `json:"labels,omitempty"`
 	// +kubebuilder:validation:Required

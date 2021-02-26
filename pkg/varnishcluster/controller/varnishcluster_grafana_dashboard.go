@@ -37,6 +37,10 @@ func (r *ReconcileVarnishCluster) reconcileGrafanaDashboard(ctx context.Context,
 		return nil
 	}
 
+	if instance.Spec.Monitoring.GrafanaDashboard.Title == "" {
+		instance.Spec.Monitoring.GrafanaDashboard.Title = fmt.Sprintf("%s varnish", instance.Name)
+	}
+
 	if instance.Spec.Monitoring.GrafanaDashboard.Namespace != "" {
 		installationNamespace := instance.Spec.Monitoring.GrafanaDashboard.Namespace
 		err := r.Get(ctx, types.NamespacedName{Name: installationNamespace}, &v1.Namespace{})
@@ -166,7 +170,7 @@ func (r *ReconcileVarnishCluster) createGrafanaDashboardConfigMap(instance *vcap
 			cmLabels[key] = value
 		}
 	} else {
-		cmLabels["grafana_dashboard"] = "1" //default. Set the same value as the Grafana chart uses
+		cmLabels["grafana_dashboard"] = "1" // Default setting. Set the same value as the Grafana chart uses
 	}
 	grafanaDashboard.SetLabels(cmLabels)
 
@@ -178,7 +182,7 @@ func (r *ReconcileVarnishCluster) createGrafanaDashboardConfigMap(instance *vcap
 		}
 	}
 
-	dashboardData, err := generateGrafanaDashboardData(*instance.Spec.Monitoring.GrafanaDashboard.DatasourceName)
+	dashboardData, err := generateGrafanaDashboardData(instance)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -187,12 +191,12 @@ func (r *ReconcileVarnishCluster) createGrafanaDashboardConfigMap(instance *vcap
 	return grafanaDashboard, nil
 }
 
-func generateGrafanaDashboardData(datasourceName string) (map[string]string, error) {
+func generateGrafanaDashboardData(instance *vcapi.VarnishCluster) (map[string]string, error) {
 	data := map[string]interface{}{
-		"DatasourceName": datasourceName,
+		"DatasourceName": *instance.Spec.Monitoring.GrafanaDashboard.DatasourceName,
 	}
 
-	t, err := template.New("GrafanaDashboard").Parse(grafanaDashboardTemplate)
+	t, err := template.New("GrafanaDashboard").Parse(generateGrafanaDashboardTemplate(instance))
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -202,7 +206,7 @@ func generateGrafanaDashboardData(datasourceName string) (map[string]string, err
 		return nil, errors.WithStack(err)
 	}
 
-	dashboardData := map[string]string{"varnish-cluster-dashboard.json": b.String()}
+	dashboardData := map[string]string{fmt.Sprintf("%s-dashboard.json", instance.Name): b.String()}
 
 	return dashboardData, nil
 }

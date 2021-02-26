@@ -2,10 +2,11 @@ package controller
 
 import (
 	"context"
-	"time"
-
+	"fmt"
 	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 	"github.com/ibm/varnish-operator/pkg/names"
+	"k8s.io/apimachinery/pkg/util/json"
+	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 
@@ -45,6 +46,7 @@ var _ = Describe("grafana dashboard", func() {
 			Monitoring: &vcapi.VarnishClusterMonitoring{
 				GrafanaDashboard: &vcapi.VarnishClusterMonitoringGrafanaDashboard{
 					Enabled:        true,
+					Title:          "",
 					Namespace:      "",
 					Labels:         map[string]string{"foo": "bar"},
 					DatasourceName: proto.String("Prometheus"),
@@ -124,6 +126,27 @@ var _ = Describe("grafana dashboard", func() {
 
 				return "Found"
 			}, time.Second*10).Should(Equal(metav1.StatusReasonNotFound), "The dashboard in default namespace should be deleted")
+
+			By("Overriding the dashboard title")
+			Eventually(func() error {
+				err := k8sClient.Get(context.Background(), types.NamespacedName{Name: vcName, Namespace: vcNamespace}, newVC)
+				if err != nil {
+					return err
+				}
+				newVC.Spec.Monitoring.GrafanaDashboard.Title = "Test Varnish Dashboard"
+				err = k8sClient.Update(context.Background(), newVC)
+				return err
+			}, time.Second*10).Should(Succeed())
+
+			dashboardCM = &v1.ConfigMap{}
+			Eventually(func() error {
+				return k8sClient.Get(context.Background(), dashboardName, dashboardCM)
+			}, time.Second*5).Should(Succeed())
+
+			dashboardString := dashboardCM.Data[fmt.Sprintf("%s-dashboard.json", newVC.Name)]
+			var result map[string]interface{}
+			_ = json.Unmarshal([]byte(dashboardString), &result)
+			Expect(result["title"].(string)).To(Equal(newVC.Spec.Monitoring.GrafanaDashboard.Title))
 
 			By("Disabling the dashboard")
 			Eventually(func() error {

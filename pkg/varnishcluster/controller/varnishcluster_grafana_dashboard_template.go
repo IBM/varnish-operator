@@ -1,6 +1,12 @@
 package controller
 
-var grafanaDashboardTemplate = `
+import (
+	"github.com/ibm/varnish-operator/api/v1alpha1"
+)
+
+func generateGrafanaDashboardTemplate(vc *v1alpha1.VarnishCluster) string {
+	grafanaDashboardTemplate :=
+		`
 {
   "annotations": {
     "list": [
@@ -2397,8 +2403,9 @@ var grafanaDashboardTemplate = `
     ]
   },
   "timezone": "browser",
-  "title": "Varnish",
+  "title": "`+vc.Spec.Monitoring.GrafanaDashboard.Title+`",
   "uid": "",
   "version": 1
+}`
+	return grafanaDashboardTemplate
 }
-`

@@ -42,7 +42,7 @@ uninstall:
 manifests:
 	# CRD apiextensions.k8s.io/v1
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=varnish-operator output:rbac:none paths="./..." output:crd:artifacts:config=config/crd/bases
-	kustomize build ${ROOT_DIR}config/crd > $(ROOT_DIR)varnish-operator/templates/customresourcedefinition.yaml
+	kustomize build ${ROOT_DIR}config/crd > $(ROOT_DIR)varnish-operator/templates/crds/varnishcluster.yaml
 
 	# ClusterRole
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=varnish-operator paths="./..." output:crd:none output:rbac:stdout > $(ROOT_DIR)varnish-operator/templates/clusterrole.yaml

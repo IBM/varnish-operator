@@ -25,7 +25,7 @@ Clone the repo and install the chart using the local path to the chart:
 ```bash
 $ git clone https://github.com/IBM/varnish-operator.git
 $ cd varnish-operator
-$ helm install --name varnish-test config/samples/helm-charts/varnishcluster-with-monitoring --set varnish.backendsSelector.app=nginx --set varnish.backendsPort=80
+$ helm install varnish-test config/samples/helm-charts/varnishcluster-with-monitoring --set varnish.backendsSelector.app=nginx --set varnish.backendsPort=80
 ```
 
 Note that we've specified the selector for our backends (`--set backendsSelector.app=nginx`) and the port they are listening on (`--set backendsPort=80`)
@@ -38,7 +38,7 @@ NAME                                                      READY   STATUS    REST
 nginx-5c7588df-8wsr6                                      1/1     Running   0          5m16s
 prometheus-varnish-test-prometheus-0                      3/3     Running   0          3m7s
 varnish-test-grafana-9f584598d-89smp                      2/2     Running   0          3m8s
-varnish-test-varnish-varnish-1                1/1     Running   0          3m7s
+varnish-test-varnish-varnish-1                            1/1     Running   0          3m7s
 ```
 
 and the corresponding services created:
@@ -105,5 +105,5 @@ $ curl localhost:8080
 To uninstall the chart simply delete the chart:
 
 ```bash
-helm delete --purge varnish-test
+helm uninstall varnish-test
 ```

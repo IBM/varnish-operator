@@ -1,9 +1,5 @@
 name: Helm Chart
 
-env:
-  HELM2_VERSION: "v2.17.0"
-  HELM3_VERSION: "v3.5.2"
-
 on:
   release:
     types:
@@ -16,25 +12,14 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v2
-      - name: Install Helm3
+      - name: Get Helm
         run: |
-          curl -Lo ./helm.tar.gz https://get.helm.sh/helm-$HELM3_VERSION-linux-amd64.tar.gz
-          tar -zxvf ./helm.tar.gz && sudo mv linux-amd64/helm /usr/local/bin/helm
-          sudo chmod +x /usr/local/bin/helm
-          rm -rf helm.tar.gz linux-amd64/
-      - name: Helm3 lint
-        run: |
-          helm lint varnish-operator
-      - name: Helm3 Uninstall
-        run: |
-          sudo rm -rf /usr/local/bin/helm
-      - name: Install Helm2
-        run: |
-          curl -Lo ./helm.tar.gz https://get.helm.sh/helm-$HELM2_VERSION-linux-amd64.tar.gz
-          tar -zxvf ./helm.tar.gz && sudo mv linux-amd64/helm /usr/local/bin/helm
-          sudo chmod +x /usr/local/bin/helm
-          sudo rm -rf helm.tar.gz linux-amd64
-      - name: Helm2 lint
+          curl -Lo ./helm.tar.gz https://get.helm.sh/helm-v3.5.2-linux-amd64.tar.gz
+          mkdir -p bin
+          tar -zxvf ./helm.tar.gz && mv linux-amd64/helm bin/
+          rm helm.tar.gz
+          rm -rf linux-amd64
+      - name: Helm lint
         run: helm lint varnish-operator
       - name: Ensure helm-releases folder exists
         run: mkdir -p helm-releases
@@ -48,8 +33,7 @@ jobs:
           fi
       - name: Change versions
         run: |
-          mkdir -p bin
-          curl -Lo ./bin/yq https://github.com/mikefarah/yq/releases/download/3.4.1/yq_linux_amd64
+          curl -Lo ./bin/yq https://github.com/mikefarah/yq/releases/download/3.4.0/yq_linux_amd64
           chmod +x ./bin/yq
           ./bin/yq w -i varnish-operator/Chart.yaml 'appVersion' $VERSION
           ./bin/yq w -i varnish-operator/Chart.yaml 'version' $VERSION
@@ -61,8 +45,7 @@ jobs:
         run: |
           git config --global user.email ""
           git config --global user.name "Github Actions CI"
-          helm init --client-only
-          helm package varnish-operator --app-version $VERSION --version $VERSION --destination helm-releases
+          ./bin/helm package varnish-operator --app-version $VERSION --version $VERSION --destination helm-releases
           helm repo index helm-releases --url https://raw.githubusercontent.com/IBM/varnish-operator/main/helm-releases
           git add helm-releases/*
           git commit -a -m "Release $VERSION"

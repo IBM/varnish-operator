@@ -1,7 +1,6 @@
 package controller
 
-func generateGrafanaDashboardTemplate() string {
-	grafanaDashboardTemplate :=
+var grafanaDashboardTemplate =
 		`
 {
   "annotations": {
@@ -2403,5 +2402,3 @@ func generateGrafanaDashboardTemplate() string {
   "uid": "",
   "version": 1
 }`
-	return grafanaDashboardTemplate
-}

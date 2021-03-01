@@ -38,7 +38,7 @@ func (r *ReconcileVarnishCluster) reconcileGrafanaDashboard(ctx context.Context,
 	}
 
 	if instance.Spec.Monitoring.GrafanaDashboard.Title == "" {
-		instance.Spec.Monitoring.GrafanaDashboard.Title = fmt.Sprintf("Varnish (%s)", instance.Name)
+		instance.Spec.Monitoring.GrafanaDashboard.Title = fmt.Sprintf("Varnish (%s-%s)", instance.Namespace, instance.Name)
 	}
 
 	if instance.Spec.Monitoring.GrafanaDashboard.Namespace != "" {
@@ -197,7 +197,7 @@ func generateGrafanaDashboardData(instance *vcapi.VarnishCluster) (map[string]st
 		"Title": instance.Spec.Monitoring.GrafanaDashboard.Title,
 	}
 
-	t, err := template.New("GrafanaDashboard").Parse(generateGrafanaDashboardTemplate())
+	t, err := template.New("GrafanaDashboard").Parse(grafanaDashboardTemplate)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

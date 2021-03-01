@@ -85,7 +85,7 @@ var _ = Describe("grafana dashboard", func() {
 			var data map[string]interface{}
 			err = json.Unmarshal([]byte(dashboardString), &data)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(data["title"].(string)).To(Equal(fmt.Sprintf("Varnish (%s-%s)", newVC.Namespace, newVC.Name)))
+			Expect(data["title"].(string)).To(Equal(fmt.Sprintf("Varnish (%s/%s)", newVC.Namespace, newVC.Name)))
 
 			By("Owner reference should be set if the dashboard installed in the same namespace as VarnishCluster")
 			ownerReference := []metav1.OwnerReference{

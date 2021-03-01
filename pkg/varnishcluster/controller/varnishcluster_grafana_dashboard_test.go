@@ -2,10 +2,11 @@ package controller
 
 import (
 	"context"
-	"time"
-
+	"fmt"
 	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 	"github.com/ibm/varnish-operator/pkg/names"
+	"k8s.io/apimachinery/pkg/util/json"
+	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 
@@ -45,6 +46,7 @@ var _ = Describe("grafana dashboard", func() {
 			Monitoring: &vcapi.VarnishClusterMonitoring{
 				GrafanaDashboard: &vcapi.VarnishClusterMonitoringGrafanaDashboard{
 					Enabled:        true,
+					Title:          "",
 					Namespace:      "",
 					Labels:         map[string]string{"foo": "bar"},
 					DatasourceName: proto.String("Prometheus"),
@@ -60,7 +62,7 @@ var _ = Describe("grafana dashboard", func() {
 	})
 
 	Context("when varnishcluster is created and dashboard is enabled", func() {
-		It("should be created", func() {
+		It("should be created with default config", func() {
 			newVC := vc.DeepCopy()
 			err := k8sClient.Create(context.Background(), newVC)
 			Expect(err).ToNot(HaveOccurred())
@@ -77,6 +79,13 @@ var _ = Describe("grafana dashboard", func() {
 				vcapi.LabelVarnishUID:       string(newVC.UID),
 				"foo":                       "bar",
 			}))
+
+			By("Dashboard title should default to <cluster name> varnish")
+			dashboardString := dashboardCM.Data[names.GrafanaDashboardFile(newVC.Name)]
+			var data map[string]interface{}
+			err = json.Unmarshal([]byte(dashboardString), &data)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(data["title"].(string)).To(Equal(fmt.Sprintf("Varnish (%s/%s)", newVC.Namespace, newVC.Name)))
 
 			By("Owner reference should be set if the dashboard installed in the same namespace as VarnishCluster")
 			ownerReference := []metav1.OwnerReference{
@@ -146,6 +155,25 @@ var _ = Describe("grafana dashboard", func() {
 
 				return "Found"
 			}, time.Second*10).Should(Equal(metav1.StatusReasonNotFound), "The dashboard should be deleted")
+		})
+
+		It("should be created if dashboard title override specified", func() {
+			newVC := vc.DeepCopy()
+			newVC.Spec.Monitoring.GrafanaDashboard.Title = "Test Varnish Dashboard"
+			err := k8sClient.Create(context.Background(), newVC)
+			Expect(err).ToNot(HaveOccurred())
+
+			dashboardCM := &v1.ConfigMap{}
+			Eventually(func() error {
+				return k8sClient.Get(context.Background(), dashboardName, dashboardCM)
+			}, time.Second*5).Should(Succeed())
+
+			By("Dashboard title should be overridden")
+			dashboardString := dashboardCM.Data[names.GrafanaDashboardFile(newVC.Name)]
+			var data map[string]interface{}
+			err = json.Unmarshal([]byte(dashboardString), &data)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(data["title"].(string)).To(Equal(newVC.Spec.Monitoring.GrafanaDashboard.Title))
 		})
 	})
 })

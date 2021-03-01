@@ -1,6 +1,7 @@
 package controller
 
-var grafanaDashboardTemplate = `
+var grafanaDashboardTemplate =
+		`
 {
   "annotations": {
     "list": [
@@ -2397,8 +2398,7 @@ var grafanaDashboardTemplate = `
     ]
   },
   "timezone": "browser",
-  "title": "Varnish",
+  "title": "{{.Title}}",
   "uid": "",
   "version": 1
-}
-`
+}`

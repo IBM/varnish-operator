@@ -47,3 +47,7 @@ func ServiceMonitor(vcName string) string {
 func GrafanaDashboard(vcName string) string {
 	return vcName + "-grafana-dashboard"
 }
+
+func GrafanaDashboardFile(vcName string) string {
+	return vcName + "-dashboard.json"
+}

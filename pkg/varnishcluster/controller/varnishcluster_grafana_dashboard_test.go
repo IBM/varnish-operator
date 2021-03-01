@@ -81,10 +81,10 @@ var _ = Describe("grafana dashboard", func() {
 			}))
 
 			By("Dashboard title should default to <cluster name> varnish")
-			dashboardString := dashboardCM.Data[names.GrafanaDashboardJson(newVC.Name)]
+			dashboardString := dashboardCM.Data[names.GrafanaDashboardFile(newVC.Name)]
 			var data map[string]interface{}
 			_ = json.Unmarshal([]byte(dashboardString), &data)
-			Expect(data["title"].(string)).To(Equal(fmt.Sprintf("%s varnish", newVC.Name)))
+			Expect(data["title"].(string)).To(Equal(fmt.Sprintf("Varnish (%s)", newVC.Name)))
 
 			By("Owner reference should be set if the dashboard installed in the same namespace as VarnishCluster")
 			ownerReference := []metav1.OwnerReference{
@@ -168,7 +168,7 @@ var _ = Describe("grafana dashboard", func() {
 			}, time.Second*5).Should(Succeed())
 
 			By("Dashboard title should be overridden")
-			dashboardString := dashboardCM.Data[names.GrafanaDashboardJson(newVC.Name)]
+			dashboardString := dashboardCM.Data[names.GrafanaDashboardFile(newVC.Name)]
 			var data map[string]interface{}
 			_ = json.Unmarshal([]byte(dashboardString), &data)
 			Expect(data["title"].(string)).To(Equal(newVC.Spec.Monitoring.GrafanaDashboard.Title))

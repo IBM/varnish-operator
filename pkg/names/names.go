@@ -48,6 +48,6 @@ func GrafanaDashboard(vcName string) string {
 	return vcName + "-grafana-dashboard"
 }
 
-func GrafanaDashboardJson(vcName string) string {
+func GrafanaDashboardFile(vcName string) string {
 	return vcName + "-dashboard.json"
 }

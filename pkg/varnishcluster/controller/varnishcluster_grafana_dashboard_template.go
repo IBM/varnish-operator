@@ -1,10 +1,6 @@
 package controller
 
-import (
-	"github.com/ibm/varnish-operator/api/v1alpha1"
-)
-
-func generateGrafanaDashboardTemplate(vc *v1alpha1.VarnishCluster) string {
+func generateGrafanaDashboardTemplate() string {
 	grafanaDashboardTemplate :=
 		`
 {
@@ -2403,7 +2399,7 @@ func generateGrafanaDashboardTemplate(vc *v1alpha1.VarnishCluster) string {
     ]
   },
   "timezone": "browser",
-  "title": "`+vc.Spec.Monitoring.GrafanaDashboard.Title+`",
+  "title": "{{.Title}}",
   "uid": "",
   "version": 1
 }`

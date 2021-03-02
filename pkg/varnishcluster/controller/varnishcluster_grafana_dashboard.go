@@ -194,7 +194,8 @@ func (r *ReconcileVarnishCluster) createGrafanaDashboardConfigMap(instance *vcap
 func generateGrafanaDashboardData(instance *vcapi.VarnishCluster) (map[string]string, error) {
 	data := map[string]interface{}{
 		"DatasourceName": *instance.Spec.Monitoring.GrafanaDashboard.DatasourceName,
-		"Title": instance.Spec.Monitoring.GrafanaDashboard.Title,
+		"Title":          instance.Spec.Monitoring.GrafanaDashboard.Title,
+		"ServiceName":    instance.Name,
 	}
 
 	t, err := template.New("GrafanaDashboard").Parse(grafanaDashboardTemplate)

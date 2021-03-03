@@ -196,6 +196,7 @@ func generateGrafanaDashboardData(instance *vcapi.VarnishCluster) (map[string]st
 		"DatasourceName": *instance.Spec.Monitoring.GrafanaDashboard.DatasourceName,
 		"Title":          instance.Spec.Monitoring.GrafanaDashboard.Title,
 		"ServiceName":    instance.Name,
+		"Namespace":      instance.Namespace,
 	}
 
 	t, err := template.New("GrafanaDashboard").Parse(grafanaDashboardTemplate)

@@ -103,7 +103,7 @@ var grafanaDashboardTemplate = `
       "tableColumn": "Value",
       "targets": [
         {
-          "expr": "avg(\n  (\n    rate(varnish_main_cache_hit{service=\"{{.ServiceName}}\", instance=~\"^($varnish_instance).*\"}[1m]) / (rate(varnish_main_cache_hit{service=\"{{.ServiceName}}\", instance=~\"^($varnish_instance).*\"}[1m]) + rate(varnish_main_cache_miss{service=\"{{.ServiceName}}\", instance=~\"^($varnish_instance).*\"}[1m]))\n  )\n)",
+          "expr": "avg(\n  (\n    rate(varnish_main_cache_hit{service=\"{{.ServiceName}}\", pod=~\"^($varnish_pod).*\", namespace=\"{{.Namespace}}\"}[1m]) / (rate(varnish_main_cache_hit{service=\"{{.ServiceName}}\", pod=~\"^($varnish_pod).*\", namespace=\"{{.Namespace}}\"}[1m]) + rate(varnish_main_cache_miss{service=\"{{.ServiceName}}\", pod=~\"^($varnish_pod).*\", namespace=\"{{.Namespace}}\"}[1m]))\n  )\n)",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -193,7 +193,7 @@ var grafanaDashboardTemplate = `
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(irate(varnish_main_cache_hit{service=\"{{.ServiceName}}\", instance=~\"^($varnish_instance).*\"}[1m])) + sum(irate(varnish_main_cache_miss{service=\"{{.ServiceName}}\", instance=~\"^($varnish_instance).*\"}[1m]))",
+          "expr": "sum(irate(varnish_main_cache_hit{service=\"{{.ServiceName}}\", pod=~\"^($varnish_pod).*\", namespace=\"{{.Namespace}}\"}[1m])) + sum(irate(varnish_main_cache_miss{service=\"{{.ServiceName}}\", pod=~\"^($varnish_pod).*\", namespace=\"{{.Namespace}}\"}[1m]))",
           "format": "time_series",
           "hide": false,
           "interval": "15s",
@@ -284,7 +284,7 @@ var grafanaDashboardTemplate = `
       "tableColumn": "frontend_for",
       "targets": [
         {
-          "expr": "sum(irate(varnish_main_sessions_total{service=\"{{.ServiceName}}\", instance=~\"^($varnish_instance).*\"}[1m]))",
+          "expr": "sum(irate(varnish_main_sessions_total{service=\"{{.ServiceName}}\", pod=~\"^($varnish_pod).*\", namespace=\"{{.Namespace}}\"}[1m]))",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -374,7 +374,7 @@ var grafanaDashboardTemplate = `
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(irate(varnish_main_cache_hit{service=\"{{.ServiceName}}\", instance=~\"^($varnish_instance).*\"}[1m]))",
+          "expr": "sum(irate(varnish_main_cache_hit{service=\"{{.ServiceName}}\", pod=~\"^($varnish_pod).*\", namespace=\"{{.Namespace}}\"}[1m]))",
           "format": "time_series",
           "interval": "15s",
           "intervalFactor": 1,
@@ -460,7 +460,7 @@ var grafanaDashboardTemplate = `
       "tableColumn": "",
       "targets": [
         {
-          "expr": "max(varnish_main_vmods{service=\"{{.ServiceName}}\", instance=~\"^($varnish_instance).*\"})",
+          "expr": "max(varnish_main_vmods{service=\"{{.ServiceName}}\", pod=~\"^($varnish_pod).*\", namespace=\"{{.Namespace}}\"})",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 2,
@@ -548,7 +548,7 @@ var grafanaDashboardTemplate = `
       "tableColumn": "__name__",
       "targets": [
         {
-          "expr": "min(varnish_main_uptime{service=\"{{.ServiceName}}\", instance=~\"^($varnish_instance).*\"})",
+          "expr": "min(varnish_main_uptime{service=\"{{.ServiceName}}\", pod=~\"^($varnish_pod).*\", namespace=\"{{.Namespace}}\"})",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "",
@@ -635,7 +635,7 @@ var grafanaDashboardTemplate = `
       "tableColumn": "version",
       "targets": [
         {
-          "expr": "varnish_version{service=\"{{.ServiceName}}\", instance=~\"^($varnish_instance).*\"}",
+          "expr": "varnish_version{service=\"{{.ServiceName}}\", pod=~\"^($varnish_pod).*\", namespace=\"{{.Namespace}}\"}",
           "format": "table",
           "intervalFactor": 2,
           "legendFormat": "",
@@ -709,7 +709,7 @@ var grafanaDashboardTemplate = `
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(irate(varnish_main_cache_hit{ service=\"{{.ServiceName}}\" }[1m])) + sum(irate(varnish_main_cache_miss{ service=\"{{.ServiceName}}\" }[1m]))",
+          "expr": "sum(irate(varnish_main_cache_hit{ service=\"{{.ServiceName}}\", namespace=\"{{.Namespace}}\" }[1m])) + sum(irate(varnish_main_cache_miss{ service=\"{{.ServiceName}}\", namespace=\"{{.Namespace}}\" }[1m]))",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -798,14 +798,14 @@ var grafanaDashboardTemplate = `
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(irate(varnish_main_cache_hit{ service=\"{{.ServiceName}}\" }[1m]))",
+          "expr": "sum(irate(varnish_main_cache_hit{ service=\"{{.ServiceName}}\", namespace=\"{{.Namespace}}\" }[1m]))",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "cache hits",
           "refId": "A"
         },
         {
-          "expr": "sum(irate(varnish_main_cache_miss{ service=\"{{.ServiceName}}\" }[1m]))",
+          "expr": "sum(irate(varnish_main_cache_miss{ service=\"{{.ServiceName}}\", namespace=\"{{.Namespace}}\" }[1m]))",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "cache misses",
@@ -893,7 +893,7 @@ var grafanaDashboardTemplate = `
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(irate(varnish_main_thread_queue_len{ service=\"{{.ServiceName}}\" }[1m]))",
+          "expr": "sum(irate(varnish_main_thread_queue_len{ service=\"{{.ServiceName}}\", namespace=\"{{.Namespace}}\" }[1m]))",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "queued requests",
@@ -994,7 +994,7 @@ var grafanaDashboardTemplate = `
       "steppedLine": true,
       "targets": [
         {
-          "expr": "avg(rate(varnish_main_cache_hit{service=\"{{.ServiceName}}\", instance=~\"^($varnish_instance).*\"}[1m]) / (rate(varnish_main_cache_miss{service=\"{{.ServiceName}}\", instance=~\"^($varnish_instance).*\"}[1m])+rate(varnish_main_cache_hit{service=\"{{.ServiceName}}\", instance=~\"^($varnish_instance).*\"}[1m])))",
+          "expr": "avg(rate(varnish_main_cache_hit{service=\"{{.ServiceName}}\", pod=~\"^($varnish_pod).*\", namespace=\"{{.Namespace}}\"}[1m]) / (rate(varnish_main_cache_miss{service=\"{{.ServiceName}}\", pod=~\"^($varnish_pod).*\", namespace=\"{{.Namespace}}\"}[1m])+rate(varnish_main_cache_hit{service=\"{{.ServiceName}}\", pod=~\"^($varnish_pod).*\", namespace=\"{{.Namespace}}\"}[1m])))",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -1004,7 +1004,7 @@ var grafanaDashboardTemplate = `
           "step": 240
         },
         {
-          "expr": "avg(1 - (rate(varnish_main_cache_hit{service=\"{{.ServiceName}}\", instance=~\"^($varnish_instance).*\"}[1m]) / (rate(varnish_main_cache_miss{service=\"{{.ServiceName}}\", instance=~\"^($varnish_instance).*\"}[1m])+rate(varnish_main_cache_hit{service=\"{{.ServiceName}}\", instance=~\"^($varnish_instance).*\"}[1m]))))",
+          "expr": "avg(1 - (rate(varnish_main_cache_hit{service=\"{{.ServiceName}}\", pod=~\"^($varnish_pod).*\", namespace=\"{{.Namespace}}\"}[1m]) / (rate(varnish_main_cache_miss{service=\"{{.ServiceName}}\", pod=~\"^($varnish_pod).*\", namespace=\"{{.Namespace}}\"}[1m])+rate(varnish_main_cache_hit{service=\"{{.ServiceName}}\", pod=~\"^($varnish_pod).*\", namespace=\"{{.Namespace}}\"}[1m]))))",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -1094,7 +1094,7 @@ var grafanaDashboardTemplate = `
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(irate(varnish_main_cache_hitpass{ service=\"{{.ServiceName}}\" }[1m]))",
+          "expr": "sum(irate(varnish_main_cache_hitpass{ service=\"{{.ServiceName}}\", namespace=\"{{.Namespace}}\" }[1m]))",
           "format": "time_series",
           "hide": true,
           "intervalFactor": 1,
@@ -1183,7 +1183,7 @@ var grafanaDashboardTemplate = `
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(irate(varnish_main_req_dropped{ service=\"{{.ServiceName}}\" }[1m]))",
+          "expr": "sum(irate(varnish_main_req_dropped{ service=\"{{.ServiceName}}\", namespace=\"{{.Namespace}}\" }[1m]))",
           "format": "time_series",
           "instant": false,
           "intervalFactor": 1,
@@ -1286,7 +1286,7 @@ var grafanaDashboardTemplate = `
       "steppedLine": false,
       "targets": [
         {
-          "expr": "varnish_sma_g_bytes{service=\"{{.ServiceName}}\", type=\"s0\"}",
+          "expr": "varnish_sma_g_bytes{service=\"{{.ServiceName}}\", type=\"s0\", namespace=\"{{.Namespace}}\"}",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{"{{pod}}"}}",
@@ -1402,7 +1402,7 @@ var grafanaDashboardTemplate = `
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(irate(varnish_main_n_expired{service=\"{{.ServiceName}}\", instance=~\"^($varnish_instance).*\"}[1m]))",
+          "expr": "sum(irate(varnish_main_n_expired{service=\"{{.ServiceName}}\", pod=~\"^($varnish_pod).*\", namespace=\"{{.Namespace}}\"}[1m]))",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 2,
@@ -1412,7 +1412,7 @@ var grafanaDashboardTemplate = `
           "step": 240
         },
         {
-          "expr": "sum(irate(varnish_main_n_lru_moved{service=\"{{.ServiceName}}\", instance=~\"^($varnish_instance).*\"}[1m]))",
+          "expr": "sum(irate(varnish_main_n_lru_moved{service=\"{{.ServiceName}}\", pod=~\"^($varnish_pod).*\", namespace=\"{{.Namespace}}\"}[1m]))",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 2,
@@ -1421,7 +1421,7 @@ var grafanaDashboardTemplate = `
           "step": 240
         },
         {
-          "expr": "sum(irate(varnish_main_n_lru_nuked{service=\"{{.ServiceName}}\", instance=~\"^($varnish_instance).*\"}[1m]))",
+          "expr": "sum(irate(varnish_main_n_lru_nuked{service=\"{{.ServiceName}}\", pod=~\"^($varnish_pod).*\", namespace=\"{{.Namespace}}\"}[1m]))",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 2,
@@ -1430,7 +1430,7 @@ var grafanaDashboardTemplate = `
           "step": 240
         },
         {
-          "expr": "sum(varnish_sma_g_bytes{service=\"{{.ServiceName}}\", type=\"s0\", instance=~\"^($varnish_instance).*\"})",
+          "expr": "sum(varnish_sma_g_bytes{service=\"{{.ServiceName}}\", type=\"s0\", pod=~\"^($varnish_pod).*\", namespace=\"{{.Namespace}}\"})",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "mem used",
@@ -1517,7 +1517,7 @@ var grafanaDashboardTemplate = `
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(irate(varnish_main_n_expired{ service=\"{{.ServiceName}}\" }[1m]))",
+          "expr": "sum(irate(varnish_main_n_expired{ service=\"{{.ServiceName}}\", namespace=\"{{.Namespace}}\" }[1m]))",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "expired objects",
@@ -1635,7 +1635,7 @@ var grafanaDashboardTemplate = `
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(irate(varnish_main_s_resp_hdrbytes{service=\"{{.ServiceName}}\", instance=~\"^($varnish_instance).*\"}[1m]) + irate(varnish_main_s_resp_bodybytes{service=\"{{.ServiceName}}\", instance=~\"^($varnish_instance).*\"}[1m]))",
+          "expr": "sum(irate(varnish_main_s_resp_hdrbytes{service=\"{{.ServiceName}}\", pod=~\"^($varnish_pod).*\", namespace=\"{{.Namespace}}\"}[1m]) + irate(varnish_main_s_resp_bodybytes{service=\"{{.ServiceName}}\", pod=~\"^($varnish_pod).*\", namespace=\"{{.Namespace}}\"}[1m]))",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -1645,7 +1645,7 @@ var grafanaDashboardTemplate = `
           "step": 60
         },
         {
-          "expr": "sum(irate(varnish_backend_beresp_hdrbytes{service=\"{{.ServiceName}}\", instance=~\"^($varnish_instance).*\"}[1m]) + irate(varnish_backend_beresp_bodybytes{service=\"{{.ServiceName}}\", instance=~\"^($varnish_instance).*\"}[1m]))",
+          "expr": "sum(irate(varnish_backend_beresp_hdrbytes{service=\"{{.ServiceName}}\", pod=~\"^($varnish_pod).*\", namespace=\"{{.Namespace}}\"}[1m]) + irate(varnish_backend_beresp_bodybytes{service=\"{{.ServiceName}}\", pod=~\"^($varnish_pod).*\", namespace=\"{{.Namespace}}\"}[1m]))",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -1656,7 +1656,7 @@ var grafanaDashboardTemplate = `
           "step": 60
         },
         {
-          "expr": "sum(irate(varnish_backend_beresp_hdrbytes{service=\"{{.ServiceName}}\", instance=~\"^($varnish_instance).*\"}[1m]) + irate(varnish_backend_beresp_bodybytes{service=\"{{.ServiceName}}\", instance=~\"^($varnish_instance).*\"}[1m])) by (backend)",
+          "expr": "sum(irate(varnish_backend_beresp_hdrbytes{service=\"{{.ServiceName}}\", pod=~\"^($varnish_pod).*\", namespace=\"{{.Namespace}}\"}[1m]) + irate(varnish_backend_beresp_bodybytes{service=\"{{.ServiceName}}\", pod=~\"^($varnish_pod).*\", namespace=\"{{.Namespace}}\"}[1m])) by (backend)",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "backend {{"{{ backend }}"}}",
@@ -1743,7 +1743,7 @@ var grafanaDashboardTemplate = `
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(irate(varnish_main_n_lru_nuked{ service=\"{{.ServiceName}}\" }[1m]))",
+          "expr": "sum(irate(varnish_main_n_lru_nuked{ service=\"{{.ServiceName}}\", namespace=\"{{.Namespace}}\" }[1m]))",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "nuked",
@@ -1845,7 +1845,7 @@ var grafanaDashboardTemplate = `
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(irate(varnish_main_busy_sleep{ service=\"{{.ServiceName}}\" }[1m]))",
+          "expr": "sum(irate(varnish_main_busy_sleep{ service=\"{{.ServiceName}}\", namespace=\"{{.Namespace}}\" }[1m]))",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "requests",
@@ -1932,7 +1932,7 @@ var grafanaDashboardTemplate = `
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(irate(varnish_main_backend_retry{ service=\"{{.ServiceName}}\" }[1m]))",
+          "expr": "sum(irate(varnish_main_backend_retry{ service=\"{{.ServiceName}}\", namespace=\"{{.Namespace}}\" }[1m]))",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "retries ",
@@ -2020,7 +2020,7 @@ var grafanaDashboardTemplate = `
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(irate(varnish_main_threads_limited{ service=\"{{.ServiceName}}\" }[1m]))",
+          "expr": "sum(irate(varnish_main_threads_limited{ service=\"{{.ServiceName}}\", namespace=\"{{.Namespace}}\" }[1m]))",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "threads",
@@ -2107,7 +2107,7 @@ var grafanaDashboardTemplate = `
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(irate(varnish_main_sessions{ service=\"{{.ServiceName}}\" }[1m])) by (type)",
+          "expr": "sum(irate(varnish_main_sessions{ service=\"{{.ServiceName}}\", namespace=\"{{.Namespace}}\" }[1m])) by (type)",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -2196,7 +2196,7 @@ var grafanaDashboardTemplate = `
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(varnish_main_thread_queue_len{ service=\"{{.ServiceName}}\" })",
+          "expr": "sum(varnish_main_thread_queue_len{ service=\"{{.ServiceName}}\", namespace=\"{{.Namespace}}\" })",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "queue",
@@ -2283,7 +2283,7 @@ var grafanaDashboardTemplate = `
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(irate(varnish_main_fetch{ service=\"{{.ServiceName}}\" }[1m])) by (type)",
+          "expr": "sum(irate(varnish_main_fetch{ service=\"{{.ServiceName}}\", namespace=\"{{.Namespace}}\", namespace=\"{{.Namespace}}\" }[1m])) by (type)",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{"{{type}}"}}",
@@ -2341,20 +2341,26 @@ var grafanaDashboardTemplate = `
       {
         "allValue": null,
         "current": {
+          "selected": false,
           "text": "All",
           "value": "$__all"
         },
-        "datasource": "{{.DatasourceName}}",
-        "definition": "label_values(varnish_up{ service=\"{{.ServiceName}}\" }, instance)",
+        "datasource": "Prometheus-varnish",
+        "definition": "label_values(varnish_up{ service=\"{{.ServiceName}}\", namespace=\"{{.Namespace}}\", namespace=\"{{.Namespace}}\" }, pod)",
+        "description": null,
+        "error": null,
         "hide": 0,
         "includeAll": true,
-        "label": "Instance",
+        "label": "Pod",
         "multi": false,
-        "name": "varnish_instance",
+        "name": "varnish_pod",
         "options": [],
-        "query": "",
+        "query": {
+          "query": "label_values(varnish_up{ service=\"{{.ServiceName}}\", namespace=\"{{.Namespace}}\", namespace=\"{{.Namespace}}\" }, pod)",
+          "refId": "StandardVariableQuery"
+        },
         "refresh": 1,
-        "regex": "/^(.*):/",
+        "regex": "",
         "skipUrlSync": false,
         "sort": 1,
         "tagValuesQuery": "",

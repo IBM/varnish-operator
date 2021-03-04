@@ -1,8 +1,8 @@
-FROM golang:1.14-buster AS builder
+FROM golang:1.15-buster AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive INSTALL_DIRECTORY=/usr/local/bin
 
-RUN apt-get update && apt-get install -y --no-install-recommends git curl
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends git curl
 
 WORKDIR /go/src/github.com/ibm/varnish-operator
 

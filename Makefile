@@ -42,7 +42,7 @@ uninstall:
 manifests:
 	# CRD apiextensions.k8s.io/v1
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=varnish-operator output:rbac:none paths="./..." output:crd:artifacts:config=config/crd/bases
-	kustomize build ${ROOT_DIR}config/crd > $(ROOT_DIR)varnish-operator/templates/crds/varnishcluster.yaml
+	kustomize build ${ROOT_DIR}config/crd > $(ROOT_DIR)varnish-operator/crds/varnishcluster.yaml
 
 	# ClusterRole
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=varnish-operator paths="./..." output:crd:none output:rbac:stdout > $(ROOT_DIR)varnish-operator/templates/clusterrole.yaml
@@ -138,7 +138,7 @@ docker-tag-push-pod: docker-tag-push-varnish docker-tag-push-varnish-exporter do
 # download controller-gen if necessary
 controller-gen:
 ifeq (, $(shell which controller-gen))
-	go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.2.5
+	go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.5.0
 CONTROLLER_GEN=$(GOBIN)/controller-gen
 else
 CONTROLLER_GEN=$(shell which controller-gen)

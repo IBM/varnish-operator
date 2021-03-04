@@ -6,13 +6,11 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/labels"
-
-	"go.uber.org/zap/zapcore"
-
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/caarlos0/env/v6"
 	"github.com/pkg/errors"
+	"go.uber.org/zap/zapcore"
 )
 
 const VCLConfigDir = "/etc/varnish"

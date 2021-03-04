@@ -44,70 +44,63 @@ const (
 )
 
 func SetupVarnishReconciler(ctx context.Context, vcCtrl reconcile.Reconciler, mgr manager.Manager, reconcileChan chan event.GenericEvent) error {
-	clusterRoleBindingEventHandler := &handler.EnqueueRequestsFromMapFunc{ToRequests: handler.ToRequestsFunc(
-		func(a handler.MapObject) []ctrl.Request {
-			cr, ok := a.Object.(*rbac.ClusterRoleBinding)
-			if !ok {
-				return nil
-			}
+	clusterRoleBindingEventHandler := handler.EnqueueRequestsFromMapFunc(func(a client.Object) []ctrl.Request {
+		cr, ok := a.(*rbac.ClusterRoleBinding)
+		if !ok {
+			return nil
+		}
 
-			if cr.Annotations[annotationVarnishClusterNamespace] == "" {
-				return nil
-			}
+		if cr.Annotations[annotationVarnishClusterNamespace] == "" {
+			return nil
+		}
 
-			if cr.Annotations[annotationVarnishClusterName] == "" {
-				return nil
-			}
+		if cr.Annotations[annotationVarnishClusterName] == "" {
+			return nil
+		}
 
-			return []ctrl.Request{
-				{NamespacedName: types.NamespacedName{
-					Name:      cr.Annotations[annotationVarnishClusterName],
-					Namespace: cr.Annotations[annotationVarnishClusterNamespace],
-				}},
-			}
-		}),
-	}
+		return []ctrl.Request{
+			{NamespacedName: types.NamespacedName{
+				Name:      cr.Annotations[annotationVarnishClusterName],
+				Namespace: cr.Annotations[annotationVarnishClusterNamespace],
+			}},
+		}
+	})
 
-	clusterRoleEventHandler := &handler.EnqueueRequestsFromMapFunc{ToRequests: handler.ToRequestsFunc(
-		func(a handler.MapObject) []ctrl.Request {
-			cr, ok := a.Object.(*rbac.ClusterRole)
-			if !ok {
-				return nil
-			}
+	clusterRoleEventHandler := handler.EnqueueRequestsFromMapFunc(func(a client.Object) []ctrl.Request {
+		cr, ok := a.(*rbac.ClusterRole)
+		if !ok {
+			return nil
+		}
 
-			if cr.Annotations[annotationVarnishClusterNamespace] == "" {
-				return nil
-			}
+		if cr.Annotations[annotationVarnishClusterNamespace] == "" {
+			return nil
+		}
 
-			if cr.Annotations[annotationVarnishClusterName] == "" {
-				return nil
-			}
+		if cr.Annotations[annotationVarnishClusterName] == "" {
+			return nil
+		}
 
-			return []ctrl.Request{
-				{NamespacedName: types.NamespacedName{
-					Name:      cr.Annotations[annotationVarnishClusterName],
-					Namespace: cr.Annotations[annotationVarnishClusterNamespace],
-				}},
-			}
-		}),
-	}
+		return []ctrl.Request{
+			{NamespacedName: types.NamespacedName{
+				Name:      cr.Annotations[annotationVarnishClusterName],
+				Namespace: cr.Annotations[annotationVarnishClusterNamespace],
+			}},
+		}
+	})
 
 	vcPodsSelector := labels.SelectorFromSet(map[string]string{vcapi.LabelVarnishComponent: vcapi.VarnishComponentVarnish})
-	varnishClusterPodsEventHandler := &handler.EnqueueRequestsFromMapFunc{
-		ToRequests: handler.ToRequestsFunc(
-			func(a handler.MapObject) []ctrl.Request {
-				if !vcPodsSelector.Matches(labels.Set(a.Meta.GetLabels())) {
-					return nil
-				}
+	varnishClusterPodsEventHandler := handler.EnqueueRequestsFromMapFunc(func(a client.Object) []ctrl.Request {
+		if !vcPodsSelector.Matches(labels.Set(a.GetLabels())) {
+			return nil
+		}
 
-				return []ctrl.Request{
-					{NamespacedName: types.NamespacedName{
-						Name:      a.Meta.GetLabels()[vcapi.LabelVarnishOwner],
-						Namespace: a.Meta.GetNamespace(),
-					}},
-				}
-			}),
-	}
+		return []ctrl.Request{
+			{NamespacedName: types.NamespacedName{
+				Name:      a.GetLabels()[vcapi.LabelVarnishOwner],
+				Namespace: a.GetNamespace(),
+			}},
+		}
+	})
 
 	builder := ctrl.NewControllerManagedBy(mgr)
 	builder.Named("varnishcluster")
@@ -128,9 +121,9 @@ func SetupVarnishReconciler(ctx context.Context, vcCtrl reconcile.Reconciler, mg
 	err := mgr.GetClient().List(ctx, serviceMonitorList)
 	if err != nil {
 		if _, ok := errors.Cause(err).(*meta.NoKindMatchError); ok {
-			logger.FromContext(ctx).Warnf("Can't watch ServiceMonitor. ServiceMonitor Kind is not found. Prometheus operator needs to be installed first.", err)
+			logger.FromContext(ctx).Warn("Can't watch ServiceMonitor. ServiceMonitor Kind is not found. Prometheus operator needs to be installed first.", err)
 		} else {
-			logger.FromContext(ctx).Errorf("Can't watch ServiceMonitor: %s", err)
+			logger.FromContext(ctx).Error("Can't watch ServiceMonitor: %s", err)
 			//the return is intentionally omitted. Better work without that watch than not at all
 		}
 	} else {
@@ -182,9 +175,7 @@ func NewVarnishReconciler(mgr manager.Manager, cfg *config.Config, logr *logger.
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles;rolebindings;clusterroles;clusterrolebindings,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups=monitoring.coreos.com,resources=servicemonitors,verbs=list;watch;create;update;delete
 
-func (r *ReconcileVarnishCluster) Reconcile(request ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
-
+func (r *ReconcileVarnishCluster) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	logr := r.logger.With(logger.FieldVarnishCluster, request.Name)
 	logr = logr.With(logger.FieldNamespace, request.Namespace)
 	ctx = logger.ToContext(ctx, logr)

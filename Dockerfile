@@ -1,4 +1,4 @@
-FROM golang:1.14-buster AS builder
+FROM golang:1.15-buster AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive INSTALL_DIRECTORY=/usr/local/bin
 

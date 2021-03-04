@@ -34,7 +34,7 @@ func (q *ReconcileTriggerer) TriggerAfter(key string, triggerAfter time.Duration
 		q.Unlock()
 		q.logger.Debugf("Triggering reconcile")
 		q.reconcileChan <- event.GenericEvent{
-			Meta: instance,
+			Object: instance,
 		}
 	})
 	q.Lock()

@@ -1,4 +1,4 @@
-apiVersion: admissionregistration.k8s.io/v1beta1
+apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
   name: varnish-operator-webhook-configuration
@@ -22,3 +22,5 @@ webhooks:
       - UPDATE
       resources:
       - varnishclusters
+    admissionReviewVersions: ["v1", "v1beta1"]
+    sideEffects: None

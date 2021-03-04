@@ -2346,7 +2346,7 @@ var grafanaDashboardTemplate = `
           "value": "$__all"
         },
         "datasource": "Prometheus-varnish",
-        "definition": "label_values(varnish_up{ service=\"{{.ServiceName}}\", namespace=\"{{.Namespace}}\", namespace=\"{{.Namespace}}\" }, pod)",
+        "definition": "label_values(varnish_up{ service=\"{{.ServiceName}}\", namespace=\"{{.Namespace}}\" }, pod)",
         "description": null,
         "error": null,
         "hide": 0,
@@ -2356,7 +2356,7 @@ var grafanaDashboardTemplate = `
         "name": "varnish_pod",
         "options": [],
         "query": {
-          "query": "label_values(varnish_up{ service=\"{{.ServiceName}}\", namespace=\"{{.Namespace}}\", namespace=\"{{.Namespace}}\" }, pod)",
+          "query": "label_values(varnish_up{ service=\"{{.ServiceName}}\", namespace=\"{{.Namespace}}\" }, pod)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 1,

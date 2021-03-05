@@ -2283,7 +2283,7 @@ var grafanaDashboardTemplate = `
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(irate(varnish_main_fetch{ service=\"{{.ServiceName}}\", namespace=\"{{.Namespace}}\", namespace=\"{{.Namespace}}\" }[1m])) by (type)",
+          "expr": "sum(irate(varnish_main_fetch{ service=\"{{.ServiceName}}\", namespace=\"{{.Namespace}}\" }[1m])) by (type)",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{"{{type}}"}}",
@@ -2345,7 +2345,7 @@ var grafanaDashboardTemplate = `
           "text": "All",
           "value": "$__all"
         },
-        "datasource": "Prometheus-varnish",
+        "datasource": "{{.DatasourceName}}",
         "definition": "label_values(varnish_up{ service=\"{{.ServiceName}}\", namespace=\"{{.Namespace}}\" }, pod)",
         "description": null,
         "error": null,

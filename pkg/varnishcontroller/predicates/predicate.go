@@ -36,7 +36,7 @@ func NewVarnishControllerPredicate(clusterUID types.UID, endpointsSelectors []la
 func (p *varnishControllerPredicate) Create(e event.CreateEvent) bool {
 	switch v := e.Object.(type) {
 	case *v1alpha1.VarnishCluster:
-		if e.Meta.GetUID() != p.clusterUID {
+		if e.Object.GetUID() != p.clusterUID {
 			return false
 		}
 	case *v1.Endpoints:
@@ -45,7 +45,7 @@ func (p *varnishControllerPredicate) Create(e event.CreateEvent) bool {
 		}
 	}
 
-	p.logger.Debugf("Create event for resource %T: %s/%s", e.Object, e.Meta.GetNamespace(), e.Meta.GetName())
+	p.logger.Debugf("Create event for resource %T: %s/%s", e.Object, e.Object.GetNamespace(), e.Object.GetName())
 	return true
 }
 
@@ -57,7 +57,7 @@ func (p *varnishControllerPredicate) Delete(e event.DeleteEvent) bool {
 		return false
 	}
 
-	p.logger.Debugf("Delete event for resource %T: %s/%s", e.Object, e.Meta.GetNamespace(), e.Meta.GetName())
+	p.logger.Debugf("Delete event for resource %T: %s/%s", e.Object, e.Object.GetNamespace(), e.Object.GetName())
 	return true
 }
 
@@ -78,14 +78,14 @@ func (p *varnishControllerPredicate) Update(e event.UpdateEvent) bool {
 		}
 	}
 
-	p.logger.Debugf("Update event for resource %T: %s/%s", e.ObjectNew, e.MetaNew.GetNamespace(), e.MetaNew.GetName())
+	p.logger.Debugf("Update event for resource %T: %s/%s", e.ObjectNew, e.ObjectNew.GetNamespace(), e.ObjectNew.GetName())
 	return true
 }
 
 func (p *varnishControllerPredicate) Generic(e event.GenericEvent) bool {
 	switch endpoint := e.Object.(type) {
 	case *v1alpha1.VarnishCluster:
-		if e.Meta.GetUID() != p.clusterUID {
+		if e.Object.GetUID() != p.clusterUID {
 			return false
 		}
 	case *v1.Endpoints:
@@ -94,14 +94,14 @@ func (p *varnishControllerPredicate) Generic(e event.GenericEvent) bool {
 		}
 	}
 
-	p.logger.Debugf("Generic event for resource %T: %s/%s", e.Object, e.Meta.GetNamespace(), e.Meta.GetName())
+	p.logger.Debugf("Generic event for resource %T: %s/%s", e.Object, e.Object.GetNamespace(), e.Object.GetName())
 	return true
 }
 
 func (p *varnishControllerPredicate) allowVarnishClusterUpdateEvent(e event.UpdateEvent) bool {
 	newCluster := e.ObjectNew.(*v1alpha1.VarnishCluster)
 	oldCluster := e.ObjectOld.(*v1alpha1.VarnishCluster)
-	if e.MetaNew.GetUID() != p.clusterUID || e.MetaOld.GetUID() != p.clusterUID {
+	if e.ObjectNew.GetUID() != p.clusterUID || e.ObjectOld.GetUID() != p.clusterUID {
 		return false
 	}
 

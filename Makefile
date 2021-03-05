@@ -138,7 +138,7 @@ docker-tag-push-pod: docker-tag-push-varnish docker-tag-push-varnish-exporter do
 # download controller-gen if necessary
 controller-gen:
 ifeq (, $(shell which controller-gen))
-	go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.2.5
+	go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.5.0
 CONTROLLER_GEN=$(GOBIN)/controller-gen
 else
 CONTROLLER_GEN=$(shell which controller-gen)

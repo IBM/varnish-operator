@@ -74,6 +74,7 @@ var waitGroup = &sync.WaitGroup{}                 //waits until the reconcile lo
 var reconcileChan = make(chan event.GenericEvent) //can be used to send manually reconcile events. Useful for testing.
 var shutdown = false                              //to track if the shutdown process has been started. Used for graceful shutdown
 var operatorConfig = &config.Config{CoupledVarnishImage: testCoupledVarnishImage}
+var ctx = context.Background()
 
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -91,7 +92,7 @@ var _ = BeforeSuite(func(done Done) {
 	logf.SetLogger(zapr.NewLogger(logr.Desugar()))
 
 	logf.SetLogger(zap.New(func(o *zap.Options) {
-		o.DestWritter = destWriter
+		o.DestWriter = destWriter
 	}))
 
 	By("bootstrapping test environment")
@@ -143,12 +144,12 @@ var _ = AfterSuite(func() {
 })
 
 func SetupTestReconcile(inner reconcile.Reconciler) reconcile.Reconciler {
-	fn := reconcile.Func(func(req reconcile.Request) (reconcile.Result, error) {
+	fn := reconcile.Func(func(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
 		if shutdown { // do not start reconcile events if we're shutting down. Otherwise those events will fail because of shut down apiserver
 			return reconcile.Result{}, nil
 		}
 		waitGroup.Add(1) //makes sure the in flight reconcile events are handled gracefully
-		result, err := inner.Reconcile(req)
+		result, err := inner.Reconcile(ctx, req)
 		waitGroup.Done()
 		return result, err
 	})
@@ -158,7 +159,7 @@ func SetupTestReconcile(inner reconcile.Reconciler) reconcile.Reconciler {
 func StartTestManager(mgr manager.Manager) chan struct{} {
 	stop := make(chan struct{})
 	go func() {
-		Expect(mgr.Start(stop)).NotTo(HaveOccurred())
+		Expect(mgr.Start(ctx)).NotTo(HaveOccurred())
 	}()
 	return stop
 }

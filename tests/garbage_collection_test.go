@@ -12,7 +12,6 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	policyv1beta1 "k8s.io/api/policy/v1beta1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/gogo/protobuf/proto"
@@ -114,13 +113,13 @@ var _ = Describe("Varnish Cluster", func() {
 	})
 })
 
-func expectResourceIsCreated(name types.NamespacedName, obj runtime.Object) {
+func expectResourceIsCreated(name types.NamespacedName, obj client.Object) {
 	Eventually(func() error {
 		return k8sClient.Get(context.Background(), name, obj)
 	}, time.Second*5).Should(Succeed(), fmt.Sprintf("%T %s expected to exist", obj, name))
 }
 
-func expectResourceIsDeleted(name types.NamespacedName, obj runtime.Object) {
+func expectResourceIsDeleted(name types.NamespacedName, obj client.Object) {
 	Eventually(func() metav1.StatusReason {
 		err := k8sClient.Get(context.Background(), name, obj)
 		if err != nil {

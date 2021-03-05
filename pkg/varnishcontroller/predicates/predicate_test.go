@@ -26,20 +26,6 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 		}.AsSelector(),
 	}
 
-	epTypeMeta := &v1.Endpoints{
-		ObjectMeta: v12.ObjectMeta{
-			Name:      "epName",
-			Namespace: "epNamespace",
-		},
-	}
-	vcTypeMeta := &v1alpha1.VarnishCluster{
-		ObjectMeta: v12.ObjectMeta{
-			Name:      "vcName",
-			Namespace: "vcNamespace",
-			UID:       clusterUID,
-		},
-	}
-
 	cases := []struct {
 		name              string
 		event             event.UpdateEvent
@@ -51,6 +37,8 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectOld: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
+						Name:      "epName",
+						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"app": "nginx",
 						},
@@ -88,6 +76,8 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectNew: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
+						Name:      "epName",
+						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"app": "nginx",
 						},
@@ -122,8 +112,6 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 						},
 					},
 				},
-				MetaNew: epTypeMeta,
-				MetaOld: epTypeMeta,
 			},
 			shouldBeProcessed: false,
 		},
@@ -133,6 +121,8 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectOld: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
+						Name:      "epName",
+						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"varnish-component": "varnish-service",
 							"varnish-owner":     "varnishcluster-example",
@@ -172,6 +162,8 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectNew: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
+						Name:      "epName",
+						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"varnish-component": "varnish-service",
 							"varnish-owner":     "varnishcluster-example",
@@ -208,8 +200,6 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 						},
 					},
 				},
-				MetaNew: epTypeMeta,
-				MetaOld: epTypeMeta,
 			},
 			shouldBeProcessed: false,
 		},
@@ -219,6 +209,8 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectOld: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
+						Name:      "epName",
+						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"app": "nginx",
 						},
@@ -256,6 +248,8 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectNew: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
+						Name:      "epName",
+						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"app": "nginx",
 						},
@@ -290,8 +284,6 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 						},
 					},
 				},
-				MetaNew: epTypeMeta,
-				MetaOld: epTypeMeta,
 			},
 			shouldBeProcessed: false,
 		},
@@ -301,6 +293,8 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectOld: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
+						Name:      "epName",
+						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"app": "nginx",
 						},
@@ -338,6 +332,8 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectNew: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
+						Name:      "epName",
+						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"app": "nginx",
 						},
@@ -367,8 +363,6 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 						},
 					},
 				},
-				MetaNew: epTypeMeta,
-				MetaOld: epTypeMeta,
 			},
 			shouldBeProcessed: true,
 		},
@@ -378,6 +372,8 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectOld: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
+						Name:      "epName",
+						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"app": "nginx",
 						},
@@ -415,6 +411,8 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectNew: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
+						Name:      "epName",
+						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"app": "nginx",
 						},
@@ -450,8 +448,6 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 						},
 					},
 				},
-				MetaNew: epTypeMeta,
-				MetaOld: epTypeMeta,
 			},
 			shouldBeProcessed: false,
 		},
@@ -461,6 +457,8 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectOld: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
+						Name:      "epName",
+						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"app": "nginx",
 						},
@@ -498,6 +496,8 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectNew: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
+						Name:      "epName",
+						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"app": "nginx",
 						},
@@ -527,8 +527,6 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 						},
 					},
 				},
-				MetaNew: epTypeMeta,
-				MetaOld: epTypeMeta,
 			},
 			shouldBeProcessed: true,
 		},
@@ -538,6 +536,8 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectNew: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
+						Name:      "epName",
+						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"app": "not-nginx",
 						},
@@ -546,22 +546,25 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectOld: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
+						Name:      "epName",
+						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"app": "not-nginx",
 						},
 					},
 				},
-				MetaNew: epTypeMeta,
-				MetaOld: epTypeMeta,
 			},
 			shouldBeProcessed: false,
 		},
 		{
-			name: "A event from correct VarnishCluster with changed backend labels should be processed",
+			name: "An event from correct VarnishCluster with changed backend labels should be processed",
 			event: event.UpdateEvent{
 				ObjectNew: &v1alpha1.VarnishCluster{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
+						Name:      "vcName",
+						Namespace: "vcNamespace",
+						UID:       clusterUID,
 						Labels: map[string]string{
 							"app": "varnish",
 						},
@@ -577,6 +580,9 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectOld: &v1alpha1.VarnishCluster{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
+						Name:      "vcName",
+						Namespace: "vcNamespace",
+						UID:       clusterUID,
 						Labels: map[string]string{
 							"app": "varnish",
 						},
@@ -589,17 +595,18 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 						},
 					},
 				},
-				MetaOld: vcTypeMeta,
-				MetaNew: vcTypeMeta,
 			},
 			shouldBeProcessed: true,
 		},
 		{
-			name: "A event from VarnishCluster with changed ConfigMap version should be processed",
+			name: "An event from VarnishCluster with changed ConfigMap version should be processed",
 			event: event.UpdateEvent{
 				ObjectNew: &v1alpha1.VarnishCluster{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
+						Name:      "vcName",
+						Namespace: "vcNamespace",
+						UID:       clusterUID,
 						Labels: map[string]string{
 							"app": "varnish",
 						},
@@ -620,6 +627,9 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectOld: &v1alpha1.VarnishCluster{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
+						Name:      "vcName",
+						Namespace: "vcNamespace",
+						UID:       clusterUID,
 						Labels: map[string]string{
 							"app": "varnish",
 						},
@@ -637,8 +647,6 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 						},
 					},
 				},
-				MetaOld: vcTypeMeta,
-				MetaNew: vcTypeMeta,
 			},
 			shouldBeProcessed: true,
 		},
@@ -648,6 +656,9 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectNew: &v1alpha1.VarnishCluster{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
+						Name:      "vcName",
+						Namespace: "vcNamespace",
+						UID:       clusterUID,
 						Labels: map[string]string{
 							"app": "varnish",
 						},
@@ -668,6 +679,9 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectOld: &v1alpha1.VarnishCluster{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
+						Name:      "vcName",
+						Namespace: "vcNamespace",
+						UID:       clusterUID,
 						Labels: map[string]string{
 							"app": "varnish",
 						},
@@ -685,17 +699,18 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 						},
 					},
 				},
-				MetaOld: vcTypeMeta,
-				MetaNew: vcTypeMeta,
 			},
 			shouldBeProcessed: false,
 		},
 		{
-			name: "A event from not corresponding VarnishCluster should not be processed",
+			name: "An event from not corresponding VarnishCluster should not be processed",
 			event: event.UpdateEvent{
 				ObjectNew: &v1alpha1.VarnishCluster{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
+						Name:      "vcName",
+						Namespace: "vcNamespace",
+						UID:       "differentUID",
 						Labels: map[string]string{
 							"app": "not-nginx",
 						},
@@ -704,42 +719,36 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 				ObjectOld: &v1alpha1.VarnishCluster{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
+						Name:      "vcName",
+						Namespace: "vcNamespace",
+						UID:       "differentUID",
 						Labels: map[string]string{
 							"app": "not-nginx",
 						},
-					},
-				},
-				MetaOld: &v1alpha1.VarnishCluster{
-					ObjectMeta: v12.ObjectMeta{
-						Name:      "vcName",
-						Namespace: "vcNamespace",
-						UID:       "differentUID",
-					},
-				},
-				MetaNew: &v1alpha1.VarnishCluster{
-					ObjectMeta: v12.ObjectMeta{
-						Name:      "vcName",
-						Namespace: "vcNamespace",
-						UID:       "differentUID",
 					},
 				},
 			},
 			shouldBeProcessed: false,
 		},
 		{
-			name: "Event with wrong object type for event.ObjectOld should not be processed",
+			name: "An event with wrong object type for event.ObjectOld should not be processed",
 			event: event.UpdateEvent{
-				ObjectOld: &v1.Pod{},
+				ObjectOld: &v1.Pod{
+					ObjectMeta: v12.ObjectMeta{
+						Name:      "epName",
+						Namespace: "epNamespace",
+					},
+				},
 				ObjectNew: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
+						Name:      "epName",
+						Namespace: "epNamespace",
 						Labels: map[string]string{
 							"app": "nginx",
 						},
 					},
 				},
-				MetaNew: epTypeMeta,
-				MetaOld: epTypeMeta,
 			},
 			shouldBeProcessed: false,
 		},
@@ -748,20 +757,13 @@ func TestVarnishControllerPredicate_Update(t *testing.T) {
 	for _, c := range cases {
 		epPredicate := NewVarnishControllerPredicate(clusterUID, epSelectors, nil)
 		if allowToProcess := epPredicate.Update(c.event); allowToProcess != c.shouldBeProcessed {
-			t.Fatalf("Test %q failed. Allowed to process %t, Should've been alllowed to process: %t", c.name, allowToProcess, c.shouldBeProcessed)
+			t.Fatalf("Test %q failed. Allowed to process %t. Should've been allowed to process: %t", c.name, allowToProcess, c.shouldBeProcessed)
 		}
 	}
 }
 
 func TestVarnishControllerPredicateCreateGeneric(t *testing.T) {
 	clusterUID := types.UID("varnishcluster-uid")
-	vcTypeMeta := &v1alpha1.VarnishCluster{
-		ObjectMeta: v12.ObjectMeta{
-			Name:      "vcName",
-			Namespace: "vcNamespace",
-			UID:       clusterUID,
-		},
-	}
 	epSelectors := []labels.Selector{
 		labels.Set{
 			"app": "nginx",
@@ -784,12 +786,14 @@ func TestVarnishControllerPredicateCreateGeneric(t *testing.T) {
 				Object: &v1alpha1.VarnishCluster{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
+						Name:      "vcName",
+						Namespace: "vcNamespace",
+						UID:       clusterUID,
 						Labels: map[string]string{
 							"app": "nginx",
 						},
 					},
 				},
-				Meta: vcTypeMeta,
 			},
 			shouldBeProcessed: true,
 		},
@@ -799,16 +803,12 @@ func TestVarnishControllerPredicateCreateGeneric(t *testing.T) {
 				Object: &v1alpha1.VarnishCluster{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
-						Labels: map[string]string{
-							"app": "nginx",
-						},
-					},
-				},
-				Meta: &v1alpha1.VarnishCluster{
-					ObjectMeta: v12.ObjectMeta{
 						Name:      "vcName",
 						Namespace: "vcNamespace",
 						UID:       "wrongUID",
+						Labels: map[string]string{
+							"app": "nginx",
+						},
 					},
 				},
 			},
@@ -819,13 +819,6 @@ func TestVarnishControllerPredicateCreateGeneric(t *testing.T) {
 			event: event.CreateEvent{
 				Object: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
-					ObjectMeta: v12.ObjectMeta{
-						Labels: map[string]string{
-							"wrong": "labels",
-						},
-					},
-				},
-				Meta: &v1.Endpoints{
 					ObjectMeta: v12.ObjectMeta{
 						Name:      "epName",
 						Namespace: "epNamespace",
@@ -843,13 +836,6 @@ func TestVarnishControllerPredicateCreateGeneric(t *testing.T) {
 				Object: &v1.Endpoints{
 					TypeMeta: v12.TypeMeta{},
 					ObjectMeta: v12.ObjectMeta{
-						Labels: map[string]string{
-							"app": "nginx",
-						},
-					},
-				},
-				Meta: &v1.Endpoints{
-					ObjectMeta: v12.ObjectMeta{
 						Name:      "epName",
 						Namespace: "epNamespace",
 						Labels: map[string]string{
@@ -865,11 +851,11 @@ func TestVarnishControllerPredicateCreateGeneric(t *testing.T) {
 	for _, c := range cases {
 		vcPredicate := NewVarnishControllerPredicate(clusterUID, epSelectors, logger.NewNopLogger())
 		if allowToProcess := vcPredicate.Create(c.event); allowToProcess != c.shouldBeProcessed {
-			t.Fatalf("Test %q failed for Create. Allowed to process %t, Should've been alllowed to process: %t", c.name, allowToProcess, c.shouldBeProcessed)
+			t.Fatalf("Test %q failed for Create. Allowed to process %t. Should've been allowed to process: %t", c.name, allowToProcess, c.shouldBeProcessed)
 		}
 		// the logic for Generic is the same as for Create so reuse the test cases
-		if allowToProcess := vcPredicate.Generic(event.GenericEvent{Meta: c.event.Meta, Object: c.event.Object}); allowToProcess != c.shouldBeProcessed {
-			t.Fatalf("Test %q failed for Generic. Allowed to process %t, Should've been alllowed to process: %t", c.name, allowToProcess, c.shouldBeProcessed)
+		if allowToProcess := vcPredicate.Generic(event.GenericEvent{Object: c.event.Object}); allowToProcess != c.shouldBeProcessed {
+			t.Fatalf("Test %q failed for Generic. Allowed to process %t. Should've been allowed to process: %t", c.name, allowToProcess, c.shouldBeProcessed)
 		}
 	}
 }
@@ -883,15 +869,13 @@ func TestVarnishControllerPredicate_Delete(t *testing.T) {
 		{
 			name: "Deleted endpoints shouldn't trigger and event",
 			event: event.DeleteEvent{
-				Meta:   &v1.Endpoints{},
 				Object: &v1.Endpoints{},
 			},
 			shouldBeProcessed: false,
 		},
 		{
-			name: "Deleted VarnishCLlusters shouldn't trigger and event",
+			name: "Deleted VarnishClusters shouldn't trigger and event",
 			event: event.DeleteEvent{
-				Meta:   &v1alpha1.VarnishCluster{},
 				Object: &v1alpha1.VarnishCluster{},
 			},
 			shouldBeProcessed: false,
@@ -899,8 +883,7 @@ func TestVarnishControllerPredicate_Delete(t *testing.T) {
 		{
 			name: "Other watched resources deletion should trigger an event",
 			event: event.DeleteEvent{
-				Object: &v1.Pod{},
-				Meta: &v1.Pod{
+				Object: &v1.Pod{
 					ObjectMeta: v12.ObjectMeta{
 						Name:      "testPod",
 						Namespace: "testNamespace",
@@ -915,8 +898,7 @@ func TestVarnishControllerPredicate_Delete(t *testing.T) {
 		epPredicate := NewVarnishControllerPredicate("someUID", []labels.Selector{}, logger.NewNopLogger())
 
 		if allowToProcess := epPredicate.Delete(c.event); allowToProcess != c.shouldBeProcessed {
-			t.Fatalf("Test %q failed for Delete. Allowed to process %t, Should've been alllowed to process: %t", c.name, allowToProcess, c.shouldBeProcessed)
+			t.Fatalf("Test %q failed for Delete. Allowed to process %t. Should've been allowed to process: %t", c.name, allowToProcess, c.shouldBeProcessed)
 		}
-
 	}
 }

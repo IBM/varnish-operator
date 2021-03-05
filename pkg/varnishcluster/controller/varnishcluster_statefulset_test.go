@@ -21,7 +21,7 @@ import (
 
 var _ = Describe("statefulset", func() {
 	validBackendPort := intstr.FromInt(8080)
-	vcNamespace := "defaults"
+	vcNamespace := "default"
 	vcName := "test"
 	objMeta := metav1.ObjectMeta{
 		Namespace: vcNamespace,

@@ -191,7 +191,7 @@ func (r *ReconcileVarnishCluster) createServiceMonitorObject(instance *vcapi.Var
 	}
 
 	matchLabels := map[string]interface{}{}
-	componentLabels := labels.ComponentLabels(instance, vcapi.VarnishComponentVarnish)
+	componentLabels := labels.ComponentLabels(instance, vcapi.VarnishComponentCacheService)
 	for key, value := range componentLabels {
 		matchLabels[key] = value
 	}

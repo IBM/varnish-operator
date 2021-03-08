@@ -10,7 +10,7 @@ spec:
     type: "OnDelete" #can be "OnDelete", "RollingUpdate" and "DelayedRollingUpdate"
   varnish:
     # path to image + tag
-    image: ibmcom/varnish:0.27.0
+    image: ibmcom/varnish:0.27.1
     imagePullPolicy: Always
     # restart policy used for Varnish containers
     restartPolicy: Always
@@ -30,7 +30,7 @@ spec:
     # and defines the container's resources allocation.
     controller:
       #  # path to image + tag to override, by default it refers to varnish.image with "-controller" suffix image.
-      image: ibmcom/varnish-controller:0.27.0
+      image: ibmcom/varnish-controller:0.27.1
       #  # imagePullPolicy controls how the varnish-controller image will be pulled for new containers
       #  imagePullPolicy: Always
       #  # Resources allocated to the Varnish controller container through Kubernetes.
@@ -46,7 +46,7 @@ spec:
 
     metricsExporter:
       #  # path to image + tag to override, by default it refers to varnish.image with "-metrics-exporter" suffix image.
-      image: ibmcom/varnish-metrics-exporter:0.27.0
+      image: ibmcom/varnish-metrics-exporter:0.27.1
       #  # imagePullPolicy controls how the varnish-metrics-exporter image will be pulled for new containers
       #  imagePullPolicy: Always
       #  # Resources allocated to the Varnish metrics exporter container through Kubernetes.

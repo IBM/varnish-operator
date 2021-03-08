@@ -173,7 +173,7 @@ func NewVarnishReconciler(mgr manager.Manager, cfg *config.Config, logr *logger.
 // +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups=policy,resources=poddisruptionbudgets,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles;rolebindings;clusterroles;clusterrolebindings,verbs=list;watch;create;update;delete
-// +kubebuilder:rbac:groups=monitoring.coreos.com,resources=servicemonitors,verbs=list;watch;create;update;delete
+// +kubebuilder:rbac:groups=monitoring.coreos.com,resources=servicemonitors,verbs=get;list;watch;create;update;delete
 
 func (r *ReconcileVarnishCluster) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	logr := r.logger.With(logger.FieldVarnishCluster, request.Name)

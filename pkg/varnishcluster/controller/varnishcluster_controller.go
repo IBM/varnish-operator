@@ -164,7 +164,8 @@ func NewVarnishReconciler(mgr manager.Manager, cfg *config.Config, logr *logger.
 // +kubebuilder:rbac:groups=caching.ibm.com,resources=varnishclusters,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups=caching.ibm.com,resources=varnishclusters/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=caching.ibm.com,resources=varnishclusters/finalizers,verbs=get;update;patch
-// +kubebuilder:rbac:groups="",resources=configmaps;secrets,verbs=get;list;watch;create;update
+// +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update
+// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;delete
 // +kubebuilder:rbac:groups="",resources=services;serviceaccounts,verbs=list;watch;create;update;delete
 // +kubebuilder:rbac:groups="",resources=endpoints,verbs=list;watch
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch

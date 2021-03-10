@@ -65,6 +65,8 @@ jobs:
         with:
           tags: ibmcom/varnish-controller:${{ steps.get_version.outputs.VERSION }}
           file: ./Dockerfile.controller
+          build-args: |
+            VERSION=${{ steps.get_version.outputs.VERSION }}
           push: ${{ github.event_name == 'release' && github.event.action == 'created' }}
   varnish-metrics-exporter:
     runs-on: ubuntu-latest

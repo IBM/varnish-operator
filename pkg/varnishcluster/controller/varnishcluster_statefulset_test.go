@@ -101,7 +101,7 @@ var _ = Describe("statefulset", func() {
 			Expect(varnishContainer.Args).To(Equal([]string{
 				"-F",
 				"-S", "/etc/varnish-secret/secret",
-				"-T", "127.0.0.1:6082",
+				"-T", "0.0.0.0:6082",
 				"-a", "0.0.0.0:6081",
 				"-b", "127.0.0.1:0",
 			}))
@@ -161,7 +161,7 @@ var _ = Describe("statefulset", func() {
 				"-S",
 				"/etc/varnish-secret/secret",
 				"-T",
-				"127.0.0.1:6082",
+				"0.0.0.0:6082",
 				"-a",
 				"0.0.0.0:6081",
 				"-b",

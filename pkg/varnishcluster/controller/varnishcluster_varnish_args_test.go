@@ -33,7 +33,7 @@ func TestGetSanitizedVarnishArgs(t *testing.T) {
 			expectedResult: []string{
 				"-F",
 				"-S", "/etc/varnish-secret/secret",
-				"-T", fmt.Sprintf("127.0.0.1:%d", v1alpha1.VarnishAdminPort),
+				"-T", fmt.Sprintf("0.0.0.0:%d", v1alpha1.VarnishAdminPort),
 				"-a", fmt.Sprintf("0.0.0.0:%d", v1alpha1.VarnishPort),
 				"-b", "127.0.0.1:0",
 			},
@@ -49,7 +49,7 @@ func TestGetSanitizedVarnishArgs(t *testing.T) {
 			expectedResult: []string{
 				"-F",
 				"-S", "/etc/varnish-secret/secret",
-				"-T", fmt.Sprintf("127.0.0.1:%d", v1alpha1.VarnishAdminPort),
+				"-T", fmt.Sprintf("0.0.0.0:%d", v1alpha1.VarnishAdminPort),
 				"-a", fmt.Sprintf("0.0.0.0:%d", v1alpha1.VarnishPort),
 				"-b", "127.0.0.1:0",
 			},
@@ -65,7 +65,7 @@ func TestGetSanitizedVarnishArgs(t *testing.T) {
 			expectedResult: []string{
 				"-F",
 				"-S", "/etc/varnish-secret/secret",
-				"-T", fmt.Sprintf("127.0.0.1:%d", v1alpha1.VarnishAdminPort),
+				"-T", fmt.Sprintf("0.0.0.0:%d", v1alpha1.VarnishAdminPort),
 				"-a", fmt.Sprintf("0.0.0.0:%d", v1alpha1.VarnishPort),
 				"-b", "127.0.0.1:0",
 			},
@@ -81,7 +81,7 @@ func TestGetSanitizedVarnishArgs(t *testing.T) {
 			expectedResult: []string{
 				"-F",
 				"-S", "/etc/varnish-secret/secret",
-				"-T", fmt.Sprintf("127.0.0.1:%d", v1alpha1.VarnishAdminPort),
+				"-T", fmt.Sprintf("0.0.0.0:%d", v1alpha1.VarnishAdminPort),
 				"-a", fmt.Sprintf("0.0.0.0:%d", v1alpha1.VarnishPort),
 				"-b", "127.0.0.1:0",
 			},
@@ -97,7 +97,7 @@ func TestGetSanitizedVarnishArgs(t *testing.T) {
 			expectedResult: []string{
 				"-F",
 				"-S", "/etc/varnish-secret/secret",
-				"-T", fmt.Sprintf("127.0.0.1:%d", v1alpha1.VarnishAdminPort),
+				"-T", fmt.Sprintf("0.0.0.0:%d", v1alpha1.VarnishAdminPort),
 				"-a", fmt.Sprintf("0.0.0.0:%d", v1alpha1.VarnishPort),
 				"-b", "127.0.0.1:0",
 				"-p", "default_grace=3600",
@@ -115,7 +115,7 @@ func TestGetSanitizedVarnishArgs(t *testing.T) {
 			expectedResult: []string{
 				"-F",
 				"-S", "/etc/varnish-secret/secret",
-				"-T", fmt.Sprintf("127.0.0.1:%d", v1alpha1.VarnishAdminPort),
+				"-T", fmt.Sprintf("0.0.0.0:%d", v1alpha1.VarnishAdminPort),
 				"-a", fmt.Sprintf("0.0.0.0:%d", v1alpha1.VarnishPort),
 				"-b", "127.0.0.1:0",
 				"-p", "default_grace=3600",

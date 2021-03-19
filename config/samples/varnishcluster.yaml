@@ -12,8 +12,6 @@ spec:
     # path to image + tag
     image: ibmcom/varnish:0.27.1
     imagePullPolicy: Always
-    # restart policy used for Varnish containers
-    restartPolicy: Always
     # Resources allocated to the Varnish pod through Kubernetes. It is strongly recommended that you specify resources,
     # since Varnish is an in-memory cache, and you do not want it restarting frequently.
     #resources:

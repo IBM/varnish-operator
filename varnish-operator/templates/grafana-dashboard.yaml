@@ -644,7 +644,7 @@ data:
         },
         "yaxes": [
         {
-          "format": "s",
+          "format": "percent",
           "label": null,
           "logBase": 1,
           "max": null,

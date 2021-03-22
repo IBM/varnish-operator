@@ -15,6 +15,12 @@ The repo includes an [example helm chart](https://github.com/IBM/varnish-operato
 After you have the [operator installed](installation.md), clone the repo and install the helm chart.
 
 ```bash
+$ #install operator with monitoring enabled
+$ helm install varnish-operator varnish-operator/varnish-operator --wait \
+--set monitoring.grafanaDashboard.enabled=true \
+--set monitoring.grafanaDashboard.datasourceName="Prometheus-varnish-operator" \
+--set monitoring.prometheusServiceMonitor.enabled=true \
+--set monitoring.prometheusServiceMonitor.labels.app=varnish-operator
 $ git clone https://github.com/IBM/varnish-operator.git
 $ cd varnish-operator/config/samples/helm-charts/varnish-operator-monitoring
 $ helm dep build
@@ -49,15 +55,15 @@ One of the metrics can be used to setup alerts when the provided VCL failed to c
 
 ### VarnishCluster with Monitoring Stack Example
 
-The repo has a Helm chart example that installs a simple VarnishCluster with Prometheus and Grafana configured to monitor it. The chart depends on the Prometheus operator so it has to be installed first. 
+The repo has a Helm chart example that installs a simple backend with VarnishCluster to cache it amd Prometheus with Grafana configured to monitor it. The chart depends on the Prometheus operator so it has to be installed first. 
 
-It can be installed by cloning the repo and installing the chart with necessary backend configs:
+It can be installed by cloning the repo and installing the chart:
 
 ```bash
 $ git clone https://github.com/IBM/varnish-operator.git
 $ cd varnish-operator/config/samples/helm-charts/varnishcluster-with-monitoring
 $ helm dep build
-$ helm install --name varnish-test . --set varnish.backendsSelector.app=nginx --set varnish.backendsPort=80
+$ helm install --name varnish-test .
 ```
 
 Port forward the Grafana pod to see the dashboard:

@@ -14,7 +14,7 @@ data:
         {
           "datasource": "{{ required "Field .Values.monitoring.grafanaDashboard.datasourceName is required" .Values.monitoring.grafanaDashboard.datasourceName }}",
           "enable": true,
-          "expr": "up{service=\"varnish-operator\"} unless (up{service=\"varnish-operator\"} offset 1m)",
+          "expr": "up{service=\"varnish-operator-service\", namespace=\"{{.Release.Namespace}}\"} unless (up{service=\"varnish-operator-service\", namespace=\"{{.Release.Namespace}}\"} offset 1m)",
           "hide": false,
           "iconColor": "rgba(255, 96, 96, 1)",
           "limit": 100,
@@ -86,7 +86,7 @@ data:
         "steppedLine": false,
         "targets": [
         {
-          "expr": "sum(rate(controller_runtime_reconcile_total[1m])) by (result)",
+          "expr": "sum(rate(controller_runtime_reconcile_total{service=\"varnish-operator-service\", namespace=\"{{.Release.Namespace}}\"}[1m])) by (result)",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -176,7 +176,7 @@ data:
         "steppedLine": false,
         "targets": [
         {
-          "expr": "sum(rate(controller_runtime_reconcile_time_seconds_count[1m]))",
+          "expr": "sum(rate(controller_runtime_reconcile_time_seconds_count{service=\"varnish-operator-service\", namespace=\"{{.Release.Namespace}}\"}[1m]))",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "",
@@ -263,7 +263,7 @@ data:
         "steppedLine": false,
         "targets": [
         {
-          "expr": "sum(rate(rest_client_requests_total[1m])) by (code, method)",
+          "expr": "sum(rate(rest_client_requests_total{service=\"varnish-operator-service\", namespace=\"{{.Release.Namespace}}\"}[1m])) by (code, method)",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{"{{ code }}"}} {{"{{ method }}"}}",
@@ -353,7 +353,7 @@ data:
         "steppedLine": false,
         "targets": [
         {
-          "expr": "sum(irate(rest_client_request_latency_seconds_sum[1m])) by (url, verb)",
+          "expr": "sum(irate(rest_client_request_latency_seconds_sum{service=\"varnish-operator-service\", namespace=\"{{.Release.Namespace}}\"}[1m])) by (url, verb)",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -441,7 +441,7 @@ data:
         "steppedLine": false,
         "targets": [
         {
-          "expr": "sum(workqueue_depth)",
+          "expr": "sum(workqueue_depth{service=\"varnish-operator-service\", namespace=\"{{.Release.Namespace}}\"})",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "",
@@ -528,7 +528,7 @@ data:
         "steppedLine": false,
         "targets": [
         {
-          "expr": "sum(irate(workqueue_retries_total[1m]))",
+          "expr": "sum(irate(workqueue_retries_total{service=\"varnish-operator-service\", namespace=\"{{.Release.Namespace}}\"}[1m]))",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "retries",
@@ -617,7 +617,7 @@ data:
         "steppedLine": false,
         "targets": [
         {
-          "expr": "irate(process_cpu_seconds_total[1m])",
+          "expr": "irate(process_cpu_seconds_total{service=\"varnish-operator-service\", namespace=\"{{.Release.Namespace}}\"}[1m])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{"{{ pod }}"}} ({{"{{ instance }}"}})",
@@ -704,7 +704,7 @@ data:
         "steppedLine": false,
         "targets": [
         {
-          "expr": "process_resident_memory_bytes",
+          "expr": "process_resident_memory_bytes{service=\"varnish-operator-service\", namespace=\"{{.Release.Namespace}}\"}",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{"{{ pod }}"}} ({{"{{ instance }}"}})",
@@ -792,7 +792,7 @@ data:
         "steppedLine": false,
         "targets": [
         {
-          "expr": "sum(rate(controller_runtime_webhook_latency_seconds_count[1m])) by (webhook)",
+          "expr": "sum(rate(controller_runtime_webhook_latency_seconds_count{service=\"varnish-operator-service\", namespace=\"{{.Release.Namespace}}\"}[1m])) by (webhook)",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{"{{ webhook }}"}}",
@@ -879,7 +879,7 @@ data:
         "steppedLine": false,
         "targets": [
         {
-          "expr": "sum(rate(controller_runtime_webhook_requests_total[1m])) by (webhook)",
+          "expr": "sum(rate(controller_runtime_webhook_requests_total{service=\"varnish-operator-service\", namespace=\"{{.Release.Namespace}}\"}[1m])) by (webhook)",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{"{{ webhook }}"}}",
@@ -972,7 +972,7 @@ data:
         "steppedLine": false,
         "targets": [
         {
-          "expr": "sum(rate(controller_runtime_reconcile_errors_total[1m]))",
+          "expr": "sum(rate(controller_runtime_reconcile_errors_total{service=\"varnish-operator-service\", namespace=\"{{.Release.Namespace}}\"}[1m]))",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "errors",

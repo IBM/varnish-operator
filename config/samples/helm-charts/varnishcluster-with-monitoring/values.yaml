@@ -1,6 +1,6 @@
 grafana:
   admin:
-    existingSecret: grafana-admin-password
+    existingSecret: varnishcluster-grafana-admin-password
   sidecar:
     datasources:
       enabled: true

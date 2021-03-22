@@ -4,7 +4,7 @@
 
 grafana:
   admin:
-    existingSecret: grafana-admin-password
+    existingSecret: varnish-operator-grafana-admin-password
   sidecar:
     datasources:
       enabled: true

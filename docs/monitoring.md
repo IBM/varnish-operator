@@ -55,7 +55,7 @@ One of the metrics can be used to setup alerts when the provided VCL failed to c
 
 ### VarnishCluster with Monitoring Stack Example
 
-The repo has a Helm chart example that installs a simple backend with VarnishCluster to cache it amd Prometheus with Grafana configured to monitor it. The chart depends on the Prometheus operator so it has to be installed first. 
+The repo has a Helm chart example that installs a simple backend and VarnishCluster to cache requests. Additionally, it installs Prometheus with a pre-configured Grafana instance to monitor it. This chart depends on the Prometheus operator so it must be installed first. 
 
 It can be installed by cloning the repo and installing the chart:
 

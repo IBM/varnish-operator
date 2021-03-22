@@ -10,7 +10,6 @@ spec:
   serviceMonitorSelector:
     matchLabels:
       app: varnish-operator
-      tier: monitoring
   serviceAccountName: {{ .Release.Name }}-prometheus
   resources:
     requests:

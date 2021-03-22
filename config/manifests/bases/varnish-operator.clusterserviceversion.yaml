@@ -7,7 +7,7 @@ metadata:
     categories: Networking
     certified: "false"
     containerImage: ibmcom/varnish-operator:0.26.0
-    createdAt: "2021-02-15"
+    createdAt: 2021-02-15T11:15:31+0000
     description: Run and manage Varnish clusters on Kubernetes
     repository: https://github.com/IBM/varnish-operator
     support: https://ibm.github.io/varnish-operator/

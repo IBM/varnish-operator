@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{.Release.Name}}-backend
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: backend
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: hashicorp/http-echo
+          args:
+            - "-text"
+            - "Hello world!"
+          ports:
+            - containerPort: 5678
+              name: backend

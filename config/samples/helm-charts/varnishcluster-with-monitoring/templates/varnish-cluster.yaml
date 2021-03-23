@@ -11,7 +11,16 @@ spec:
     entrypointFileName: entrypoint.vcl
   backend:
     selector:
-      {{ toYaml .Values.varnish.backendsSelector | nindent 6 }}
-    port: {{ .Values.varnish.backendsPort }}
+      app: backend
+    port: backend
   service:
     port: 80
+  monitoring:
+    prometheusServiceMonitor:
+      enabled: true
+      scrapeInterval: 35s
+      labels:
+        app: varnish
+    grafanaDashboard:
+      enabled: true
+      datasourceName: Prometheus-varnish

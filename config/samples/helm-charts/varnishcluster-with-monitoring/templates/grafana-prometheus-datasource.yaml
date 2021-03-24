@@ -6,7 +6,7 @@ metadata:
   labels:
     grafana_datasource: "1"
 data:
-  datasource.yaml: |-
+  {{ .Release.Name }}-datasource.yaml: |-
     apiVersion: 1
 
     datasources:

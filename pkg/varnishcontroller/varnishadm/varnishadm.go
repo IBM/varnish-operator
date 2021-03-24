@@ -17,6 +17,8 @@ const (
 	VCLStatusAvailable = "available"
 	//VCLStatusActive - VCL configuration is active now
 	VCLStatusActive = "active"
+	//VCLStatusDiscarded - VCL configuration is discarded but still in use by in-flight requests
+	VCLStatusDiscarded = "discarded"
 	//VCLTemperatureCold - vanish VCL "temperature"
 	VCLTemperatureCold = "cold"
 	//VCLTemperatureWarm for preloaded varnish's VCL

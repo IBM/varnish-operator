@@ -27,6 +27,8 @@ jobs:
         with:
           tags: ibmcom/varnish-operator:${{ steps.get_version.outputs.VERSION }}
           file: ./Dockerfile
+          build-args: |
+            VERSION=${{ steps.get_version.outputs.VERSION }}
           push: ${{ github.event_name == 'release' && github.event.action == 'created' }} #push only on release
   varnishd:
     runs-on: ubuntu-latest

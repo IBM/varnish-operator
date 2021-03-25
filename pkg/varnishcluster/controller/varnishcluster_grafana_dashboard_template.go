@@ -1856,7 +1856,7 @@ var grafanaDashboardTemplate = `
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Requests sent to sleep sleep per seconds",
+      "title": "Requests sent to sleep per seconds",
       "tooltip": {
         "shared": true,
         "sort": 0,

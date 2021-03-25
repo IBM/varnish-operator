@@ -92,6 +92,30 @@ For more automated solution use `kubectl rollout restart statefulset <sts-name>`
 
 Simply calling `kubectl delete` on the `VarnishCluster` will recursively delete all dependent resources, so that is the only action you need to take. This includes a user-generated ConfigMap, as the VarnishCluster will take ownership of that ConfigMap after creation. Deleting any of the dependent resources will trigger the operator to recreate that resource, in the same way that deleting the Pod of a Deployment will trigger the recreation of that Pod.
 
+### Accessing the management interface
+
+In case you have the need to control varnish through the management interface, it is available at port `6082`.
+
+From your application you can connect to the Varnish pod using its DNS name: `<pod-name>.<varnishcluster-name>-headless-service.<namespace>.svc.cluster.local:6082`.
+For example, if your `VarnishCluster` is named `example`, you can connect to the first pod with the following command:
+
+```bash
+$ varnishadm -T example-varnish-0.example-headless-service.default.svc.cluster.local:6082 -S /etc/varnish-secret/secret
+200
+-----------------------------
+Varnish Cache CLI 1.0
+-----------------------------
+Linux,5.8.0-45-generic,x86_64,-jnone,-sdefault,-sdefault,-hcritbit
+varnish-6.1.1 revision efc2f6c1536cf2272e471f5cff5f145239b19460
+
+Type 'help' for command list.
+Type 'quit' to close CLI session.
+
+varnish>
+```
+
+You will need to specify the authentication secret file. It can be found in the `<varnishcluster-name>-varnish-secret` secret by default which can be mounted into your pod.
+
 ### Topology-aware load balancing
 
 The Varnish controller is capable of discovering the cluster's geographical topology by reading its node labels, specifically `topology.kubernetes.io/zone` (or `failure-domain.beta.kubernetes.io/zone` which deprecated but still may be in use). Knowing cluster topology empowers the operator to control how traffic to the application backends is distributed. Currently the topology information is used to change an application backend's priority by changing its weight, so **local** backends (located in the same zone as Varnish pod) can be preferred over **remote** backends (located in other zones related to Varnish pod location). Such a configuration may not only reduce cross-zone traffic and therefore its cost, but potentially can reduce Varnish to backend latency. However, this functionality have some limitations. At this moment, only the Random Director can accept weight as backend parameter.

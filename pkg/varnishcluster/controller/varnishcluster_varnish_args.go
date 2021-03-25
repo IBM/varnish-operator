@@ -23,7 +23,7 @@ func getSanitizedVarnishArgs(spec *vcapi.VarnishClusterSpec) []string {
 		{"-a", fmt.Sprintf("0.0.0.0:%d", vcapi.VarnishPort)},
 		{"-S", "/etc/varnish-secret/secret"},
 		{"-b", "127.0.0.1:0"}, //start a varnishd without predefined backend. It has to be overridden by settings from ConfigMap
-		{"-T", fmt.Sprintf("127.0.0.1:%d", vcapi.VarnishAdminPort)},
+		{"-T", fmt.Sprintf("0.0.0.0:%d", vcapi.VarnishAdminPort)},
 	}
 
 	rawArgs := spec.Varnish.Args

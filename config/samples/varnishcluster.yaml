@@ -6,12 +6,12 @@ spec:
   # The number of varnish instances to run. Default: 1
   replicas: 1
   # updateStrategy can be used to control the way Varnish pods will be updated. "OnDelete" is by default.
-  updateStrategy:
-    type: "OnDelete" #can be "OnDelete", "RollingUpdate" and "DelayedRollingUpdate"
+#  updateStrategy:
+#    type: "OnDelete" #can be "OnDelete", "RollingUpdate" and "DelayedRollingUpdate"
   varnish:
     # path to image + tag
-    image: ibmcom/varnish:0.27.2
-    imagePullPolicy: Always
+#    image: ibmcom/varnish:0.27.2
+#    imagePullPolicy: Always
     # Resources allocated to the Varnish pod through Kubernetes. It is strongly recommended that you specify resources,
     # since Varnish is an in-memory cache, and you do not want it restarting frequently.
     #resources:
@@ -26,9 +26,9 @@ spec:
     args: ["-p", "default_ttl=3600", "-p", "default_grace=3600"]
     # varnish's controller - an optional definiton for the pod. It allows override default image name and pull policy
     # and defines the container's resources allocation.
-    controller:
+#    controller:
       #  # path to image + tag to override, by default it refers to varnish.image with "-controller" suffix image.
-      image: ibmcom/varnish-controller:0.27.2
+#      image: ibmcom/varnish-controller:0.27.2
       #  # imagePullPolicy controls how the varnish-controller image will be pulled for new containers
       #  imagePullPolicy: Always
       #  # Resources allocated to the Varnish controller container through Kubernetes.
@@ -42,9 +42,9 @@ spec:
     # varnish's metrics exporter - an optional definiton for the pod. It allows override default image name and pull policy
     # and defines the container's resources allocation.
 
-    metricsExporter:
+#    metricsExporter:
       #  # path to image + tag to override, by default it refers to varnish.image with "-metrics-exporter" suffix image.
-      image: ibmcom/varnish-metrics-exporter:0.27.2
+#      image: ibmcom/varnish-metrics-exporter:0.27.2
       #  # imagePullPolicy controls how the varnish-metrics-exporter image will be pulled for new containers
       #  imagePullPolicy: Always
       #  # Resources allocated to the Varnish metrics exporter container through Kubernetes.
@@ -83,10 +83,10 @@ spec:
     #     remote: 10
   service:
     port: 80
-    metricsPort: 8080
-    type: ClusterIP # ClusterIP, LoadBalancer and NodePort are supported
-    annotations:
-      example: annotation
+#    metricsPort: 8080
+#    type: ClusterIP # ClusterIP, LoadBalancer and NodePort are supported
+#    annotations:
+#      example: annotation
   # Affinity configuration to apply to Varnish pods.
   # For more on affinity, see https://kubernetes.io/docs/concepts/configuration/assign-pod-node#affinity-and-anti-affinity
   #affinity:
@@ -143,4 +143,4 @@ spec:
   # logging level: "debug", "info", "warn", "error"
   #logLevel: info
   # logging encoder: "json", "console"
-  logFormat: console
+#  logFormat: console

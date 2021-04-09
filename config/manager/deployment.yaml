@@ -16,8 +16,6 @@ spec:
         operator: varnish-operator
     spec:
       serviceAccountName: varnish-operator
-      securityContext:
-        runAsUser: 65532
       containers:
         - image: controller:latest
           name: varnish-operator
@@ -44,7 +42,7 @@ spec:
             - name: LEADERELECTION_ENABLED
               value: "false"
             - name: CONTAINER_IMAGE
-              value: ibmcom/varnish-operator:0.26.0
+              value: ibmcom/varnish-operator:0.27.2
             - name: WEBHOOKS_ENABLED
               value: "false"
             - name: LOGLEVEL

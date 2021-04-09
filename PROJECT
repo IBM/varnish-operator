@@ -3,11 +3,16 @@ layout: go.kubebuilder.io/v3
 projectName: varnish-operator
 repo: github.com/ibm/varnish-operator
 resources:
-- crdVersion: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: ibm.com
   group: caching
   kind: VarnishCluster
+  path: github.com/ibm/varnish-operator/api/v1alpha1
   version: v1alpha1
-version: 3-alpha
+version: "3"
 plugins:
   manifests.sdk.operatorframework.io/v2: {}
   scorecard.sdk.operatorframework.io/v2: {}

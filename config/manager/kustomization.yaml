@@ -6,4 +6,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: ibmcom/varnish-operator
-  newTag: 0.26.0
+  newTag: 0.27.2

@@ -1,0 +1,7 @@
+namespace: varnish-operator
+namePrefix: varnish-operator-
+
+bases:
+- ../crd
+- ../rbac
+- ../manager

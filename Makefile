@@ -1,7 +1,7 @@
 # Image URL to use in all building/pushing image targets
 ROOT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 VERSION ?= "local"
-PUBLISH_IMG ?= varnish-operator:${VERSION}
+PUBLISH_IMG ?= ibmcom/varnish-operator:${VERSION}
 IMG ?= ${PUBLISH_IMG}-dev
 VARNISH_PUBLISH_IMG ?= varnish:${VERSION}
 VARNISH_IMG ?= ${VARNISH_PUBLISH_IMG}-dev
@@ -41,7 +41,7 @@ uninstall:
 # Generate manifests e.g. CRD, RBAC etc.
 manifests:
 	# CRD apiextensions.k8s.io/v1
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=varnish-operator output:rbac:none paths="./..." output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=varnish-operator paths="./..." output:crd:artifacts:config=config/crd/bases
 	kustomize build ${ROOT_DIR}config/crd > $(ROOT_DIR)varnish-operator/crds/varnishcluster.yaml
 
 	# ClusterRole
@@ -148,3 +148,20 @@ e2e-tests:
 	sh $(ROOT_DIR)hack/create_dev_cluster.sh
 	KUBECONFIG=$(ROOT_DIR)e2e-tests-kubeconfig go test ./tests
 	sh $(ROOT_DIR)hack/delete_dev_cluster.sh
+
+KUSTOMIZE = $(shell pwd)/bin/kustomize
+kustomize:
+	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
+
+# Generate bundle manifests and metadata, then validate generated files.
+.PHONY: bundle
+bundle: manifests kustomize
+	yq w -i config/manager/deployment.yaml 'spec.template.spec.containers(name==varnish-operator).env(name==CONTAINER_IMAGE).value' $(PUBLISH_IMG)
+	yq w -i config/manifests/bases/varnish-operator.clusterserviceversion.yaml 'metadata.annotations.containerImage' $(PUBLISH_IMG)
+	yq w -i config/manifests/bases/varnish-operator.clusterserviceversion.yaml 'metadata.annotations.createdAt' $(date +"%Y-%m-%d")
+	operator-sdk generate kustomize manifests -q
+	cd config/manager && $(KUSTOMIZE) edit set image controller=$(PUBLISH_IMG)
+	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
+	operator-sdk bundle validate ./bundle
+	cp Dockerfile.bundle ./bundle/Dockerfile
+	mv ./bundle ./$(VERSION)

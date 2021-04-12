@@ -38,9 +38,6 @@ jobs:
           ./bin/yq w -i varnish-operator/Chart.yaml 'appVersion' $VERSION
           ./bin/yq w -i varnish-operator/Chart.yaml 'version' $VERSION
           ./bin/yq w -i varnish-operator/values.yaml 'container.image' $(./bin/yq r varnish-operator/values.yaml 'container.image' | sed "s/:.*/:$VERSION/")
-          ./bin/yq w -i config/samples/varnishcluster.yaml 'spec.varnish.image' $(./bin/yq r config/samples/varnishcluster.yaml 'spec.varnish.image' | sed "s/:.*/:$VERSION/")
-          ./bin/yq w -i config/samples/varnishcluster.yaml 'spec.varnish.controller.image' $(./bin/yq r config/samples/varnishcluster.yaml 'spec.varnish.controller.image' | sed "s/:.*/:$VERSION/")
-          ./bin/yq w -i config/samples/varnishcluster.yaml 'spec.varnish.metricsExporter.image' $(./bin/yq r config/samples/varnishcluster.yaml 'spec.varnish.metricsExporter.image' | sed "s/:.*/:$VERSION/")
       - name: Package chart
         run: |
           git config --global user.email ""

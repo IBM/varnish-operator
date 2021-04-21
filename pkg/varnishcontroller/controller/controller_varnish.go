@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/ibm/varnish-operator/api/v1alpha1"
 	"github.com/ibm/varnish-operator/pkg/logger"
 	"github.com/ibm/varnish-operator/pkg/varnishcontroller/events"
@@ -58,11 +60,11 @@ func (r *ReconcileVarnish) reconcileVarnish(ctx context.Context, vc *v1alpha1.Va
 	// cleanup unused VCLs. It cleans up only VCLs created by varnish controller (those that start with our prefix)
 	for _, vclConfig := range configsList {
 		if vclConfig.Status == varnishadm.VCLStatusAvailable && strings.HasPrefix(vclConfig.Name, VCLVersionPrefix) {
-			err := r.varnish.Discard(vclConfig.Name)
-			if err != nil {
-				return errors.Wrapf(err, "Can't delete VCL config %q", vclConfig.Name)
+			if err := r.varnish.Discard(vclConfig.Name); err != nil {
+				logr.Error(fmt.Sprintf("Can't delete VCL config %q", vclConfig.Name), zap.Error(err))
+			} else {
+				cleanedUpVCLs++
 			}
-			cleanedUpVCLs++
 		}
 	}
 

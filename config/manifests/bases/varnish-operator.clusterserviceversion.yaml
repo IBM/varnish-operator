@@ -6,8 +6,8 @@ metadata:
     capabilities: Full Lifecycle
     categories: Networking
     certified: "false"
-    containerImage: ibmcom/varnish-operator:0.27.2
-    createdAt: 2021-02-15T11:15:31+0000
+    containerImage: ibmcom/varnish-operator:0.0.1-craig-test
+    createdAt: ""
     description: Run and manage Varnish clusters on Kubernetes
     repository: https://github.com/IBM/varnish-operator
     support: https://ibm.github.io/varnish-operator/

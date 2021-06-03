@@ -12,6 +12,11 @@ VARNISH_METRICS_IMG ?= ${VARNISH_METRICS_PUBLISH_IMG}-dev
 NAMESPACE ?= "default"
 CRD_OPTIONS ?= "crd:crdVersions=v1,trivialVersions=false"
 
+KUSTOMIZE = $(shell pwd)/bin/kustomize
+ifeq (, $(wildcard $KUSTOMIZE))
+  KUSTOMIZE = $(shell which kustomize)
+endif
+
 # all: test varnish-operator
 all: test varnish-operator varnish-controller
 
@@ -149,16 +154,20 @@ e2e-tests:
 	KUBECONFIG=$(ROOT_DIR)e2e-tests-kubeconfig go test ./tests
 	sh $(ROOT_DIR)hack/delete_dev_cluster.sh
 
-KUSTOMIZE = $(shell pwd)/bin/kustomize
 kustomize:
 	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
 
 # Generate bundle manifests and metadata, then validate generated files.
 .PHONY: bundle
 bundle: manifests kustomize
+ifeq ($(shell yq --version | cut -d" " -f3 | cut -d"." -f1), 3)
 	yq w -i config/manager/deployment.yaml 'spec.template.spec.containers(name==varnish-operator).env(name==CONTAINER_IMAGE).value' $(PUBLISH_IMG)
 	yq w -i config/manifests/bases/varnish-operator.clusterserviceversion.yaml 'metadata.annotations.containerImage' $(PUBLISH_IMG)
 	yq w -i config/manifests/bases/varnish-operator.clusterserviceversion.yaml 'metadata.annotations.createdAt' $(date +"%Y-%m-%d")
+else
+	yq e '(.spec.template.spec.containers[] | select(.name == "varnish-operator") | .env[] | select(.name == "CONTAINER_IMAGE") | .value) = "'$(PUBLISH_IMG)'"' -i config/manager/deployment.yaml
+	yq e '.metadata.annotations.containerImage = "'$(PUBLISH_IMG)'" | .metadata.annotations.createdAt = "'$(date +"%Y-%m-%d")'"' -i config/manifests/bases/varnish-operator.clusterserviceversion.yaml
+endif
 	operator-sdk generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(PUBLISH_IMG)
 	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)

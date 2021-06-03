@@ -103,6 +103,16 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 								},
 							},
 						},
+						{
+							Name: vcapi.HaproxyConfigVolume,
+							VolumeSource: v1.VolumeSource{
+								ConfigMap: &v1.ConfigMapVolumeSource{
+									LocalObjectReference: v1.LocalObjectReference{
+										Name: instance.Spec.HaproxySidecar.ConfigMapName,
+									},
+								},
+							},
+						},
 					},
 
 					Containers: []v1.Container{
@@ -249,6 +259,35 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 							TerminationMessagePath:   "/dev/termination-log",
 							TerminationMessagePolicy: v1.TerminationMessageReadFile,
 							ImagePullPolicy:          instance.Spec.Varnish.Controller.ImagePullPolicy,
+						},
+						//haproxy sidecar
+						{
+							Name: vcapi.HaproxyContainerName,
+							Image: instance.Spec.HaproxySidecar.Image,
+							ImagePullPolicy: instance.Spec.HaproxySidecar.ImagePullPolicy,
+							// apparently /healthz is only for haproxy-ingress
+							//ReadinessProbe: &v1.Probe{
+							//	Handler: v1.Handler{
+							//		HTTPGet: &v1.HTTPGetAction{
+							//			Port: intstr.FromInt(vcapi.HaproxyHealthCheckPort),
+							//			Path: "/healthz",
+							//			Scheme: v1.URISchemeHTTP,
+							//		},
+							//	},
+							//	TimeoutSeconds: 10,
+							//	PeriodSeconds: 10,
+							//	SuccessThreshold: 1,
+							//	FailureThreshold: 3,
+							//	InitialDelaySeconds: 10,
+							//},
+							Resources: *instance.Spec.HaproxySidecar.Resources,
+							VolumeMounts: []v1.VolumeMount{
+								{
+									Name: vcapi.HaproxyConfigVolume,
+									MountPath: vcapi.HaproxyConfigMountPath,
+									ReadOnly: true,
+								},
+							},
 						},
 					},
 					TerminationGracePeriodSeconds: proto.Int64(30),

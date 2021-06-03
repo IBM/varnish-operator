@@ -1,0 +1,29 @@
+apiVersion: caching.ibm.com/v1alpha1
+kind: VarnishCluster
+metadata:
+  name: varnishcluster-example
+spec:
+  vcl:
+    configMapName: test-vcl-config # name of the config map that will store your VCL files. Will be created if doesn't exist.
+    entrypointFileName: default.vcl # main file used by Varnish to compile the VCL code.
+  replicas: 3 # run 3 replicas of Varnish
+  backend:
+    port: 2034
+    selector:
+      app: varnish-backend # labels that identify your backend pods
+  service:
+    port: 80 # Varnish pods will be exposed on that port
+  monitoring:
+    prometheusServiceMonitor:
+      enabled: true
+      scrapeInterval: 5s
+      labels:
+        app: varnish
+    grafanaDashboard:
+      enabled: true
+      datasourceName: Prometheus
+  proxySidecar:
+    enabled: true
+    image: haproxytech/haproxy-debian:2.4
+    imagePullPolicy: IfNotPresent
+    configMapName: proxy-sidecar-config.yaml

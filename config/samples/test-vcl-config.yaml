@@ -1,0 +1,265 @@
+apiVersion: v1
+data:
+  backends.vcl.tmpl: |-
+    // This file is generated. Do not edit manually, as changes will be destroyed
+
+    // This file is generated. Do not edit manually, as changes will be destroyed
+
+    import directors;
+
+    // Backend nodes:
+    {{ if .Backends -}}
+    {{ range .Backends }}
+    backend {{ .PodName }} {
+      // backend {{ .PodName }} labels:
+      .host = "{{ .IP }}";
+      .port = "{{ $.TargetPort }}";
+    }
+    {{ end }}
+    {{- else -}}
+    // Without this dummy backend, varnish will not compile the code
+    // This is a dummy, and should not be used anywhere
+    backend dummy {
+      .host = "127.0.0.1";
+      .port = "0";
+    }
+    {{- end }}
+
+    probe heartbeat {
+      .request = "HEAD /heartbeat HTTP/1.1"
+          "Connection: close"
+          "Host: shard";
+      .interval = 1s;
+    }
+
+    // Varnish cluster nodes:
+    {{ range .VarnishNodes }}
+    backend {{ .PodName }} {
+      .host = "{{ .IP }}";
+      .port = "{{ $.VarnishPort }}";
+      .probe = heartbeat;
+    }
+    {{ end }}
+
+    // Create ACL with varnish cluster members
+    acl acl_cluster {
+      {{ range .VarnishNodes }}
+      "{{ .IP }}"/32;
+      {{ end }}
+    }
+
+    sub init_backends {
+      // The line  below is generated and creates a variable that is used to build custom logic
+      // when the user configured the backends incorrectly. E.g. return a custom error page that indicates the issue.
+      // only strings are allowed to be set globally
+      var.global_set("backendsFound", {{ if .Backends }}"true"{{ else }}"false"{{ end }});
+
+      new real = directors.round_robin();
+      {{- range .Backends }}
+      real.add_backend({{ .PodName }});
+      {{- end }}
+
+      new cluster = directors.shard();
+      {{ range .VarnishNodes }}
+      cluster.add_backend({{ .PodName }});
+      {{ end }}
+      cluster.set_rampup(0s);
+      cluster.set_warmup(0);
+      cluster.reconfigure();
+    }
+  default.vcl: |
+    vcl 4.0;
+
+    import std;
+    import var;
+    import blob;
+    include "backends.vcl";
+
+    sub vcl_init {
+      call init_backends;
+      return (ok);
+    }
+
+
+    sub vcl_recv {
+      # Validates placeid
+      if (req.url ~ "placeid=\w{0,8}&" || req.url ~ "id=\w{0,8}&type=placeid") {
+        return (synth(704, ""));
+      }
+
+      # Passthrough for /v3/location/heartbeat. When return (pass) from vcl_recv the request and subsequent response will be passed to and from the backend server. It won't be cached.
+      if (req.url == "/v3/location/heartbeat") {
+        return (pass);
+      }
+
+      if (remote.ip ~ acl_cluster) {
+        if (req.http.Host == "shard") {
+           if (req.url == "/heartbeat") {
+            return (synth(200));
+          }
+          return (synth(404));
+        }
+      }
+
+      // If backends are not configured correctly
+      if (!(var.global_get("backendsFound") == "true")) {
+        return(synth(503, "No backends configured"));
+      }
+
+      set req.backend_hint = cluster.backend(HASH);
+      set req.http.X-shard = req.backend_hint;
+
+      if (req.http.X-shard == server.identity || remote.ip ~ acl_cluster) {
+        set req.backend_hint = real.backend();
+      } else {
+        return(pass);
+      }
+
+      // Generate transaction id header if request doesn't have one
+      if (!req.http.transaction-id) {
+        set req.http.transaction-id = std.time2integer(now, 0) + ":" + std.real2integer(std.random(0, 10000000000), 0);
+      }
+
+      if (req.method == "GET" && req.url == "/liveness") {
+        if (!std.healthy(req.backend_hint)) {
+          return(synth(503, "No healthy backends"));
+        }
+        return(synth(200, "OK"));
+      }
+
+      // Do not cache paths with health (healthcheck cache fix)
+      if (req.url ~ "health") {
+        return (pass);
+      }
+
+      return (hash);
+    }
+
+
+    sub vcl_synth {
+      # Detected invalid placeid vcl_recv
+      if (resp.status == 704) {
+        set resp.http.twc-metadata = "invalid placeid";
+        set resp.status = 204;
+        return (deliver);
+      }
+
+      set resp.http.Content-Type = "text/html; charset=utf-8";
+
+      if (!(var.global_get("backendsFound") == "true")) { //error message if no backends configured
+        synthetic( {"<!DOCTYPE html>
+          <html>
+            <head>
+              <title>Incorrect backend configuration</title>
+            </head>
+            <body>
+              <h1>Incorrect backend configuration</h1>
+              <p>Please check your deployment. It may not have pods running or Varnish is pointed to a non existing deployment.</p>
+              <p>XID: "} + req.xid + {"</p>
+              <hr>
+            </body>
+          </html>
+          "} );
+      } else { //default error message for the rest of the cases
+      synthetic( {"<!DOCTYPE html>
+          <html>
+            <head>
+              <title>"} + resp.status + " " + resp.reason + {"</title>
+            </head>
+            <body>
+              <h1>Error "} + resp.status + " " + resp.reason + {"</h1>
+              <p>"} + resp.reason + {"</p>
+              <h3>Guru meditation:</h3>
+              <p>XID: "} + req.xid + {"</p>
+              <hr>
+              <p>Varnish cache server</p>
+            </body>
+          </html>
+          "} );
+      }
+
+      return (deliver);
+    }
+
+
+    sub vcl_hash {
+      # Called after vcl_recv to create a hash value for the request. This is used as a key
+      # to look up the object in Varnish.
+      hash_data(req.url);
+
+      return (lookup);
+    }
+
+
+    sub vcl_hit {
+      # Do not serve stale objects
+      if (obj.ttl >= 0s) {
+        return (deliver);
+      }
+      return (miss);
+    }
+
+
+    sub vcl_backend_response {
+      # Do not cache 404s from backends, with the exception of an invalid air quality station
+      if (beresp.status == 404) {
+        if (!(bereq.url ~ "product=globalAirQuality" && bereq.url ~ "/location/resolve")) {
+            set beresp.ttl = 0s;
+        }
+      }
+
+      # Do not cache oversized objects
+      if ( std.integer(beresp.http.content-length, 0) >=  25000 ) {
+        set beresp.uncacheable = true;
+      }
+
+      # Adding randomizer to avoid stampede evictions
+      set beresp.ttl = beresp.ttl * std.random(0.90,1.05);
+      return (deliver);
+    }
+
+
+    sub vcl_deliver {
+
+      set resp.http.grace = req.http.grace;
+
+      # Converts 404 to 204 when trying to resolve an invalid global air quality station
+      if (req.url ~ "product=globalAirQuality") {
+        if (req.url ~ "/location/resolve") {
+          if (resp.status == 404) {
+            set resp.status = 204;
+            set resp.http.twc-metadata = "GAQ 404->204";
+          }
+        }
+      }
+
+      // if it's the shard that is responsible for the object
+      // otherwise, the shard that got the request will overwrite the correct value set by the shard that stores the object
+      if (req.http.X-shard == server.identity || remote.ip ~ acl_cluster) {
+        if (obj.hits > 0) {
+          set resp.http.X-Varnish-Cache = "HIT";
+        }
+        else {
+          set resp.http.X-Varnish-Cache = "MISS";
+        }
+      }
+
+      set resp.http.X-Shard = req.backend_hint;
+
+      set resp.http.X-Served-By = server.identity;
+
+      return (deliver);
+    }
+
+    sub vcl_fini {
+      return (ok);
+    }
+kind: ConfigMap
+metadata:
+  labels:
+    operator: varnish
+    varnish-component: vcl-file-configmap
+    varnish-owner: varnish-sharded-perf-test
+    role: perf-tests
+    varnish: sharded
+  name: test-vcl-config

@@ -23,8 +23,8 @@ data:
     frontend localhost
       # Only bind on 80 if you also want to listen for connections on 80
       bind *:80
-      option tcplog
       mode tcp
+      option tcplog
       default_backend nodes
 
     resolvers localdns
@@ -35,5 +35,4 @@ data:
       mode tcp
       balance roundrobin
       option ssl-hello-chk
-      source 0.0.0.0 usesrc clientip
       server mb01 api.mapbox.com:443 resolvers localdns ssl verify none

@@ -8,10 +8,21 @@ metadata:
   name: proxy-sidecar-config
 data:
   haproxy.cfg: |+
+    global
+      daemon
+      maxconn 64
+      log 127.0.0.1:514 local0
+
+    defaults
+      log global
+      mode http
+      timeout connect 5000ms
+      timeout client 50000ms
+      timeout server 50000ms
+
     frontend localhost
       # Only bind on 80 if you also want to listen for connections on 80
       bind *:80
-      bind *:443
       option tcplog
       mode tcp
       default_backend nodes
@@ -25,4 +36,4 @@ data:
       balance roundrobin
       option ssl-hello-chk
       source 0.0.0.0 usesrc clientip
-      server mb01 api.mapbox.com:443 resolvers localdns check inter 1000
+      server mb01 api.mapbox.com:443 resolvers localdns ssl verify none

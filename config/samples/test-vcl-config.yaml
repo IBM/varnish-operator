@@ -191,16 +191,6 @@ data:
 
       set resp.http.grace = req.http.grace;
 
-      # Converts 404 to 204 when trying to resolve an invalid global air quality station
-      if (req.url ~ "product=globalAirQuality") {
-        if (req.url ~ "/location/resolve") {
-          if (resp.status == 404) {
-            set resp.status = 204;
-            set resp.http.twc-metadata = "GAQ 404->204";
-          }
-        }
-      }
-
       // if it's the shard that is responsible for the object
       // otherwise, the shard that got the request will overwrite the correct value set by the shard that stores the object
       if (req.http.X-shard == server.identity || remote.ip ~ acl_cluster) {

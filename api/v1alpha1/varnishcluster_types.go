@@ -61,6 +61,7 @@ const (
 	HaproxyContainerName   = "haproxy-sidecar"
 	HaproxyConfigMountPath = "/usr/local/etc/haproxy"
 	HaproxyConfigVolume    = "haproxy-config"
+	HaproxyScriptsVolume   = "haproxy-scripts"
 	HaproxyHealthCheckPort = 10253
 )
 

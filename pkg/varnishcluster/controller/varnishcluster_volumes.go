@@ -25,6 +25,14 @@ func getVarnishClusterVolumeMountsInstance() *VarnishClusterVolumes {
 	return varnishClusterVolumesSingleton
 }
 
+func (r *VarnishClusterVolumes) createHaproxyConfigVolumeMount() v1.VolumeMount {
+	return v1.VolumeMount{
+		Name:      vcapi.HaproxyConfigVolume,
+		MountPath: vcapi.HaproxyConfigMountPath,
+		ReadOnly:  true,
+	}
+}
+
 func (r *VarnishClusterVolumes) createVarnishSharedVolumeMount(readOnly bool) v1.VolumeMount {
 	return v1.VolumeMount{
 		Name:      vcapi.VarnishSharedVolume,
@@ -45,6 +53,14 @@ func (r *VarnishClusterVolumes) createVarnishSecretVolumeMount() v1.VolumeMount 
 	return v1.VolumeMount{
 		Name:      vcapi.VarnishSecretVolume,
 		MountPath: "/etc/varnish-secret",
+		ReadOnly:  true,
+	}
+}
+
+func (r *VarnishClusterVolumes) createHaproxyScriptsVolumeMount() v1.VolumeMount {
+	return v1.VolumeMount{
+		Name:      vcapi.HaproxyScriptsVolume,
+		MountPath: "/haproxy-scripts",
 		ReadOnly:  true,
 	}
 }
@@ -93,6 +109,20 @@ func (r *VarnishClusterVolumes) createVolumes(instance *vcapi.VarnishCluster) []
 			},
 		}
 		volumes = append(volumes, haproxyVolume)
+
+		var scriptEx int32 = 0777
+		haproxyScriptsVolume := v1.Volume{
+			Name: vcapi.HaproxyScriptsVolume,
+			VolumeSource: v1.VolumeSource{
+				ConfigMap: &v1.ConfigMapVolumeSource{
+					LocalObjectReference: v1.LocalObjectReference{
+						Name: vcapi.HaproxyScriptsVolume + "-configmap",
+					},
+					DefaultMode: &scriptEx,
+				},
+			},
+		}
+		volumes = append(volumes, haproxyScriptsVolume)
 	}
 	return volumes
 }

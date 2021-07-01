@@ -180,11 +180,8 @@ func (r *VarnishClusterContainers) createHaproxySidecarContainer(instance *vcapi
 		//},
 		Resources: *instance.Spec.HaproxySidecar.Resources,
 		VolumeMounts: []v1.VolumeMount{
-			{
-				Name:      vcapi.HaproxyConfigVolume,
-				MountPath: vcapi.HaproxyConfigMountPath,
-				ReadOnly:  true,
-			},
+			r.vols.createHaproxyConfigVolumeMount(),
+			r.vols.createHaproxyScriptsVolumeMount(),
 		},
 	}
 }

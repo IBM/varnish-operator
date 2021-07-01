@@ -176,5 +176,5 @@ endif
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(PUBLISH_IMG)
 	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 	operator-sdk bundle validate ./bundle
-	cp Dockerfile ./bundle/Dockerfile
+	cp Dockerfile.bundle ./bundle/Dockerfile
 	mv ./bundle ./$(VERSION)

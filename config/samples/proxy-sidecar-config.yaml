@@ -11,7 +11,7 @@ data:
     global
       daemon
       maxconn 64
-      log 127.0.0.1:514 local0
+      log stdout format raw daemon
 
     defaults
       log global

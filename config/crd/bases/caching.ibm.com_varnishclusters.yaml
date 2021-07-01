@@ -418,7 +418,7 @@ spec:
                 type: object
               haproxySidecar:
                 properties:
-                  configMapMame:
+                  configMapName:
                     type: string
                   enabled:
                     type: boolean

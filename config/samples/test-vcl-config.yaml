@@ -7,23 +7,10 @@ data:
 
     import directors;
 
-    // Backend nodes:
-    {{ if .Backends -}}
-    {{ range .Backends }}
-    backend {{ .PodName }} {
-      // backend {{ .PodName }} labels:
-      .host = "{{ .IP }}";
-      .port = "{{ $.TargetPort }}";
-    }
-    {{ end }}
-    {{- else -}}
-    // Without this dummy backend, varnish will not compile the code
-    // This is a dummy, and should not be used anywhere
-    backend dummy {
+    backend local_haproxy {
       .host = "127.0.0.1";
-      .port = "0";
+      .port = "80";
     }
-    {{- end }}
 
     probe heartbeat {
       .request = "HEAD /heartbeat HTTP/1.1"
@@ -52,12 +39,10 @@ data:
       // The line  below is generated and creates a variable that is used to build custom logic
       // when the user configured the backends incorrectly. E.g. return a custom error page that indicates the issue.
       // only strings are allowed to be set globally
-      var.global_set("backendsFound", {{ if .Backends }}"true"{{ else }}"false"{{ end }});
+      var.global_set("backendsFound", "true");
 
       new real = directors.round_robin();
-      {{- range .Backends }}
-      real.add_backend({{ .PodName }});
-      {{- end }}
+      real.add_backend(local_haproxy);
 
       new cluster = directors.shard();
       {{ range .VarnishNodes }}
@@ -82,16 +67,6 @@ data:
 
 
     sub vcl_recv {
-      # Validates placeid
-      if (req.url ~ "placeid=\w{0,8}&" || req.url ~ "id=\w{0,8}&type=placeid") {
-        return (synth(704, ""));
-      }
-
-      # Passthrough for /v3/location/heartbeat. When return (pass) from vcl_recv the request and subsequent response will be passed to and from the backend server. It won't be cached.
-      if (req.url == "/v3/location/heartbeat") {
-        return (pass);
-      }
-
       if (remote.ip ~ acl_cluster) {
         if (req.http.Host == "shard") {
            if (req.url == "/heartbeat") {
@@ -201,13 +176,6 @@ data:
 
 
     sub vcl_backend_response {
-      # Do not cache 404s from backends, with the exception of an invalid air quality station
-      if (beresp.status == 404) {
-        if (!(bereq.url ~ "product=globalAirQuality" && bereq.url ~ "/location/resolve")) {
-            set beresp.ttl = 0s;
-        }
-      }
-
       # Do not cache oversized objects
       if ( std.integer(beresp.http.content-length, 0) >=  25000 ) {
         set beresp.uncacheable = true;

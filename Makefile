@@ -17,6 +17,10 @@ ifeq (, $(wildcard $KUSTOMIZE))
   KUSTOMIZE = $(shell which kustomize)
 endif
 
+# ifeq (, $(wildcard $KUSTOMIZE))
+#   $(error kustomize must exist)
+# endif
+
 # all: test varnish-operator
 all: test varnish-operator varnish-controller
 
@@ -172,5 +176,6 @@ endif
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(PUBLISH_IMG)
 	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 	operator-sdk bundle validate ./bundle
-	cp Dockerfile.bundle ./bundle/Dockerfile
+	cp Dockerfile ./bundle/Dockerfile
+	cp Dockerfile.* ./bundle/.
 	mv ./bundle ./$(VERSION)

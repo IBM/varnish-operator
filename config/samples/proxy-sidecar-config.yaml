@@ -7,7 +7,7 @@ metadata:
     varnish-owner: varnishcluster-example
   name: proxy-sidecar-config
 data:
-  haproxy.cfg: |-
+  haproxy.cfg: |+
     frontend localhost
       # Only bind on 80 if you also want to listen for connections on 80
       bind *:80
@@ -16,12 +16,13 @@ data:
       mode tcp
       default_backend nodes
 
+    resolvers localdns
+      parse-resolv-conf
+      hold valid 10s
+
     backend nodes
       mode tcp
       balance roundrobin
       option ssl-hello-chk
       source 0.0.0.0 usesrc clientip
-      # Add an entry for each of your backend servers and their resolvable hostnames
-      server webserver1 10.0.0.7:443 check
-      server webserver2 10.0.0.8:443 check
-      server webserver1 10.0.0.9:443 check
+      server mb01 api.mapbox.com:443 resolvers localdns check inter 1000

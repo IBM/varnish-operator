@@ -6,7 +6,7 @@ spec:
   vcl:
     configMapName: test-vcl-config # name of the config map that will store your VCL files. Will be created if doesn't exist.
     entrypointFileName: default.vcl # main file used by Varnish to compile the VCL code.
-  replicas: 3 # run 3 replicas of Varnish
+  replicas: 1 # run 3 replicas of Varnish
   backend:
     port: 2034
     selector:
@@ -22,8 +22,11 @@ spec:
     grafanaDashboard:
       enabled: true
       datasourceName: Prometheus
-  proxySidecar:
+  haproxySidecar:
     enabled: true
     image: haproxytech/haproxy-debian:2.4
     imagePullPolicy: IfNotPresent
-    configMapName: proxy-sidecar-config.yaml
+    configMapName: proxy-sidecar-config
+  varnish:
+    image: us.icr.io/icm-docker-images/varnish:0.0.1-craig-test-dev
+    imagePullSecret: "all-icr-io"

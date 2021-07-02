@@ -59,10 +59,10 @@ const (
 	VarnishClusterBackendZoneBalancingTypeThresholds = "thresholds"
 
 	HaproxyContainerName   = "haproxy-sidecar"
-	HaproxyConfigMountPath = "/usr/local/etc/haproxy"
 	HaproxyConfigVolume    = "haproxy-config"
+	HaproxyMetricsPort     = 8404
+	HaproxyMetricsPortName = "haproxy-metrics"
 	HaproxyScriptsVolume   = "haproxy-scripts"
-	HaproxyHealthCheckPort = 10253
 )
 
 // +kubebuilder:object:root=true
@@ -110,9 +110,9 @@ type HaproxySidecar struct {
 	ConfigMapName string `json:"configMapName,omitempty"` // mount under /usr/local/etc/haproxy/haproxy.cfg
 	Image         string `json:"image,omitempty"`
 	// +kubebuilder:validation:Enum=Always;Never;IfNotPresent
-	ImagePullPolicy v1.PullPolicy            `json:"imagePullPolicy,omitempty"`
-	ImagePullSecret string                   `json:"imagePullSecret,omitempty"`
-	Resources       *v1.ResourceRequirements `json:"resources,omitempty"`
+	ImagePullPolicy v1.PullPolicy           `json:"imagePullPolicy,omitempty"`
+	ImagePullSecret string                  `json:"imagePullSecret,omitempty"`
+	Resources       v1.ResourceRequirements `json:"resources,omitempty"`
 }
 
 type VarnishClusterUpdateStrategyType string

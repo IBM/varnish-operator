@@ -91,8 +91,10 @@ func defaultVarnishClusterSpec(in *VarnishClusterSpec) {
 		in.Backend.ZoneBalancing = &VarnishClusterBackendZoneBalancing{}
 	}
 
-	if in.HaproxySidecar != nil && in.HaproxySidecar.Resources == nil {
-		in.HaproxySidecar.Resources = &v1.ResourceRequirements{}
+	if in.HaproxySidecar == nil {
+		in.HaproxySidecar = &HaproxySidecar{
+			Enabled: false,
+		}
 	}
 
 	defaultVarnishZoneBalancingType(in.Backend.ZoneBalancing)

@@ -28,7 +28,7 @@ func getVarnishClusterVolumeMountsInstance() *VarnishClusterVolumes {
 func (r *VarnishClusterVolumes) createHaproxyConfigVolumeMount() v1.VolumeMount {
 	return v1.VolumeMount{
 		Name:      vcapi.HaproxyConfigVolume,
-		MountPath: vcapi.HaproxyConfigMountPath,
+		MountPath: "/usr/local/etc/haproxy",
 		ReadOnly:  true,
 	}
 }
@@ -97,7 +97,7 @@ func (r *VarnishClusterVolumes) createVolumes(instance *vcapi.VarnishCluster) []
 			},
 		},
 	}
-	if instance.Spec.HaproxySidecar != nil && instance.Spec.HaproxySidecar.Enabled {
+	if instance.Spec.HaproxySidecar.Enabled {
 		haproxyVolume := v1.Volume{
 			Name: vcapi.HaproxyConfigVolume,
 			VolumeSource: v1.VolumeSource{

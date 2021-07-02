@@ -178,7 +178,14 @@ func (r *VarnishClusterContainers) createHaproxySidecarContainer(instance *vcapi
 		//	FailureThreshold: 3,
 		//	InitialDelaySeconds: 10,
 		//},
-		Resources: *instance.Spec.HaproxySidecar.Resources,
+		Ports: []v1.ContainerPort{
+			{
+				Name:          vcapi.HaproxyMetricsPortName,
+				Protocol:      v1.ProtocolTCP,
+				ContainerPort: vcapi.HaproxyMetricsPort,
+			},
+		},
+		Resources: instance.Spec.HaproxySidecar.Resources,
 		VolumeMounts: []v1.VolumeMount{
 			r.vols.createHaproxyConfigVolumeMount(),
 			r.vols.createHaproxyScriptsVolumeMount(),
@@ -192,7 +199,7 @@ func (r *VarnishClusterContainers) createContainers(instance *vcapi.VarnishClust
 		r.createVarnishMetricsContainer(instance, varnishImage),
 		r.createVarnishControllerContainer(instance, varnishImage, endpointSelector),
 	}
-	if instance.Spec.HaproxySidecar != nil && instance.Spec.HaproxySidecar.Enabled {
+	if instance.Spec.HaproxySidecar.Enabled {
 		containers = append(containers, r.createHaproxySidecarContainer(instance))
 	}
 	return containers

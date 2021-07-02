@@ -110,7 +110,6 @@ func (r *VarnishClusterVolumes) createVolumes(instance *vcapi.VarnishCluster) []
 		}
 		volumes = append(volumes, haproxyVolume)
 
-		var scriptEx int32 = 0777
 		haproxyScriptsVolume := v1.Volume{
 			Name: vcapi.HaproxyScriptsVolume,
 			VolumeSource: v1.VolumeSource{
@@ -118,7 +117,7 @@ func (r *VarnishClusterVolumes) createVolumes(instance *vcapi.VarnishCluster) []
 					LocalObjectReference: v1.LocalObjectReference{
 						Name: vcapi.HaproxyScriptsVolume + "-configmap",
 					},
-					DefaultMode: &scriptEx,
+					DefaultMode: proto.Int32(0777),
 				},
 			},
 		}

@@ -22,17 +22,14 @@ data:
 
     frontend localhost
       # Only bind on 80 if you also want to listen for connections on 80
-      bind *:80
+      bind *:8080
       mode tcp
       option tcplog
       default_backend nodes
 
-    resolvers localdns
-      parse-resolv-conf
-      hold valid 10s
-
     backend nodes
-      mode tcp
+      mode http
       balance roundrobin
-      option ssl-hello-chk
-      server mb01 api.mapbox.com:443 resolvers localdns ssl verify none
+      http-response set-header Strict-Transport-Security max-age=31536000
+      http-request set-header Host api.mapbox.com
+      server mb01 api.mapbox.com:443 ssl sni str(api.mapbox.com) verify none

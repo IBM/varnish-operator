@@ -46,7 +46,7 @@ jobs:
         if: ${{ always() && steps.helm.outcome == 'failure' }}
         run: |
           mkdir ./kind-logs
-          kind export logs ./kind-logs
+          kind export logs ./kind-logs --name=e2e-tests
           tar -cvf kind-e2e-logs-1-20.tar ./kind-logs
 
       - name: Upload logs artifact

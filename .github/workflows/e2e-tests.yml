@@ -23,9 +23,9 @@ jobs:
           docker build -f Dockerfile.controller -t ibmcom/varnish-controller:local .
           docker build -f Dockerfile.exporter -t ibmcom/varnish-metrics-exporter:local .
       - name: Create k8s Kind Cluster v1.20.0
-        uses: helm/kind-action@v1.1.0
+        uses: helm/kind-action@v1.2.0
         with:
-          version: v0.10.0
+          version: v0.11.1
           cluster_name: e2e-tests
           node_image: kindest/node:v1.20.2@sha256:8f7ea6e7642c0da54f04a7ee10431549c0257315b3a634f6ef2fecaaedb19bab
       - name: create namespace

@@ -36,13 +36,14 @@ jobs:
           kind load --name e2e-tests docker-image ibmcom/varnish-controller:local
           kind load --name e2e-tests docker-image ibmcom/varnish-metrics-exporter:local
       - name: install operator
+        id: helm
         run: helm install varnish-operator --debug --namespace=varnish-operator varnish-operator --wait --set container.imagePullPolicy=Never --set container.image=ibmcom/varnish-operator:local
       - name: run tests
         run: go test -count=1 ./tests #-count=1 is to disable tests caching.
       - name: delete cluster
         run: kind delete cluster --name=e2e-tests
       - name: Capture logs if e2e failed
-        if: ${{ always() && steps.e2e.outcome == 'failure' }}
+        if: ${{ always() && steps.helm.outcome == 'failure' }}
         run: |
           mkdir ./kind-logs
           kind export logs ./kind-logs

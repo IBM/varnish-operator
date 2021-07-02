@@ -52,6 +52,7 @@ jobs:
           kubectl -n varnish-operator get events
           kubectl -n varnish-operator describe job
           kubectl -n varnish-operator describe pod
+          kubectl describe node
           kubectl -n varnish-operator logs -f -l app=varnish-operator-webhooks-cert-gen --all-containers
 
       - name: Upload logs artifact

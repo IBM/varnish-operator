@@ -41,6 +41,20 @@ jobs:
         run: go test -count=1 ./tests #-count=1 is to disable tests caching.
       - name: delete cluster
         run: kind delete cluster --name=e2e-tests
+      - name: Capture logs if e2e failed
+        if: ${{ always() && steps.e2e.outcome == 'failure' }}
+        run: |
+          mkdir ./kind-logs
+          kind export logs ./kind-logs
+          tar -cvf kind-e2e-logs-1-20.tar ./kind-logs
+
+      - name: Upload logs artifact
+        if: ${{ always() && steps.e2e.outcome == 'failure' }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: kind-e2e-logs-1-20.tar
+          path: kind-e2e-logs-1-20.tar
+          retention-days: 7
       - name: Create k8s Kind Cluster 1.19.7
         uses: helm/kind-action@v1.1.0
         with:

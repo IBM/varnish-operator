@@ -50,7 +50,7 @@ jobs:
           tar -cvf kind-e2e-logs-1-20.tar ./kind-logs
 
       - name: Upload logs artifact
-        if: ${{ always() && steps.e2e.outcome == 'failure' }}
+        if: ${{ always() && steps.helm.outcome == 'failure' }}
         uses: actions/upload-artifact@v2
         with:
           name: kind-e2e-logs-1-20.tar

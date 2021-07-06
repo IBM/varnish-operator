@@ -30,7 +30,7 @@ func TestAPIs(t *testing.T) {
 		[]Reporter{printer.NewlineReporter{}})
 }
 
-var _ = BeforeSuite(func(done Done) {
+var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(func(o *zap.Options) { o.DestWriter = GinkgoWriter }))
 	logr := logger.NewLogger("console", zapcore.DebugLevel)
 	By("bootstrapping test environment")
@@ -47,6 +47,4 @@ var _ = BeforeSuite(func(done Done) {
 	k8sClient, err = client.New(restConfig, client.Options{Scheme: scheme.Scheme})
 	Expect(err).ToNot(HaveOccurred())
 	Expect(k8sClient).ToNot(BeNil())
-
-	close(done)
 }, 60)

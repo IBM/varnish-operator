@@ -36,11 +36,6 @@ data:
     }
 
     sub init_backends {
-      // The line  below is generated and creates a variable that is used to build custom logic
-      // when the user configured the backends incorrectly. E.g. return a custom error page that indicates the issue.
-      // only strings are allowed to be set globally
-      var.global_set("backendsFound", "true");
-
       new real = directors.round_robin();
       real.add_backend(local_haproxy);
 
@@ -74,11 +69,6 @@ data:
           }
           return (synth(404));
         }
-      }
-
-      // If backends are not configured correctly
-      if (!(var.global_get("backendsFound") == "true")) {
-        return(synth(503, "No backends configured"));
       }
 
       set req.backend_hint = cluster.backend(HASH);
@@ -121,21 +111,6 @@ data:
 
       set resp.http.Content-Type = "text/html; charset=utf-8";
 
-      if (!(var.global_get("backendsFound") == "true")) { //error message if no backends configured
-        synthetic( {"<!DOCTYPE html>
-          <html>
-            <head>
-              <title>Incorrect backend configuration</title>
-            </head>
-            <body>
-              <h1>Incorrect backend configuration</h1>
-              <p>Please check your deployment. It may not have pods running or Varnish is pointed to a non existing deployment.</p>
-              <p>XID: "} + req.xid + {"</p>
-              <hr>
-            </body>
-          </html>
-          "} );
-      } else { //default error message for the rest of the cases
       synthetic( {"<!DOCTYPE html>
           <html>
             <head>
@@ -151,7 +126,6 @@ data:
             </body>
           </html>
           "} );
-      }
 
       return (deliver);
     }

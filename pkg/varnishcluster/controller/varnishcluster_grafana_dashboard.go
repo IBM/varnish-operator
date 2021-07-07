@@ -216,15 +216,15 @@ func generateGrafanaDashboardData(instance *vcapi.VarnishCluster) (map[string]st
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	dashboardData := map[string]string{names.GrafanaDashboardFile(instance.Name): varnishDashboard}
 
-	haproxyDashboard, err := instantiateTemplate("HaproxyGrafanaDashboard", haproxyGrafanaDashboardTemplate, data)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	dashboardData := map[string]string{
-		names.GrafanaDashboardFile(instance.Name):        varnishDashboard,
-		names.HaproxyGrafanaDashboardFile(instance.Name): haproxyDashboard,
+	var haproxyDashboard string
+	if instance.Spec.HaproxySidecar.Enabled {
+		haproxyDashboard, err = instantiateTemplate("HaproxyGrafanaDashboard", haproxyGrafanaDashboardTemplate, data)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		dashboardData[names.HaproxyGrafanaDashboardFile(instance.Name)] = haproxyDashboard
 	}
 
 	return dashboardData, nil

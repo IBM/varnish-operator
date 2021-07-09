@@ -1,15 +1,17 @@
 package tests
 
 import (
+	"testing"
+
 	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 	"github.com/ibm/varnish-operator/pkg/logger"
 	"k8s.io/client-go/rest"
-	"testing"
 
 	"go.uber.org/zap/zapcore"
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"k8s.io/client-go/kubernetes/scheme"
+	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"

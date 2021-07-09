@@ -22,12 +22,12 @@ jobs:
           docker build -f Dockerfile.varnishd -t ibmcom/varnish:local .
           docker build -f Dockerfile.controller -t ibmcom/varnish-controller:local .
           docker build -f Dockerfile.exporter -t ibmcom/varnish-metrics-exporter:local .
-      - name: Create k8s Kind Cluster v1.20.0
+      - name: Create k8s Kind Cluster v1.20.7
         uses: helm/kind-action@v1.2.0
         with:
           version: v0.11.1
           cluster_name: e2e-tests
-          node_image: kindest/node:v1.20.2@sha256:8f7ea6e7642c0da54f04a7ee10431549c0257315b3a634f6ef2fecaaedb19bab
+          node_image: kindest/node:v1.20.7@sha256:4c68efafa97d278a75a5b4677fb27e4986b03301739f1f87575af32202da9cfe
       - name: create namespace
         run: kubectl create namespace varnish-operator
       - name: load images
@@ -43,12 +43,12 @@ jobs:
         run: go test -count=1 ./tests #-count=1 is to disable tests caching.
       - name: delete cluster
         run: kind delete cluster --name=e2e-tests
-      - name: Create k8s Kind Cluster 1.19.7
+      - name: Create k8s Kind Cluster 1.19.11
         uses: helm/kind-action@v1.2.0
         with:
           version: v0.11.1
           cluster_name: e2e-tests
-          node_image: kindest/node:v1.19.7@sha256:a70639454e97a4b733f9d9b67e12c01f6b0297449d5b9cbbef87473458e26dca
+          node_image: kindest/node:v1.19.11@sha256:558780c13d9736d9ba55fa695a5bb8f403a53e42b95bea54fbdc4712181f5e3f
       - name: create namespace
         run: kubectl create namespace varnish-operator
       - name: load images

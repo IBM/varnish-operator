@@ -105,7 +105,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 	// Else if the statefulset exists, and it is different, update
 	// Else no changes, do nothing
 	if err != nil && kerrors.IsNotFound(err) {
-		//logr.Infoc("Creating StatefulSet", "new", desired)
+		logr.Infoc("Creating StatefulSet", "new", desired)
 		err = r.Create(ctx, desired)
 		if err != nil {
 			return nil, nil, errors.Wrap(err, "could not create statefulset")

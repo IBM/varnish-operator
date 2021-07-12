@@ -25,10 +25,10 @@ Clone the repo and install the chart using the local path to the chart:
 ```bash
 $ git clone https://github.com/IBM/varnish-operator.git
 $ cd varnish-operator
-$ helm install varnish-test config/samples/helm-charts/varnishcluster-with-monitoring --set varnish.backendsSelector.app=nginx --set varnish.backendsPort=80
+$ helm install varnish-test config/samples/helm-charts/varnishcluster-with-monitoring --set varnish.backend.selector.app=nginx --set varnish.backend.port=80
 ```
 
-Note that we've specified the selector for our backends (`--set backendsSelector.app=nginx`) and the port they are listening on (`--set backendsPort=80`)
+Note that we've specified the selector for our backend (`--set varnish.backend.selector.app=nginx`) and the port they are listening on (`--set varnish.backend.port=80`)
 
 You should see your `VarnishCluster`, `Prometheus` and `Grafana` pods starting/running:
 

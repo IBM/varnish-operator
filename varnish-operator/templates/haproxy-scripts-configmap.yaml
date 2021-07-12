@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: haproxy-scripts-configmap
+  namespace: {{ .Release.Namespace }}
+data:
+{{ (.Files.Glob "scripts/*.sh").AsConfig | indent 2 }}

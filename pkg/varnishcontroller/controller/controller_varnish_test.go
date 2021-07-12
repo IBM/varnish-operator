@@ -98,6 +98,9 @@ func TestReconcileVarnish(t *testing.T) {
 					VCL: &v1alpha1.VarnishClusterVCL{
 						EntrypointFileName: &entrypointFileName,
 					},
+					HaproxySidecar: &v1alpha1.HaproxySidecar{
+						Enabled: true,
+					},
 				},
 			},
 			pod:                               &v1.Pod{},

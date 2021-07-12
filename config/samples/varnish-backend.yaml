@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: varnish-perf-test-backend
+spec:
+  selector:
+    matchLabels:
+      app: varnish-backend
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: varnish-backend
+    spec:
+      imagePullSecrets:
+      - name: all-icr-io
+      containers:
+      - name: backend
+        image: us.icr.io/icm-varnish/varnish-perf-test-backend:v4
+        ports:
+        - containerPort: 2034
+        env:
+        - name: "PAYLOAD_SIZE_B"
+          value: "16834729024"
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: backend-nginx-config
+          mountPath: /etc/nginx/conf.d
+      volumes:
+      - name: backend-nginx-config
+        configMap:
+          name: backend-nginx-config-cm
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-nginx-config-cm
+data:
+  default.conf: |
+    upstream node {
+      server localhost:2034;
+    }
+    server {
+      listen                  2036;
+      server_name             _;
+      root                    /usr/share/nginx/html;
+      location / {
+        gzip on;
+        gzip_proxied any;
+        gzip_types      text/plain text/html;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header Host localhost:2034;
+        proxy_pass http://node;
+        proxy_redirect off;
+        port_in_redirect off;
+      }
+    }

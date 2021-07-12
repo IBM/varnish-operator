@@ -1,3 +1,4 @@
+{{- $replicas := .Values.replicas | toString | float64 }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -24,7 +25,7 @@ spec:
         - name: NAMESPACE
           value: {{ .Release.Namespace | quote }}
         - name: LEADERELECTION_ENABLED
-          value: {{ if gt .Values.replicas 1.0 }}"true"{{ else }}"false"{{ end }}
+          value: {{ if gt $replicas 1.0 }}"true"{{ else }}"false"{{ end }}
         - name: CONTAINER_IMAGE
           value: {{ .Values.container.image | quote }}
         - name: WEBHOOKS_ENABLED

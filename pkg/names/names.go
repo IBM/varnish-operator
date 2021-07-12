@@ -51,3 +51,7 @@ func GrafanaDashboard(vcName string) string {
 func GrafanaDashboardFile(vcName string) string {
 	return vcName + "-dashboard.json"
 }
+
+func HaproxyGrafanaDashboardFile(vcName string) string {
+	return vcName + "haproxy-dashboard.json"
+}

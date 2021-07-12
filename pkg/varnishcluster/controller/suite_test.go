@@ -85,7 +85,7 @@ func TestAPIs(t *testing.T) {
 	)
 }
 
-var _ = BeforeSuite(func(done Done) {
+var _ = BeforeSuite(func() {
 	//logr, destWriter := logger.NewLogger("console", zapcore.DebugLevel), GinkgoWriter //uncomment and replace with the line below to have logging
 	logr, destWriter := logger.NewNopLogger(), GinkgoWriter
 	ctrl.SetLogger(zapr.NewLogger(logr.Desugar()))
@@ -131,7 +131,6 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 
 	mgrStopCh = StartTestManager(mgr)
-	close(done)
 }, 60)
 
 var _ = AfterSuite(func() {

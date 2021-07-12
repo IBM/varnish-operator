@@ -1,0 +1,13 @@
+container:
+  # path to image + tag
+  image: us.icr.io/icm-docker-images/ibmcom/varnish-operator:0.0.1-craig-test-dev
+  imagePullPolicy: Always
+  imagePullSecret: "all-icr-io"
+logLevel: info
+logFormat: json
+monitoring:
+  grafanaDashboard:
+    enabled: true
+    datasourceName: "Prometheus"
+  prometheusServiceMonitor:
+    enabled: true

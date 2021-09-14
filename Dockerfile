@@ -1,4 +1,4 @@
-FROM golang:1.15-buster AS builder
+FROM golang:1.17.1-bullseye AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive INSTALL_DIRECTORY=/usr/local/bin
 
@@ -28,7 +28,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     github.com/ibm/varnish-operator/cmd/varnish-operator
 
 
-FROM debian:buster-slim
+FROM debian:bullseye-slim
 
 LABEL maintainer="Alex Lytvynenko <oleksandr.lytvynenko@ibm.com>, Tomash Sidei <tomash.sidei@ibm.com>"
 

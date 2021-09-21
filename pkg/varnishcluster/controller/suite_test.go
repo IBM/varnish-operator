@@ -17,6 +17,8 @@ package controller
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"path/filepath"
 	"sync"
 	"testing"
@@ -54,7 +56,6 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
-	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	// +kubebuilder:scaffold:imports
 )
@@ -75,19 +76,17 @@ var reconcileChan = make(chan event.GenericEvent) //can be used to send manually
 var shutdown = false                              //to track if the shutdown process has been started. Used for graceful shutdown
 var operatorConfig = &config.Config{CoupledVarnishImage: testCoupledVarnishImage}
 var ctx = context.Background()
+var logr *logger.Logger
 
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
-
-	RunSpecsWithDefaultAndCustomReporters(t,
-		"Controller Suite",
-		[]Reporter{printer.NewlineReporter{}},
-	)
+	RunSpecs(t, "Controller Suite")
 }
 
-var _ = BeforeSuite(func(done Done) {
-	//logr, destWriter := logger.NewLogger("console", zapcore.DebugLevel), GinkgoWriter //uncomment and replace with the line below to have logging
-	logr, destWriter := logger.NewNopLogger(), GinkgoWriter
+var _ = BeforeSuite(func() {
+	var destWriter io.Writer
+	//logr, destWriter = logger.NewLogger("console", zapcore.DebugLevel), GinkgoWriter //uncomment and replace with the line below to have logging
+	logr, destWriter = logger.NewNopLogger(), GinkgoWriter
 	ctrl.SetLogger(zapr.NewLogger(logr.Desugar()))
 	logf.SetLogger(zapr.NewLogger(logr.Desugar()))
 
@@ -131,16 +130,18 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 
 	mgrStopCh = StartTestManager(mgr)
-	close(done)
-}, 60)
+})
 
 var _ = AfterSuite(func() {
 	By("tearing down the test environment")
 	shutdown = true
-	close(mgrStopCh)      //tell the manager to shutdown
-	waitGroup.Wait()      //wait for all reconcile loops to be finished
+	close(mgrStopCh) //tell the manager to shutdown
+	waitGroup.Wait() //wait for all reconcile loops to be finished
+	//only log the error until https://github.com/kubernetes-sigs/controller-runtime/issues/1571 is resolved
 	err := testEnv.Stop() //stop the test control plane (etcd, kube-apiserver)
-	Expect(err).ToNot(HaveOccurred())
+	if err != nil {
+		logr.Warn(fmt.Sprintf("Failed to stop testenv properly: %#v", err))
+	}
 })
 
 func SetupTestReconcile(inner reconcile.Reconciler) reconcile.Reconciler {

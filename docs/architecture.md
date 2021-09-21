@@ -3,7 +3,7 @@
 Varnish operator consists of multiple components working together to operate a Varnish clusters.
 
 #### CustomResourceDefinition
-CustomResourceDefinition extends Kubernetes with a `VarnishCluster` resource that describes your Varnish instances being deployed. You would define a resource of Kind `VarnishCluster` and specify all the relevant specs needed to define your the Varnish cluster (backends being cached, service port that exposes Varnish instances, VCL configuration, cpu/memory requests and limits, etc.). 
+CustomResourceDefinition extends Kubernetes with a `VarnishCluster` resource that describes your Varnish instance. Define a resource of Kind `VarnishCluster` and specify all the required fields for the Varnish cluster (backend, service port, VCL configuration, cpu/memory requests and limits, etc.). 
 
 `VarnishCluster` spec fields are described in the [VarnishCluster configuration](varnish-cluster-configuration.md) section.
 

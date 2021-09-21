@@ -57,8 +57,8 @@ varnish-operator-fd96f48f-gn6mc   1/1     Running             0          40s
       vcl:
         configMapName: vcl-config # name of the config map that will store your VCL files. Will be created if doesn't exist.
         entrypointFileName: entrypoint.vcl # main file used by Varnish to compile the VCL code.
-      replicas: 3 # run 3 replicas of Varnish
       backend:
+        port: 80
         selector:
           app: nginx-backend # labels that identify your backend pods
       service:

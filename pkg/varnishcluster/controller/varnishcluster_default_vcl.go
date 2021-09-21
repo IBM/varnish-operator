@@ -14,6 +14,9 @@ sub vcl_init {
 }
 
 sub vcl_recv {
+  if (req.restarts > 0) {
+    set req.hash_always_miss = true;
+  }
 
   if (req.method == "GET" && req.url == "/heartbeat") {
     return(synth(200, "OK"));
@@ -93,7 +96,7 @@ sub vcl_hit {
   if (obj.ttl >= 0s) {
     return (deliver);
   }
-  return (miss);
+  return (restart);
 }
 
 sub vcl_backend_response {

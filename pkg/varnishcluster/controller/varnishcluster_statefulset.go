@@ -62,10 +62,10 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 					Labels: varnishLabels,
 				},
 				Spec: v1.PodSpec{
-					// Share a single process namespace between all of the containers in a pod.
+					// Share a single process namespace between all the containers in a pod.
 					// When this is set containers will be able to view and signal processes from other containers
 					// in the same pod.It is required for the pod to provide reliable way to collect metrics.
-					// Otherwise metrics collection container may only collect general varnish process metrics.
+					// Otherwise, metrics collection container may only collect general varnish process metrics.
 					ShareProcessNamespace:         proto.Bool(true),
 					Volumes:                       getVarnishClusterVolumeMountsInstance().createVolumes(instance),
 					Containers:                    getVarnishClusterContainersInstance().createContainers(instance, varnishdArgs, varnishImage, endpointSelector),

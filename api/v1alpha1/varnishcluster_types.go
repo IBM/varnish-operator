@@ -59,6 +59,7 @@ const (
 	VarnishClusterBackendZoneBalancingTypeThresholds = "thresholds"
 
 	HaproxyContainerName   = "haproxy-sidecar"
+	HaproxyConfigMapName   = "haproxy-configmap"
 	HaproxyConfigVolume    = "haproxy-config"
 	HaproxyMetricsPort     = 8404
 	HaproxyMetricsPortName = "haproxy-metrics"
@@ -110,9 +111,18 @@ type HaproxySidecar struct {
 	ConfigMapName string `json:"configMapName,omitempty"` // mount under /usr/local/etc/haproxy/haproxy.cfg
 	Image         string `json:"image,omitempty"`
 	// +kubebuilder:validation:Enum=Always;Never;IfNotPresent
-	ImagePullPolicy v1.PullPolicy           `json:"imagePullPolicy,omitempty"`
-	ImagePullSecret string                  `json:"imagePullSecret,omitempty"`
-	Resources       v1.ResourceRequirements `json:"resources,omitempty"`
+	ImagePullPolicy           v1.PullPolicy           `json:"imagePullPolicy,omitempty"`
+	ImagePullSecret           string                  `json:"imagePullSecret,omitempty"`
+	Resources                 v1.ResourceRequirements `json:"resources,omitempty"`
+	MaxConnections            *int32                  `json:"maxConnections,omitempty"`
+	ConnectTimeout            *int32                  `json:"connectTimeout,omitempty"`  // in millis, 5000 default
+	ClientTimeout             *int32                  `json:"clientTimeout,omitempty"`   // in millis, 50000 default
+	ServerTimeout             *int32                  `json:"serverTimeout,omitempty"`   // in millis, 50000 default
+	StatRefreshRate           *int32                  `json:"statRefreshRate,omitempty"` // in seconds, 10 default
+	BackendServerPort         *int32                  `json:"backendServerPort,omitempty"`
+	BackendServerHostHeader   string                  `json:"BackendServerHostHeader,omitempty"`
+	BackendServerMaxAgeHeader *int32                  `json:"backendServerMaxAgeHeader,omitempty"`
+	BackendServers            []string                `json:"backendServers,omitempty"`
 }
 
 type VarnishClusterUpdateStrategyType string

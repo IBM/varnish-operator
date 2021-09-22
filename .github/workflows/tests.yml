@@ -25,10 +25,11 @@ jobs:
       id: go
     - name: Setup Kubebuilder assets
       run: |
-        wget -O kubebuilder.tgz https://go.kubebuilder.io/dl/2.3.2/linux/amd64;
-        tar -C /tmp/ -xzf kubebuilder.tgz;
-        rm kubebuilder.tgz;
-        echo "KUBEBUILDER_ASSETS=/tmp/kubebuilder_2.3.2_linux_amd64/bin" >> $GITHUB_ENV
+        curl -sSLo envtest-bins.tar.gz "https://storage.googleapis.com/kubebuilder-tools/kubebuilder-tools-1.21.2-linux-amd64.tar.gz"
+        mkdir -p /tmp/kubebuilder
+        tar -C /tmp/kubebuilder/ --strip-components=1 -zvxf envtest-bins.tar.gz
+        rm envtest-bins.tar.gz;
+        echo "KUBEBUILDER_ASSETS=/tmp/kubebuilder/bin" >> $GITHUB_ENV
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
     - name: Get dependencies

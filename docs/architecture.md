@@ -22,7 +22,7 @@ The containers share specific volumes for the varnish configuration and work dir
 
 ##### Varnish
 
-The Varnish process itself. Currently only Varnish version `6.1.1` is supported. The operator doesn't support arbitrary Varnish images due to additional components needed for the operator to function. The container image is custom built with varnish and varnish modules preinstalled.
+The Varnish process itself. Currently only Varnish version `6.5.1` is supported. The operator doesn't support arbitrary Varnish images due to additional components needed for the operator to function. The container image is custom built with varnish and varnish modules preinstalled.
 
 ##### Varnish-Controller
 

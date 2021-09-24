@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gogo/protobuf/proto"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 )
@@ -121,53 +120,6 @@ func TestReloadCommand(t *testing.T) {
 	}
 }
 
-func TestListCommand(t *testing.T) {
-	cases := []struct {
-		errExpected error
-		execute     executorProvider
-		response    []VCLConfig
-		desc        string
-	}{
-		{
-			nil,
-			mockSuccesListResponse,
-			[]VCLConfig{
-				{
-					Status:      VCLStatusAvailable,
-					Name:        "boot",
-					Temperature: VCLTemperatureCold,
-				},
-				{
-					Status:      VCLStatusActive,
-					Name:        "v55329",
-					Temperature: VCLTemperatureWarm,
-				},
-			},
-			"success",
-		},
-		{
-			errors.Wrap(errors.New("some error"), "A response from external program"),
-			mockErrResponse,
-			[]VCLConfig{},
-			"error",
-		},
-	}
-	for _, tc := range cases {
-		t.Run(tc.desc, func(tt *testing.T) {
-			p := &VarnishAdm{
-				execute: tc.execute,
-			}
-			data, err := p.List()
-			if !cmp.Equal(data, tc.response) {
-				tt.Errorf("Unexpected response %v\n Expected: %v", data, tc.response)
-			}
-			if !cmp.Equal(err, tc.errExpected, equalError) {
-				tt.Errorf("Unexpected error return. %s", cmp.Diff(err, tc.errExpected))
-			}
-		})
-	}
-}
-
 func TestEnsureNotNilDefaultExecCommandProvider(t *testing.T) {
 	c := execCommandProvider("echo", "hello", "world")
 	if c == nil || (reflect.ValueOf(c).Kind() == reflect.Ptr && reflect.ValueOf(c).IsNil()) {
@@ -254,6 +206,10 @@ available     auto/cold          0 v55329
 `
 )
 
+func errorEqual(a, b error) bool {
+	return a == nil && b == nil || a != nil && b != nil && a.Error() == b.Error()
+}
+
 var (
 	// equalError reports whether errors a and b are considered equal.
 	// They're equal if both are nil, or both are not nil and a.Error() == b.Error().
@@ -268,78 +224,6 @@ var (
 	})
 )
 
-func TestParseConfigs(t *testing.T) {
-	cases := []struct {
-		input       string
-		expected    []VCLConfig
-		expectedErr error
-	}{
-		{
-			input: simpleVCLconfig,
-			expected: []VCLConfig{
-				{
-					Status:      VCLStatusAvailable,
-					Name:        "boot",
-					Temperature: VCLTemperatureCold,
-				},
-				{
-					Status:      VCLStatusActive,
-					Name:        "v55329",
-					Temperature: VCLTemperatureWarm,
-				},
-			},
-			expectedErr: nil,
-		},
-		{
-			input: labeledVCLconfig,
-			expected: []VCLConfig{
-				{
-					Status:      VCLStatusAvailable,
-					Name:        "boot",
-					Temperature: VCLTemperatureCold,
-				},
-				{
-					Status:      VCLStatusActive,
-					Name:        "v55329",
-					Temperature: VCLTemperatureWarm,
-				},
-				{
-					Status:        VCLStatusAvailable,
-					Name:          "label1",
-					Temperature:   VCLTemperatureWarm,
-					Label:         true,
-					ReferencedVCL: proto.String("v55329"),
-				},
-			},
-			expectedErr: nil,
-		},
-		{
-			input:       unknownVCLconfig,
-			expected:    nil,
-			expectedErr: errors.New("unknown VCL config format"),
-		},
-	}
-
-	for _, c := range cases {
-		actual, err := parseVCLConfigsList([]byte(c.input))
-		if !cmp.Equal(err, c.expectedErr, equalError) {
-			t.Logf("Unexpected error values: %#v. Expected: %#v", err, c.expectedErr)
-			t.Fail()
-		}
-		if !cmp.Equal(actual, c.expected) {
-			t.Logf(`
-Input: 
-%s
-Parsed config:
-%#v
-Expected config:
-%#v
-`, c.input, actual, c.expected)
-			t.Fail()
-		}
-	}
-}
-
 func TestGetActiveConfigurationName(t *testing.T) {
 	cases := []struct {
 		errExpected error
@@ -350,6 +234,9 @@ func TestGetActiveConfigurationName(t *testing.T) {
 		{
 			nil,
 			func(name string, args ...string) executor {
+				if args[len(args)-1] == "-j" {
+					return &mockExecutor{err: errors.New("err"), response: []byte("Command failed with error code 102\nJSON unimplemented")}
+				}
 				return &mockExecutor{response: []byte(simpleVCLconfig)}
 			},
 			"v55329",
@@ -358,6 +245,9 @@ func TestGetActiveConfigurationName(t *testing.T) {
 		{
 			nil,
 			func(name string, args ...string) executor {
+				if args[len(args)-1] == "-j" {
+					return &mockExecutor{err: errors.New("err"), response: []byte("Command failed with error code 102\nJSON unimplemented")}
+				}
 				return &mockExecutor{response: []byte(labeledVCLconfig)}
 			},
 			"v55329",
@@ -366,6 +256,9 @@ func TestGetActiveConfigurationName(t *testing.T) {
 		{
 			errors.Errorf("No active VCL configuration found"),
 			func(name string, args ...string) executor {
+				if args[len(args)-1] == "-j" {
+					return &mockExecutor{err: errors.New("err"), response: []byte("Command failed with error code 102\nJSON unimplemented")}
+				}
 				return &mockExecutor{response: []byte(inactiveVCLconfig)}
 			},
 			"",
@@ -374,6 +267,9 @@ func TestGetActiveConfigurationName(t *testing.T) {
 		{
 			errors.WithStack(errors.New("unknown VCL config format")),
 			func(name string, args ...string) executor {
+				if args[len(args)-1] == "-j" {
+					return &mockExecutor{err: errors.New("err"), response: []byte("Command failed with error code 102\nJSON unimplemented")}
+				}
 				return &mockExecutor{response: []byte(unknownVCLconfig)}
 			},
 			"",
@@ -381,7 +277,12 @@ func TestGetActiveConfigurationName(t *testing.T) {
 		},
 		{
 			errors.Wrap(errors.New("some error"), string(response)),
-			mockErrResponse,
+			func(name string, args ...string) executor {
+				if args[len(args)-1] == "-j" {
+					return &mockExecutor{err: errors.New("err"), response: []byte("Command failed with error code 102\nJSON unimplemented")}
+				}
+				return mockErrResponse(name, args...)
+			},
 			"",
 			"externalError",
 		},
@@ -392,8 +293,9 @@ func TestGetActiveConfigurationName(t *testing.T) {
 				execute: tc.execute,
 			}
 			name, err := p.GetActiveConfigurationName()
-			if !cmp.Equal(err, tc.errExpected, equalError) {
-				tt.Logf("Unexpected error values: %#v. Expected: %#v", err, tc.errExpected)
+			if !errorEqual(err, tc.errExpected) {
+				//cmp.Diff(err, tc.errExpected, equalError)
+				tt.Logf("Unexpected error values: %#v. Expected: %#v \n %s\n", err, tc.errExpected, cmp.Diff(err, tc.errExpected, equalError))
 				tt.Fail()
 			}
 

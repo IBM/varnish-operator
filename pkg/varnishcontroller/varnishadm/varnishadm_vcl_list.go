@@ -27,7 +27,6 @@ func (v *VarnishAdm) List() ([]VCLConfig, error) {
 	out, err := v.run(append(v.varnishAdmArgs, "vcl.list", "-j"))
 	if err != nil {
 		if strings.Contains(string(out), "JSON unimplemented") {
-
 			out, err = v.run(append(v.varnishAdmArgs, "vcl.list"))
 			if err != nil {
 				return []VCLConfig{}, errors.Wrap(err, string(out))
@@ -86,20 +85,20 @@ type vclListResponse struct {
 }
 
 func (v *vclListResponse) UnmarshalJSON(data []byte) error {
-	rawUmarshalledData := make([]interface{}, 0)
-	err := json.Unmarshal(data, &rawUmarshalledData)
+	unmarshalledData := make([]interface{}, 0)
+	err := json.Unmarshal(data, &unmarshalledData)
 	if err != nil {
 		return err
 	}
 
-	version, ok := rawUmarshalledData[0].(float64)
+	version, ok := unmarshalledData[0].(float64)
 	if !ok {
 		return errors.New("unknown version format")
 	}
 
 	v.Version = int(version)
 
-	command, ok := rawUmarshalledData[1].([]interface{})
+	command, ok := unmarshalledData[1].([]interface{})
 	if !ok {
 		return errors.New("unknown command format")
 	}
@@ -112,7 +111,7 @@ func (v *vclListResponse) UnmarshalJSON(data []byte) error {
 		v.Command = append(v.Command, argStr)
 	}
 
-	respTime, ok := rawUmarshalledData[2].(float64)
+	respTime, ok := unmarshalledData[2].(float64)
 	if !ok {
 		return errors.New("unknown response time format")
 	}
@@ -121,8 +120,8 @@ func (v *vclListResponse) UnmarshalJSON(data []byte) error {
 	nsecs := int64((respTime - float64(secs)) * 1e9)
 	v.ResponseTime = time.Unix(secs, nsecs)
 
-	for i := 3; i < len(rawUmarshalledData); i++ {
-		vclMap, ok := rawUmarshalledData[i].(map[string]interface{})
+	for i := 3; i < len(unmarshalledData); i++ {
+		vclMap, ok := unmarshalledData[i].(map[string]interface{})
 		if !ok {
 			return errors.New("unknown VCL config format")
 		}

@@ -1,10 +1,7 @@
 package varnishadm
 
 import (
-	"bufio"
-	"bytes"
 	"os/exec"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -123,22 +120,6 @@ func (v *VarnishAdm) Reload(version, entry string) ([]byte, error) {
 	return v.use(version)
 }
 
-// List returns a list of VCL names which had been loaded into the varnish instance.
-// it is a wrapper over varnishadm vcl.list command
-func (v *VarnishAdm) List() ([]VCLConfig, error) {
-	out, err := v.run(append(v.varnishAdmArgs, "vcl.list"))
-	if err != nil {
-		return []VCLConfig{}, errors.Wrap(err, string(out))
-	}
-
-	configs, err := parseVCLConfigsList(out)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	return configs, nil
-}
-
 // Discard deletes an existing VCL from the Varnish instance
 // it is a wrapper over varnishadm vcl.discard command
 func (v *VarnishAdm) Discard(vclConfigName string) error {
@@ -190,15 +171,6 @@ func (v *VarnishAdm) GetActiveConfigurationName() (string, error) {
 	return active.Name, nil
 }
 
-//VCLConfig represents varnish's config list
-type VCLConfig struct {
-	Status        string
-	Name          string
-	Label         bool
-	Temperature   string
-	ReferencedVCL *string //nil if Label == false
-}
-
 // getActiveVCLConfig returns the VarnishClusterVCL config currently used in VarnishClusterVarnish
 func (v *VarnishAdm) getActiveVCLConfig() (*VCLConfig, error) {
 	configsList, err := v.List()
@@ -212,31 +184,4 @@ func (v *VarnishAdm) getActiveVCLConfig() (*VCLConfig, error) {
 	}
 	// That means that VarnishClusterVarnish is in not started/invalid state. Return an error to trigger an another reconcile event
 	return nil, errors.Errorf("No active VCL configuration found")
-}
-
-func parseVCLConfigsList(commandOutput []byte) ([]VCLConfig, error) {
-	var configs []VCLConfig
-	lines := bufio.NewScanner(bytes.NewReader(commandOutput))
-	for lines.Scan() {
-		columns := strings.Fields(lines.Text())
-		switch len(columns) {
-		case 0: //empty string
-			continue
-		case 4: //config without a label
-			temp := strings.Split(columns[1], "/")
-			configs = append(configs, VCLConfig{Status: columns[0], Name: columns[3], Label: false, Temperature: temp[1]})
-		case 6: //labeled config or a label itself
-			var refVCL *string
-			temp := strings.Split(columns[1], "/")
-			isLabel := temp[0] == "label"
-			if isLabel {
-				refVCL = &columns[5]
-			}
-			config := VCLConfig{Status: columns[0], Name: columns[3], Label: isLabel, Temperature: temp[1], ReferencedVCL: refVCL}
-			configs = append(configs, config)
-		default:
-			return nil, errors.New("unknown VCL config format")
-		}
-	}
-	return configs, nil
 }

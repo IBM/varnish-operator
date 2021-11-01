@@ -59,6 +59,8 @@ const (
 	VarnishClusterBackendZoneBalancingTypeThresholds = "thresholds"
 
 	HaproxyContainerName   = "haproxy-sidecar"
+	HaproxyConfigFileName  = "haproxy.cfg"
+	HaproxyConfigDir       = "/usr/local/etc/haproxy"
 	HaproxyConfigMapName   = "haproxy-configmap"
 	HaproxyConfigVolume    = "haproxy-config"
 	HaproxyMetricsPort     = 8404

@@ -25,11 +25,11 @@ func getVarnishClusterVolumeMountsInstance() *VarnishClusterVolumes {
 	return varnishClusterVolumesSingleton
 }
 
-func (r *VarnishClusterVolumes) createHaproxyConfigVolumeMount() v1.VolumeMount {
+func (r *VarnishClusterVolumes) createHaproxyConfigVolumeMount(readOnly bool) v1.VolumeMount {
 	return v1.VolumeMount{
 		Name:      vcapi.HaproxyConfigVolume,
-		MountPath: "/usr/local/etc/haproxy",
-		ReadOnly:  true,
+		MountPath: vcapi.HaproxyConfigDir,
+		ReadOnly:  readOnly,
 	}
 }
 

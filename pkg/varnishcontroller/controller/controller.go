@@ -1,8 +1,12 @@
 package controller
 
 import (
+	"bytes"
 	"context"
+	"os"
+	"os/exec"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/ibm/varnish-operator/api/v1alpha1"
@@ -119,6 +123,18 @@ func (r *ReconcileVarnish) Reconcile(ctx context.Context, request reconcile.Requ
 	return res, nil
 }
 
+func templatizeHaproxyConfig(instance *v1alpha1.VarnishCluster, tmpl string) (string, error) {
+	t, err := template.New("haproxy-config").Parse(tmpl)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+	var b bytes.Buffer
+	if err := t.Execute(&b, instance.Spec.HaproxySidecar); err != nil {
+		return "", errors.WithStack(err)
+	}
+	return b.String(), nil
+}
+
 func (r *ReconcileVarnish) reconcileWithContext(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	logr := logger.FromContext(ctx)
 	vc := &v1alpha1.VarnishCluster{}
@@ -142,6 +158,43 @@ func (r *ReconcileVarnish) reconcileWithContext(ctx context.Context, request rec
 	err = r.Get(ctx, types.NamespacedName{Namespace: request.Namespace, Name: r.config.PodName}, pod)
 	if err != nil {
 		return reconcile.Result{}, errors.WithStack(err)
+	}
+
+	if vc.Spec.HaproxySidecar.Enabled {
+		haproxyConfigMap, err := r.getConfigMap(ctx, r.config.Namespace, vc.Spec.HaproxySidecar.ConfigMapName)
+		if err != nil {
+			return reconcile.Result{}, errors.WithStack(err)
+		}
+
+		cfgData, err := templatizeHaproxyConfig(vc, haproxyConfigMap.Data[v1alpha1.HaproxyConfigFileName])
+		haproxyConfigFileName := v1alpha1.HaproxyConfigDir + "/" + v1alpha1.HaproxyConfigFileName
+		haproxyConfigUpdated := false
+
+		if b, err := os.ReadFile(haproxyConfigFileName); err != nil {
+			if strings.Compare(string(b), cfgData) != 0 {
+				if err := os.WriteFile(haproxyConfigFileName, []byte(cfgData), 0644); err != nil {
+					return reconcile.Result{}, errors.WithStack(err)
+				} else {
+					haproxyConfigUpdated = true
+				}
+			}
+		} else {
+			if err := os.WriteFile(haproxyConfigFileName, []byte(cfgData), 0644); err != nil {
+				return reconcile.Result{}, errors.WithStack(err)
+			} else {
+				haproxyConfigUpdated = true
+			}
+		}
+
+		if haproxyConfigUpdated {
+			cmdString := "/haproxy-scripts/haproxy-hup.sh"
+			logr.Infof("Executing: %s", cmdString)
+			cmd := exec.Command(cmdString)
+			if err := cmd.Run(); err != nil {
+				logr.Errorf("Failed to send haproxy sighup. %v", err)
+				return reconcile.Result{}, errors.WithStack(err)
+			}
+		}
 	}
 
 	cm, err := r.getConfigMap(ctx, r.config.Namespace, *vc.Spec.VCL.ConfigMapName)

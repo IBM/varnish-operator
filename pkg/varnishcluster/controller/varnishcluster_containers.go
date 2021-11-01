@@ -133,6 +133,8 @@ func (r *VarnishClusterContainers) createVarnishControllerContainer(instance *vc
 			{Name: "LOG_LEVEL", Value: instance.Spec.LogLevel},
 		},
 		VolumeMounts: []v1.VolumeMount{
+			r.vols.createHaproxyConfigVolumeMount(false),
+			r.vols.createHaproxyScriptsVolumeMount(),
 			r.vols.createVarnishSharedVolumeMount(false),
 			r.vols.createVarnishSettingsVolumeMount(false),
 			r.vols.createVarnishSecretVolumeMount(),
@@ -187,7 +189,7 @@ func (r *VarnishClusterContainers) createHaproxySidecarContainer(instance *vcapi
 		},
 		Resources: instance.Spec.HaproxySidecar.Resources,
 		VolumeMounts: []v1.VolumeMount{
-			r.vols.createHaproxyConfigVolumeMount(),
+			r.vols.createHaproxyConfigVolumeMount(true),
 			r.vols.createHaproxyScriptsVolumeMount(),
 		},
 	}

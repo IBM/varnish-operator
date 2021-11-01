@@ -141,7 +141,9 @@ func (r *ReconcileVarnishCluster) reconcileServiceGeneric(ctx context.Context, i
 		// ClusterIP is immutable once created, so always enforce the same as existing
 		desired.Spec.ClusterIP = found.Spec.ClusterIP
 		desired.Spec.ClusterIPs = found.Spec.ClusterIPs
-
+		desired.Spec.IPFamilies = found.Spec.IPFamilies
+		desired.Spec.IPFamilyPolicy = found.Spec.IPFamilyPolicy
+		desired.Spec.InternalTrafficPolicy = found.Spec.InternalTrafficPolicy
 		// use nodePort from the spec or the one allocated by Kubernetes
 		if desired.Spec.Type == v1.ServiceTypeLoadBalancer || desired.Spec.Type == v1.ServiceTypeNodePort {
 			inheritNodePorts(desired.Spec.Ports, found.Spec.Ports)

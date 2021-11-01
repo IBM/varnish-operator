@@ -15,7 +15,7 @@ $ helm repo update
 ### Install Varnish Operator
 
 ```bash
-$ helm install --name varnish-operator --namespace varnish-operator varnish-operator/varnish-operator
+$ helm install varnish-operator --namespace varnish-operator varnish-operator/varnish-operator
 ```                                                                                                                        
 
 You should see your operator pod up and running:

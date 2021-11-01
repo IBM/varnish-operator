@@ -7,7 +7,7 @@ The purpose of the project is to provide a convenient way to deploy and manage V
 
 Kubernetes version `>=1.16.0` is supported.
 
-Varnish version 6.1.1 is supported.
+Varnish version 6.5.1 is supported.
 
 Full documentation can be found [here](https://ibm.github.io/varnish-operator/)
 

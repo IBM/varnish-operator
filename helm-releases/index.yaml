@@ -2,8 +2,19 @@ apiVersion: v1
 entries:
   varnish-operator:
   - apiVersion: v2
+    appVersion: 0.28.0
+    created: "2021-10-20T07:41:30.180121981Z"
+    description: Provides an easy way to deploy and manage a cluster of Varnish instances
+    digest: d8c977d4c72dda076174db3cb18c7581fdd7d9414b5172b3a774a824dc24b356
+    keywords:
+    - varnish
+    name: varnish-operator
+    urls:
+    - https://raw.githubusercontent.com/IBM/varnish-operator/main/helm-releases/varnish-operator-0.28.0.tgz
+    version: 0.28.0
+  - apiVersion: v2
     appVersion: 0.27.3
-    created: "2021-04-22T00:47:48.606108955Z"
+    created: "2021-10-20T07:41:30.179100976Z"
     description: Provides an easy way to deploy and manage a cluster of Varnish instances
     digest: 2d0994ac7b15ec48620dc8761a81b0e5dd7691a2c72e28dc469b942653a5e422
     keywords:
@@ -14,7 +25,7 @@ entries:
     version: 0.27.3
   - apiVersion: v2
     appVersion: 0.27.2
-    created: "2021-04-22T00:47:48.604670858Z"
+    created: "2021-10-20T07:41:30.178093872Z"
     description: Provides an easy way to deploy and manage a cluster of Varnish instances
     digest: eb34113e747c9230a4eccdf2f69cef7049a8c493e3dce9ad5ceb3d829662e8b1
     keywords:
@@ -25,7 +36,7 @@ entries:
     version: 0.27.2
   - apiVersion: v2
     appVersion: 0.27.1
-    created: "2021-04-22T00:47:48.602971325Z"
+    created: "2021-10-20T07:41:30.176469464Z"
     description: Provides an easy way to deploy and manage a cluster of Varnish instances
     digest: d99ed01aa50f9d4d7ec48c097cd0d69dd8a46afacc3b51e8e2eaa7ded25599be
     keywords:
@@ -36,7 +47,7 @@ entries:
     version: 0.27.1
   - apiVersion: v1
     appVersion: 0.27.0
-    created: "2021-04-22T00:47:48.601610838Z"
+    created: "2021-10-20T07:41:30.175553659Z"
     description: Provides an easy way to deploy and manage a cluster of Varnish instances
     digest: 81072e2644490186f20cfcf1f8f0179d5dfc5d4500cb1a1de6f73ee18b344fce
     keywords:
@@ -47,7 +58,7 @@ entries:
     version: 0.27.0
   - apiVersion: v1
     appVersion: 0.26.0
-    created: "2021-04-22T00:47:48.600670909Z"
+    created: "2021-10-20T07:41:30.174614455Z"
     description: Provides an easy way to deploy and manage a cluster of Varnish instances
     digest: dfcb049e9abee1e5fbfcb3b1d89e50a60def5d341d4ee1cb47cf02c28c5f9e4e
     keywords:
@@ -56,4 +67,4 @@ entries:
     urls:
     - https://raw.githubusercontent.com/IBM/varnish-operator/main/helm-releases/varnish-operator-0.26.0.tgz
     version: 0.26.0
-generated: "2021-04-22T00:47:48.599495348Z"
+generated: "2021-10-20T07:41:30.164540606Z"

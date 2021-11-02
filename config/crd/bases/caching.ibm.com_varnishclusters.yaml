@@ -924,6 +924,8 @@ spec:
                     format: int32
                     type: integer
                   configMapName:
+                    maxLength: 253
+                    pattern: ^[a-z0-9.-]+$
                     type: string
                   connectTimeout:
                     format: int32
@@ -978,6 +980,8 @@ spec:
                   statRefreshRate:
                     format: int32
                     type: integer
+                required:
+                - configMapName
                 type: object
               logFormat:
                 enum:

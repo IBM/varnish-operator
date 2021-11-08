@@ -22,6 +22,47 @@ jobs:
           docker build -f Dockerfile.varnishd -t ibmcom/varnish:local .
           docker build -f Dockerfile.controller -t ibmcom/varnish-controller:local .
           docker build -f Dockerfile.exporter -t ibmcom/varnish-metrics-exporter:local .
+      - name: Create k8s Kind Cluster v1.22.0
+        uses: helm/kind-action@v1.2.0
+        with:
+          version: v0.11.1
+          cluster_name: e2e-tests
+          node_image: kindest/node:v1.22.0@sha256:b8bda84bb3a190e6e028b1760d277454a72267a5454b57db34437c34a588d047
+      - name: create namespace
+        run: kubectl create namespace varnish-operator
+      - name: load images
+        run: |
+          kind load --name e2e-tests docker-image ibmcom/varnish-operator:local
+          kind load --name e2e-tests docker-image ibmcom/varnish:local
+          kind load --name e2e-tests docker-image ibmcom/varnish-controller:local
+          kind load --name e2e-tests docker-image ibmcom/varnish-metrics-exporter:local
+      - name: install operator
+        id: helm
+        run: helm install varnish-operator --debug --namespace=varnish-operator varnish-operator --wait --set container.imagePullPolicy=Never --set container.image=ibmcom/varnish-operator:local
+      - name: run tests
+        run: go test -count=1 ./tests #-count=1 is to disable tests caching.
+      - name: delete cluster
+        run: kind delete cluster --name=e2e-tests
+      - name: Create k8s Kind Cluster v1.21.1
+        uses: helm/kind-action@v1.2.0
+        with:
+          version: v0.11.1
+          cluster_name: e2e-tests
+          node_image: kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
+      - name: create namespace
+        run: kubectl create namespace varnish-operator
+      - name: load images
+        run: |
+          kind load --name e2e-tests docker-image ibmcom/varnish-operator:local
+          kind load --name e2e-tests docker-image ibmcom/varnish:local
+          kind load --name e2e-tests docker-image ibmcom/varnish-controller:local
+          kind load --name e2e-tests docker-image ibmcom/varnish-metrics-exporter:local
+      - name: install operator
+        run: helm install varnish-operator --debug --namespace=varnish-operator varnish-operator --wait --set container.imagePullPolicy=Never --set container.image=ibmcom/varnish-operator:local
+      - name: run tests
+        run: go test -count=1 ./tests #-count=1 is to disable tests caching.
+      - name: delete cluster
+        run: kind delete cluster --name=e2e-tests
       - name: Create k8s Kind Cluster v1.20.0
         uses: helm/kind-action@v1.2.0
         with:
@@ -37,7 +78,6 @@ jobs:
           kind load --name e2e-tests docker-image ibmcom/varnish-controller:local
           kind load --name e2e-tests docker-image ibmcom/varnish-metrics-exporter:local
       - name: install operator
-        id: helm
         run: helm install varnish-operator --debug --namespace=varnish-operator varnish-operator --wait --set container.imagePullPolicy=Never --set container.image=ibmcom/varnish-operator:local
       - name: run tests
         run: go test -count=1 ./tests #-count=1 is to disable tests caching.

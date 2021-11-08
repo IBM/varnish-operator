@@ -91,7 +91,7 @@ This can be done using the helm template configured to use your custom image:
 docker build -t <image-name> -f Dockerfile .
 docker push <image-name>
 make manifests #make sure your helm charts are in sync with current CRD and RBAC definitions
-helm install --name varnish-operator --namespace varnish-operator-system --set container.image=<image-name> ./varnish-operator
+helm install varnish-operator --namespace varnish-operator-system --set container.image=<image-name> ./varnish-operator
 ``` 
 
 Check the operator pod logs to make sure all works as expected:

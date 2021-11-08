@@ -25,7 +25,7 @@ $ kubectl create ns varnish-operator
 Install the operator:
 
 ```bash
-$ helm install --name varnish-operator --namespace varnish-operator varnish-operator/varnish-operator
+$ helm install varnish-operator --namespace varnish-operator varnish-operator/varnish-operator
 ```                                                                                                                        
 
 You should see your operator pod up and running:

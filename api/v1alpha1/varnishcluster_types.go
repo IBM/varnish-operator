@@ -125,7 +125,7 @@ type HaproxySidecar struct {
 	ServerTimeout             *int32                  `json:"serverTimeout,omitempty"`   // in millis, 50000 default
 	StatRefreshRate           *int32                  `json:"statRefreshRate,omitempty"` // in seconds, 10 default
 	BackendServerPort         *int32                  `json:"backendServerPort,omitempty"`
-	BackendServerHostHeader   string                  `json:"BackendServerHostHeader,omitempty"`
+	BackendServerHostHeader   string                  `json:"backendServerHostHeader,omitempty"`
 	BackendServerMaxAgeHeader *int32                  `json:"backendServerMaxAgeHeader,omitempty"`
 	BackendServers            []string                `json:"backendServers,omitempty"`
 }

@@ -1,35 +1,25 @@
 package controller
 
 import (
-	"sync"
-
 	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-type VarnishClusterContainers struct {
-	vols *VarnishClusterVolumes
-}
-
-var varnishClusterContainersLock = &sync.Mutex{}
-var varnishClusterContainersSingleton *VarnishClusterContainers
-
-func getVarnishClusterContainersInstance() *VarnishClusterContainers {
-	if varnishClusterContainersSingleton == nil {
-		varnishClusterContainersLock.Lock()
-		defer varnishClusterContainersLock.Unlock()
-		if varnishClusterContainersSingleton == nil {
-			varnishClusterContainersSingleton = &VarnishClusterContainers{
-				vols: getVarnishClusterVolumeMountsInstance(),
-			}
-		}
+func varnishClusterContainers(instance *vcapi.VarnishCluster, varnishdArgs []string, varnishImage string, endpointSelector map[string]string) []v1.Container {
+	containers := []v1.Container{
+		varnishContainer(instance, varnishdArgs, varnishImage),
+		varnishMetricsContainer(instance, varnishImage),
+		varnishControllerContainer(instance, varnishImage, endpointSelector),
 	}
-	return varnishClusterContainersSingleton
+	if instance.Spec.HaproxySidecar.Enabled {
+		containers = append(containers, haproxySidecarContainer(instance))
+	}
+	return containers
 }
 
-func (r *VarnishClusterContainers) createVarnishContainer(instance *vcapi.VarnishCluster, varnishdArgs []string, varnishImage string) v1.Container {
+func varnishContainer(instance *vcapi.VarnishCluster, varnishdArgs []string, varnishImage string) v1.Container {
 	//Varnish container
 	return v1.Container{
 		Name:  vcapi.VarnishContainerName,
@@ -42,9 +32,9 @@ func (r *VarnishClusterContainers) createVarnishContainer(instance *vcapi.Varnis
 			},
 		},
 		VolumeMounts: []v1.VolumeMount{
-			r.vols.createVarnishSharedVolumeMount(false),
-			r.vols.createVarnishSettingsVolumeMount(true),
-			r.vols.createVarnishSecretVolumeMount(),
+			varnishSharedVolumeMount(false),
+			varnishSettingsVolumeMount(true),
+			varnishSecretVolumeMount(),
 		},
 		Args:      varnishdArgs,
 		Resources: *instance.Spec.Varnish.Resources,
@@ -66,7 +56,7 @@ func (r *VarnishClusterContainers) createVarnishContainer(instance *vcapi.Varnis
 	}
 }
 
-func (r *VarnishClusterContainers) createVarnishMetricsContainer(instance *vcapi.VarnishCluster, varnishImage string) v1.Container {
+func varnishMetricsContainer(instance *vcapi.VarnishCluster, varnishImage string) v1.Container {
 	varnishMetricsImage := imageNameGenerate(instance.Spec.Varnish.MetricsExporter.Image, varnishImage, vcapi.VarnishMetricsExporterImage)
 
 	//Varnish metrics
@@ -81,8 +71,8 @@ func (r *VarnishClusterContainers) createVarnishMetricsContainer(instance *vcapi
 			},
 		},
 		VolumeMounts: []v1.VolumeMount{
-			r.vols.createVarnishSharedVolumeMount(true),
-			r.vols.createVarnishSettingsVolumeMount(true),
+			varnishSharedVolumeMount(true),
+			varnishSettingsVolumeMount(true),
 		},
 		Resources: instance.Spec.Varnish.MetricsExporter.Resources,
 		ReadinessProbe: &v1.Probe{
@@ -104,7 +94,7 @@ func (r *VarnishClusterContainers) createVarnishMetricsContainer(instance *vcapi
 	}
 }
 
-func (r *VarnishClusterContainers) createVarnishControllerContainer(instance *vcapi.VarnishCluster, varnishImage string, endpointSelector map[string]string) v1.Container {
+func varnishControllerContainer(instance *vcapi.VarnishCluster, varnishImage string, endpointSelector map[string]string) v1.Container {
 	gvk := instance.GroupVersionKind()
 	varnishControllerImage := imageNameGenerate(instance.Spec.Varnish.Controller.Image, varnishImage, vcapi.VarnishControllerImage)
 
@@ -133,11 +123,11 @@ func (r *VarnishClusterContainers) createVarnishControllerContainer(instance *vc
 			{Name: "LOG_LEVEL", Value: instance.Spec.LogLevel},
 		},
 		VolumeMounts: []v1.VolumeMount{
-			r.vols.createHaproxyConfigVolumeMount(false),
-			r.vols.createHaproxyScriptsVolumeMount(),
-			r.vols.createVarnishSharedVolumeMount(false),
-			r.vols.createVarnishSettingsVolumeMount(false),
-			r.vols.createVarnishSecretVolumeMount(),
+			haproxyConfigVolumeMount(false),
+			haproxyScriptsVolumeMount(),
+			varnishSharedVolumeMount(false),
+			varnishSettingsVolumeMount(false),
+			varnishSecretVolumeMount(),
 		},
 		ReadinessProbe: &v1.Probe{
 			Handler: v1.Handler{
@@ -159,7 +149,7 @@ func (r *VarnishClusterContainers) createVarnishControllerContainer(instance *vc
 	}
 }
 
-func (r *VarnishClusterContainers) createHaproxySidecarContainer(instance *vcapi.VarnishCluster) v1.Container {
+func haproxySidecarContainer(instance *vcapi.VarnishCluster) v1.Container {
 	//haproxy sidecar
 	return v1.Container{
 		Name:            vcapi.HaproxyContainerName,
@@ -189,20 +179,8 @@ func (r *VarnishClusterContainers) createHaproxySidecarContainer(instance *vcapi
 		},
 		Resources: instance.Spec.HaproxySidecar.Resources,
 		VolumeMounts: []v1.VolumeMount{
-			r.vols.createHaproxyConfigVolumeMount(true),
-			r.vols.createHaproxyScriptsVolumeMount(),
+			haproxyConfigVolumeMount(true),
+			haproxyScriptsVolumeMount(),
 		},
 	}
-}
-
-func (r *VarnishClusterContainers) createContainers(instance *vcapi.VarnishCluster, varnishdArgs []string, varnishImage string, endpointSelector map[string]string) []v1.Container {
-	containers := []v1.Container{
-		r.createVarnishContainer(instance, varnishdArgs, varnishImage),
-		r.createVarnishMetricsContainer(instance, varnishImage),
-		r.createVarnishControllerContainer(instance, varnishImage, endpointSelector),
-	}
-	if instance.Spec.HaproxySidecar.Enabled {
-		containers = append(containers, r.createHaproxySidecarContainer(instance))
-	}
-	return containers
 }

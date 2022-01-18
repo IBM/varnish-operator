@@ -106,12 +106,14 @@ var _ = Describe("Varnish cluster", func() {
 	})
 
 	It("pods respond with backend responses and metrics", func() {
+		fmt.Println("testing")
 		Expect(k8sClient.Create(context.Background(), backendsDeployment)).To(Succeed())
 		Expect(k8sClient.Create(context.Background(), vc)).To(Succeed())
 		By("backend pods become ready")
 		waitForPodsReadiness(vcNamespace, backendLabels)
 		By("varnish pods become ready")
 		waitForPodsReadiness(vcNamespace, varnishPodLabels)
+		time.Sleep(time.Second * 3)
 		pf := portForwardPod(vcNamespace, varnishPodLabels, []string{"6081:6081", "9131:9131"})
 		defer pf.Close()
 
@@ -124,7 +126,7 @@ var _ = Describe("Varnish cluster", func() {
 				return 0, err
 			}
 			return resp.StatusCode, nil
-		}, time.Second*30, time.Second*5).Should(Equal(200))
+		}, time.Second*60, time.Second*2).Should(Equal(200))
 		Expect(resp.Header.Get("X-Varnish-Cache")).To(Equal("MISS"))
 		body, err := ioutil.ReadAll(resp.Body)
 		Expect(err).NotTo(HaveOccurred())

@@ -62,7 +62,7 @@ jobs:
         if: ${{ always() && (steps.e2e.outcome == 'failure' || steps.helm.outcome == 'failure') }}
         run: |
           mkdir ./kind-logs
-          kind export logs ./kind-logs
+          kind export logs ./kind-logs --name e2e-tests
           tar -cvf kind-e2e-logs-${{ matrix.kubernetes-version }}.tar ./kind-logs
       - name: upload logs artifact
         if: ${{ always() && (steps.e2e.outcome == 'failure' || steps.helm.outcome == 'failure') }}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -76,6 +77,34 @@ func getPodLogs(pod v1.Pod, podLogOpts v1.PodLogOptions) (string, error) {
 	str := buff.String()
 
 	return str, err
+}
+
+// showClusterEvents shows all events from the cluster. Helpful if the pods were not able to be schedule
+func showClusterEvents() {
+	eventsList := &v1.EventList{}
+	err := k8sClient.List(context.Background(), eventsList)
+	if err != nil {
+		fmt.Println("Unable to get events. Error: ", err)
+	}
+
+	var eventsOutput []string
+	for _, event := range eventsList.Items {
+		eventsOutput = append(eventsOutput, fmt.Sprintf("%s %s %s/%s %s/%s: %s - %s",
+			event.LastTimestamp.String(), event.Type,
+			event.InvolvedObject.APIVersion, event.InvolvedObject.Kind,
+			event.InvolvedObject.Namespace, event.InvolvedObject.Name,
+			event.Name, event.Message,
+		))
+	}
+
+	startIndex := len(eventsOutput) - int(tailLines)
+	if startIndex < 0 {
+		startIndex = 0
+	}
+
+	fmt.Println("Kubernetes events: ")
+	fmt.Print(strings.Join(eventsOutput[startIndex:], "\n"))
+	Expect(ioutil.WriteFile(debugLogsDir+"cluster-events.txt", []byte(strings.Join(eventsOutput, "\n")), 0777)).To(Succeed())
 }
 
 func showPodLogs(labels map[string]string, namespace string) {

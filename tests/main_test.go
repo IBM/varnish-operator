@@ -20,6 +20,10 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+const (
+	debugLogsDir = "/tmp/debug-logs/"
+)
+
 var (
 	k8sClient  client.Client
 	restConfig *rest.Config

@@ -33,6 +33,7 @@ var _ = Describe("Varnish cluster", func() {
 	backendLabels := map[string]string{"app": "test-backend"}
 	backendDeploymentName := "test-backend"
 	varnishPodLabels := map[string]string{vcapi.LabelVarnishComponent: vcapi.VarnishComponentVarnish}
+	operatorPodLabels := map[string]string{"operator": "cassandra-operator"}
 
 	backendsDeployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -96,6 +97,26 @@ var _ = Describe("Varnish cluster", func() {
 		},
 	}
 
+	var _ = JustAfterEach(func() {
+		if CurrentGinkgoTestDescription().Failed {
+			fmt.Printf("Test failed! Collecting diags just after failed test in %s\n", CurrentGinkgoTestDescription().TestText)
+
+			podList := &v1.PodList{}
+			err := k8sClient.List(context.Background(), podList, client.InNamespace(vcNamespace))
+			Expect(err).ToNot(HaveOccurred())
+
+			for _, pod := range podList.Items {
+				fmt.Println("Pod: ", pod.Name, " Status: ", pod.Status.Phase)
+				for _, container := range pod.Status.ContainerStatuses {
+					fmt.Println("Container: ", container.Name, " Ready: ", container.State)
+				}
+			}
+
+			showPodLogs(operatorPodLabels, "varnish-operator")
+			showPodLogs(varnishPodLabels, vcNamespace)
+		}
+	})
+
 	AfterEach(func() {
 		By("deleting created resources")
 		Expect(k8sClient.DeleteAllOf(context.Background(), &vcapi.VarnishCluster{}, client.InNamespace(vcNamespace))).To(Succeed())
@@ -106,14 +127,12 @@ var _ = Describe("Varnish cluster", func() {
 	})
 
 	It("pods respond with backend responses and metrics", func() {
-		fmt.Println("testing")
 		Expect(k8sClient.Create(context.Background(), backendsDeployment)).To(Succeed())
 		Expect(k8sClient.Create(context.Background(), vc)).To(Succeed())
 		By("backend pods become ready")
 		waitForPodsReadiness(vcNamespace, backendLabels)
 		By("varnish pods become ready")
 		waitForPodsReadiness(vcNamespace, varnishPodLabels)
-		time.Sleep(time.Second * 3)
 		pf := portForwardPod(vcNamespace, varnishPodLabels, []string{"6081:6081", "9131:9131"})
 		defer pf.Close()
 
@@ -126,7 +145,7 @@ var _ = Describe("Varnish cluster", func() {
 				return 0, err
 			}
 			return resp.StatusCode, nil
-		}, time.Second*60, time.Second*2).Should(Equal(200))
+		}, time.Second*20, time.Second*2).Should(Equal(200))
 		Expect(resp.Header.Get("X-Varnish-Cache")).To(Equal("MISS"))
 		body, err := ioutil.ReadAll(resp.Body)
 		Expect(err).NotTo(HaveOccurred())

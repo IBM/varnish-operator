@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -57,6 +58,44 @@ func getMetricByLabel(metricFamilies map[string]*prometheusClient.MetricFamily, 
 		}
 	}
 	return prometheusClient.Metric{}, false
+}
+
+func getPodLogs(pod v1.Pod, podLogOpts v1.PodLogOptions) (string, error) {
+	req := kubeClient.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &podLogOpts)
+	podLogs, err := req.Stream(context.Background())
+	if err != nil {
+		return "", err
+	}
+	defer func() { _ = podLogs.Close() }()
+
+	buff := new(bytes.Buffer)
+	_, err = io.Copy(buff, podLogs)
+	if err != nil {
+		return "", err
+	}
+	str := buff.String()
+
+	return str, err
+}
+
+func showPodLogs(labels map[string]string, namespace string) {
+	podList := &v1.PodList{}
+	err := k8sClient.List(context.Background(), podList, client.InNamespace(namespace), client.MatchingLabels(labels))
+	if err != nil {
+		fmt.Println("Unable to get pods. Error: ", err)
+	}
+
+	for _, pod := range podList.Items {
+		fmt.Println("Logs from pod: ", pod.Name)
+
+		for _, container := range pod.Spec.Containers {
+			str, err := getPodLogs(pod, v1.PodLogOptions{TailLines: &tailLines, Container: container.Name})
+			if err != nil {
+				continue
+			}
+			fmt.Println(str)
+		}
+	}
 }
 
 func waitForPodsTermination(namespace string, selector map[string]string) {

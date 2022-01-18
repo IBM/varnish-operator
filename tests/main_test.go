@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"k8s.io/client-go/kubernetes"
 	"testing"
 
 	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
@@ -19,8 +20,12 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var k8sClient client.Client
-var restConfig *rest.Config
+var (
+	k8sClient  client.Client
+	restConfig *rest.Config
+	kubeClient *kubernetes.Clientset
+	tailLines  int64 = 30
+)
 
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -44,4 +49,8 @@ var _ = BeforeSuite(func() {
 	k8sClient, err = client.New(restConfig, client.Options{Scheme: scheme.Scheme})
 	Expect(err).ToNot(HaveOccurred())
 	Expect(k8sClient).ToNot(BeNil())
+
+	// Create client test. We use kubernetes package bc currently only it has GetLogs method.
+	kubeClient, err = kubernetes.NewForConfig(restConfig)
+	Expect(err).ToNot(HaveOccurred())
 })

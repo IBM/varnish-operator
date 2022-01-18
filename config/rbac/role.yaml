@@ -21,6 +21,7 @@ rules:
   - ""
   resources:
   - endpoints
+  - namespaces
   verbs:
   - list
   - watch

@@ -136,7 +136,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 							Args:      varnishdArgs,
 							Resources: *instance.Spec.Varnish.Resources,
 							ReadinessProbe: &v1.Probe{
-								Handler: v1.Handler{
+								ProbeHandler: v1.ProbeHandler{
 									Exec: &v1.ExecAction{
 										Command: []string{"/usr/bin/varnishadm", "ping"},
 									},
@@ -176,7 +176,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 							},
 							Resources: instance.Spec.Varnish.MetricsExporter.Resources,
 							ReadinessProbe: &v1.Probe{
-								Handler: v1.Handler{
+								ProbeHandler: v1.ProbeHandler{
 									HTTPGet: &v1.HTTPGetAction{
 										Port:   intstr.FromInt(vcapi.VarnishPrometheusExporterPort),
 										Scheme: v1.URISchemeHTTP,
@@ -233,7 +233,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 								},
 							},
 							ReadinessProbe: &v1.Probe{
-								Handler: v1.Handler{
+								ProbeHandler: v1.ProbeHandler{
 									HTTPGet: &v1.HTTPGetAction{
 										Port:   intstr.FromInt(vcapi.HealthCheckPort),
 										Path:   "/readyz",

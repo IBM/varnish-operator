@@ -23,10 +23,10 @@ jobs:
         - kubernetes-version: "1.18"
           kind-node: kindest/node:v1.18.19@sha256:7af1492e19b3192a79f606e43c35fb741e520d195f96399284515f077b3b622c
     steps:
-      - name: Set up Go 1.x
+      - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.15
+          go-version: ^1.17
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
       - name: Get dependencies
@@ -37,7 +37,7 @@ jobs:
           docker build -f Dockerfile.varnishd -t ibmcom/varnish:local .
           docker build -f Dockerfile.controller -t ibmcom/varnish-controller:local .
           docker build -f Dockerfile.exporter -t ibmcom/varnish-metrics-exporter:local .
-      - name: Create k8s Kind Cluster v1.22.0
+      - name: Create k8s Kind Cluster ${{ matrix.kubernetes-version }}
         uses: helm/kind-action@v1.2.0
         with:
           version: v0.11.1
@@ -58,8 +58,6 @@ jobs:
       - name: run tests
         id: e2e
         run: go test -count=1 ./tests #-count=1 is to disable tests caching.
-      - name: delete cluster
-        run: kind delete cluster --name=e2e-tests
       - name: capture logs if e2e failed
         if: ${{ always() && (steps.e2e.outcome == 'failure' || steps.helm.outcome == 'failure') }}
         run: |

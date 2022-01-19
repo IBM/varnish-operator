@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -118,11 +119,19 @@ func showPodLogs(labels map[string]string, namespace string) {
 		fmt.Println("Logs from pod: ", pod.Name)
 
 		for _, container := range pod.Spec.Containers {
+			logFileName := fmt.Sprintf("%s%s-%s-%s.txt", debugLogsDir, pod.Namespace, pod.Name, container.Name)
 			str, err := getPodLogs(pod, v1.PodLogOptions{TailLines: &tailLines, Container: container.Name})
 			if err != nil {
 				continue
 			}
 			fmt.Println(str)
+			allLogs, err := getPodLogs(pod, v1.PodLogOptions{Container: container.Name})
+			if err != nil {
+				fileContent := []byte(fmt.Sprintf("couldn't get logs for pod %s/%s container %s: %s", pod.Namespace, pod.Name, container.Name, err.Error()))
+				Expect(ioutil.WriteFile(logFileName, fileContent, 0777)).To(Succeed())
+				continue
+			}
+			Expect(ioutil.WriteFile(logFileName, []byte(allLogs), 0777)).To(Succeed())
 		}
 	}
 }

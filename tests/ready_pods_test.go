@@ -3,12 +3,12 @@ package tests
 import (
 	"context"
 	"fmt"
-	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strings"
 	"time"
+
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 
 	"github.com/prometheus/common/expfmt"
 	appsv1 "k8s.io/api/apps/v1"
@@ -34,7 +34,6 @@ var _ = Describe("Varnish cluster", func() {
 	backendLabels := map[string]string{"app": "test-backend"}
 	backendDeploymentName := "test-backend"
 	varnishPodLabels := map[string]string{vcapi.LabelVarnishComponent: vcapi.VarnishComponentVarnish}
-	operatorPodLabels := map[string]string{"operator": "varnish-operator"}
 
 	backendsDeployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -97,36 +96,6 @@ var _ = Describe("Varnish cluster", func() {
 			},
 		},
 	}
-
-	var _ = JustAfterEach(func() {
-		if CurrentGinkgoTestDescription().Failed {
-			fmt.Printf("Test failed! Collecting diags just after failed test in %s\n", CurrentGinkgoTestDescription().TestText)
-
-			Expect(os.MkdirAll(debugLogsDir, 0777)).To(Succeed())
-			vcList := &vcapi.VarnishClusterList{}
-			Expect(k8sClient.List(context.Background(), vcList)).To(Succeed())
-
-			fmt.Fprintf(GinkgoWriter, "Gathering log info for Varnish Operator\n")
-			showPodLogs(operatorPodLabels, "varnish-operator")
-
-			for _, vc := range vcList.Items {
-				fmt.Fprintf(GinkgoWriter, "Gathering log info for VarnishCluster %s/%s\n", vc.Namespace, vc.Name)
-				podList := &v1.PodList{}
-				Expect(k8sClient.List(context.Background(), podList, client.InNamespace(vc.Namespace))).To(Succeed())
-
-				for _, pod := range podList.Items {
-					fmt.Println("Pod: ", pod.Name, " Status: ", pod.Status.Phase)
-					for _, container := range pod.Status.ContainerStatuses {
-						fmt.Println("Container: ", container.Name, " Ready: ", container.State)
-					}
-				}
-
-				showPodLogs(varnishPodLabels, vc.Namespace)
-			}
-
-			showClusterEvents()
-		}
-	})
 
 	AfterEach(func() {
 		By("deleting created resources")

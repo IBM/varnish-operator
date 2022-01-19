@@ -64,10 +64,17 @@ jobs:
           mkdir ./kind-logs
           kind export logs ./kind-logs --name e2e-tests
           tar -cvf kind-e2e-logs-${{ matrix.kubernetes-version }}.tar ./kind-logs
-      - name: upload logs artifact
+      - name: upload kind logs artifact
         if: ${{ always() && (steps.e2e.outcome == 'failure' || steps.helm.outcome == 'failure') }}
         uses: actions/upload-artifact@v2
         with:
           name: kind-e2e-logs-${{ matrix.kubernetes-version }}.tar
           path: kind-e2e-logs-${{ matrix.kubernetes-version }}.tar
+          retention-days: 7
+      - name: upload e2e test logs artifact
+        if: ${{ always() && steps.e2e.outcome == 'failure' }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: debug-logs-${{ matrix.kubernetes-version }}.tar
+          path: /tmp/debug-logs/
           retention-days: 7

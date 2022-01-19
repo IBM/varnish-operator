@@ -3,11 +3,12 @@ package tests
 import (
 	"context"
 	"fmt"
-	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
+
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 
 	"github.com/prometheus/common/expfmt"
 	appsv1 "k8s.io/api/apps/v1"

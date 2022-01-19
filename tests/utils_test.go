@@ -4,11 +4,14 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -57,6 +60,80 @@ func getMetricByLabel(metricFamilies map[string]*prometheusClient.MetricFamily, 
 		}
 	}
 	return prometheusClient.Metric{}, false
+}
+
+func getPodLogs(pod v1.Pod, podLogOpts v1.PodLogOptions) (string, error) {
+	req := kubeClient.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &podLogOpts)
+	podLogs, err := req.Stream(context.Background())
+	if err != nil {
+		return "", err
+	}
+	defer func() { _ = podLogs.Close() }()
+
+	buff := new(bytes.Buffer)
+	_, err = io.Copy(buff, podLogs)
+	if err != nil {
+		return "", err
+	}
+	str := buff.String()
+
+	return str, err
+}
+
+// showClusterEvents shows all events from the cluster. Helpful if the pods were not able to be schedule
+func showClusterEvents() {
+	eventsList := &v1.EventList{}
+	err := k8sClient.List(context.Background(), eventsList)
+	if err != nil {
+		fmt.Println("Unable to get events. Error: ", err)
+	}
+
+	var eventsOutput []string
+	for _, event := range eventsList.Items {
+		eventsOutput = append(eventsOutput, fmt.Sprintf("%s %s %s/%s %s/%s: %s - %s",
+			event.LastTimestamp.String(), event.Type,
+			event.InvolvedObject.APIVersion, event.InvolvedObject.Kind,
+			event.InvolvedObject.Namespace, event.InvolvedObject.Name,
+			event.Name, event.Message,
+		))
+	}
+
+	startIndex := len(eventsOutput) - int(tailLines)
+	if startIndex < 0 {
+		startIndex = 0
+	}
+
+	fmt.Println("Kubernetes events: ")
+	fmt.Print(strings.Join(eventsOutput[startIndex:], "\n"))
+	Expect(ioutil.WriteFile(debugLogsDir+"cluster-events.txt", []byte(strings.Join(eventsOutput, "\n")), 0777)).To(Succeed())
+}
+
+func showPodLogs(labels map[string]string, namespace string) {
+	podList := &v1.PodList{}
+	err := k8sClient.List(context.Background(), podList, client.InNamespace(namespace), client.MatchingLabels(labels))
+	if err != nil {
+		fmt.Println("Unable to get pods. Error: ", err)
+	}
+
+	for _, pod := range podList.Items {
+		fmt.Println("Logs from pod: ", pod.Name)
+
+		for _, container := range pod.Spec.Containers {
+			logFileName := fmt.Sprintf("%s%s-%s-%s.txt", debugLogsDir, pod.Namespace, pod.Name, container.Name)
+			str, err := getPodLogs(pod, v1.PodLogOptions{TailLines: &tailLines, Container: container.Name})
+			if err != nil {
+				continue
+			}
+			fmt.Println(str)
+			allLogs, err := getPodLogs(pod, v1.PodLogOptions{Container: container.Name})
+			if err != nil {
+				fileContent := []byte(fmt.Sprintf("couldn't get logs for pod %s/%s container %s: %s", pod.Namespace, pod.Name, container.Name, err.Error()))
+				Expect(ioutil.WriteFile(logFileName, fileContent, 0777)).To(Succeed())
+				continue
+			}
+			Expect(ioutil.WriteFile(logFileName, []byte(allLogs), 0777)).To(Succeed())
+		}
+	}
 }
 
 func waitForPodsTermination(namespace string, selector map[string]string) {

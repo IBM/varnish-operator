@@ -1,5 +1,7 @@
 # Varnish Operator
 
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5895/badge)](https://bestpractices.coreinfrastructure.org/projects/5895)
+
 ### Project status: alpha
 The project is in development and breaking changes can be introduced.
 

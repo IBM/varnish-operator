@@ -2,20 +2,27 @@ name: Tests
 
 on: push
 
+env:
+  GO_VERSION: 1.17
+
 jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - name: Setup-go installation
-        uses: actions/setup-go@v3
       - name: Check out code into the Go module directory
         uses: actions/checkout@v3
+      - name: Setup-go installation
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v3.1.0
+        uses: golangci/golangci-lint-action@v3
         with:
           version: v1.45.2
-          args: --timeout=2m
+          args: --timeout=2m --enable exportloopref
+          skip-pkg-cache: true
+          skip-build-cache: true
   tests:
     name: Tests
     runs-on: ubuntu-latest

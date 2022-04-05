@@ -49,6 +49,18 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 	varnishControllerImage := imageNameGenerate(instance.Spec.Varnish.Controller.Image, varnishImage, vcapi.VarnishControllerImage)
 	varnishMetricsImage := imageNameGenerate(instance.Spec.Varnish.MetricsExporter.Image, varnishImage, vcapi.VarnishMetricsExporterImage)
 
+	var pvcs []v1.PersistentVolumeClaim
+	for _, volumeClaimTemplate := range instance.Spec.Varnish.ExtraVolumeClaimTemplates {
+		pvcs = append(pvcs, v1.PersistentVolumeClaim{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        volumeClaimTemplate.Metadata.Name,
+				Labels:      volumeClaimTemplate.Metadata.Labels,
+				Annotations: volumeClaimTemplate.Metadata.Annotations,
+			},
+			Spec: volumeClaimTemplate.Spec,
+		})
+	}
+
 	desired := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      names.StatefulSet(instance.Name),
@@ -64,6 +76,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 			PodManagementPolicy:  appsv1.ParallelPodManagement,
 			UpdateStrategy:       updateStrategy,
 			RevisionHistoryLimit: proto.Int(10),
+			VolumeClaimTemplates: pvcs,
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: varnishLabels,
@@ -74,7 +87,8 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 					// in the same pod.It is required for the pod to provide reliable way to collect metrics.
 					// Otherwise metrics collection container may only collect general varnish process metrics.
 					ShareProcessNamespace: proto.Bool(true),
-					Volumes: []v1.Volume{
+					InitContainers:        instance.Spec.Varnish.ExtraInitContainers,
+					Volumes: append([]v1.Volume{
 						{
 							Name: vcapi.VarnishSharedVolume,
 							VolumeSource: v1.VolumeSource{
@@ -103,7 +117,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 								},
 							},
 						},
-					},
+					}, instance.Spec.Varnish.ExtraVolumes...),
 
 					Containers: []v1.Container{
 						//Varnish container
@@ -117,7 +131,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 									Protocol:      v1.ProtocolTCP,
 								},
 							},
-							VolumeMounts: []v1.VolumeMount{
+							VolumeMounts: append([]v1.VolumeMount{
 								{
 									Name:      vcapi.VarnishSharedVolume,
 									MountPath: "/var/lib/varnish",
@@ -132,7 +146,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 									MountPath: "/etc/varnish-secret",
 									ReadOnly:  true,
 								},
-							},
+							}, instance.Spec.Varnish.ExtraVolumeMounts...),
 							Args:      varnishdArgs,
 							Resources: *instance.Spec.Varnish.Resources,
 							ReadinessProbe: &v1.Probe{

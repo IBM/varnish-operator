@@ -281,8 +281,7 @@ func (r *ReconcileVarnishCluster) reconcileWithContext(ctx context.Context, requ
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	// TODO: remove extra return var
-	if _, err = r.reconcileConfigMap(ctx, varnishSelector, instance, instanceStatus); err != nil {
+	if err = r.reconcileConfigMap(ctx, varnishSelector, instance, instanceStatus); err != nil {
 		return ctrl.Result{}, err
 	}
 

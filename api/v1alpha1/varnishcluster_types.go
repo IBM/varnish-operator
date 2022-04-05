@@ -120,14 +120,30 @@ type UpdateStrategyDelayedRollingUpdate struct {
 type VarnishClusterVarnish struct {
 	Image string `json:"image,omitempty"`
 	// +kubebuilder:validation:Enum=Always;Never;IfNotPresent
-	ImagePullPolicy v1.PullPolicy                         `json:"imagePullPolicy,omitempty"`
-	ImagePullSecret string                                `json:"imagePullSecret,omitempty"`
-	Resources       *v1.ResourceRequirements              `json:"resources,omitempty"`
-	Args            []string                              `json:"args,omitempty"`
-	Controller      *VarnishClusterVarnishController      `json:"controller,omitempty"`
-	MetricsExporter *VarnishClusterVarnishMetricsExporter `json:"metricsExporter,omitempty"`
-	Secret          *VarnishClusterVarnishSecret          `json:"admAuth,omitempty"`
-	EnvFrom         []v1.EnvFromSource                    `json:"envFrom,omitempty"`
+	ImagePullPolicy           v1.PullPolicy                         `json:"imagePullPolicy,omitempty"`
+	ImagePullSecret           string                                `json:"imagePullSecret,omitempty"`
+	Resources                 *v1.ResourceRequirements              `json:"resources,omitempty"`
+	Args                      []string                              `json:"args,omitempty"`
+	Controller                *VarnishClusterVarnishController      `json:"controller,omitempty"`
+	MetricsExporter           *VarnishClusterVarnishMetricsExporter `json:"metricsExporter,omitempty"`
+	Secret                    *VarnishClusterVarnishSecret          `json:"admAuth,omitempty"`
+	EnvFrom                   []v1.EnvFromSource                    `json:"envFrom,omitempty"`
+	ExtraInitContainers       []v1.Container                        `json:"extraInitContainers,omitempty"`
+	ExtraVolumeClaimTemplates []PVC                                 `json:"extraVolumeClaimTemplates,omitempty"`
+	ExtraVolumes              []v1.Volume                           `json:"extraVolumes,omitempty"`
+	ExtraVolumeMounts         []v1.VolumeMount                      `json:"extraVolumeMounts,omitempty"`
+}
+
+type PVC struct {
+	Metadata ObjectMetadata `json:"metadata,omitempty"`
+	// +kubebuilder:validation:Required
+	Spec v1.PersistentVolumeClaimSpec `json:"spec"`
+}
+
+type ObjectMetadata struct {
+	Name        string            `json:"name,omitempty"`
+	Labels      map[string]string `json:"labels,omitempty"`
+	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
 type VarnishClusterVarnishController struct {

@@ -23,7 +23,7 @@ const (
 	annotationVCLVersion = "VCLVersion"
 )
 
-func (r *ReconcileVarnishCluster) reconcileConfigMap(ctx context.Context, podsSelector map[string]string, instance, instanceStatus *vcapi.VarnishCluster) (*v1.ConfigMap, error) {
+func (r *ReconcileVarnishCluster) reconcileConfigMap(ctx context.Context, podsSelector map[string]string, instance, instanceStatus *vcapi.VarnishCluster) error {
 	logr := logger.FromContext(ctx).With(logger.FieldComponent, vcapi.VarnishComponentVCLFileConfigMap)
 	logr = logr.With(logger.FieldComponentName, instance.Spec.VCL.ConfigMapName)
 
@@ -47,20 +47,20 @@ func (r *ReconcileVarnishCluster) reconcileConfigMap(ctx context.Context, podsSe
 			},
 		}
 		if err := controllerutil.SetControllerReference(instance, cm, r.scheme); err != nil {
-			return nil, errors.Wrap(err, "could not initialize default ConfigMap")
+			return errors.Wrap(err, "could not initialize default ConfigMap")
 		}
 
 		logr.Infoc("Creating ConfigMap with default VCL files", "new", cm)
 		if err = r.Create(ctx, cm); err != nil {
-			return nil, errors.Wrap(err, "could not create ConfigMap")
+			return errors.Wrap(err, "could not create ConfigMap")
 		}
 	} else if err != nil {
-		return nil, errors.Wrap(err, "could not get current state of ConfigMap")
+		return errors.Wrap(err, "could not get current state of ConfigMap")
 	} else {
 		cmCopy := cm.DeepCopy() //create a copy to check later if the config map changed and needs to be updated
 		// TODO: there may be a problem if the configmap is already owned by something else. That will prevent the `Watch` fn (in varnishcluster_controller.go#run) from detecting updates to the ConfigMap. It will also cause this code to throw an unhandled error that we may want to handle
 		if err = controllerutil.SetControllerReference(instance, cm, r.scheme); err != nil {
-			return nil, errors.Wrap(err, "could not set controller as the OwnerReference for existing ConfigMap")
+			return errors.Wrap(err, "could not set controller as the OwnerReference for existing ConfigMap")
 		}
 		// don't trample on any labels created by user
 		if cm.Labels == nil {
@@ -73,7 +73,7 @@ func (r *ReconcileVarnishCluster) reconcileConfigMap(ctx context.Context, podsSe
 		if !compare.EqualConfigMap(cm, cmCopy) {
 			logr.Infow("Updating ConfigMap with defaults", "diff", compare.DiffConfigMap(cm, cmCopy))
 			if err = r.Update(ctx, cm); err != nil {
-				return nil, errors.Wrap(err, "could not update configmap")
+				return errors.Wrap(err, "could not update configmap")
 			}
 		} else {
 			logr.Debugw("No updates for ConfigMap")
@@ -92,7 +92,7 @@ func (r *ReconcileVarnishCluster) reconcileConfigMap(ctx context.Context, podsSe
 	selector := labels.SelectorFromSet(podsSelector)
 	err = r.List(context.Background(), pods, &client.MatchingLabelsSelector{Selector: selector})
 	if err != nil {
-		return nil, errors.Wrap(err, "can't get list of pods")
+		return errors.Wrap(err, "can't get list of pods")
 	}
 
 	latest, outdated := 0, 0
@@ -108,5 +108,5 @@ func (r *ReconcileVarnishCluster) reconcileConfigMap(ctx context.Context, podsSe
 	}
 
 	instanceStatus.Status.VCL.Availability = fmt.Sprintf("%d latest / %d outdated", latest, outdated)
-	return cm, nil
+	return nil
 }

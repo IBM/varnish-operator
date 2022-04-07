@@ -2642,6 +2642,8 @@ spec:
                                 the PersistentVolume backing this claim.
                               type: string
                           type: object
+                      required:
+                      - spec
                       type: object
                     type: array
                   extraVolumeMounts:

@@ -17,6 +17,8 @@ container:
     requests:
       cpu: 500m
       memory: 200Mi
+affinity: {}
+tolerations: []
 # logging level: "debug", "info", "warn", "error"
 logLevel: info
 # logging encoder: "json", "console"

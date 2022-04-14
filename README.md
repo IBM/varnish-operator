@@ -27,6 +27,7 @@ The operator manages the whole lifecycle of the cluster: creating, deleting and 
  * [x] Prometheus metrics support
  * [x] Scaling
  * [x] Configurable update strategy
+ * [x] Persistence (for [file storage backend](https://varnish-cache.org/docs/trunk/users-guide/storage-backends.html#file) support)
  * [ ] Multiple Varnish versions support
  * [ ] Autoscaling
 

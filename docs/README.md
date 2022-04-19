@@ -10,6 +10,7 @@ Varnish operator creates, configures and manages Varnish clusters. It generates 
  * [x] Prometheus metrics support
  * [x] Scaling
  * [x] Configurable update strategy
+ * [x] Persistence (for [file storage backend](https://varnish-cache.org/docs/trunk/users-guide/storage-backends.html#file) support)
  * [ ] Multiple Varnish versions support
  * [ ] Autoscaling
 

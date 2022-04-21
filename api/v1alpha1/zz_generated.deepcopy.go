@@ -381,6 +381,13 @@ func (in *VarnishClusterSpec) DeepCopyInto(out *VarnishClusterSpec) {
 		*out = new(v1beta1.PodDisruptionBudgetSpec)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.NodeSelector != nil {
+		in, out := &in.NodeSelector, &out.NodeSelector
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	if in.Affinity != nil {
 		in, out := &in.Affinity, &out.Affinity
 		*out = new(v1.Affinity)

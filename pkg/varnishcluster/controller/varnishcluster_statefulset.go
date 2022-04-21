@@ -269,6 +269,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 					DNSPolicy:                     v1.DNSClusterFirst,
 					SecurityContext:               &v1.PodSecurityContext{},
 					ServiceAccountName:            names.ServiceAccount(instance.Name),
+					NodeSelector:                  instance.Spec.NodeSelector,
 					Affinity:                      instance.Spec.Affinity,
 					Tolerations:                   instance.Spec.Tolerations,
 					RestartPolicy:                 v1.RestartPolicyAlways,

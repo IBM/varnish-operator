@@ -284,6 +284,9 @@ var _ = Describe("statefulset", func() {
 					Args:                     []string{"bash", "-c", "sleep 30s"},
 				},
 			}
+			nodeSelector := map[string]string{
+				"os": "linux",
+			}
 
 			newVC.Spec.Varnish = &vcapi.VarnishClusterVarnish{
 				ExtraVolumeMounts: []v1.VolumeMount{
@@ -295,6 +298,7 @@ var _ = Describe("statefulset", func() {
 				ExtraVolumeClaimTemplates: textExtraVolumeClaimTemplates,
 				ExtraInitContainers:       testExtraInitContainers,
 			}
+			newVC.Spec.NodeSelector = nodeSelector
 			err := k8sClient.Create(context.Background(), newVC)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -310,6 +314,7 @@ var _ = Describe("statefulset", func() {
 			Expect(sts.Spec.VolumeClaimTemplates[0].Name).To(Equal(textExtraVolumeClaimTemplates[0].Metadata.Name))
 			Expect(sts.Spec.Template.Spec.Volumes).To(ContainElement(testExtraVolume))
 			Expect(sts.Spec.Template.Spec.InitContainers).To(Equal(testExtraInitContainers))
+			Expect(sts.Spec.Template.Spec.NodeSelector).To(Equal(nodeSelector))
 			Expect(varnishContainer.VolumeMounts).To(ContainElement(testExtraVolumeMount))
 		})
 	})

@@ -19,6 +19,7 @@ container:
       memory: 200Mi
 affinity: {}
 tolerations: []
+nodeSelector: {}
 # logging level: "debug", "info", "warn", "error"
 logLevel: info
 # logging encoder: "json", "console"

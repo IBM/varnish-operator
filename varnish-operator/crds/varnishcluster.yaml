@@ -956,6 +956,10 @@ spec:
                         type: string
                     type: object
                 type: object
+              nodeSelector:
+                additionalProperties:
+                  type: string
+                type: object
               podDisruptionBudget:
                 description: PodDisruptionBudgetSpec is a description of a PodDisruptionBudget.
                 properties:

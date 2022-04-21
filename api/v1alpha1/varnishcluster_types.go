@@ -89,6 +89,7 @@ type VarnishClusterSpec struct {
 	// +kubebuilder:validation:Required
 	Service             *VarnishClusterService                 `json:"service,omitempty"`
 	PodDisruptionBudget *policyv1beta1.PodDisruptionBudgetSpec `json:"podDisruptionBudget,omitempty"`
+	NodeSelector        map[string]string                      `json:"nodeSelector,omitempty"`
 	Affinity            *v1.Affinity                           `json:"affinity,omitempty"`
 	Tolerations         []v1.Toleration                        `json:"tolerations,omitempty"`
 	Monitoring          *VarnishClusterMonitoring              `json:"monitoring,omitempty"`

@@ -28,6 +28,8 @@ func TestGetBackendsEndpoint(t *testing.T) {
 	utilruntime.Must(clientgoscheme.AddToScheme(baseScheme))
 	utilruntime.Must(v1alpha1.AddToScheme(baseScheme))
 	backendPortNumber := intstr.FromInt(4314)
+	backendPortName := intstr.FromString("backend")
+	local, remote, threshold := 30, 70, 30
 
 	tcs := []struct {
 		name              string
@@ -58,7 +60,7 @@ func TestGetBackendsEndpoint(t *testing.T) {
 			k8sLists: []client.ObjectList{
 				&v1.PodList{
 					Items: []v1.Pod{
-						createTestPod("pod1", "ns1", "10.24.12.2", "node1",
+						createTestPod("backend1", "ns1", "10.24.12.2", "node1",
 							map[string]string{"app": "backend"},
 							[]v1.ContainerPort{{Name: "backend", ContainerPort: backendPortNumber.IntVal}},
 						),
@@ -67,7 +69,96 @@ func TestGetBackendsEndpoint(t *testing.T) {
 			},
 			expectedPodNumber: backendPortNumber.IntVal,
 			expectedPodInfo: []PodInfo{
-				{IP: "10.24.12.2", NodeLabels: map[string]string{v1.LabelTopologyZone: "zone1"}, PodName: "pod1", Weight: 1},
+				{IP: "10.24.12.2", NodeLabels: map[string]string{v1.LabelTopologyZone: "zone1"}, PodName: "backend1", Weight: 1},
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "multiple backends in multiple namespaces",
+			vc: &v1alpha1.VarnishCluster{
+				Spec: v1alpha1.VarnishClusterSpec{
+					Backend: &v1alpha1.VarnishClusterBackend{
+						Selector:   map[string]string{"app": "backend"},
+						Port:       &backendPortName,
+						Namespaces: []string{"ns1", "ns2"},
+						ZoneBalancing: &v1alpha1.VarnishClusterBackendZoneBalancing{
+							Type: v1alpha1.VarnishClusterBackendZoneBalancingTypeAuto,
+						},
+					},
+				},
+			},
+			podNamespace: "ns1",
+			podNode:      "node1",
+			k8sObjects: []client.Object{
+				createTestNode("node1", map[string]string{v1.LabelTopologyZone: "zone1"}),
+				createTestNode("node2", map[string]string{v1.LabelTopologyZone: "zone2"}),
+			},
+			k8sLists: []client.ObjectList{
+				&v1.PodList{
+					Items: []v1.Pod{
+						createTestPod("backend1", "ns1", "10.24.12.2", "node1",
+							map[string]string{"app": "backend"},
+							[]v1.ContainerPort{{Name: "backend", ContainerPort: backendPortNumber.IntVal}},
+						),
+						createTestPod("backend2", "ns2", "10.24.12.3", "node2",
+							map[string]string{"app": "backend"},
+							[]v1.ContainerPort{{Name: "backend", ContainerPort: backendPortNumber.IntVal}},
+						),
+					},
+				},
+			},
+			expectedPodNumber: backendPortNumber.IntVal,
+			expectedPodInfo: []PodInfo{
+				{IP: "10.24.12.2", NodeLabels: map[string]string{v1.LabelTopologyZone: "zone1"}, PodName: "backend1", Weight: 10},
+				{IP: "10.24.12.3", NodeLabels: map[string]string{v1.LabelTopologyZone: "zone2"}, PodName: "backend2", Weight: 1},
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "threshold type of zone balancing",
+			vc: &v1alpha1.VarnishCluster{
+				Spec: v1alpha1.VarnishClusterSpec{
+					Backend: &v1alpha1.VarnishClusterBackend{
+						Selector:   map[string]string{"app": "backend"},
+						Port:       &backendPortName,
+						Namespaces: []string{"ns1", "ns2"},
+						ZoneBalancing: &v1alpha1.VarnishClusterBackendZoneBalancing{
+							Type: v1alpha1.VarnishClusterBackendZoneBalancingTypeThresholds,
+							Thresholds: []v1alpha1.VarnishClusterBackendZoneBalancingThreshold{
+								{
+									Local:     &local,
+									Remote:    &remote,
+									Threshold: &threshold,
+								},
+							},
+						},
+					},
+				},
+			},
+			podNamespace: "ns1",
+			podNode:      "node1",
+			k8sObjects: []client.Object{
+				createTestNode("node1", map[string]string{v1.LabelTopologyZone: "zone1"}),
+				createTestNode("node2", map[string]string{v1.LabelTopologyZone: "zone2"}),
+			},
+			k8sLists: []client.ObjectList{
+				&v1.PodList{
+					Items: []v1.Pod{
+						createTestPod("backend1", "ns1", "10.24.12.2", "node1",
+							map[string]string{"app": "backend"},
+							[]v1.ContainerPort{{Name: "backend", ContainerPort: backendPortNumber.IntVal}},
+						),
+						createTestPod("backend2", "ns2", "10.24.12.3", "node2",
+							map[string]string{"app": "backend"},
+							[]v1.ContainerPort{{Name: "backend", ContainerPort: backendPortNumber.IntVal}},
+						),
+					},
+				},
+			},
+			expectedPodNumber: backendPortNumber.IntVal,
+			expectedPodInfo: []PodInfo{
+				{IP: "10.24.12.2", NodeLabels: map[string]string{v1.LabelTopologyZone: "zone1"}, PodName: "backend1", Weight: 30},
+				{IP: "10.24.12.3", NodeLabels: map[string]string{v1.LabelTopologyZone: "zone2"}, PodName: "backend2", Weight: 70},
 			},
 			expectedErr: nil,
 		},

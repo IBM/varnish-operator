@@ -7,7 +7,7 @@ package v1alpha1
 
 import (
 	appsv1 "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
+	"k8s.io/api/core/v1"
 	"k8s.io/api/policy/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -135,6 +135,11 @@ func (in *VarnishClusterBackend) DeepCopyInto(out *VarnishClusterBackend) {
 		in, out := &in.Port, &out.Port
 		*out = new(intstr.IntOrString)
 		**out = **in
+	}
+	if in.Namespaces != nil {
+		in, out := &in.Namespaces, &out.Namespaces
+		*out = make([]string, len(*in))
+		copy(*out, *in)
 	}
 	if in.ZoneBalancing != nil {
 		in, out := &in.ZoneBalancing, &out.ZoneBalancing

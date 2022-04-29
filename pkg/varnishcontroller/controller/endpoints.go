@@ -15,16 +15,15 @@ import (
 )
 
 func (r *ReconcileVarnish) getBackendEndpoints(ctx context.Context, vc *v1alpha1.VarnishCluster) ([]PodInfo, int32, float64, float64, error) {
-
 	varnishNodeLabels, err := r.getNodeLabels(ctx, r.config.NodeName)
 	if err != nil {
 		return nil, 0, 0, 0, errors.WithStack(err)
 	}
 
 	// Check for deprecated topology labels
-	zoneLabel := "topology.kubernetes.io/zone"
-	if _, ok := varnishNodeLabels["failure-domain.beta.kubernetes.io/zone"]; ok {
-		zoneLabel = "failure-domain.beta.kubernetes.io/zone"
+	zoneLabel := v1.LabelTopologyZone
+	if _, ok := varnishNodeLabels[v1.LabelFailureDomainBetaZone]; ok {
+		zoneLabel = v1.LabelFailureDomainBetaZone
 	}
 
 	currentZone := varnishNodeLabels[zoneLabel]
@@ -32,7 +31,12 @@ func (r *ReconcileVarnish) getBackendEndpoints(ctx context.Context, vc *v1alpha1
 	actualLocalWeight := 1.0
 	actualRemoteWeight := 1.0
 
-	backendList, portNumber, err := r.getPodsInfo(ctx, r.config.EndpointSelector, *vc.Spec.Backend.Port)
+	namespaces := []string{r.config.Namespace}
+	if len(vc.Spec.Backend.Namespaces) > 0 {
+		namespaces = vc.Spec.Backend.Namespaces
+	}
+
+	backendList, portNumber, err := r.getPodsInfo(ctx, namespaces, labels.SelectorFromSet(vc.Spec.Backend.Selector), *vc.Spec.Backend.Port)
 	if err != nil {
 		return nil, 0, 0, 0, errors.WithStack(err)
 	}
@@ -95,11 +99,10 @@ func (r *ReconcileVarnish) getBackendEndpoints(ctx context.Context, vc *v1alpha1
 }
 
 func (r *ReconcileVarnish) getVarnishEndpoints(ctx context.Context, vc *v1alpha1.VarnishCluster) ([]PodInfo, error) {
-
-	labels := labels.SelectorFromSet(vclabels.CombinedComponentLabels(vc, v1alpha1.VarnishComponentCacheService))
+	varnishLables := labels.SelectorFromSet(vclabels.CombinedComponentLabels(vc, v1alpha1.VarnishComponentVarnish))
 	varnishPort := intstr.FromString(v1alpha1.VarnishPortName)
 
-	varnishEndpoints, _, err := r.getPodsInfo(ctx, labels, varnishPort)
+	varnishEndpoints, _, err := r.getPodsInfo(ctx, []string{r.config.Namespace}, varnishLables, varnishPort)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -107,35 +110,47 @@ func (r *ReconcileVarnish) getVarnishEndpoints(ctx context.Context, vc *v1alpha1
 	return varnishEndpoints, nil
 }
 
-func (r *ReconcileVarnish) getPodsInfo(ctx context.Context, labels labels.Selector, validPort intstr.IntOrString) ([]PodInfo, int32, error) {
+func (r *ReconcileVarnish) getPodsInfo(ctx context.Context, namespaces []string, labels labels.Selector, validPort intstr.IntOrString) ([]PodInfo, int32, error) {
+	var pods []v1.Pod
+	for _, namespace := range namespaces {
+		listOptions := []client.ListOption{
+			client.MatchingLabelsSelector{Selector: labels},
+			client.InNamespace(namespace),
+		}
+		found := &v1.PodList{}
+		err := r.List(ctx, found, listOptions...)
+		if err != nil {
+			return nil, 0, errors.Wrapf(err, "could not retrieve endpoints from namespace %v with labels %s", namespaces, labels.String())
+		}
 
-	found := &v1.EndpointsList{}
-	err := r.List(ctx, found, client.MatchingLabelsSelector{Selector: labels}, client.InNamespace(r.config.Namespace))
-	if err != nil {
-		return nil, 0, errors.Wrapf(err, "could not retrieve endpoints from namespace %s with labels %s", r.config.Namespace, labels.String())
-	}
-
-	if len(found.Items) == 0 {
-		return nil, 0, errors.Errorf("no endpoints from namespace %s matching labels %s", r.config.Namespace, labels.String())
+		pods = append(pods, found.Items...)
 	}
 
 	var portNumber int32
 	var podInfoList []PodInfo
-	for _, endpoints := range found.Items {
-		for _, endpoint := range endpoints.Subsets {
-			for _, address := range append(endpoint.Addresses, endpoint.NotReadyAddresses...) {
-				for _, port := range endpoint.Ports {
-					if port.Port == validPort.IntVal || port.Name == validPort.StrVal {
-						portNumber = port.Port
-						var backendWeight float64 = 1.0
-						nodeLabels, err := r.getNodeLabels(ctx, *address.NodeName)
-						if err != nil {
-							return nil, 0, errors.WithStack(err)
-						}
-						b := PodInfo{IP: address.IP, NodeLabels: nodeLabels, PodName: address.TargetRef.Name, Weight: backendWeight}
-						podInfoList = append(podInfoList, b)
-						break
+
+	if len(pods) == 0 {
+		r.logger.Infof("No pods found by labels %v in namespace(s) %v", labels.String(), namespaces)
+		return podInfoList, 0, nil
+	}
+
+	for _, pod := range pods {
+		if len(pod.Status.PodIP) == 0 || len(pod.Spec.NodeName) == 0 {
+			continue
+		}
+
+		for _, container := range pod.Spec.Containers {
+			for _, containerPort := range container.Ports {
+				if containerPort.ContainerPort == validPort.IntVal || containerPort.Name == validPort.StrVal {
+					portNumber = containerPort.ContainerPort
+					var backendWeight = 1.0
+					nodeLabels, err := r.getNodeLabels(ctx, pod.Spec.NodeName)
+					if err != nil {
+						return nil, 0, errors.WithStack(err)
 					}
+					b := PodInfo{IP: pod.Status.PodIP, NodeLabels: nodeLabels, PodName: pod.Name, Weight: backendWeight}
+					podInfoList = append(podInfoList, b)
+					break
 				}
 			}
 		}
@@ -185,7 +200,6 @@ func calculateBackendRatio(backends []PodInfo, currentZone string, zoneLabel str
 }
 
 func checkMultizone(endpoints []PodInfo, zoneLabel string, currentZone string) bool {
-
 	for _, b := range endpoints {
 		if _, ok := b.NodeLabels[zoneLabel]; ok {
 			if b.NodeLabels[zoneLabel] != currentZone {

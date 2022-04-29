@@ -864,6 +864,10 @@ spec:
                 type: object
               backend:
                 properties:
+                  namespaces:
+                    items:
+                      type: string
+                    type: array
                   port:
                     anyOf:
                     - type: integer

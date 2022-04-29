@@ -29,7 +29,8 @@ func TestGetBackendsEndpoint(t *testing.T) {
 	utilruntime.Must(v1alpha1.AddToScheme(baseScheme))
 	backendPortNumber := intstr.FromInt(4314)
 	backendPortName := intstr.FromString("backend")
-	local, remote, threshold := 30, 70, 30
+	local1, remote1, threshold1 := 30, 70, 70
+	local2, remote2, threshold2 := 10, 40, 30
 
 	tcs := []struct {
 		name              string
@@ -126,9 +127,14 @@ func TestGetBackendsEndpoint(t *testing.T) {
 							Type: v1alpha1.VarnishClusterBackendZoneBalancingTypeThresholds,
 							Thresholds: []v1alpha1.VarnishClusterBackendZoneBalancingThreshold{
 								{
-									Local:     &local,
-									Remote:    &remote,
-									Threshold: &threshold,
+									Local:     &local1,
+									Remote:    &remote1,
+									Threshold: &threshold1,
+								},
+								{
+									Local:     &local2,
+									Remote:    &remote2,
+									Threshold: &threshold2,
 								},
 							},
 						},
@@ -152,6 +158,14 @@ func TestGetBackendsEndpoint(t *testing.T) {
 							map[string]string{"app": "backend"},
 							[]v1.ContainerPort{{Name: "backend", ContainerPort: backendPortNumber.IntVal}},
 						),
+						createTestPod("backend3", "ns2", "10.24.12.5", "node2",
+							map[string]string{"app": "backend1"}, //should not be selected
+							[]v1.ContainerPort{{Name: "backend", ContainerPort: backendPortNumber.IntVal}},
+						),
+						createTestPod("backend4", "ns2", "", "", //not scheduled yet
+							map[string]string{"app": "backend"},
+							[]v1.ContainerPort{{Name: "backend", ContainerPort: backendPortNumber.IntVal}},
+						),
 					},
 				},
 			},
@@ -161,6 +175,40 @@ func TestGetBackendsEndpoint(t *testing.T) {
 				{IP: "10.24.12.3", NodeLabels: map[string]string{v1.LabelTopologyZone: "zone2"}, PodName: "backend2", Weight: 70},
 			},
 			expectedErr: nil,
+		},
+		{
+			name: "no backends",
+			vc: &v1alpha1.VarnishCluster{
+				Spec: v1alpha1.VarnishClusterSpec{
+					Backend: &v1alpha1.VarnishClusterBackend{
+						Selector: map[string]string{"app": "backend"},
+						Port:     &backendPortName,
+					},
+				},
+			},
+			podNamespace: "ns1",
+			podNode:      "node1",
+			k8sObjects: []client.Object{
+				createTestNode("node1", map[string]string{v1.LabelTopologyZone: "zone1"}),
+				createTestNode("node2", map[string]string{v1.LabelTopologyZone: "zone2"}),
+			},
+			k8sLists: []client.ObjectList{
+				&v1.PodList{
+					Items: []v1.Pod{
+						createTestPod("backend1", "ns1", "10.24.12.2", "node1",
+							map[string]string{"app": "backend4"},
+							[]v1.ContainerPort{{Name: "backend", ContainerPort: backendPortNumber.IntVal}},
+						),
+						createTestPod("backend2", "ns2", "10.24.12.3", "node2",
+							map[string]string{"app": "backend3"},
+							[]v1.ContainerPort{{Name: "backend", ContainerPort: backendPortNumber.IntVal}},
+						),
+					},
+				},
+			},
+			expectedPodNumber: 0,
+			expectedPodInfo:   nil,
+			expectedErr:       nil,
 		},
 	}
 

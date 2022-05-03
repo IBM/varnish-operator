@@ -101,7 +101,7 @@ func SetupVarnishReconciler(mgr manager.Manager, cfg *config.Config, varnish var
 			predicates.NewLabelMatcherPredicate(varnishPodsSelector, logr),
 		),
 	)
-	builder.WithEventFilter(predicates.NewDebugPredicate(logr))
+	//builder.WithEventFilter(predicates.NewDebugPredicate(logr))
 
 	return builder.Complete(r)
 }

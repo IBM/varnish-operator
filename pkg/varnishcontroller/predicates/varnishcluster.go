@@ -43,11 +43,7 @@ func (p *varnishClusterPredicate) Create(e event.CreateEvent) bool {
 
 func (p *varnishClusterPredicate) Delete(e event.DeleteEvent) bool {
 	_, ok := e.Object.(*v1alpha1.VarnishCluster)
-	if !ok {
-		return false
-	}
-
-	return true
+	return ok
 }
 
 func (p *varnishClusterPredicate) Update(e event.UpdateEvent) bool {

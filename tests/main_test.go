@@ -6,6 +6,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/onsi/ginkgo/v2/types"
+
 	v1 "k8s.io/api/core/v1"
 
 	"k8s.io/client-go/kubernetes"
@@ -67,18 +69,18 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = JustAfterEach(func() {
-	if CurrentGinkgoTestDescription().Failed {
-		fmt.Printf("Test failed! Collecting diags just after failed test in %s\n", CurrentGinkgoTestDescription().TestText)
+	if CurrentSpecReport().Failed() && CurrentSpecReport().State != types.SpecStateInterrupted {
+		fmt.Printf("Test failed! Collecting diags just after failed test in %s:%d\n", CurrentSpecReport().FileName(), CurrentSpecReport().LineNumber())
 
 		Expect(os.MkdirAll(debugLogsDir, 0777)).To(Succeed())
 		vcList := &vcapi.VarnishClusterList{}
 		Expect(k8sClient.List(context.Background(), vcList)).To(Succeed())
 
-		fmt.Fprintf(GinkgoWriter, "Gathering log info for Varnish Operator\n")
+		GinkgoWriter.Println("Gathering log info for Varnish Operator")
 		showPodLogs(operatorPodLabels, "varnish-operator")
 
 		for _, vc := range vcList.Items {
-			fmt.Fprintf(GinkgoWriter, "Gathering log info for VarnishCluster %s/%s\n", vc.Namespace, vc.Name)
+			GinkgoWriter.Printf("Gathering log info for VarnishCluster %s/%s\n", vc.Namespace, vc.Name)
 			podList := &v1.PodList{}
 			Expect(k8sClient.List(context.Background(), podList, client.InNamespace(vc.Namespace))).To(Succeed())
 

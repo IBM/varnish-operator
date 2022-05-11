@@ -37,7 +37,7 @@ varnish-operator-fd96f48f-gn6mc   1/1     Running             0          40s
 1. Create a simple backend that will be cached by Varnish:
 
     ```bash
-    $ kubectl create deployment nginx-backend --image nginx -n varnish-cluster
+    $ kubectl create deployment nginx-backend --image nginx -n varnish-cluster --port=80
       deployment.apps/nginx-backend created
     $ kubectl get deployment -n varnish-cluster nginx-backend --show-labels #get pod labels, they will be used to identify your backend pods
       NAME            READY   UP-TO-DATE   AVAILABLE   AGE   LABELS
@@ -85,7 +85,7 @@ You can check if all works by doing `kubectl port-forward` and checking the serv
 Port forward your service:
 
 ```bash
-$ kubectl port-forward -n varnish-cluster service/varnishcluster-example 8080:80
+$ kubectl port-forward -n varnish-cluster service/varnishcluster-example 8080:6081
 Forwarding from 127.0.0.1:8080 -> 6081
 Forwarding from [::1]:8080 -> 6081
 ...

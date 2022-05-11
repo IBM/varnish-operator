@@ -73,7 +73,6 @@ func main() {
 	controllerMetrics.Registry.MustRegister(vMetrics.VCLCompilationError)
 
 	mgr, err := ctrl.NewManager(clientConfig, ctrl.Options{
-		Namespace:              varnishControllerConfig.Namespace,
 		Scheme:                 scheme,
 		HealthProbeBindAddress: fmt.Sprintf(":%d", v1alpha1.HealthCheckPort),
 		MetricsBindAddress:     fmt.Sprintf(":%d", v1alpha1.VarnishControllerMetricsPort),

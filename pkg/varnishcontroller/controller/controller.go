@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	ctrlBuilder "sigs.k8s.io/controller-runtime/pkg/builder"
+
 	"github.com/ibm/varnish-operator/api/v1alpha1"
 	"github.com/ibm/varnish-operator/pkg/logger"
 	"github.com/ibm/varnish-operator/pkg/varnishcontroller/config"
@@ -42,14 +44,24 @@ type PodInfo struct {
 // SetupVarnishReconciler creates a new VarnishCluster Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func SetupVarnishReconciler(mgr manager.Manager, cfg *config.Config, varnish varnishadm.VarnishAdministrator, metrics *metrics.VarnishControllerMetrics, logr *logger.Logger) error {
+	backendsLabels, err := labels.ConvertSelectorToLabelsMap(cfg.EndpointSelectorString)
+	if err != nil {
+		return err
+	}
+
+	backendNamespacePredicate := predicates.NewNamespacesMatcherPredicate([]string{cfg.Namespace}, logr)
+	backendLabelsPredicate := predicates.NewLabelMatcherPredicate(backendsLabels.AsSelector(), logr)
+
 	r := &ReconcileVarnish{
-		config:       cfg,
-		logger:       logr,
-		Client:       mgr.GetClient(),
-		scheme:       mgr.GetScheme(),
-		varnish:      varnish,
-		eventHandler: events.NewEventHandler(mgr.GetEventRecorderFor(events.EventRecorderName), cfg.PodName),
-		metrics:      metrics,
+		config:                     cfg,
+		logger:                     logr,
+		Client:                     mgr.GetClient(),
+		scheme:                     mgr.GetScheme(),
+		varnish:                    varnish,
+		eventHandler:               events.NewEventHandler(mgr.GetEventRecorderFor(events.EventRecorderName), cfg.PodName),
+		metrics:                    metrics,
+		backendsSelectorPredicate:  backendLabelsPredicate,
+		backendsNamespacePredicate: backendNamespacePredicate,
 	}
 
 	podMapFunc := handler.EnqueueRequestsFromMapFunc(
@@ -65,22 +77,31 @@ func SetupVarnishReconciler(mgr manager.Manager, cfg *config.Config, varnish var
 	builder := ctrl.NewControllerManagedBy(mgr)
 	builder.Named("varnish-controller")
 
-	builder.For(&v1alpha1.VarnishCluster{})
-	builder.Watches(&source.Kind{Type: &v1.Endpoints{}}, podMapFunc)
+	builder.For(&v1alpha1.VarnishCluster{}, ctrlBuilder.WithPredicates(predicates.NewVarnishClusterPredicate(r.config.VarnishClusterUID, logr)))
 
-	backendsLabels, err := labels.ConvertSelectorToLabelsMap(cfg.EndpointSelectorString)
-	if err != nil {
-		return err
-	}
+	builder.Watches(
+		&source.Kind{Type: &v1.Pod{}},
+		podMapFunc,
+		ctrlBuilder.WithPredicates(
+			backendNamespacePredicate,
+			backendLabelsPredicate,
+		),
+	)
 
 	varnishPodsSelector := labels.SelectorFromSet(labels.Set{
 		v1alpha1.LabelVarnishOwner:     cfg.VarnishClusterName,
 		v1alpha1.LabelVarnishComponent: v1alpha1.VarnishComponentCacheService,
 		v1alpha1.LabelVarnishUID:       string(cfg.VarnishClusterUID),
 	})
-
-	endpointsSelectors := []labels.Selector{labels.SelectorFromSet(backendsLabels), varnishPodsSelector}
-	builder.WithEventFilter(predicates.NewVarnishControllerPredicate(cfg.VarnishClusterUID, endpointsSelectors, nil))
+	builder.Watches(
+		&source.Kind{Type: &v1.Pod{}},
+		podMapFunc,
+		ctrlBuilder.WithPredicates(
+			predicates.NewNamespacesMatcherPredicate([]string{cfg.Namespace}, logr),
+			predicates.NewLabelMatcherPredicate(varnishPodsSelector, logr),
+		),
+	)
+	//builder.WithEventFilter(predicates.NewDebugPredicate(logr))
 
 	return builder.Complete(r)
 }
@@ -89,12 +110,14 @@ var _ reconcile.Reconciler = &ReconcileVarnish{}
 
 type ReconcileVarnish struct {
 	client.Client
-	config       *config.Config
-	logger       *logger.Logger
-	scheme       *runtime.Scheme
-	eventHandler *events.EventHandler
-	varnish      varnishadm.VarnishAdministrator
-	metrics      *metrics.VarnishControllerMetrics
+	config                     *config.Config
+	logger                     *logger.Logger
+	scheme                     *runtime.Scheme
+	eventHandler               *events.EventHandler
+	varnish                    varnishadm.VarnishAdministrator
+	metrics                    *metrics.VarnishControllerMetrics
+	backendsNamespacePredicate *predicates.NamespacesMatcherPredicate
+	backendsSelectorPredicate  *predicates.LabelMatcherPredicate
 }
 
 func (r *ReconcileVarnish) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
@@ -134,6 +157,13 @@ func (r *ReconcileVarnish) reconcileWithContext(ctx context.Context, request rec
 	}
 
 	r.scheme.Default(vc)
+
+	if len(vc.Spec.Backend.Namespaces) > 0 {
+		r.backendsNamespacePredicate.Namespaces = vc.Spec.Backend.Namespaces
+	} else {
+		r.backendsNamespacePredicate.Namespaces = []string{r.config.Namespace}
+	}
+	r.backendsSelectorPredicate.Selector = labels.SelectorFromSet(vc.Spec.Backend.Selector)
 
 	varnishPort := int32(v1alpha1.VarnishPort)
 	entrypointFileName := *vc.Spec.VCL.EntrypointFileName

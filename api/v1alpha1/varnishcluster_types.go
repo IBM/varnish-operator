@@ -195,6 +195,7 @@ type VarnishClusterBackend struct {
 	Selector map[string]string `json:"selector,omitempty"`
 	// +kubebuilder:validation:Required
 	Port          *intstr.IntOrString                 `json:"port,omitempty"`
+	Namespaces    []string                            `json:"namespaces,omitempty"`
 	ZoneBalancing *VarnishClusterBackendZoneBalancing `json:"zoneBalancing,omitempty"`
 }
 

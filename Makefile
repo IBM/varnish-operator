@@ -10,7 +10,7 @@ VARNISH_CONTROLLER_IMG ?= ${VARNISH_CONTROLLER_PUBLISH_IMG}-dev
 VARNISH_METRICS_PUBLISH_IMG ?= varnish-metrics-exporter:${VERSION}
 VARNISH_METRICS_IMG ?= ${VARNISH_METRICS_PUBLISH_IMG}-dev
 NAMESPACE ?= "default"
-CRD_OPTIONS ?= "crd:crdVersions=v1,trivialVersions=false"
+CRD_OPTIONS ?= "crd:crdVersions=v1"
 
 KUSTOMIZE = $(shell pwd)/bin/kustomize
 ifeq (, $(wildcard $KUSTOMIZE))

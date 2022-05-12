@@ -28,28 +28,13 @@ func (r *ReconcileVarnishCluster) reconcileRole(ctx context.Context, instance *v
 		Rules: []rbac.PolicyRule{
 			{
 				APIGroups: []string{""},
-				Resources: []string{"endpoints", "configmaps"},
-				Verbs:     []string{"list", "watch"},
-			},
-			{
-				APIGroups: []string{"caching.ibm.com"},
-				Resources: []string{"varnishclusters"},
+				Resources: []string{"endpoints"},
 				Verbs:     []string{"list", "watch"},
 			},
 			{
 				APIGroups: []string{""},
 				Resources: []string{"events"},
 				Verbs:     []string{"create", "patch"},
-			},
-			{
-				APIGroups: []string{""},
-				Resources: []string{"pods"},
-				Verbs:     []string{"list", "get", "watch", "update"},
-			},
-			{
-				APIGroups: []string{""},
-				Resources: []string{"secrets"},
-				Verbs:     []string{"get", "watch"},
 			},
 		},
 	}

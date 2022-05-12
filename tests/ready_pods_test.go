@@ -3,11 +3,12 @@ package tests
 import (
 	"context"
 	"fmt"
-	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
+
+	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 
 	"github.com/prometheus/common/expfmt"
 	appsv1 "k8s.io/api/apps/v1"
@@ -15,7 +16,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/gogo/protobuf/proto"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -124,7 +125,7 @@ var _ = Describe("Varnish cluster", func() {
 				return 0, err
 			}
 			return resp.StatusCode, nil
-		}, time.Second*20, time.Second*2).Should(Equal(200))
+		}, time.Second*30, time.Second*2).Should(Equal(200))
 		Expect(resp.Header.Get("X-Varnish-Cache")).To(Equal("MISS"))
 		body, err := ioutil.ReadAll(resp.Body)
 		Expect(err).NotTo(HaveOccurred())

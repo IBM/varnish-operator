@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"time"
 
+	"k8s.io/apimachinery/pkg/api/resource"
+
 	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/gogo/protobuf/proto"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -233,6 +235,87 @@ var _ = Describe("statefulset", func() {
 			metricsContainer, err := getContainerByName(sts.Spec.Template.Spec, vcapi.VarnishMetricsExporterName)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(metricsContainer.Image).To(Equal("us.icr.io/different-location/varnish-metrics-exporter:test"))
+		})
+	})
+
+	Context("when varnishcluster is created with persistence enabled", func() {
+		It("should be created with corresponding volume mounts and volume claim templates", func() {
+			newVC := vc.DeepCopy()
+			volumeMode := v1.PersistentVolumeFilesystem
+			textExtraVolumeClaimTemplates := []vcapi.PVC{
+				{
+					Metadata: vcapi.ObjectMetadata{
+						Name: "data-volume",
+					},
+					Spec: v1.PersistentVolumeClaimSpec{
+						StorageClassName: proto.String("storage-class-example"),
+						AccessModes: []v1.PersistentVolumeAccessMode{
+							v1.ReadWriteOnce,
+						},
+						Resources: v1.ResourceRequirements{
+							Requests: map[v1.ResourceName]resource.Quantity{
+								v1.ResourceStorage: resource.MustParse("30Gi"),
+							},
+						},
+						VolumeMode: &volumeMode,
+					},
+				},
+			}
+
+			testExtraVolume := v1.Volume{
+				Name: "extra-volume",
+				VolumeSource: v1.VolumeSource{
+					EmptyDir: &v1.EmptyDirVolumeSource{},
+				},
+			}
+
+			testExtraVolumeMount := v1.VolumeMount{
+				Name:      "extra-volume",
+				MountPath: "/extra/volume/mount",
+			}
+
+			testExtraInitContainers := []v1.Container{
+				{
+					Name:                     "init",
+					Image:                    "ubuntu",
+					ImagePullPolicy:          v1.PullIfNotPresent,
+					TerminationMessagePath:   "/message/path",
+					TerminationMessagePolicy: v1.TerminationMessageReadFile,
+					Args:                     []string{"bash", "-c", "sleep 30s"},
+				},
+			}
+			nodeSelector := map[string]string{
+				"os": "linux",
+			}
+
+			newVC.Spec.Varnish = &vcapi.VarnishClusterVarnish{
+				ExtraVolumeMounts: []v1.VolumeMount{
+					testExtraVolumeMount,
+				},
+				ExtraVolumes: []v1.Volume{
+					testExtraVolume,
+				},
+				ExtraVolumeClaimTemplates: textExtraVolumeClaimTemplates,
+				ExtraInitContainers:       testExtraInitContainers,
+			}
+			newVC.Spec.NodeSelector = nodeSelector
+			err := k8sClient.Create(context.Background(), newVC)
+			Expect(err).ToNot(HaveOccurred())
+
+			sts := &apps.StatefulSet{}
+			Eventually(func() error {
+				return k8sClient.Get(context.Background(), stsName, sts)
+			}, time.Second*5).Should(Succeed())
+
+			varnishContainer, err := getContainerByName(sts.Spec.Template.Spec, vcapi.VarnishContainerName)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(sts.Spec.VolumeClaimTemplates[0].Spec).To(Equal(textExtraVolumeClaimTemplates[0].Spec))
+			Expect(sts.Spec.VolumeClaimTemplates[0].Name).To(Equal(textExtraVolumeClaimTemplates[0].Metadata.Name))
+			Expect(sts.Spec.Template.Spec.Volumes).To(ContainElement(testExtraVolume))
+			Expect(sts.Spec.Template.Spec.InitContainers).To(Equal(testExtraInitContainers))
+			Expect(sts.Spec.Template.Spec.NodeSelector).To(Equal(nodeSelector))
+			Expect(varnishContainer.VolumeMounts).To(ContainElement(testExtraVolumeMount))
 		})
 	})
 })

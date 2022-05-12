@@ -118,6 +118,29 @@ func defaultVarnish(in *VarnishClusterVarnish) {
 		in.MetricsExporter = &VarnishClusterVarnishMetricsExporter{}
 	}
 	defaultVarnishMetricsExporter(in.MetricsExporter)
+
+	if len(in.ExtraInitContainers) > 0 {
+		for i, container := range in.ExtraInitContainers {
+			if container.ImagePullPolicy == "" {
+				in.ExtraInitContainers[i].ImagePullPolicy = v1.PullIfNotPresent
+			}
+			if len(container.TerminationMessagePolicy) == 0 {
+				in.ExtraInitContainers[i].TerminationMessagePolicy = v1.TerminationMessageReadFile
+			}
+			if len(container.TerminationMessagePath) == 0 {
+				in.ExtraInitContainers[i].TerminationMessagePath = "/dev/termination-log"
+			}
+		}
+	}
+
+	if len(in.ExtraVolumeClaimTemplates) > 0 {
+		for i, template := range in.ExtraVolumeClaimTemplates {
+			if template.Spec.VolumeMode == nil {
+				volumeMode := v1.PersistentVolumeFilesystem
+				in.ExtraVolumeClaimTemplates[i].Spec.VolumeMode = &volumeMode
+			}
+		}
+	}
 }
 
 func defaultVarnishController(in *VarnishClusterVarnishController) {

@@ -42,6 +42,18 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 		updateStrategy.RollingUpdate = instance.Spec.UpdateStrategy.RollingUpdate
 	}
 
+	var pvcs []v1.PersistentVolumeClaim
+	for _, volumeClaimTemplate := range instance.Spec.Varnish.ExtraVolumeClaimTemplates {
+		pvcs = append(pvcs, v1.PersistentVolumeClaim{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        volumeClaimTemplate.Metadata.Name,
+				Labels:      volumeClaimTemplate.Metadata.Labels,
+				Annotations: volumeClaimTemplate.Metadata.Annotations,
+			},
+			Spec: volumeClaimTemplate.Spec,
+		})
+	}
+
 	desired := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      names.StatefulSet(instance.Name),
@@ -57,6 +69,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 			PodManagementPolicy:  appsv1.ParallelPodManagement,
 			UpdateStrategy:       updateStrategy,
 			RevisionHistoryLimit: proto.Int(10),
+			VolumeClaimTemplates: pvcs,
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: varnishLabels,
@@ -73,6 +86,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 					DNSPolicy:                     v1.DNSClusterFirst,
 					SecurityContext:               &v1.PodSecurityContext{},
 					ServiceAccountName:            names.ServiceAccount(instance.Name),
+					NodeSelector:                  instance.Spec.NodeSelector,
 					Affinity:                      instance.Spec.Affinity,
 					Tolerations:                   instance.Spec.Tolerations,
 					RestartPolicy:                 v1.RestartPolicyAlways,

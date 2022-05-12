@@ -167,7 +167,7 @@ func NewVarnishReconciler(mgr manager.Manager, cfg *config.Config, logr *logger.
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update
 // +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;delete
 // +kubebuilder:rbac:groups="",resources=services;serviceaccounts,verbs=list;watch;create;update;delete
-// +kubebuilder:rbac:groups="",resources=endpoints,verbs=list;watch
+// +kubebuilder:rbac:groups="",resources=endpoints;namespaces,verbs=list;watch
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 // +kubebuilder:rbac:groups="",resources=pods,verbs=list;get;watch;update
 // +kubebuilder:rbac:groups="",resources=nodes,verbs=watch;list
@@ -281,13 +281,11 @@ func (r *ReconcileVarnishCluster) reconcileWithContext(ctx context.Context, requ
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-
 	if instance.Spec.HaproxySidecar.Enabled {
 		if err = r.reconcileHaproxyConfigMap(ctx, varnishSelector, instance); err != nil {
 			return ctrl.Result{}, err
 		}
 	}
-
 	if err = r.reconcileConfigMap(ctx, varnishSelector, instance, instanceStatus); err != nil {
 		return ctrl.Result{}, err
 	}

@@ -31,15 +31,15 @@ func varnishContainer(instance *vcapi.VarnishCluster, varnishdArgs []string, var
 				Protocol:      v1.ProtocolTCP,
 			},
 		},
-		VolumeMounts: []v1.VolumeMount{
+		VolumeMounts: append([]v1.VolumeMount{
 			varnishSharedVolumeMount(false),
 			varnishSettingsVolumeMount(true),
 			varnishSecretVolumeMount(),
-		},
+		}, instance.Spec.Varnish.ExtraVolumeMounts...),
 		Args:      varnishdArgs,
 		Resources: *instance.Spec.Varnish.Resources,
 		ReadinessProbe: &v1.Probe{
-			Handler: v1.Handler{
+			ProbeHandler: v1.ProbeHandler{
 				Exec: &v1.ExecAction{
 					Command: []string{"/usr/bin/varnishadm", "ping"},
 				},
@@ -76,7 +76,7 @@ func varnishMetricsContainer(instance *vcapi.VarnishCluster, varnishImage string
 		},
 		Resources: instance.Spec.Varnish.MetricsExporter.Resources,
 		ReadinessProbe: &v1.Probe{
-			Handler: v1.Handler{
+			ProbeHandler: v1.ProbeHandler{
 				HTTPGet: &v1.HTTPGetAction{
 					Port:   intstr.FromInt(vcapi.VarnishPrometheusExporterPort),
 					Scheme: v1.URISchemeHTTP,
@@ -130,7 +130,7 @@ func varnishControllerContainer(instance *vcapi.VarnishCluster, varnishImage str
 			varnishSecretVolumeMount(),
 		},
 		ReadinessProbe: &v1.Probe{
-			Handler: v1.Handler{
+			ProbeHandler: v1.ProbeHandler{
 				HTTPGet: &v1.HTTPGetAction{
 					Port:   intstr.FromInt(vcapi.HealthCheckPort),
 					Path:   "/readyz",

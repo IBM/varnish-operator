@@ -70,13 +70,18 @@ func (r *ReconcileVarnishCluster) reconcileHeadlessService(ctx context.Context, 
 		}
 	} else if err != nil {
 		return errors.Wrap(err, "could not get current state of Headless Service")
-	} else if !compare.EqualService(found, desired) {
-		logr.Infoc("Updating Headless Service", "diff", compare.DiffService(found, desired))
-		if err = r.Update(ctx, found); err != nil {
-			return errors.Wrap(err, "could not update Headless Service")
-		}
 	} else {
-		logr.Debugw("No updates for Headless Service")
+		desired.Spec.InternalTrafficPolicy = found.Spec.InternalTrafficPolicy
+		desired.Spec.IPFamilyPolicy = found.Spec.IPFamilyPolicy
+		desired.Spec.IPFamilies = found.Spec.IPFamilies
+		if !compare.EqualService(found, desired) {
+			logr.Infoc("Updating Headless Service", "diff", compare.DiffService(found, desired))
+			if err = r.Update(ctx, found); err != nil {
+				return errors.Wrap(err, "could not update Headless Service")
+			}
+		} else {
+			logr.Debugw("No updates for Headless Service")
+		}
 	}
 
 	return nil

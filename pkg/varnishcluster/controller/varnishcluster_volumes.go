@@ -64,5 +64,5 @@ func varnishClusterVolumes(instance *vcapi.VarnishCluster) []v1.Volume {
 		}
 		volumes = append(volumes, haproxyScriptsVolume)
 	}
-	return volumes
+	return append(volumes, instance.Spec.Varnish.ExtraVolumes...)
 }

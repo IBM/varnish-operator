@@ -2,7 +2,10 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"sort"
+
+	"github.com/ibm/varnish-operator/pkg/varnishcontroller/events"
 
 	"github.com/ibm/varnish-operator/api/v1alpha1"
 	vclabels "github.com/ibm/varnish-operator/pkg/labels"
@@ -36,7 +39,7 @@ func (r *ReconcileVarnish) getBackendEndpoints(ctx context.Context, vc *v1alpha1
 		namespaces = vc.Spec.Backend.Namespaces
 	}
 
-	backendList, portNumber, err := r.getPodsInfo(ctx, namespaces, labels.SelectorFromSet(vc.Spec.Backend.Selector), *vc.Spec.Backend.Port)
+	backendList, portNumber, err := r.getPodsInfo(ctx, vc, namespaces, labels.SelectorFromSet(vc.Spec.Backend.Selector), *vc.Spec.Backend.Port)
 	if err != nil {
 		return nil, 0, 0, 0, errors.WithStack(err)
 	}
@@ -102,7 +105,7 @@ func (r *ReconcileVarnish) getVarnishEndpoints(ctx context.Context, vc *v1alpha1
 	varnishLables := labels.SelectorFromSet(vclabels.CombinedComponentLabels(vc, v1alpha1.VarnishComponentVarnish))
 	varnishPort := intstr.FromString(v1alpha1.VarnishPortName)
 
-	varnishEndpoints, _, err := r.getPodsInfo(ctx, []string{r.config.Namespace}, varnishLables, varnishPort)
+	varnishEndpoints, _, err := r.getPodsInfo(ctx, vc, []string{r.config.Namespace}, varnishLables, varnishPort)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -110,7 +113,7 @@ func (r *ReconcileVarnish) getVarnishEndpoints(ctx context.Context, vc *v1alpha1
 	return varnishEndpoints, nil
 }
 
-func (r *ReconcileVarnish) getPodsInfo(ctx context.Context, namespaces []string, labels labels.Selector, validPort intstr.IntOrString) ([]PodInfo, int32, error) {
+func (r *ReconcileVarnish) getPodsInfo(ctx context.Context, vc *v1alpha1.VarnishCluster, namespaces []string, labels labels.Selector, validPort intstr.IntOrString) ([]PodInfo, int32, error) {
 	var pods []v1.Pod
 	for _, namespace := range namespaces {
 		listOptions := []client.ListOption{
@@ -139,9 +142,11 @@ func (r *ReconcileVarnish) getPodsInfo(ctx context.Context, namespaces []string,
 			continue
 		}
 
+		portFound := false
 		for _, container := range pod.Spec.Containers {
 			for _, containerPort := range container.Ports {
 				if containerPort.ContainerPort == validPort.IntVal || containerPort.Name == validPort.StrVal {
+					portFound = true
 					portNumber = containerPort.ContainerPort
 					var backendWeight = 1.0
 					nodeLabels, err := r.getNodeLabels(ctx, pod.Spec.NodeName)
@@ -153,6 +158,12 @@ func (r *ReconcileVarnish) getPodsInfo(ctx context.Context, namespaces []string,
 					break
 				}
 			}
+		}
+
+		if !portFound {
+			errMsg := fmt.Sprintf("Backend pod %s/%s ignored since none of it's containers have port %q defined", pod.Namespace, pod.Name, validPort.String())
+			r.eventHandler.Warning(vc, events.EventReasonBackendIgnored, errMsg)
+			r.logger.Warnf(errMsg)
 		}
 	}
 

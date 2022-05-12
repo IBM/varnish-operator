@@ -11,6 +11,8 @@ const (
 
 	EventReasonReloadError         EventReason = "ReloadError"
 	EventReasonVCLCompilationError EventReason = "VCLCompilationError"
+	EventReasonInvalidVCLConfigMap EventReason = "InvalidVCLConfigMap"
+	EventReasonBackendIgnored      EventReason = "BackendIgnored"
 
 	annotationSourcePod string = "sourcePod"
 )

@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -202,8 +203,10 @@ func (r *ReconcileVarnish) reconcileWithContext(ctx context.Context, request rec
 
 	for fileName, contents := range templatizedFiles {
 		if _, found := newFiles[fileName]; found {
-			// TODO: probably want to create event for this
-			return reconcile.Result{}, errors.Errorf("ConfigMap has %s and %s.tmpl entries. Cannot include file and template with same name", fileName, fileName)
+			errMsg := fmt.Sprintf("VCL ConfigMap %s has %s and %s.tmpl entries. Cannot include file and template with same name",
+				*vc.Spec.VCL.ConfigMapName, fileName, fileName)
+			r.eventHandler.Warning(vc, events.EventReasonInvalidVCLConfigMap, errMsg)
+			return reconcile.Result{}, errors.Errorf(errMsg)
 		}
 		newFiles[fileName] = contents
 	}
@@ -218,7 +221,13 @@ func (r *ReconcileVarnish) reconcileWithContext(ctx context.Context, request rec
 		return reconcile.Result{}, errors.WithStack(err)
 	}
 
-	if filesTouched {
+	configName, err := r.varnish.GetActiveConfigurationName()
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	// reload if files changed, or we didn't load the VCL yet (happens when only the container restarted and not the whole pod)
+	if filesTouched || configName == "boot" {
 		if err = r.reconcileVarnish(ctx, vc, pod, cm); err != nil {
 			return reconcile.Result{}, errors.WithStack(err)
 		}

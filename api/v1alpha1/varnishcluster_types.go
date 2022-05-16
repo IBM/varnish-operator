@@ -196,6 +196,7 @@ type VarnishClusterBackend struct {
 	// +kubebuilder:validation:Required
 	Port          *intstr.IntOrString                 `json:"port,omitempty"`
 	Namespaces    []string                            `json:"namespaces,omitempty"`
+	OnlyReady     bool                                `json:"onlyReady,omitempty"`
 	ZoneBalancing *VarnishClusterBackendZoneBalancing `json:"zoneBalancing,omitempty"`
 }
 

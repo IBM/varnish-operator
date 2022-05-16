@@ -121,7 +121,7 @@ backend nginx-backend-6f4c6cbc6c-ckqmv {
 }
 ```
 
-The `.Backends` array can include both all backend nodes and only ready nodes. It depends on `.spec.backends.onlyReady` field.
+The `.Backends` array can include both all backend nodes (default behavior) and only ready nodes. It depends on `.spec.backends.onlyReady` field.
 It depends on which readiness checks you want to respect:
 * Kubernetes readiness checks - field set to `true`. In this case the `.Backends` template var in VCL will include only ready backend pods. 
 Keep in mind that every backend state change will trigger a Varnish VCL config reload.

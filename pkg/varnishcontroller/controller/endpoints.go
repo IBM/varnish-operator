@@ -161,7 +161,7 @@ func (r *ReconcileVarnish) getPodsInfo(ctx context.Context, vc *v1alpha1.Varnish
 		}
 
 		if !portFound {
-			errMsg := fmt.Sprintf("Backend pod %s/%s ignored since none of it's containers have port %q defined", pod.Namespace, pod.Name, validPort.String())
+			errMsg := fmt.Sprintf("Backend pod %s/%s ignored since none of its containers have port %q defined", pod.Namespace, pod.Name, validPort.String())
 			r.eventHandler.Warning(vc, events.EventReasonBackendIgnored, errMsg)
 			r.logger.Warnf(errMsg)
 		}

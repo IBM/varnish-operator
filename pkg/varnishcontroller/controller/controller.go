@@ -45,13 +45,10 @@ type PodInfo struct {
 // SetupVarnishReconciler creates a new VarnishCluster Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func SetupVarnishReconciler(mgr manager.Manager, cfg *config.Config, varnish varnishadm.VarnishAdministrator, metrics *metrics.VarnishControllerMetrics, logr *logger.Logger) error {
-	backendsLabels, err := labels.ConvertSelectorToLabelsMap(cfg.EndpointSelectorString)
-	if err != nil {
-		return err
-	}
-
+	// stub, backends selector will be set and updated on reconcile
+	backendsSelector := labels.SelectorFromSet(labels.Set{})
 	backendNamespacePredicate := predicates.NewNamespacesMatcherPredicate([]string{cfg.Namespace}, logr)
-	backendLabelsPredicate := predicates.NewLabelMatcherPredicate(backendsLabels.AsSelector(), logr)
+	backendLabelsPredicate := predicates.NewLabelMatcherPredicate(backendsSelector, logr)
 
 	r := &ReconcileVarnish{
 		config:                     cfg,
@@ -91,7 +88,7 @@ func SetupVarnishReconciler(mgr manager.Manager, cfg *config.Config, varnish var
 
 	varnishPodsSelector := labels.SelectorFromSet(labels.Set{
 		v1alpha1.LabelVarnishOwner:     cfg.VarnishClusterName,
-		v1alpha1.LabelVarnishComponent: v1alpha1.VarnishComponentCacheService,
+		v1alpha1.LabelVarnishComponent: v1alpha1.VarnishComponentVarnish,
 		v1alpha1.LabelVarnishUID:       string(cfg.VarnishClusterUID),
 	})
 	builder.Watches(

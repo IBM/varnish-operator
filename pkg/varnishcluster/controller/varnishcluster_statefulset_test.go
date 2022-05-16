@@ -9,8 +9,6 @@ import (
 
 	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 
-	"k8s.io/apimachinery/pkg/labels"
-
 	"github.com/gogo/protobuf/proto"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -117,11 +115,6 @@ var _ = Describe("statefulset", func() {
 			varnishControllerContainer, err := getContainerByName(podSpec, vcapi.VarnishControllerName)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(varnishControllerContainer.Image).To(Equal("ibmcom/varnish-controller:test"))
-			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "ENDPOINT_SELECTOR_STRING", Value: labels.SelectorFromSet(map[string]string{
-				vcapi.LabelVarnishOwner:     vcName,
-				vcapi.LabelVarnishComponent: vcapi.VarnishComponentNoCacheService,
-				vcapi.LabelVarnishUID:       string(newVC.UID),
-			}).String()}))
 			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "NAMESPACE", Value: vcNamespace}))
 			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "POD_NAME", ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{APIVersion: "v1", FieldPath: "metadata.name"}}}))
 			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "VARNISH_CLUSTER_NAME", Value: vcName}))

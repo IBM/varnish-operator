@@ -125,7 +125,7 @@ The `.Backends` array can include both all backend nodes (default behavior) and 
 It depends on which readiness checks you want to respect:
 * Kubernetes readiness checks - field set to `true`. In this case the `.Backends` template var in VCL will include only ready backend pods. 
 Keep in mind that every backend state change will trigger a Varnish VCL config reload.
-* Varnish readiness probes - field set to `false` or omitted. This way the `.Backends` array will include all scheduled pods, so it is strongly recommended to set [health checks](https://varnish-cache.org/docs/3.0/tutorial/advanced_backend_servers.html#health-checks) in your VCL configuration. Otherwise, Varnish could send traffic to not yet ready backends. 
+* Varnish readiness probes - field set to `false` or omitted. This way the `.Backends` array will include all scheduled pods, so it is strongly recommended to set [health checks](https://varnish-cache.org/docs/6.6/reference/vcl-probe.html#backend-health-probes) in your VCL configuration. Otherwise, Varnish could send traffic to not yet ready backends. 
 
 You can also combine approaches and use both Kubernetes and Varnish health probes.
 

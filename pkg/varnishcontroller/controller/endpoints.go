@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/ibm/varnish-operator/pkg/varnishcontroller/podutil"
+
 	"github.com/ibm/varnish-operator/pkg/varnishcontroller/events"
 
 	"github.com/ibm/varnish-operator/api/v1alpha1"
@@ -34,12 +36,13 @@ func (r *ReconcileVarnish) getBackendEndpoints(ctx context.Context, vc *v1alpha1
 	actualLocalWeight := 1.0
 	actualRemoteWeight := 1.0
 
-	namespaces := []string{r.config.Namespace}
+	ns := []string{r.config.Namespace}
 	if len(vc.Spec.Backend.Namespaces) > 0 {
-		namespaces = vc.Spec.Backend.Namespaces
+		ns = vc.Spec.Backend.Namespaces
 	}
 
-	backendList, portNumber, err := r.getPodsInfo(ctx, vc, namespaces, labels.SelectorFromSet(vc.Spec.Backend.Selector), *vc.Spec.Backend.Port)
+	selector := labels.SelectorFromSet(vc.Spec.Backend.Selector)
+	backendList, portNumber, err := r.getPodsInfo(ctx, vc, ns, selector, *vc.Spec.Backend.Port, vc.Spec.Backend.OnlyReady)
 	if err != nil {
 		return nil, 0, 0, 0, errors.WithStack(err)
 	}
@@ -105,7 +108,7 @@ func (r *ReconcileVarnish) getVarnishEndpoints(ctx context.Context, vc *v1alpha1
 	varnishLables := labels.SelectorFromSet(vclabels.CombinedComponentLabels(vc, v1alpha1.VarnishComponentVarnish))
 	varnishPort := intstr.FromString(v1alpha1.VarnishPortName)
 
-	varnishEndpoints, _, err := r.getPodsInfo(ctx, vc, []string{r.config.Namespace}, varnishLables, varnishPort)
+	varnishEndpoints, _, err := r.getPodsInfo(ctx, vc, []string{r.config.Namespace}, varnishLables, varnishPort, false)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -113,7 +116,7 @@ func (r *ReconcileVarnish) getVarnishEndpoints(ctx context.Context, vc *v1alpha1
 	return varnishEndpoints, nil
 }
 
-func (r *ReconcileVarnish) getPodsInfo(ctx context.Context, vc *v1alpha1.VarnishCluster, namespaces []string, labels labels.Selector, validPort intstr.IntOrString) ([]PodInfo, int32, error) {
+func (r *ReconcileVarnish) getPodsInfo(ctx context.Context, vc *v1alpha1.VarnishCluster, namespaces []string, labels labels.Selector, validPort intstr.IntOrString, onlyReady bool) ([]PodInfo, int32, error) {
 	var pods []v1.Pod
 	for _, namespace := range namespaces {
 		listOptions := []client.ListOption{
@@ -139,6 +142,10 @@ func (r *ReconcileVarnish) getPodsInfo(ctx context.Context, vc *v1alpha1.Varnish
 
 	for _, pod := range pods {
 		if len(pod.Status.PodIP) == 0 || len(pod.Spec.NodeName) == 0 {
+			continue
+		}
+
+		if onlyReady && !podutil.PodReady(pod) {
 			continue
 		}
 

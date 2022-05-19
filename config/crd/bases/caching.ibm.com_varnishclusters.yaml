@@ -868,6 +868,8 @@ spec:
                     items:
                       type: string
                     type: array
+                  onlyReady:
+                    type: boolean
                   port:
                     anyOf:
                     - type: integer

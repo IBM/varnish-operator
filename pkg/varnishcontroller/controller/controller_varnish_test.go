@@ -99,8 +99,7 @@ func TestReconcileVarnish(t *testing.T) {
 						EntrypointFileName: &entrypointFileName,
 					},
 					HaproxySidecar: &v1alpha1.HaproxySidecar{
-						Enabled:       false,
-						ConfigMapName: v1alpha1.HaproxyConfigMapName,
+						Enabled: false,
 					},
 				},
 			},
@@ -125,8 +124,7 @@ func TestReconcileVarnish(t *testing.T) {
 						EntrypointFileName: &entrypointFileName,
 					},
 					HaproxySidecar: &v1alpha1.HaproxySidecar{
-						Enabled:       false,
-						ConfigMapName: v1alpha1.HaproxyConfigMapName,
+						Enabled: false,
 					},
 				},
 			},

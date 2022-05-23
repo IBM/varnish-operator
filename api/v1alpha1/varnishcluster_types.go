@@ -110,12 +110,8 @@ type VarnishClusterSpec struct {
 }
 
 type HaproxySidecar struct {
-	Enabled bool `json:"enabled,omitempty"`
-	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:MaxLength=253
-	// +kubebuilder:validation:Pattern=`^[a-z0-9.-]+$`
-	ConfigMapName string `json:"configMapName,omitempty"` // mount under /usr/local/etc/haproxy/haproxy.cfg
-	Image         string `json:"image,omitempty"`
+	Enabled bool   `json:"enabled,omitempty"`
+	Image   string `json:"image,omitempty"`
 	// +kubebuilder:validation:Enum=Always;Never;IfNotPresent
 	ImagePullPolicy           v1.PullPolicy           `json:"imagePullPolicy,omitempty"`
 	ImagePullSecret           string                  `json:"imagePullSecret,omitempty"`

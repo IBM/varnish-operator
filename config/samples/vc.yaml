@@ -26,7 +26,6 @@ spec:
     enabled: true
     image: haproxytech/haproxy-debian:2.4
     imagePullPolicy: IfNotPresent
-    configMapName: proxy-sidecar-config
   varnish:
     image: us.icr.io/icm-docker-images/varnish:cin
     imagePullSecret: "all-icr-io"

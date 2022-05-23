@@ -55,3 +55,7 @@ func GrafanaDashboardFile(vcName string) string {
 func HaproxyGrafanaDashboardFile(vcName string) string {
 	return vcName + "haproxy-dashboard.json"
 }
+
+func HaproxyConfigMap(vcName string) string {
+	return vcName + "haproxy-configmap"
+}

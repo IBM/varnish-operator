@@ -17,11 +17,11 @@ import (
 
 func (r *ReconcileVarnishCluster) reconcileHaproxyConfigMap(ctx context.Context, podsSelector map[string]string, instance *vcapi.VarnishCluster, instanceStatus *vcapi.VarnishCluster) error {
 	logr := logger.FromContext(ctx).With(logger.FieldComponent, vcapi.HaproxyConfigMapName)
-	logr = logr.With(logger.FieldComponentName, instance.Spec.HaproxySidecar.ConfigMapName)
+	logr = logr.With(logger.FieldComponentName, vcapi.HaproxyConfigMapName)
 
 	cm := &v1.ConfigMap{}
 	cmLabels := vclabels.CombinedComponentLabels(instance, vcapi.HaproxyConfigMapName)
-	err := r.Get(ctx, types.NamespacedName{Name: instance.Spec.HaproxySidecar.ConfigMapName, Namespace: instance.Namespace}, cm)
+	err := r.Get(ctx, types.NamespacedName{Name: vcapi.HaproxyConfigMapName, Namespace: instance.Namespace}, cm)
 	if err != nil && kerrors.IsNotFound(err) {
 		if err := r.updateHaproxyConfigMap(instance, podsSelector, cm, cmLabels, instanceStatus, logr); err != nil {
 			return err

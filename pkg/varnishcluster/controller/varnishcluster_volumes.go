@@ -39,30 +39,30 @@ func varnishClusterVolumes(instance *vcapi.VarnishCluster) []v1.Volume {
 		},
 	}
 	if instance.Spec.HaproxySidecar.Enabled {
-		haproxyVolume := v1.Volume{
-			Name: vcapi.HaproxyConfigVolume,
-			VolumeSource: v1.VolumeSource{
-				ConfigMap: &v1.ConfigMapVolumeSource{
-					LocalObjectReference: v1.LocalObjectReference{
-						Name: instance.Spec.HaproxySidecar.ConfigMapName,
+		haproxyVolumes := []v1.Volume{
+			{
+				Name: vcapi.HaproxyConfigVolume,
+				VolumeSource: v1.VolumeSource{
+					ConfigMap: &v1.ConfigMapVolumeSource{
+						LocalObjectReference: v1.LocalObjectReference{
+							Name: vcapi.HaproxyConfigMapName,
+						},
+					},
+				},
+			},
+			{
+				Name: vcapi.HaproxyScriptsVolume,
+				VolumeSource: v1.VolumeSource{
+					ConfigMap: &v1.ConfigMapVolumeSource{
+						LocalObjectReference: v1.LocalObjectReference{
+							Name: vcapi.HaproxyScriptsVolume + "-configmap",
+						},
+						DefaultMode: proto.Int32(0777),
 					},
 				},
 			},
 		}
-		volumes = append(volumes, haproxyVolume)
-
-		haproxyScriptsVolume := v1.Volume{
-			Name: vcapi.HaproxyScriptsVolume,
-			VolumeSource: v1.VolumeSource{
-				ConfigMap: &v1.ConfigMapVolumeSource{
-					LocalObjectReference: v1.LocalObjectReference{
-						Name: vcapi.HaproxyScriptsVolume + "-configmap",
-					},
-					DefaultMode: proto.Int32(0777),
-				},
-			},
-		}
-		volumes = append(volumes, haproxyScriptsVolume)
+		volumes = append(volumes, haproxyVolumes...)
 	}
 	return append(volumes, instance.Spec.Varnish.ExtraVolumes...)
 }

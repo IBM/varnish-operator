@@ -14,6 +14,7 @@ import (
 
 	"github.com/ibm/varnish-operator/api/v1alpha1"
 	"github.com/ibm/varnish-operator/pkg/logger"
+	"github.com/ibm/varnish-operator/pkg/names"
 	"github.com/ibm/varnish-operator/pkg/varnishcontroller/config"
 	"github.com/ibm/varnish-operator/pkg/varnishcontroller/events"
 	"github.com/ibm/varnish-operator/pkg/varnishcontroller/metrics"
@@ -289,7 +290,7 @@ func (r *ReconcileVarnish) hupHaproxy() error {
 
 func (r *ReconcileVarnish) reconcileHaproxyConfig(ctx context.Context, vc *v1alpha1.VarnishCluster) (*v1.ConfigMap, error) {
 	logr := logger.FromContext(ctx)
-	haproxyConfigMap, err := r.getConfigMap(ctx, r.config.Namespace, vc.Spec.HaproxySidecar.ConfigMapName)
+	haproxyConfigMap, err := r.getConfigMap(ctx, r.config.Namespace, names.HaproxyConfigMap(vc.Name))
 	if err != nil {
 		return nil, err
 	}

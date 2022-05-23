@@ -2,6 +2,7 @@ package predicates
 
 import (
 	"github.com/ibm/varnish-operator/pkg/logger"
+	"github.com/ibm/varnish-operator/pkg/varnishcontroller/podutil"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -52,6 +53,10 @@ func (p *LabelMatcherPredicate) Update(e event.UpdateEvent) bool {
 	}
 
 	if len(newPod.Spec.NodeName) != 0 && oldPod.Spec.NodeName != newPod.Spec.NodeName {
+		return true
+	}
+
+	if podutil.PodReady(*newPod) != podutil.PodReady(*oldPod) {
 		return true
 	}
 

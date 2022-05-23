@@ -1,7 +1,7 @@
 apiVersion: v2
-appVersion: 0.30.0
+appVersion: 0.31.0
 description: Provides an easy way to deploy and manage a cluster of Varnish instances
 keywords:
   - varnish
 name: varnish-operator
-version: 0.30.0
+version: 0.31.0

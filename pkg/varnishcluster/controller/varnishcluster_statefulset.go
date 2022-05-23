@@ -23,7 +23,6 @@ import (
 )
 
 func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, instance, instanceStatus *vcapi.VarnishCluster, endpointSelector map[string]string) (*appsv1.StatefulSet, map[string]string, error) {
-	varnishdArgs := getSanitizedVarnishArgs(&instance.Spec)
 	varnishLabels := vclabels.CombinedComponentLabels(instance, vcapi.VarnishComponentVarnish)
 	var varnishImage string
 	if instance.Spec.Varnish.Image == "" {
@@ -31,6 +30,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 	} else {
 		varnishImage = instance.Spec.Varnish.Image
 	}
+	varnishdArgs := getSanitizedVarnishArgs(&instance.Spec)
 
 	var updateStrategy appsv1.StatefulSetUpdateStrategy
 	switch instance.Spec.UpdateStrategy.Type {
@@ -80,6 +80,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 					// in the same pod.It is required for the pod to provide reliable way to collect metrics.
 					// Otherwise, metrics collection container may only collect general varnish process metrics.
 					ShareProcessNamespace:         proto.Bool(true),
+					InitContainers:                instance.Spec.Varnish.ExtraInitContainers,
 					Volumes:                       varnishClusterVolumes(instance),
 					Containers:                    varnishClusterContainers(instance, varnishdArgs, varnishImage, endpointSelector),
 					TerminationGracePeriodSeconds: proto.Int64(30),

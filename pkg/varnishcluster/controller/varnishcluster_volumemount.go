@@ -13,19 +13,11 @@ func haproxyConfigVolumeMount(readOnly bool) v1.VolumeMount {
 	}
 }
 
-func varnishSharedVolumeMount(readOnly bool) v1.VolumeMount {
+func haproxyScriptsVolumeMount() v1.VolumeMount {
 	return v1.VolumeMount{
-		Name:      vcapi.VarnishSharedVolume,
-		MountPath: "/var/lib/varnish",
-		ReadOnly:  readOnly,
-	}
-}
-
-func varnishSettingsVolumeMount(readOnly bool) v1.VolumeMount {
-	return v1.VolumeMount{
-		Name:      vcapi.VarnishSettingsVolume,
-		MountPath: "/etc/varnish",
-		ReadOnly:  readOnly,
+		Name:      vcapi.HaproxyScriptsVolume,
+		MountPath: "/haproxy-scripts",
+		ReadOnly:  true,
 	}
 }
 
@@ -37,10 +29,18 @@ func varnishSecretVolumeMount() v1.VolumeMount {
 	}
 }
 
-func haproxyScriptsVolumeMount() v1.VolumeMount {
+func varnishSettingsVolumeMount(readOnly bool) v1.VolumeMount {
 	return v1.VolumeMount{
-		Name:      vcapi.HaproxyScriptsVolume,
-		MountPath: "/haproxy-scripts",
-		ReadOnly:  true,
+		Name:      vcapi.VarnishSettingsVolume,
+		MountPath: "/etc/varnish",
+		ReadOnly:  readOnly,
+	}
+}
+
+func varnishSharedVolumeMount(readOnly bool) v1.VolumeMount {
+	return v1.VolumeMount{
+		Name:      vcapi.VarnishSharedVolume,
+		MountPath: "/var/lib/varnish",
+		ReadOnly:  readOnly,
 	}
 }

@@ -15,7 +15,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func (r *ReconcileVarnishCluster) reconcileHaproxyConfigMap(ctx context.Context, podsSelector map[string]string, instance *vcapi.VarnishCluster) error {
+func (r *ReconcileVarnishCluster) reconcileHaproxyConfigMap(ctx context.Context, podsSelector map[string]string, instance *vcapi.VarnishCluster, instanceStatus *vcapi.VarnishCluster) error {
 	logr := logger.FromContext(ctx).With(logger.FieldComponent, vcapi.HaproxyConfigMapName)
 	logr = logr.With(logger.FieldComponentName, instance.Spec.HaproxySidecar.ConfigMapName)
 
@@ -23,7 +23,7 @@ func (r *ReconcileVarnishCluster) reconcileHaproxyConfigMap(ctx context.Context,
 	cmLabels := vclabels.CombinedComponentLabels(instance, vcapi.HaproxyConfigMapName)
 	err := r.Get(ctx, types.NamespacedName{Name: instance.Spec.HaproxySidecar.ConfigMapName, Namespace: instance.Namespace}, cm)
 	if err != nil && kerrors.IsNotFound(err) {
-		if err := r.updateHaproxyConfigMap(instance, cm, cmLabels); err != nil {
+		if err := r.updateHaproxyConfigMap(instance, podsSelector, cm, cmLabels, instanceStatus, logr); err != nil {
 			return err
 		}
 		logr.Infoc("Creating HAProxy ConfigMap", "new", cm)
@@ -34,7 +34,7 @@ func (r *ReconcileVarnishCluster) reconcileHaproxyConfigMap(ctx context.Context,
 		return errors.Wrap(err, "could not get current state of HAProxy ConfigMap")
 	} else {
 		cmCopy := cm.DeepCopy() //create a copy to check later if the config map changed and needs to be updated
-		if err := r.updateHaproxyConfigMap(instance, cm, cmLabels); err != nil {
+		if err := r.updateHaproxyConfigMap(instance, podsSelector, cm, cmLabels, instanceStatus, logr); err != nil {
 			return err
 		}
 		if !compare.EqualConfigMap(cm, cmCopy) {
@@ -49,12 +49,7 @@ func (r *ReconcileVarnishCluster) reconcileHaproxyConfigMap(ctx context.Context,
 	return nil
 }
 
-func (r *ReconcileVarnishCluster) updateHaproxyConfigMap(instance *vcapi.VarnishCluster, cm *v1.ConfigMap, cmLabels map[string]string) error {
-	//data, err := templatizeHaproxyConfig(instance, cm.Data[v1alpha1.HaproxyConfigFileName])
-	//if err != nil {
-	//	return err
-	//}
-	//cm.Data[v1alpha1.HaproxyConfigFileName] = data
+func (r *ReconcileVarnishCluster) updateHaproxyConfigMap(instance *vcapi.VarnishCluster, podsSelector map[string]string, cm *v1.ConfigMap, cmLabels map[string]string, instanceStatus *vcapi.VarnishCluster, logr *logger.Logger) error {
 	cm.Data = map[string]string{v1alpha1.HaproxyConfigFileName: haproxyConfigTemplate}
 
 	// don't trample on any labels created by user
@@ -65,6 +60,20 @@ func (r *ReconcileVarnishCluster) updateHaproxyConfigMap(instance *vcapi.Varnish
 		cm.Labels[l] = v
 	}
 
+	instanceStatus.Status.HAProxy.ConfigMapVersion = cm.GetResourceVersion()
+	if cm.Annotations != nil && cm.Annotations[annotationHaproxyConfigVersion] != "" {
+		v := cm.Annotations[annotationHaproxyConfigVersion]
+		instanceStatus.Status.HAProxy.Version = &v
+	} else {
+		instanceStatus.Status.HAProxy.Version = nil //ensure the status field is empty if the annotation is
+	}
+
+	availabilityString, err := r.availabilityString(podsSelector, annotationHaproxyConfigVersion, instance.Status.HAProxy.ConfigMapVersion, logr)
+	if err != nil {
+		return err
+	}
+	instanceStatus.Status.HAProxy.Availability = availabilityString
+
 	cm.ObjectMeta.Name = vcapi.HaproxyConfigMapName
 	cm.ObjectMeta.Namespace = instance.Namespace
 	if err := controllerutil.SetControllerReference(instance, cm, r.scheme); err != nil {
@@ -72,15 +81,3 @@ func (r *ReconcileVarnishCluster) updateHaproxyConfigMap(instance *vcapi.Varnish
 	}
 	return nil
 }
-
-//func TemplatizeHaproxyConfig(instance *vcapi.VarnishCluster, tmpl string) (string, error) {
-//	t, err := template.New("haproxy-config").Parse(tmpl)
-//	if err != nil {
-//		return "", errors.WithStack(err)
-//	}
-//	var b bytes.Buffer
-//	if err := t.Execute(&b, instance.Spec.HaproxySidecar); err != nil {
-//		return "", errors.WithStack(err)
-//	}
-//	return b.String(), nil
-//}

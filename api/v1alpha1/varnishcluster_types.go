@@ -272,17 +272,26 @@ type VarnishClusterMonitoringGrafanaDashboard struct {
 
 // VarnishClusterStatus defines the observed state of VarnishCluster
 type VarnishClusterStatus struct {
-	VCL                 VCLStatus `json:"vcl"`
-	VarnishArgs         string    `json:"varnishArgs,omitempty"`
-	Replicas            int32     `json:"replicas,omitempty"`
-	VarnishPodsSelector string    `json:"varnishPodsSelector,omitempty"`
+	VCL                 VCLStatus            `json:"vcl"`
+	HAProxy             HaproxySidecarStatus `json:"haproxy"`
+	VarnishArgs         string               `json:"varnishArgs,omitempty"`
+	Replicas            int32                `json:"replicas,omitempty"`
+	VarnishPodsSelector string               `json:"varnishPodsSelector,omitempty"`
+}
+
+type ConfigMapStatus struct {
+	Version          *string `json:"version,omitempty"`
+	ConfigMapVersion string  `json:"configMapVersion"`
+	Availability     string  `json:"availability"`
 }
 
 // VCLStatus describes the VCL versions status
 type VCLStatus struct {
-	Version          *string `json:"version,omitempty"`
-	ConfigMapVersion string  `json:"configMapVersion"`
-	Availability     string  `json:"availability"`
+	ConfigMapStatus `json:",inline"`
+}
+
+type HaproxySidecarStatus struct {
+	ConfigMapStatus `json:",inline"`
 }
 
 // +kubebuilder:object:root=true

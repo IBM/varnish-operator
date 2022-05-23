@@ -20,7 +20,8 @@ import (
 )
 
 const (
-	annotationVCLVersion = "VCLVersion"
+	annotationVCLVersion           = "VCLVersion"
+	annotationHaproxyConfigVersion = "HaproxyConfigVersion"
 )
 
 func (r *ReconcileVarnishCluster) reconcileConfigMap(ctx context.Context, podsSelector map[string]string, instance, instanceStatus *vcapi.VarnishCluster) error {
@@ -88,25 +89,30 @@ func (r *ReconcileVarnishCluster) reconcileConfigMap(ctx context.Context, podsSe
 		instanceStatus.Status.VCL.Version = nil //ensure the status field is empty if the annotation is
 	}
 
+	availabilityString, err := r.availabilityString(podsSelector, "configMapVersion", instance.Status.VCL.ConfigMapVersion, logr)
+	if err != nil {
+		return err
+	}
+	instanceStatus.Status.VCL.Availability = availabilityString
+	return nil
+}
+
+func (r *ReconcileVarnishCluster) availabilityString(podsSelector map[string]string, annotationKey string, cmVersion string, logr *logger.Logger) (string, error) {
 	pods := &v1.PodList{}
 	selector := labels.SelectorFromSet(podsSelector)
-	err = r.List(context.Background(), pods, &client.MatchingLabelsSelector{Selector: selector})
-	if err != nil {
-		return errors.Wrap(err, "can't get list of pods")
+	if err := r.List(context.Background(), pods, &client.MatchingLabelsSelector{Selector: selector}); err != nil {
+		return "", errors.Wrap(err, "can't get list of pods")
 	}
-
 	latest, outdated := 0, 0
 	for _, item := range pods.Items {
 		//do not count pods that are not updated with VCL version. Those are pods that are just created and not fully functional
-		if item.Annotations["configMapVersion"] == "" {
-			logr.Debugw("ConfigMapVersion annotation is not present. Skipping the pod.")
-		} else if item.Annotations["configMapVersion"] == instance.Status.VCL.ConfigMapVersion {
+		if item.Annotations[annotationKey] == "" {
+			logr.Debugf("ConfigMapVersion annotation (%s) is not present. Skipping the pod - %s.", annotationKey, item.Name)
+		} else if item.Annotations[annotationKey] == cmVersion {
 			latest++
 		} else {
 			outdated++
 		}
 	}
-
-	instanceStatus.Status.VCL.Availability = fmt.Sprintf("%d latest / %d outdated", latest, outdated)
-	return nil
+	return fmt.Sprintf("%d latest / %d outdated", latest, outdated), nil
 }

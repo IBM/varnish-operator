@@ -912,6 +912,83 @@ spec:
                 - port
                 - selector
                 type: object
+              haproxySidecar:
+                properties:
+                  backendServerHostHeader:
+                    type: string
+                  backendServerMaxAgeHeader:
+                    format: int32
+                    type: integer
+                  backendServerPort:
+                    format: int32
+                    type: integer
+                  backendServers:
+                    items:
+                      type: string
+                    type: array
+                  clientTimeout:
+                    format: int32
+                    type: integer
+                  configMapName:
+                    maxLength: 253
+                    pattern: ^[a-z0-9.-]+$
+                    type: string
+                  connectTimeout:
+                    format: int32
+                    type: integer
+                  enabled:
+                    type: boolean
+                  image:
+                    type: string
+                  imagePullPolicy:
+                    description: PullPolicy describes a policy for if/when to pull
+                      a container image
+                    enum:
+                    - Always
+                    - Never
+                    - IfNotPresent
+                    type: string
+                  imagePullSecret:
+                    type: string
+                  maxConnections:
+                    format: int32
+                    type: integer
+                  resources:
+                    description: ResourceRequirements describes the compute resource
+                      requirements.
+                    properties:
+                      limits:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Limits describes the maximum amount of compute
+                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                        type: object
+                      requests:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Requests describes the minimum amount of compute
+                          resources required. If Requests is omitted for a container,
+                          it defaults to Limits if that is explicitly specified, otherwise
+                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                        type: object
+                    type: object
+                  serverTimeout:
+                    format: int32
+                    type: integer
+                  statRefreshRate:
+                    format: int32
+                    type: integer
+                required:
+                - configMapName
+                type: object
               logFormat:
                 enum:
                 - json
@@ -4332,6 +4409,15 @@ spec:
           status:
             description: VarnishClusterStatus defines the observed state of VarnishCluster
             properties:
+              haproxy:
+                properties:
+                  availability:
+                    type: string
+                  configMapVersion:
+                    type: string
+                  version:
+                    type: string
+                type: object
               replicas:
                 format: int32
                 type: integer

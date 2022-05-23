@@ -178,8 +178,10 @@ func (r *ReconcileVarnish) reconcileWithContext(ctx context.Context, request rec
 		return reconcile.Result{}, errors.WithStack(err)
 	}
 
+	var haproxyConfigMap *v1.ConfigMap
 	if vc.Spec.HaproxySidecar.Enabled {
-		if err := r.reconcileHaproxyConfig(ctx, vc); err != nil {
+		haproxyConfigMap, err = r.reconcileHaproxyConfig(ctx, vc)
+		if err != nil {
 			return reconcile.Result{}, errors.WithStack(err)
 		}
 	}
@@ -234,7 +236,7 @@ func (r *ReconcileVarnish) reconcileWithContext(ctx context.Context, request rec
 		}
 	}
 
-	if err := r.reconcilePod(ctx, filesTouched, pod, cm, localWeight, remoteWeight); err != nil {
+	if err := r.reconcilePod(ctx, filesTouched, pod, cm, haproxyConfigMap, localWeight, remoteWeight); err != nil {
 		return reconcile.Result{}, errors.WithStack(err)
 	}
 
@@ -279,31 +281,31 @@ func (r *ReconcileVarnish) hupHaproxy() error {
 	return nil
 }
 
-func (r *ReconcileVarnish) reconcileHaproxyConfig(ctx context.Context, vc *v1alpha1.VarnishCluster) error {
+func (r *ReconcileVarnish) reconcileHaproxyConfig(ctx context.Context, vc *v1alpha1.VarnishCluster) (*v1.ConfigMap, error) {
 	logr := logger.FromContext(ctx)
 	haproxyConfigMap, err := r.getConfigMap(ctx, r.config.Namespace, vc.Spec.HaproxySidecar.ConfigMapName)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	cfgData, err := r.templatizeHaproxyConfig(vc, haproxyConfigMap.Data[v1alpha1.HaproxyConfigFileName])
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	haproxyConfigFileName := v1alpha1.HaproxyConfigDir + "/" + v1alpha1.HaproxyConfigFileName
 	haproxyConfigUpdated, err := r.updateHaproxyConfig(haproxyConfigFileName, cfgData)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if haproxyConfigUpdated {
-		logr.Infof("hup'ing Haproxy")
+		logr.Info("hup'ing haproxy")
 		if err := r.hupHaproxy(); err != nil {
-			return err
+			return nil, err
 		}
 	}
-	return nil
+	return haproxyConfigMap, nil
 }
 
 func (r *ReconcileVarnish) filesAndTemplates(data map[string]string) (files, templates map[string]string) {

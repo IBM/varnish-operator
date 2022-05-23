@@ -33,7 +33,13 @@ backend nodes
   balance roundrobin
   http-response set-header Strict-Transport-Security max-age={{ .BackendServerMaxAgeHeader }}
   http-request set-header Host {{ .BackendServerHostHeader }}
+  {{ if not empty .HttpChk }}
+  option httpchk
+  {{ range _, $chk := .HttpChk }}
+  http-check {{ $chk }}
+  {{ end }}
+  {{ end }}
   {{ range $i, $server := .BackendServers }}
-  server svr{{ $i }} {{ $server }}:{{ $.BackendServerPort }} ssl sni str({{ $server }}) verify none
+  server svr{{ $i }} {{ $server }}:{{ $.BackendServerPort }} ssl sni str({{ $server }}) verify {{ default none .BackendAdditionalFlags }}
   {{ end }}
 `

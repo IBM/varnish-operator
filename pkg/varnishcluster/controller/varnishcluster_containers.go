@@ -98,6 +98,15 @@ func varnishControllerContainer(instance *vcapi.VarnishCluster, varnishImage str
 	gvk := instance.GroupVersionKind()
 	varnishControllerImage := imageNameGenerate(instance.Spec.Varnish.Controller.Image, varnishImage, vcapi.VarnishControllerImage)
 
+	volumeMounts := []v1.VolumeMount{
+		varnishSharedVolumeMount(false),
+		varnishSettingsVolumeMount(false),
+		varnishSecretVolumeMount(),
+	}
+	if instance.Spec.HaproxySidecar.Enabled {
+		volumeMounts = append(volumeMounts, haproxyConfigVolumeMount(false), haproxyScriptsVolumeMount())
+	}
+
 	//Varnish controller
 	return v1.Container{
 		Name:  vcapi.VarnishControllerName,
@@ -122,13 +131,7 @@ func varnishControllerContainer(instance *vcapi.VarnishCluster, varnishImage str
 			{Name: "LOG_FORMAT", Value: instance.Spec.LogFormat},
 			{Name: "LOG_LEVEL", Value: instance.Spec.LogLevel},
 		},
-		VolumeMounts: []v1.VolumeMount{
-			haproxyConfigVolumeMount(false),
-			haproxyScriptsVolumeMount(),
-			varnishSharedVolumeMount(false),
-			varnishSettingsVolumeMount(false),
-			varnishSecretVolumeMount(),
-		},
+		VolumeMounts: volumeMounts,
 		ReadinessProbe: &v1.Probe{
 			ProbeHandler: v1.ProbeHandler{
 				HTTPGet: &v1.HTTPGetAction{

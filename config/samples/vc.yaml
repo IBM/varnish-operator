@@ -28,5 +28,7 @@ spec:
     imagePullPolicy: IfNotPresent
     configMapName: proxy-sidecar-config
   varnish:
-    image: us.icr.io/icm-docker-images/varnish:0.0.1-craig-test-dev
+    image: us.icr.io/icm-docker-images/varnish:cin
     imagePullSecret: "all-icr-io"
+    controller:
+      image: us.icr.io/icm-docker-images/varnish-controller:cin

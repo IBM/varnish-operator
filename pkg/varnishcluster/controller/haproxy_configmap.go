@@ -3,6 +3,8 @@ package controller
 import (
 	"context"
 
+	"github.com/ibm/varnish-operator/pkg/names"
+
 	"github.com/ibm/varnish-operator/api/v1alpha1"
 	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 	vclabels "github.com/ibm/varnish-operator/pkg/labels"
@@ -16,12 +18,12 @@ import (
 )
 
 func (r *ReconcileVarnishCluster) reconcileHaproxyConfigMap(ctx context.Context, podsSelector map[string]string, instance *vcapi.VarnishCluster, instanceStatus *vcapi.VarnishCluster) error {
-	logr := logger.FromContext(ctx).With(logger.FieldComponent, vcapi.HaproxyConfigMapName)
-	logr = logr.With(logger.FieldComponentName, vcapi.HaproxyConfigMapName)
+	logr := logger.FromContext(ctx).With(logger.FieldComponent, names.HaproxyConfigMap(instance.Name))
+	logr = logr.With(logger.FieldComponentName, names.HaproxyConfigMap(instance.Name))
 
 	cm := &v1.ConfigMap{}
-	cmLabels := vclabels.CombinedComponentLabels(instance, vcapi.HaproxyConfigMapName)
-	err := r.Get(ctx, types.NamespacedName{Name: vcapi.HaproxyConfigMapName, Namespace: instance.Namespace}, cm)
+	cmLabels := vclabels.CombinedComponentLabels(instance, names.HaproxyConfigMap(instance.Name))
+	err := r.Get(ctx, types.NamespacedName{Name: names.HaproxyConfigMap(instance.Name), Namespace: instance.Namespace}, cm)
 	if err != nil && kerrors.IsNotFound(err) {
 		if err := r.updateHaproxyConfigMap(instance, podsSelector, cm, cmLabels, instanceStatus, logr); err != nil {
 			return err
@@ -74,7 +76,7 @@ func (r *ReconcileVarnishCluster) updateHaproxyConfigMap(instance *vcapi.Varnish
 	}
 	instanceStatus.Status.HAProxy.Availability = availabilityString
 
-	cm.ObjectMeta.Name = vcapi.HaproxyConfigMapName
+	cm.ObjectMeta.Name = names.HaproxyConfigMap(instance.Name)
 	cm.ObjectMeta.Namespace = instance.Namespace
 	if err := controllerutil.SetControllerReference(instance, cm, r.scheme); err != nil {
 		return errors.Wrap(err, "could not initialize haproxy ConfigMap")

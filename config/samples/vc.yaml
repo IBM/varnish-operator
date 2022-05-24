@@ -26,6 +26,9 @@ spec:
     enabled: true
     image: haproxytech/haproxy-debian:2.4
     imagePullPolicy: IfNotPresent
+    backendServerHostHeader: "api.mapbox.com"
+    BackendServers:
+    - "api.mapbox.com"
   varnish:
     image: us.icr.io/icm-docker-images/varnish:cin
     imagePullSecret: "all-icr-io"

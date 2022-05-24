@@ -62,18 +62,23 @@ func (in *HaproxySidecar) DeepCopyInto(out *HaproxySidecar) {
 		*out = new(int32)
 		**out = **in
 	}
-	if in.BackendServerPort != nil {
-		in, out := &in.BackendServerPort, &out.BackendServerPort
-		*out = new(int32)
-		**out = **in
-	}
 	if in.BackendServerMaxAgeHeader != nil {
 		in, out := &in.BackendServerMaxAgeHeader, &out.BackendServerMaxAgeHeader
 		*out = new(int32)
 		**out = **in
 	}
+	if in.BackendServerPort != nil {
+		in, out := &in.BackendServerPort, &out.BackendServerPort
+		*out = new(int32)
+		**out = **in
+	}
 	if in.BackendServers != nil {
 		in, out := &in.BackendServers, &out.BackendServers
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.HttpChk != nil {
+		in, out := &in.HttpChk, &out.HttpChk
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}

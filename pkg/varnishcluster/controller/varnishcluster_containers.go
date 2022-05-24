@@ -13,7 +13,7 @@ func varnishClusterContainers(instance *vcapi.VarnishCluster, varnishdArgs []str
 		varnishMetricsContainer(instance, varnishImage),
 		varnishControllerContainer(instance, varnishImage, endpointSelector),
 	}
-	if instance.Spec.HaproxySidecar.Enabled {
+	if instance.Spec.HaproxySidecar != nil && instance.Spec.HaproxySidecar.Enabled {
 		containers = append(containers, haproxySidecarContainer(instance))
 	}
 	return containers
@@ -103,7 +103,7 @@ func varnishControllerContainer(instance *vcapi.VarnishCluster, varnishImage str
 		varnishSettingsVolumeMount(false),
 		varnishSecretVolumeMount(),
 	}
-	if instance.Spec.HaproxySidecar.Enabled {
+	if instance.Spec.HaproxySidecar != nil && instance.Spec.HaproxySidecar.Enabled {
 		volumeMounts = append(volumeMounts, haproxyConfigVolumeMount(false), haproxyScriptsVolumeMount())
 	}
 

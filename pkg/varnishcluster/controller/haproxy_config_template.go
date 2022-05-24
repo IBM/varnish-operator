@@ -13,6 +13,7 @@ defaults
   timeout client {{ .ClientTimeout }}ms
   timeout server {{ .ServerTimeout }}ms
 
+{{ if .EnableFrontendMetrics -}}
 frontend stats
   bind *:8404
   option http-use-htx
@@ -20,6 +21,7 @@ frontend stats
   stats enable
   stats uri /stats
   stats refresh {{ .StatRefreshRate }}s
+{{- end }}
 
 frontend localhost
   # Only bind on 80 if you also want to listen for connections on 80
@@ -33,13 +35,13 @@ backend nodes
   balance roundrobin
   http-response set-header Strict-Transport-Security max-age={{ .BackendServerMaxAgeHeader }}
   http-request set-header Host {{ .BackendServerHostHeader }}
-  {{ if not empty .HttpChk }}
+  {{- if .HttpChk }}
   option httpchk
-  {{ range _, $chk := .HttpChk }}
+  {{- range $chk := .HttpChk }}
   http-check {{ $chk }}
-  {{ end }}
-  {{ end }}
-  {{ range $i, $server := .BackendServers }}
-  server svr{{ $i }} {{ $server }}:{{ $.BackendServerPort }} ssl sni str({{ $server }}) verify {{ default none .BackendAdditionalFlags }}
-  {{ end }}
+  {{- end }}
+  {{- end }}
+  {{- range $i, $server := .BackendServers }}
+  server svr{{ $i }} {{ $server }}:{{ $.BackendServerPort }} ssl sni str({{ $server }}) verify {{ $.BackendAdditionalFlags }}
+  {{- end }}
 `

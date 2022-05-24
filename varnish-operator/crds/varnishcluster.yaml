@@ -916,6 +916,8 @@ spec:
                 type: object
               haproxySidecar:
                 properties:
+                  backendAdditionalFlags:
+                    type: string
                   backendServerHostHeader:
                     type: string
                   backendServerMaxAgeHeader:
@@ -934,8 +936,14 @@ spec:
                   connectTimeout:
                     format: int32
                     type: integer
+                  enableFrontendMetrics:
+                    type: boolean
                   enabled:
                     type: boolean
+                  httpchk:
+                    items:
+                      type: string
+                    type: array
                   image:
                     type: string
                   imagePullPolicy:

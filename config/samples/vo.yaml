@@ -1,6 +1,6 @@
 container:
   # path to image + tag
-  image: us.icr.io/icm-docker-images/ibmcom/varnish-operator:0.0.1-craig-test-dev
+  image: us.icr.io/icm-docker-images/varnish-operator:cin
   imagePullPolicy: Always
   imagePullSecret: "all-icr-io"
 logLevel: info

@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/gogo/protobuf/proto"
 	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
+	"github.com/ibm/varnish-operator/pkg/names"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -38,14 +39,14 @@ func varnishClusterVolumes(instance *vcapi.VarnishCluster) []v1.Volume {
 			},
 		},
 	}
-	if instance.Spec.HaproxySidecar.Enabled {
+	if instance.Spec.HaproxySidecar != nil && instance.Spec.HaproxySidecar.Enabled {
 		haproxyVolumes := []v1.Volume{
 			{
 				Name: vcapi.HaproxyConfigVolume,
 				VolumeSource: v1.VolumeSource{
 					ConfigMap: &v1.ConfigMapVolumeSource{
 						LocalObjectReference: v1.LocalObjectReference{
-							Name: vcapi.HaproxyConfigMapName,
+							Name: names.HaproxyConfigMap(instance.Name),
 						},
 					},
 				},

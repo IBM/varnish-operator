@@ -300,6 +300,7 @@ func (r *ReconcileVarnish) reconcileHaproxyConfig(ctx context.Context, vc *v1alp
 		return nil, err
 	}
 
+	logr.Infof("cfgData: %s", cfgData)
 	haproxyConfigFileName := v1alpha1.HaproxyConfigDir + "/" + v1alpha1.HaproxyConfigFileName
 	haproxyConfigUpdated, err := r.updateHaproxyConfig(haproxyConfigFileName, cfgData)
 	if err != nil {

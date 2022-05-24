@@ -61,7 +61,6 @@ const (
 	HaproxyContainerName   = "haproxy-sidecar"
 	HaproxyConfigFileName  = "haproxy.cfg"
 	HaproxyConfigDir       = "/usr/local/etc/haproxy"
-	HaproxyConfigMapName   = "haproxy-configmap"
 	HaproxyConfigVolume    = "haproxy-config"
 	HaproxyMetricsPort     = 8404
 	HaproxyMetricsPortName = "haproxy-metrics"
@@ -121,10 +120,13 @@ type HaproxySidecar struct {
 	ClientTimeout             *int32                  `json:"clientTimeout,omitempty"`   // in millis, 50000 default
 	ServerTimeout             *int32                  `json:"serverTimeout,omitempty"`   // in millis, 50000 default
 	StatRefreshRate           *int32                  `json:"statRefreshRate,omitempty"` // in seconds, 10 default
-	BackendServerPort         *int32                  `json:"backendServerPort,omitempty"`
-	BackendServerHostHeader   string                  `json:"backendServerHostHeader,omitempty"`
+	EnableFrontendMetrics     bool                    `json:"enableFrontendMetrics,omitempty"`
+	BackendAdditionalFlags    string                  `json:"backendAdditionalFlags,omitempty"`
+	BackendServerHostHeader   string                  `json:"backendServerHostHeader"`
 	BackendServerMaxAgeHeader *int32                  `json:"backendServerMaxAgeHeader,omitempty"`
-	BackendServers            []string                `json:"backendServers,omitempty"`
+	BackendServerPort         *int32                  `json:"backendServerPort,omitempty"`
+	BackendServers            []string                `json:"backendServers"`
+	HttpChk                   []string                `json:"httpchk,omitempty"`
 }
 
 type VarnishClusterUpdateStrategyType string

@@ -1,7 +1,9 @@
 package controller
 
 import (
+	"bytes"
 	"context"
+	"text/template"
 
 	"github.com/ibm/varnish-operator/pkg/names"
 
@@ -51,8 +53,24 @@ func (r *ReconcileVarnishCluster) reconcileHaproxyConfigMap(ctx context.Context,
 	return nil
 }
 
+func (r *ReconcileVarnishCluster) templatizeHaproxyConfig(instance *vcapi.VarnishCluster, tmpl string) (string, error) {
+	t, err := template.New("haproxy-config").Parse(tmpl)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+	var b bytes.Buffer
+	if err := t.Execute(&b, instance.Spec.HaproxySidecar); err != nil {
+		return "", errors.WithStack(err)
+	}
+	return b.String(), nil
+}
+
 func (r *ReconcileVarnishCluster) updateHaproxyConfigMap(instance *vcapi.VarnishCluster, podsSelector map[string]string, cm *v1.ConfigMap, cmLabels map[string]string, instanceStatus *vcapi.VarnishCluster, logr *logger.Logger) error {
-	cm.Data = map[string]string{v1alpha1.HaproxyConfigFileName: haproxyConfigTemplate}
+	haproxyConfig, err := r.templatizeHaproxyConfig(instance, haproxyConfigTemplate)
+	if err != nil {
+		return err
+	}
+	cm.Data = map[string]string{v1alpha1.HaproxyConfigFileName: haproxyConfig}
 
 	// don't trample on any labels created by user
 	if cm.Labels == nil {

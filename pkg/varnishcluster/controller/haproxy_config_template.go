@@ -1,6 +1,6 @@
 package controller
 
-var haproxyConfigTemplate = `
+const haproxyConfigTemplate = `
 global
   daemon
   maxconn {{ .MaxConnections }}

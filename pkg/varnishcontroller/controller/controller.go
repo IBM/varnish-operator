@@ -1,13 +1,13 @@
 package controller
 
 import (
-	"bytes"
 	"context"
+	"crypto/md5"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"os/exec"
 	"strings"
-	"text/template"
 	"time"
 
 	ctrlBuilder "sigs.k8s.io/controller-runtime/pkg/builder"
@@ -46,6 +46,12 @@ type PodInfo struct {
 	PodName    string
 	Weight     float64
 }
+
+const (
+	haproxyConfigFileName = v1alpha1.HaproxyConfigDir + "/" + v1alpha1.HaproxyConfigFileName
+)
+
+var haproxyConfigHash = ""
 
 // SetupVarnishReconciler creates a new VarnishCluster Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -250,31 +256,20 @@ func (r *ReconcileVarnish) reconcileWithContext(ctx context.Context, request rec
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileVarnish) templatizeHaproxyConfig(instance *v1alpha1.VarnishCluster, tmpl string) (string, error) {
-	t, err := template.New("haproxy-config").Parse(tmpl)
-	if err != nil {
-		return "", errors.WithStack(err)
-	}
-	var b bytes.Buffer
-	if err := t.Execute(&b, instance.Spec.HaproxySidecar); err != nil {
-		return "", errors.WithStack(err)
-	}
-	return b.String(), nil
-}
-
-func (r *ReconcileVarnish) updateHaproxyConfig(haproxyConfigFileName string, cfgData string) (bool, error) {
-	if b, err := os.ReadFile(haproxyConfigFileName); err != nil {
-		if strings.Compare(string(b), cfgData) != 0 {
-			if err := os.WriteFile(haproxyConfigFileName, []byte(cfgData), 0644); err != nil {
-				return false, err
-			}
+func (r *ReconcileVarnish) haproxyConfigUpdated() (bool, error) {
+	if len(haproxyConfigHash) == 0 {
+	} else if b, err := os.ReadFile(haproxyConfigFileName); err != nil {
+		return false, err
+	} else {
+		hasher := md5.New()
+		hasher.Write(b)
+		configHash := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
+		if len(haproxyConfigHash) == 0 { // if the hash hasn't been set, set it but don't HUP haproxy
+			haproxyConfigHash = configHash
+		} else if configHash != haproxyConfigHash {
+			haproxyConfigHash = configHash
 			return true, nil
 		}
-	} else {
-		if err := os.WriteFile(haproxyConfigFileName, []byte(cfgData), 0644); err != nil {
-			return false, err
-		}
-		return true, nil
 	}
 	return false, nil
 }
@@ -295,14 +290,9 @@ func (r *ReconcileVarnish) reconcileHaproxyConfig(ctx context.Context, vc *v1alp
 		return nil, err
 	}
 
-	cfgData, err := r.templatizeHaproxyConfig(vc, haproxyConfigMap.Data[v1alpha1.HaproxyConfigFileName])
-	if err != nil {
-		return nil, err
-	}
-
+	cfgData := haproxyConfigMap.Data[v1alpha1.HaproxyConfigFileName]
 	logr.Infof("cfgData: %s", cfgData)
-	haproxyConfigFileName := v1alpha1.HaproxyConfigDir + "/" + v1alpha1.HaproxyConfigFileName
-	haproxyConfigUpdated, err := r.updateHaproxyConfig(haproxyConfigFileName, cfgData)
+	haproxyConfigUpdated, err := r.haproxyConfigUpdated()
 	if err != nil {
 		return nil, err
 	}

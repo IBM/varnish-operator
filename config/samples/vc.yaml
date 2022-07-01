@@ -26,8 +26,9 @@ spec:
     enabled: true
     image: haproxytech/haproxy-debian:2.4
     imagePullPolicy: IfNotPresent
+    clientTimeout: 31000
     backendServerHostHeader: "api.mapbox.com"
-    BackendServers:
+    backendServers:
     - "api.mapbox.com"
   varnish:
     image: us.icr.io/icm-docker-images/varnish:cin

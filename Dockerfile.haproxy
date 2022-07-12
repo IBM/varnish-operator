@@ -1,0 +1,7 @@
+FROM haproxytech/haproxy-debian:2.7
+
+RUN apt-get update && apt-get upgrade -y \
+    && adduser --quiet --system --no-create-home --home /nonexistent --group varnish \
+    && rm -rf /var/lib/apt/lists/*
+
+USER varnish

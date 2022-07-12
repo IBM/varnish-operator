@@ -19,6 +19,36 @@ func varnishClusterContainers(instance *vcapi.VarnishCluster, varnishdArgs []str
 	return containers
 }
 
+func varnishClusterInitContainers(instance *vcapi.VarnishCluster, varnishImage string) []v1.Container {
+	initContainers := instance.Spec.Varnish.ExtraInitContainers
+	if instance.Spec.HaproxySidecar != nil && instance.Spec.HaproxySidecar.Enabled {
+		gvk := instance.GroupVersionKind()
+		haproxyInitContainer := v1.Container{
+			Name:  "haproxy-init",
+			Image: imageNameGenerate(instance.Spec.Varnish.Controller.Image, varnishImage, vcapi.VarnishControllerImage),
+			Env: []v1.EnvVar{
+				{Name: "INIT_CONTAINER"},
+				{Name: "NAMESPACE", Value: instance.Namespace},
+				{Name: "POD_NAME", ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{APIVersion: "v1", FieldPath: "metadata.name"}}},
+				{Name: "NODE_NAME", ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{APIVersion: "v1", FieldPath: "spec.nodeName"}}},
+				{Name: "VARNISH_CLUSTER_NAME", Value: instance.Name},
+				{Name: "VARNISH_CLUSTER_UID", Value: string(instance.UID)},
+				{Name: "VARNISH_CLUSTER_GROUP", Value: gvk.Group},
+				{Name: "VARNISH_CLUSTER_VERSION", Value: gvk.Version},
+				{Name: "VARNISH_CLUSTER_KIND", Value: gvk.Kind},
+				{Name: "LOG_FORMAT", Value: instance.Spec.LogFormat},
+				{Name: "LOG_LEVEL", Value: instance.Spec.LogLevel},
+			},
+			VolumeMounts: []v1.VolumeMount{
+				haproxyConfigVolumeMount(false),
+			},
+			ImagePullPolicy: instance.Spec.Varnish.Controller.ImagePullPolicy,
+		}
+		initContainers = append(initContainers, haproxyInitContainer)
+	}
+	return initContainers
+}
+
 func varnishContainer(instance *vcapi.VarnishCluster, varnishdArgs []string, varnishImage string) v1.Container {
 	//Varnish container
 	return v1.Container{

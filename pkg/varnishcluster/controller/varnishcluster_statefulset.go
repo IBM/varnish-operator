@@ -80,7 +80,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 					// in the same pod.It is required for the pod to provide reliable way to collect metrics.
 					// Otherwise, metrics collection container may only collect general varnish process metrics.
 					ShareProcessNamespace:         proto.Bool(true),
-					InitContainers:                instance.Spec.Varnish.ExtraInitContainers,
+					InitContainers:                varnishClusterInitContainers(instance, varnishImage),
 					Volumes:                       varnishClusterVolumes(instance),
 					Containers:                    varnishClusterContainers(instance, varnishdArgs, varnishImage, endpointSelector),
 					TerminationGracePeriodSeconds: proto.Int64(30),

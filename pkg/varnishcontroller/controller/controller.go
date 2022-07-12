@@ -2,8 +2,6 @@ package controller
 
 import (
 	"context"
-	"crypto/md5"
-	"encoding/base64"
 	"fmt"
 	"os"
 	"os/exec"
@@ -50,8 +48,6 @@ type PodInfo struct {
 const (
 	haproxyConfigFileName = v1alpha1.HaproxyConfigDir + "/" + v1alpha1.HaproxyConfigFileName
 )
-
-var haproxyConfigHash = ""
 
 // SetupVarnishReconciler creates a new VarnishCluster Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -256,22 +252,24 @@ func (r *ReconcileVarnish) reconcileWithContext(ctx context.Context, request rec
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileVarnish) haproxyConfigUpdated() (bool, error) {
-	if len(haproxyConfigHash) == 0 {
-	} else if b, err := os.ReadFile(haproxyConfigFileName); err != nil {
-		return false, err
-	} else {
-		hasher := md5.New()
-		hasher.Write(b)
-		configHash := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
-		if len(haproxyConfigHash) == 0 { // if the hash hasn't been set, set it but don't HUP haproxy
-			haproxyConfigHash = configHash
-		} else if configHash != haproxyConfigHash {
-			haproxyConfigHash = configHash
-			return true, nil
+func (r *ReconcileVarnish) updateHaproxyConfig(cfgData string) (bool, error) {
+	logr := logger.FromContext(context.Background())
+	rewriteConfig := false
+	b, err := os.ReadFile(haproxyConfigFileName)
+	if err == nil {
+		orig := string(b)
+		if strings.Compare(orig, cfgData) != 0 {
+			logr.Infof("haproxy configs are different: %s\nfs: %s\ncfg: %s", haproxyConfigFileName, orig, cfgData)
+			rewriteConfig = true
 		}
+	} else { // ignore error and write the file if it didn't exist
+		logr.Infof("haproxy config not found: %s", haproxyConfigFileName)
+		rewriteConfig = true
 	}
-	return false, nil
+	if rewriteConfig {
+		err = os.WriteFile(haproxyConfigFileName, []byte(cfgData), 0644)
+	}
+	return rewriteConfig, err
 }
 
 func (r *ReconcileVarnish) hupHaproxy() error {
@@ -291,12 +289,12 @@ func (r *ReconcileVarnish) reconcileHaproxyConfig(ctx context.Context, vc *v1alp
 	}
 
 	cfgData := haproxyConfigMap.Data[v1alpha1.HaproxyConfigFileName]
-	logr.Infof("cfgData: %s", cfgData)
-	haproxyConfigUpdated, err := r.haproxyConfigUpdated()
+	haproxyConfigUpdated, err := r.updateHaproxyConfig(cfgData)
 	if err != nil {
 		return nil, err
 	}
 
+	logr.Infof("haproxyConfigUpdated %v, cfgData: %s", haproxyConfigUpdated, cfgData)
 	if haproxyConfigUpdated {
 		logr.Info("hup'ing haproxy")
 		if err := r.hupHaproxy(); err != nil {

@@ -24,9 +24,9 @@ spec:
       datasourceName: Prometheus
   haproxySidecar:
     enabled: true
-    image: haproxytech/haproxy-debian:2.4
+    image: us.icr.io/icm-docker-images/varnish-haproxy:cin
     imagePullPolicy: IfNotPresent
-    clientTimeout: 31000
+    clientTimeout: 30000
     backendServerHostHeader: "api.mapbox.com"
     backendServers:
     - "api.mapbox.com"
@@ -35,3 +35,4 @@ spec:
     imagePullSecret: "all-icr-io"
     controller:
       image: us.icr.io/icm-docker-images/varnish-controller:cin
+      imagePullPolicy: Always

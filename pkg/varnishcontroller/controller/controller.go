@@ -288,14 +288,10 @@ func (r *ReconcileVarnish) reconcileHaproxyConfig(ctx context.Context, vc *v1alp
 		return nil, err
 	}
 
-	cfgData := haproxyConfigMap.Data[v1alpha1.HaproxyConfigFileName]
-	haproxyConfigUpdated, err := r.updateHaproxyConfig(cfgData)
+	haproxyConfigUpdated, err := r.updateHaproxyConfig(haproxyConfigMap.Data[v1alpha1.HaproxyConfigFileName])
 	if err != nil {
 		return nil, err
-	}
-
-	logr.Infof("haproxyConfigUpdated %v, cfgData: %s", haproxyConfigUpdated, cfgData)
-	if haproxyConfigUpdated {
+	} else if haproxyConfigUpdated {
 		logr.Info("hup'ing haproxy")
 		if err := r.hupHaproxy(); err != nil {
 			return nil, err

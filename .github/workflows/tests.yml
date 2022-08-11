@@ -12,11 +12,10 @@ jobs:
       - name: Setup-go installation
         uses: actions/setup-go@v3
         with:
-          go-version: ^1.17
+          go-version: ^1.19
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.45.2
           args: --timeout=2m --enable exportloopref
           skip-pkg-cache: true
           skip-build-cache: true

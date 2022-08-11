@@ -211,8 +211,11 @@ type VarnishClusterVarnishSecret struct {
 
 type VarnishClusterService struct {
 	// +kubebuilder:validation:Required
-	Port        *int32 `json:"port,omitempty"`
-	MetricsPort *int32 `json:"metricsPort,omitempty"`
+	Port                      *int32 `json:"port,omitempty"`
+	NodePort                  int32  `json:"nodePort,omitempty"`
+	MetricsPort               *int32 `json:"metricsPort,omitempty"`
+	MetricsNodePort           int32  `json:"metricsNodePort,omitempty"`
+	ControllerMetricsNodePort int32  `json:"controllerMetricsNodePort,omitempty"`
 	// +kubebuilder:validation:Enum=ClusterIP;LoadBalancer;NodePort
 	Type        v1.ServiceType    `json:"type,omitempty"`
 	Annotations map[string]string `json:"annotations,omitempty"`
@@ -227,7 +230,7 @@ type VarnishClusterMonitoringPrometheusServiceMonitor struct {
 	Enabled        bool              `json:"enabled"`
 	Namespace      string            `json:"namespace"`
 	Labels         map[string]string `json:"labels,omitempty"`
-	ScrapeInterval string            `json:"scrapeInterval,omitempty"`
+	ScrapeInterval string            `json:"scrapeIntervуal,omitempty"`
 }
 
 type VarnishClusterMonitoringGrafanaDashboard struct {

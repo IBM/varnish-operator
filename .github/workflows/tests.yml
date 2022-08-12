@@ -30,7 +30,7 @@ jobs:
       id: go
     - name: Setup Kubebuilder assets
       run: |
-        curl -sSLo envtest-bins.tar.gz "https://storage.googleapis.com/kubebuilder-tools/kubebuilder-tools-1.21.2-linux-amd64.tar.gz"
+        curl -sSLo envtest-bins.tar.gz "https://storage.googleapis.com/kubebuilder-tools/kubebuilder-tools-1.24.2-linux-amd64.tar.gz"
         mkdir -p /tmp/kubebuilder
         tar -C /tmp/kubebuilder/ --strip-components=1 -zvxf envtest-bins.tar.gz
         rm envtest-bins.tar.gz;

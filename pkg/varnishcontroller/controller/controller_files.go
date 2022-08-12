@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,7 +12,7 @@ import (
 )
 
 func getCurrentFiles(dir string) (map[string]string, error) {
-	files, err := ioutil.ReadDir(dir)
+	files, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, errors.Wrapf(err, "incorrect dir: %s", dir)
 	}
@@ -21,7 +20,7 @@ func getCurrentFiles(dir string) (map[string]string, error) {
 	out := make(map[string]string, len(files))
 	for _, file := range files {
 		if name := file.Name(); filepath.Ext(name) == ".vcl" {
-			contents, err := ioutil.ReadFile(filepath.Join(dir, name))
+			contents, err := os.ReadFile(filepath.Join(dir, name))
 			if err != nil {
 				return nil, errors.Wrapf(err, "problem reading file %s", name)
 			}
@@ -52,13 +51,13 @@ func (r *ReconcileVarnish) reconcileFiles(ctx context.Context, dir string, currF
 			}
 		} else if status == 0 && strings.Compare(currFiles[fileName], newFiles[fileName]) != 0 {
 			filesTouched = true
-			if err := ioutil.WriteFile(fullpath, []byte(newFiles[fileName]), 0644); err != nil {
+			if err := os.WriteFile(fullpath, []byte(newFiles[fileName]), 0644); err != nil {
 				return filesTouched, errors.Wrapf(err, "could not write file %s", fullpath)
 			}
 			logr.Infow("Rewriting file")
 		} else if status == 1 {
 			filesTouched = true
-			if err := ioutil.WriteFile(fullpath, []byte(newFiles[fileName]), 0644); err != nil {
+			if err := os.WriteFile(fullpath, []byte(newFiles[fileName]), 0644); err != nil {
 				return filesTouched, errors.Wrapf(err, "could not write file %s", fullpath)
 			}
 			logr.Infow("Writing new file")

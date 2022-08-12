@@ -969,7 +969,7 @@ spec:
                         type: object
                       namespace:
                         type: string
-                      scrapeIntervуal:
+                      scrapeInterval:
                         type: string
                     type: object
                 type: object

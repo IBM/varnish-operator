@@ -230,7 +230,7 @@ type VarnishClusterMonitoringPrometheusServiceMonitor struct {
 	Enabled        bool              `json:"enabled"`
 	Namespace      string            `json:"namespace"`
 	Labels         map[string]string `json:"labels,omitempty"`
-	ScrapeInterval string            `json:"scrapeIntervуal,omitempty"`
+	ScrapeInterval string            `json:"scrapeInterval,omitempty"`
 }
 
 type VarnishClusterMonitoringGrafanaDashboard struct {

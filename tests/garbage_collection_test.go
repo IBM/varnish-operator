@@ -3,15 +3,16 @@ package tests
 import (
 	"context"
 	"fmt"
+	"time"
+
 	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 	"github.com/ibm/varnish-operator/pkg/names"
-	"time"
 
 	apps "k8s.io/api/apps/v1"
 	rbac "k8s.io/api/rbac/v1"
 
 	v1 "k8s.io/api/core/v1"
-	policyv1beta1 "k8s.io/api/policy/v1beta1"
+	policyv1 "k8s.io/api/policy/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/gogo/protobuf/proto"
@@ -50,7 +51,7 @@ var _ = Describe("Varnish Cluster", func() {
 						Port:     &validBackendPort,
 					},
 					Varnish: &vcapi.VarnishClusterVarnish{},
-					PodDisruptionBudget: &policyv1beta1.PodDisruptionBudgetSpec{
+					PodDisruptionBudget: &policyv1.PodDisruptionBudgetSpec{
 						MinAvailable: &minAvailabe,
 					},
 					Service: &vcapi.VarnishClusterService{
@@ -81,7 +82,7 @@ var _ = Describe("Varnish Cluster", func() {
 			expectResourceIsCreated(types.NamespacedName{Name: names.NoCacheService(vcName), Namespace: vcNamespace}, &v1.Service{})
 			expectResourceIsCreated(types.NamespacedName{Name: vcName, Namespace: vcNamespace}, &v1.Service{})
 			expectResourceIsCreated(types.NamespacedName{Name: names.VarnishSecret(vcName), Namespace: vcNamespace}, &v1.Secret{})
-			expectResourceIsCreated(types.NamespacedName{Name: names.PodDisruptionBudget(vcName), Namespace: vcNamespace}, &policyv1beta1.PodDisruptionBudget{})
+			expectResourceIsCreated(types.NamespacedName{Name: names.PodDisruptionBudget(vcName), Namespace: vcNamespace}, &policyv1.PodDisruptionBudget{})
 			expectResourceIsCreated(types.NamespacedName{Name: names.Role(vcName), Namespace: vcNamespace}, &rbac.Role{})
 			expectResourceIsCreated(types.NamespacedName{Name: names.RoleBinding(vcName), Namespace: vcNamespace}, &rbac.RoleBinding{})
 			expectResourceIsCreated(types.NamespacedName{Name: names.ClusterRole(vcName, vcNamespace)}, &rbac.ClusterRole{})
@@ -101,7 +102,7 @@ var _ = Describe("Varnish Cluster", func() {
 			expectResourceIsDeleted(types.NamespacedName{Name: names.HeadlessService(vcName), Namespace: vcNamespace}, &v1.Service{})
 			expectResourceIsDeleted(types.NamespacedName{Name: names.NoCacheService(vcName), Namespace: vcNamespace}, &v1.Service{})
 			expectResourceIsDeleted(types.NamespacedName{Name: vcName, Namespace: vcNamespace}, &v1.Service{})
-			expectResourceIsDeleted(types.NamespacedName{Name: names.PodDisruptionBudget(vcName), Namespace: vcNamespace}, &policyv1beta1.PodDisruptionBudget{})
+			expectResourceIsDeleted(types.NamespacedName{Name: names.PodDisruptionBudget(vcName), Namespace: vcNamespace}, &policyv1.PodDisruptionBudget{})
 			expectResourceIsDeleted(types.NamespacedName{Name: names.Role(vcName), Namespace: vcNamespace}, &rbac.Role{})
 			expectResourceIsDeleted(types.NamespacedName{Name: names.RoleBinding(vcName), Namespace: vcNamespace}, &rbac.RoleBinding{})
 			expectResourceIsDeleted(types.NamespacedName{Name: names.ClusterRole(vcName, vcNamespace)}, &rbac.ClusterRole{})

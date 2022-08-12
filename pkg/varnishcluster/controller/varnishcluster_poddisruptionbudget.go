@@ -10,7 +10,7 @@ import (
 	"github.com/ibm/varnish-operator/pkg/varnishcluster/compare"
 
 	"github.com/pkg/errors"
-	policyv1beta1 "k8s.io/api/policy/v1beta1"
+	policyv1 "k8s.io/api/policy/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -28,13 +28,13 @@ func (r *ReconcileVarnishCluster) reconcilePodDisruptionBudget(ctx context.Conte
 		return r.deletePDBIfExists(ctx, namespacedName)
 	}
 
-	var pdbs policyv1beta1.PodDisruptionBudgetSpec
+	var pdbs policyv1.PodDisruptionBudgetSpec
 	instance.Spec.PodDisruptionBudget.DeepCopyInto(&pdbs)
 	pdbs.Selector = &metav1.LabelSelector{
 		MatchLabels: podSelector,
 	}
 
-	desired := &policyv1beta1.PodDisruptionBudget{
+	desired := &policyv1.PodDisruptionBudget{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      namespacedName.Name,
 			Labels:    labels.CombinedComponentLabels(instance, vcapi.VarnishComponentPodDisruptionBudget),
@@ -67,13 +67,13 @@ func (r *ReconcileVarnishCluster) reconcilePodDisruptionBudget(ctx context.Conte
 	}
 }
 
-func (r *ReconcileVarnishCluster) getPDB(ctx context.Context, ns types.NamespacedName) (*policyv1beta1.PodDisruptionBudget, error) {
-	pdb := &policyv1beta1.PodDisruptionBudget{}
+func (r *ReconcileVarnishCluster) getPDB(ctx context.Context, ns types.NamespacedName) (*policyv1.PodDisruptionBudget, error) {
+	pdb := &policyv1.PodDisruptionBudget{}
 	err := r.Get(ctx, ns, pdb)
 	return pdb, err
 }
 
-func (r *ReconcileVarnishCluster) createPDB(ctx context.Context, pdb *policyv1beta1.PodDisruptionBudget) error {
+func (r *ReconcileVarnishCluster) createPDB(ctx context.Context, pdb *policyv1.PodDisruptionBudget) error {
 	err := r.Create(ctx, pdb)
 	if err != nil {
 		return errors.Wrap(err, "could not create poddisruptionbudget")
@@ -84,7 +84,7 @@ func (r *ReconcileVarnishCluster) createPDB(ctx context.Context, pdb *policyv1be
 // In Kubernetes version <= 1.14 PodDisruptionBudget updates are forbidden:
 // https://github.com/kubernetes/kubernetes/issues/45398
 // That's why it needs to be recreated every time the spec changes. Until Kubernetes 1.14 will be deprecated.
-func (r *ReconcileVarnishCluster) updatePDB(ctx context.Context, found, desired *policyv1beta1.PodDisruptionBudget) error {
+func (r *ReconcileVarnishCluster) updatePDB(ctx context.Context, found, desired *policyv1.PodDisruptionBudget) error {
 	err := r.deletePDB(ctx, found)
 	if err != nil {
 		return err
@@ -93,7 +93,7 @@ func (r *ReconcileVarnishCluster) updatePDB(ctx context.Context, found, desired 
 	return r.createPDB(ctx, desired)
 }
 
-func (r *ReconcileVarnishCluster) deletePDB(ctx context.Context, pdb *policyv1beta1.PodDisruptionBudget) error {
+func (r *ReconcileVarnishCluster) deletePDB(ctx context.Context, pdb *policyv1.PodDisruptionBudget) error {
 	err := r.Delete(ctx, pdb)
 	if err != nil {
 		return errors.Wrap(err, "could not delete poddisruptionbudget")

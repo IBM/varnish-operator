@@ -7,8 +7,8 @@ package v1alpha1
 
 import (
 	appsv1 "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/api/policy/v1beta1"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/api/policy/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -383,7 +383,7 @@ func (in *VarnishClusterSpec) DeepCopyInto(out *VarnishClusterSpec) {
 	}
 	if in.PodDisruptionBudget != nil {
 		in, out := &in.PodDisruptionBudget, &out.PodDisruptionBudget
-		*out = new(v1beta1.PodDisruptionBudgetSpec)
+		*out = new(v1.PodDisruptionBudgetSpec)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.NodeSelector != nil {
@@ -395,12 +395,12 @@ func (in *VarnishClusterSpec) DeepCopyInto(out *VarnishClusterSpec) {
 	}
 	if in.Affinity != nil {
 		in, out := &in.Affinity, &out.Affinity
-		*out = new(v1.Affinity)
+		*out = new(corev1.Affinity)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.Tolerations != nil {
 		in, out := &in.Tolerations, &out.Tolerations
-		*out = make([]v1.Toleration, len(*in))
+		*out = make([]corev1.Toleration, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
@@ -493,7 +493,7 @@ func (in *VarnishClusterVarnish) DeepCopyInto(out *VarnishClusterVarnish) {
 	*out = *in
 	if in.Resources != nil {
 		in, out := &in.Resources, &out.Resources
-		*out = new(v1.ResourceRequirements)
+		*out = new(corev1.ResourceRequirements)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.Args != nil {
@@ -518,14 +518,14 @@ func (in *VarnishClusterVarnish) DeepCopyInto(out *VarnishClusterVarnish) {
 	}
 	if in.EnvFrom != nil {
 		in, out := &in.EnvFrom, &out.EnvFrom
-		*out = make([]v1.EnvFromSource, len(*in))
+		*out = make([]corev1.EnvFromSource, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
 	if in.ExtraInitContainers != nil {
 		in, out := &in.ExtraInitContainers, &out.ExtraInitContainers
-		*out = make([]v1.Container, len(*in))
+		*out = make([]corev1.Container, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
@@ -539,14 +539,14 @@ func (in *VarnishClusterVarnish) DeepCopyInto(out *VarnishClusterVarnish) {
 	}
 	if in.ExtraVolumes != nil {
 		in, out := &in.ExtraVolumes, &out.ExtraVolumes
-		*out = make([]v1.Volume, len(*in))
+		*out = make([]corev1.Volume, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
 	if in.ExtraVolumeMounts != nil {
 		in, out := &in.ExtraVolumeMounts, &out.ExtraVolumeMounts
-		*out = make([]v1.VolumeMount, len(*in))
+		*out = make([]corev1.VolumeMount, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}

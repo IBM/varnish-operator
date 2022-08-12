@@ -5,7 +5,7 @@ package v1alpha1
 import (
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
-	policyv1beta1 "k8s.io/api/policy/v1beta1"
+	policyv1 "k8s.io/api/policy/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -87,12 +87,12 @@ type VarnishClusterSpec struct {
 	// +kubebuilder:validation:Required
 	Backend *VarnishClusterBackend `json:"backend,omitempty"`
 	// +kubebuilder:validation:Required
-	Service             *VarnishClusterService                 `json:"service,omitempty"`
-	PodDisruptionBudget *policyv1beta1.PodDisruptionBudgetSpec `json:"podDisruptionBudget,omitempty"`
-	NodeSelector        map[string]string                      `json:"nodeSelector,omitempty"`
-	Affinity            *v1.Affinity                           `json:"affinity,omitempty"`
-	Tolerations         []v1.Toleration                        `json:"tolerations,omitempty"`
-	Monitoring          *VarnishClusterMonitoring              `json:"monitoring,omitempty"`
+	Service             *VarnishClusterService            `json:"service,omitempty"`
+	PodDisruptionBudget *policyv1.PodDisruptionBudgetSpec `json:"podDisruptionBudget,omitempty"`
+	NodeSelector        map[string]string                 `json:"nodeSelector,omitempty"`
+	Affinity            *v1.Affinity                      `json:"affinity,omitempty"`
+	Tolerations         []v1.Toleration                   `json:"tolerations,omitempty"`
+	Monitoring          *VarnishClusterMonitoring         `json:"monitoring,omitempty"`
 	// +kubebuilder:validation:Enum=debug;info;warn;error;dpanic;panic;fatal
 	LogLevel string `json:"logLevel,omitempty"`
 	// +kubebuilder:validation:Enum=json;console

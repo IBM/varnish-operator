@@ -4,8 +4,8 @@
 
 ### Prerequisites
 
-* Kubernetes v1.16 or newer and `kubectl` configured to communicate with your cluster
-* Helm
+* Kubernetes v1.21 or newer and `kubectl` configured to communicate with your cluster
+* Helm 3
 
 ### Configure Helm repo
 

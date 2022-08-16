@@ -1052,15 +1052,21 @@ spec:
                     type: object
                   controllerMetricsNodePort:
                     format: int32
+                    maximum: 65535
+                    minimum: 0
                     type: integer
                   metricsNodePort:
                     format: int32
+                    maximum: 65535
+                    minimum: 0
                     type: integer
                   metricsPort:
                     format: int32
                     type: integer
                   nodePort:
                     format: int32
+                    maximum: 65535
+                    minimum: 0
                     type: integer
                   port:
                     format: int32

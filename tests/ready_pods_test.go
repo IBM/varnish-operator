@@ -3,7 +3,7 @@ package tests
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -127,7 +127,7 @@ var _ = Describe("Varnish cluster", func() {
 			return resp.StatusCode, nil
 		}, time.Second*30, time.Second*2).Should(Equal(200))
 		Expect(resp.Header.Get("X-Varnish-Cache")).To(Equal("MISS"))
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(strings.TrimSpace(string(body))).To(Equal("TEST"))
 
@@ -136,7 +136,7 @@ var _ = Describe("Varnish cluster", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(resp.StatusCode).To(Equal(200))
 		Expect(resp.Header.Get("X-Varnish-Cache")).To(Equal("HIT"))
-		body, err = ioutil.ReadAll(resp.Body)
+		body, err = io.ReadAll(resp.Body)
 		Expect(err).To(Succeed())
 		Expect(strings.TrimSpace(string(body))).To(Equal("TEST"))
 

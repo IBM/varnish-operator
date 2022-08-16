@@ -5,9 +5,9 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -105,7 +105,7 @@ func showClusterEvents() {
 
 	fmt.Println("Kubernetes events: ")
 	fmt.Print(strings.Join(eventsOutput[startIndex:], "\n"))
-	Expect(ioutil.WriteFile(debugLogsDir+"cluster-events.txt", []byte(strings.Join(eventsOutput, "\n")), 0777)).To(Succeed())
+	Expect(os.WriteFile(debugLogsDir+"cluster-events.txt", []byte(strings.Join(eventsOutput, "\n")), 0777)).To(Succeed())
 }
 
 func showPodLogs(labels map[string]string, namespace string) {
@@ -128,10 +128,10 @@ func showPodLogs(labels map[string]string, namespace string) {
 			allLogs, err := getPodLogs(pod, v1.PodLogOptions{Container: container.Name})
 			if err != nil {
 				fileContent := []byte(fmt.Sprintf("couldn't get logs for pod %s/%s container %s: %s", pod.Namespace, pod.Name, container.Name, err.Error()))
-				Expect(ioutil.WriteFile(logFileName, fileContent, 0777)).To(Succeed())
+				Expect(os.WriteFile(logFileName, fileContent, 0777)).To(Succeed())
 				continue
 			}
-			Expect(ioutil.WriteFile(logFileName, []byte(allLogs), 0777)).To(Succeed())
+			Expect(os.WriteFile(logFileName, []byte(allLogs), 0777)).To(Succeed())
 		}
 	}
 }

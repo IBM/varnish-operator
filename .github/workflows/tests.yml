@@ -12,11 +12,10 @@ jobs:
       - name: Setup-go installation
         uses: actions/setup-go@v3
         with:
-          go-version: ^1.17
+          go-version: ^1.19
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.45.2
           args: --timeout=2m --enable exportloopref
           skip-pkg-cache: true
           skip-build-cache: true
@@ -31,7 +30,7 @@ jobs:
       id: go
     - name: Setup Kubebuilder assets
       run: |
-        curl -sSLo envtest-bins.tar.gz "https://storage.googleapis.com/kubebuilder-tools/kubebuilder-tools-1.21.2-linux-amd64.tar.gz"
+        curl -sSLo envtest-bins.tar.gz "https://storage.googleapis.com/kubebuilder-tools/kubebuilder-tools-1.24.2-linux-amd64.tar.gz"
         mkdir -p /tmp/kubebuilder
         tar -C /tmp/kubebuilder/ --strip-components=1 -zvxf envtest-bins.tar.gz
         rm envtest-bins.tar.gz;

@@ -20,7 +20,6 @@ var (
 func getSanitizedVarnishArgs(spec *vcapi.VarnishClusterSpec) []string {
 	varnishArgsOverrides := [][]string{
 		{"-F"},
-		{"-a", fmt.Sprintf("0.0.0.0:%d", vcapi.VarnishPort)},
 		{"-S", "/etc/varnish-secret/secret"},
 		{"-b", "127.0.0.1:0"}, //start a varnishd without predefined backend. It has to be overridden by settings from ConfigMap
 		{"-T", fmt.Sprintf("0.0.0.0:%d", vcapi.VarnishAdminPort)},
@@ -52,6 +51,7 @@ func getSanitizedVarnishArgs(spec *vcapi.VarnishClusterSpec) []string {
 	}
 
 	varnishArgs := append(parsedArgs, varnishArgsOverrides...)
+	varnishArgs = append(varnishArgs, []string{"-a", fmt.Sprintf("0.0.0.0:%d", vcapi.VarnishPort)})
 
 	// sort the arguments so they won't appear in different order in different reconcile loops and trigger redeployment
 	sort.SliceStable(varnishArgs, func(i, j int) bool {

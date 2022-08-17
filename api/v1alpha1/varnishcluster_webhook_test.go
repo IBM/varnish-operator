@@ -22,6 +22,17 @@ func TestValidatingWebhook(t *testing.T) {
 			valid: true,
 		},
 		{
+			name: "Additional listen addresses should be allowed",
+			vc: &VarnishCluster{
+				Spec: VarnishClusterSpec{
+					Varnish: &VarnishClusterVarnish{
+						Args: []string{"-a", ":8080,PROXY"},
+					},
+				},
+			},
+			valid: true,
+		},
+		{
 			name: "Invalid values",
 			vc: &VarnishCluster{
 				Spec: VarnishClusterSpec{
@@ -59,7 +70,7 @@ func TestValidatingWebhook(t *testing.T) {
 			vc: &VarnishCluster{
 				Spec: VarnishClusterSpec{
 					Varnish: &VarnishClusterVarnish{
-						Args: []string{"-a", "-f", "-F", "-n", "-S"},
+						Args: []string{"-f", "-F", "-n", "-S"},
 					},
 				},
 			},

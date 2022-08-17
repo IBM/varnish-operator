@@ -24,7 +24,6 @@ func SetWebhookLogger(l *logger.Logger) {
 var (
 	varnishArgsKeyRegexp  = regexp.MustCompile(`^-\w$`)
 	disallowedVarnishArgs = map[string]bool{
-		"-a": true,
 		"-f": true,
 		"-F": true,
 		"-n": true,

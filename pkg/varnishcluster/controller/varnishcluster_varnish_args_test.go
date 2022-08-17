@@ -75,7 +75,7 @@ func TestGetSanitizedVarnishArgs(t *testing.T) {
 			spec: &v1alpha1.VarnishClusterSpec{
 				VCL: vclConfigMap,
 				Varnish: &v1alpha1.VarnishClusterVarnish{
-					Args: []string{"-S", "/etc/varnish/newsecret", "-T", "127.0.0.1:4235", "-a", "0.0.0.0:3425", "-b", "127.0.0.1:3456"},
+					Args: []string{"-S", "/etc/varnish/newsecret", "-T", "127.0.0.1:4235", "-b", "127.0.0.1:3456"},
 				},
 			},
 			expectedResult: []string{
@@ -117,6 +117,26 @@ func TestGetSanitizedVarnishArgs(t *testing.T) {
 				"-S", "/etc/varnish-secret/secret",
 				"-T", fmt.Sprintf("0.0.0.0:%d", v1alpha1.VarnishAdminPort),
 				"-a", fmt.Sprintf("0.0.0.0:%d", v1alpha1.VarnishPort),
+				"-b", "127.0.0.1:0",
+				"-p", "default_grace=3600",
+				"-p", "default_ttl=3600",
+			},
+		},
+		{
+			name: "additional -a arguments can be specified",
+			spec: &v1alpha1.VarnishClusterSpec{
+				VCL: vclConfigMap,
+				Varnish: &v1alpha1.VarnishClusterVarnish{
+					Args: []string{"-a", ":8080,PROXY", "-a", ":4392", "-p", "default_grace=3600", "-p", "default_ttl=3600"},
+				},
+			},
+			expectedResult: []string{
+				"-F",
+				"-S", "/etc/varnish-secret/secret",
+				"-T", fmt.Sprintf("0.0.0.0:%d", v1alpha1.VarnishAdminPort),
+				"-a", fmt.Sprintf("0.0.0.0:%d", v1alpha1.VarnishPort),
+				"-a", ":4392",
+				"-a", ":8080,PROXY",
 				"-b", "127.0.0.1:0",
 				"-p", "default_grace=3600",
 				"-p", "default_ttl=3600",

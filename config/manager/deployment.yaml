@@ -42,7 +42,7 @@ spec:
             - name: LEADERELECTION_ENABLED
               value: "false"
             - name: CONTAINER_IMAGE
-              value: ibmcom/varnish-operator:0.27.2
+              value: ibmcom/varnish-operator:0.0.1-craig-test
             - name: WEBHOOKS_ENABLED
               value: "false"
             - name: LOGLEVEL

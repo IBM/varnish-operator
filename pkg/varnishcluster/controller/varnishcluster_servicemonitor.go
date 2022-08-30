@@ -202,11 +202,15 @@ func (r *ReconcileVarnishCluster) createServiceMonitorObject(instance *vcapi.Var
 		},
 		"endpoints": []interface{}{
 			map[string]interface{}{
-				"port":     "metrics",
+				"port":     vcapi.VarnishMetricsPortName,
 				"interval": scrapeInterval,
 			},
 			map[string]interface{}{
-				"port":     "ctrl-metrics",
+				"port":     vcapi.VarnishControllerMetricsPortName,
+				"interval": scrapeInterval,
+			},
+			map[string]interface{}{
+				"port":     vcapi.HaproxyMetricsPortName,
 				"interval": scrapeInterval,
 			},
 		},

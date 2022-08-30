@@ -57,6 +57,14 @@ const (
 	VarnishClusterBackendZoneBalancingTypeDisabled   = "disabled"
 	VarnishClusterBackendZoneBalancingTypeAuto       = "auto"
 	VarnishClusterBackendZoneBalancingTypeThresholds = "thresholds"
+
+	HaproxyContainerName   = "haproxy-sidecar"
+	HaproxyConfigFileName  = "haproxy.cfg"
+	HaproxyConfigDir       = "/usr/local/etc/haproxy"
+	HaproxyConfigVolume    = "haproxy-config"
+	HaproxyMetricsPort     = 8404
+	HaproxyMetricsPortName = "haproxy-metrics"
+	HaproxyScriptsVolume   = "haproxy-scripts"
 )
 
 // +kubebuilder:object:root=true
@@ -96,7 +104,29 @@ type VarnishClusterSpec struct {
 	// +kubebuilder:validation:Enum=debug;info;warn;error;dpanic;panic;fatal
 	LogLevel string `json:"logLevel,omitempty"`
 	// +kubebuilder:validation:Enum=json;console
-	LogFormat string `json:"logFormat,omitempty"`
+	LogFormat      string          `json:"logFormat,omitempty"`
+	HaproxySidecar *HaproxySidecar `json:"haproxySidecar,omitempty"`
+}
+
+type HaproxySidecar struct {
+	Enabled bool   `json:"enabled,omitempty"`
+	Image   string `json:"image,omitempty"`
+	// +kubebuilder:validation:Enum=Always;Never;IfNotPresent
+	ImagePullPolicy           v1.PullPolicy           `json:"imagePullPolicy,omitempty"`
+	ImagePullSecret           string                  `json:"imagePullSecret,omitempty"`
+	Resources                 v1.ResourceRequirements `json:"resources,omitempty"`
+	MaxConnections            *int32                  `json:"maxConnections,omitempty"`
+	ConnectTimeout            *int32                  `json:"connectTimeout,omitempty"`  // in millis, 5000 default
+	ClientTimeout             *int32                  `json:"clientTimeout,omitempty"`   // in millis, 50000 default
+	ServerTimeout             *int32                  `json:"serverTimeout,omitempty"`   // in millis, 50000 default
+	StatRefreshRate           *int32                  `json:"statRefreshRate,omitempty"` // in seconds, 10 default
+	EnableFrontendMetrics     bool                    `json:"enableFrontendMetrics,omitempty"`
+	BackendAdditionalFlags    string                  `json:"backendAdditionalFlags,omitempty"`
+	BackendServerHostHeader   string                  `json:"backendServerHostHeader"`
+	BackendServerMaxAgeHeader *int32                  `json:"backendServerMaxAgeHeader,omitempty"`
+	BackendServerPort         *int32                  `json:"backendServerPort,omitempty"`
+	BackendServers            []string                `json:"backendServers"`
+	HttpChk                   []string                `json:"httpchk,omitempty"`
 }
 
 type VarnishClusterUpdateStrategyType string
@@ -250,17 +280,26 @@ type VarnishClusterMonitoringGrafanaDashboard struct {
 
 // VarnishClusterStatus defines the observed state of VarnishCluster
 type VarnishClusterStatus struct {
-	VCL                 VCLStatus `json:"vcl"`
-	VarnishArgs         string    `json:"varnishArgs,omitempty"`
-	Replicas            int32     `json:"replicas,omitempty"`
-	VarnishPodsSelector string    `json:"varnishPodsSelector,omitempty"`
+	VCL                 VCLStatus            `json:"vcl"`
+	HAProxy             HaproxySidecarStatus `json:"haproxy"`
+	VarnishArgs         string               `json:"varnishArgs,omitempty"`
+	Replicas            int32                `json:"replicas,omitempty"`
+	VarnishPodsSelector string               `json:"varnishPodsSelector,omitempty"`
+}
+
+type ConfigMapStatus struct {
+	Version          *string `json:"version,omitempty"`
+	ConfigMapVersion string  `json:"configMapVersion"`
+	Availability     string  `json:"availability"`
 }
 
 // VCLStatus describes the VCL versions status
 type VCLStatus struct {
-	Version          *string `json:"version,omitempty"`
-	ConfigMapVersion string  `json:"configMapVersion"`
-	Availability     string  `json:"availability"`
+	ConfigMapStatus `json:",inline"`
+}
+
+type HaproxySidecarStatus struct {
+	ConfigMapStatus `json:",inline"`
 }
 
 // +kubebuilder:object:root=true

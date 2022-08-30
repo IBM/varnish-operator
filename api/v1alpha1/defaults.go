@@ -90,7 +90,43 @@ func defaultVarnishClusterSpec(in *VarnishClusterSpec) {
 	if in.Backend.ZoneBalancing == nil {
 		in.Backend.ZoneBalancing = &VarnishClusterBackendZoneBalancing{}
 	}
+
+	DefaultHaproxySidecar(in.HaproxySidecar)
+
 	defaultVarnishZoneBalancingType(in.Backend.ZoneBalancing)
+}
+
+func DefaultHaproxySidecar(haproxySidecar *HaproxySidecar) {
+	if haproxySidecar == nil {
+		haproxySidecar = &HaproxySidecar{
+			Enabled: false,
+		}
+	} else if haproxySidecar.Enabled {
+		if haproxySidecar.MaxConnections == nil {
+			haproxySidecar.MaxConnections = proto.Int32(64)
+		}
+		if haproxySidecar.ConnectTimeout == nil {
+			haproxySidecar.ConnectTimeout = proto.Int32(5000)
+		}
+		if haproxySidecar.ClientTimeout == nil {
+			haproxySidecar.ClientTimeout = proto.Int32(50000)
+		}
+		if haproxySidecar.ServerTimeout == nil {
+			haproxySidecar.ServerTimeout = proto.Int32(50000)
+		}
+		if haproxySidecar.StatRefreshRate == nil {
+			haproxySidecar.StatRefreshRate = proto.Int32(10)
+		}
+		if haproxySidecar.BackendAdditionalFlags == "" {
+			haproxySidecar.BackendAdditionalFlags = "none"
+		}
+		if haproxySidecar.BackendServerMaxAgeHeader == nil {
+			haproxySidecar.BackendServerMaxAgeHeader = proto.Int32(31536000)
+		}
+		if haproxySidecar.BackendServerPort == nil {
+			haproxySidecar.BackendServerPort = proto.Int32(443)
+		}
+	}
 }
 
 func defaultVarnish(in *VarnishClusterVarnish) {

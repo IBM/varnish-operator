@@ -24,6 +24,8 @@ import (
 	"testing"
 	"time"
 
+	"go.uber.org/zap/zapcore"
+
 	"github.com/ibm/varnish-operator/pkg/logger"
 	"github.com/ibm/varnish-operator/pkg/names"
 	"github.com/ibm/varnish-operator/pkg/varnishcluster/config"
@@ -71,7 +73,7 @@ var cfg *rest.Config                              //config for the rest client
 var k8sClient client.Client                       //k8s client that will use the config above to point to the test environment
 var testEnv *envtest.Environment                  //brings up the control plane that you can connect to using the client above
 var mgrStopCh = make(chan struct{})               //stops the manager by sending a value to the channel
-var waitGroup = &sync.WaitGroup{}                 //waits until the reconcile loops finish. Used to gracefully shutdown the environment
+var waitGroup = &sync.WaitGroup{}                 //waits until the reconcile loop finishes. Used to gracefully shutdown the environment
 var reconcileChan = make(chan event.GenericEvent) //can be used to send manually reconcile events. Useful for testing.
 var shutdown = false                              //to track if the shutdown process has been started. Used for graceful shutdown
 var operatorConfig = &config.Config{CoupledVarnishImage: testCoupledVarnishImage}
@@ -85,8 +87,8 @@ func TestAPIs(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	var destWriter io.Writer
-	//logr, destWriter = logger.NewLogger("console", zapcore.DebugLevel), GinkgoWriter //uncomment and replace with the line below to have logging
-	logr, destWriter = logger.NewNopLogger(), GinkgoWriter
+	logr, destWriter = logger.NewLogger("console", zapcore.DebugLevel), GinkgoWriter //uncomment and replace with the line below to have logging
+	//logr, destWriter = logger.NewNopLogger(), GinkgoWriter
 	ctrl.SetLogger(zapr.NewLogger(logr.Desugar()))
 	logf.SetLogger(zapr.NewLogger(logr.Desugar()))
 

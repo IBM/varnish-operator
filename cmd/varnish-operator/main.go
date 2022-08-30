@@ -19,7 +19,8 @@ import (
 
 	"go.uber.org/zap"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+
+	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 
 	"github.com/go-logr/zapr"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"

@@ -11,3 +11,4 @@ _output
 *.swp
 *.swo
 _book
+skaffold.yaml

@@ -1,0 +1,38 @@
+apiVersion: caching.ibm.com/v1alpha1
+kind: VarnishCluster
+metadata:
+  name: varnishcluster-example
+spec:
+  vcl:
+    configMapName: test-vcl-config # name of the config map that will store your VCL files. Will be created if doesn't exist.
+    entrypointFileName: default.vcl # main file used by Varnish to compile the VCL code.
+  replicas: 1 # run 3 replicas of Varnish
+  backend:
+    port: 2034
+    selector:
+      app: varnish-backend # labels that identify your backend pods
+  service:
+    port: 80 # Varnish pods will be exposed on that port
+  monitoring:
+    prometheusServiceMonitor:
+      enabled: true
+      scrapeInterval: 5s
+      labels:
+        app: varnish
+    grafanaDashboard:
+      enabled: true
+      datasourceName: Prometheus
+  haproxySidecar:
+    enabled: true
+    image: us.icr.io/icm-docker-images/varnish-haproxy:cin
+    imagePullPolicy: IfNotPresent
+    clientTimeout: 30000
+    backendServerHostHeader: "api.mapbox.com"
+    backendServers:
+    - "api.mapbox.com"
+  varnish:
+    image: us.icr.io/icm-docker-images/varnish:cin
+    imagePullSecret: "all-icr-io"
+    controller:
+      image: us.icr.io/icm-docker-images/varnish-controller:cin
+      imagePullPolicy: Always

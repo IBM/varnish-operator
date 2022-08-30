@@ -4,9 +4,17 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
+	"os"
+	"time"
+
+	"github.com/ibm/varnish-operator/pkg/names"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 
 	"github.com/ibm/varnish-operator/api/v1alpha1"
 	"github.com/ibm/varnish-operator/pkg/logger"
@@ -69,6 +77,11 @@ func main() {
 		log.Fatalf("could not load rest client config. Error: %s", err)
 	}
 
+	if _, ok := os.LookupEnv("INIT_CONTAINER"); ok {
+		initHaproxyConfig(clientConfig, logr, varnishControllerConfig)
+		return
+	}
+
 	vMetrics := varnishMetrics.NewVarnishControllerMetrics()
 	controllerMetrics.Registry.MustRegister(vMetrics.VCLCompilationError)
 
@@ -105,5 +118,29 @@ func main() {
 	logr.Infow("Starting Varnish Controller")
 	if err = mgr.Start(signals.SetupSignalHandler()); err != nil {
 		logr.With(err).Fatalf("Failed to start manager")
+	}
+}
+
+func initHaproxyConfig(clientConfig *rest.Config, logr *logger.Logger, varnishControllerConfig *config.Config) {
+	cs, err := kubernetes.NewForConfig(clientConfig)
+	if err != nil {
+		logr.With(zap.Error(err)).Fatalf("unable to create k8s client")
+	}
+	haproxyConfigMapName := names.HaproxyConfigMap(varnishControllerConfig.VarnishClusterName)
+	configFound := false
+	for !configFound {
+		logr.Infof("attempting to retrieve configmap: %s", haproxyConfigMapName)
+		configMaps := cs.CoreV1().ConfigMaps(varnishControllerConfig.Namespace)
+		if haproxyConfigMap, err := configMaps.Get(context.Background(), haproxyConfigMapName, metav1.GetOptions{}); err == nil {
+			cfgData := haproxyConfigMap.Data[v1alpha1.HaproxyConfigFileName]
+			haproxyConfigFileName := v1alpha1.HaproxyConfigDir + "/" + v1alpha1.HaproxyConfigFileName
+			if err := os.WriteFile(haproxyConfigFileName, []byte(cfgData), 0644); err != nil {
+				logr.With(zap.Error(err)).Fatalf("unable to write haproxy config file: %s", haproxyConfigFileName)
+			}
+			logr.Infof("haproxy config has been written\n%s", cfgData)
+			configFound = true
+		} else {
+			time.Sleep(2 * time.Second)
+		}
 	}
 }

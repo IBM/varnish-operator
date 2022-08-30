@@ -34,7 +34,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends varnish
 FROM debian:bullseye-slim
 LABEL maintainer="Alex Lytvynenko <oleksandr.lytvynenko@ibm.com>, Tomash Sidei <tomash.sidei@ibm.com>"
 
-RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends libc6 libedit2 libncursesw6 libtinfo6 libvarnishapi2 \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends libc6 libedit2 libncursesw6 libtinfo6 libvarnishapi2 procps \
     && rm -rf /var/lib/apt/lists/* \
                     /etc/varnish/* \
     && adduser --quiet --system --no-create-home --home /nonexistent --group varnish \

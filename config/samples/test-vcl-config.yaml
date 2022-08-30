@@ -1,0 +1,197 @@
+apiVersion: v1
+data:
+  backends.vcl.tmpl: |-
+    // This file is generated. Do not edit manually, as changes will be destroyed
+
+    // This file is generated. Do not edit manually, as changes will be destroyed
+
+    import directors;
+
+    backend local_haproxy {
+      .host = "127.0.0.1";
+      .port = "8080";
+    }
+
+    probe heartbeat {
+      .request = "HEAD /heartbeat HTTP/1.1"
+          "Connection: close"
+          "Host: shard";
+      .interval = 1s;
+    }
+
+    // Varnish cluster nodes:
+    {{ range .VarnishNodes }}
+    backend {{ .PodName }} {
+      .host = "{{ .IP }}";
+      .port = "{{ $.VarnishPort }}";
+      .probe = heartbeat;
+    }
+    {{ end }}
+
+    // Create ACL with varnish cluster members
+    acl acl_cluster {
+      {{ range .VarnishNodes }}
+      "{{ .IP }}"/32;
+      {{ end }}
+    }
+
+    sub init_backends {
+      new real = directors.round_robin();
+      real.add_backend(local_haproxy);
+
+      new cluster = directors.shard();
+      {{ range .VarnishNodes }}
+      cluster.add_backend({{ .PodName }});
+      {{ end }}
+      cluster.set_rampup(0s);
+      cluster.set_warmup(0);
+      cluster.reconfigure();
+    }
+  default.vcl: |
+    vcl 4.0;
+
+    import std;
+    import var;
+    import blob;
+    include "backends.vcl";
+
+    sub vcl_init {
+      call init_backends;
+      return (ok);
+    }
+
+
+    sub vcl_recv {
+      if (remote.ip ~ acl_cluster) {
+        if (req.http.Host == "shard") {
+           if (req.url == "/heartbeat") {
+            return (synth(200));
+          }
+          return (synth(404));
+        }
+      }
+
+      set req.backend_hint = cluster.backend(HASH);
+      set req.http.X-shard = req.backend_hint;
+
+      if (req.http.X-shard == server.identity || remote.ip ~ acl_cluster) {
+        set req.backend_hint = real.backend();
+      } else {
+        return(pass);
+      }
+
+      // Generate transaction id header if request doesn't have one
+      if (!req.http.transaction-id) {
+        set req.http.transaction-id = std.time2integer(now, 0) + ":" + std.real2integer(std.random(0, 10000000000), 0);
+      }
+
+      if (req.method == "GET" && req.url == "/liveness") {
+        if (!std.healthy(req.backend_hint)) {
+          return(synth(503, "No healthy backends"));
+        }
+        return(synth(200, "OK"));
+      }
+
+      // Do not cache paths with health (healthcheck cache fix)
+      if (req.url ~ "health") {
+        return (pass);
+      }
+
+      return (hash);
+    }
+
+
+    sub vcl_synth {
+      # Detected invalid placeid vcl_recv
+      if (resp.status == 704) {
+        set resp.http.twc-metadata = "invalid placeid";
+        set resp.status = 204;
+        return (deliver);
+      }
+
+      set resp.http.Content-Type = "text/html; charset=utf-8";
+
+      synthetic( {"<!DOCTYPE html>
+          <html>
+            <head>
+              <title>"} + resp.status + " " + resp.reason + {"</title>
+            </head>
+            <body>
+              <h1>Error "} + resp.status + " " + resp.reason + {"</h1>
+              <p>"} + resp.reason + {"</p>
+              <h3>Guru meditation:</h3>
+              <p>XID: "} + req.xid + {"</p>
+              <hr>
+              <p>Varnish cache server</p>
+            </body>
+          </html>
+          "} );
+
+      return (deliver);
+    }
+
+
+    sub vcl_hash {
+      # Called after vcl_recv to create a hash value for the request. This is used as a key
+      # to look up the object in Varnish.
+      hash_data(req.url);
+
+      return (lookup);
+    }
+
+
+    sub vcl_hit {
+      # Do not serve stale objects
+      if (obj.ttl >= 0s) {
+        return (deliver);
+      }
+      return (miss);
+    }
+
+
+    sub vcl_backend_response {
+      # Do not cache oversized objects
+      if ( std.integer(beresp.http.content-length, 0) >=  25000 ) {
+        set beresp.uncacheable = true;
+      }
+
+      # Adding randomizer to avoid stampede evictions
+      set beresp.ttl = beresp.ttl * std.random(0.90,1.05);
+      return (deliver);
+    }
+
+
+    sub vcl_deliver {
+
+      set resp.http.grace = req.http.grace;
+
+      // if it's the shard that is responsible for the object
+      // otherwise, the shard that got the request will overwrite the correct value set by the shard that stores the object
+      if (req.http.X-shard == server.identity || remote.ip ~ acl_cluster) {
+        if (obj.hits > 0) {
+          set resp.http.X-Varnish-Cache = "HIT";
+        }
+        else {
+          set resp.http.X-Varnish-Cache = "MISS";
+        }
+      }
+
+      set resp.http.X-Shard = req.backend_hint;
+
+      set resp.http.X-Served-By = server.identity;
+
+      return (deliver);
+    }
+
+    sub vcl_fini {
+      return (ok);
+    }
+kind: ConfigMap
+metadata:
+  labels:
+    operator: varnish
+    varnish-component: vcl-file-configmap
+    varnish-owner: varnish-sharded-perf-test
+    role: perf-tests
+    varnish: sharded
+  name: test-vcl-config

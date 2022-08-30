@@ -1,4 +1,5 @@
-{{ if gt .Values.replicas 1.0 }}
+{{- $replicas := .Values.replicas | toString | float64 }}
+{{ if gt $replicas 1.0 }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:

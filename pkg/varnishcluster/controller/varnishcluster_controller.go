@@ -281,6 +281,11 @@ func (r *ReconcileVarnishCluster) reconcileWithContext(ctx context.Context, requ
 	if err != nil {
 		return ctrl.Result{}, err
 	}
+	if instance.Spec.HaproxySidecar != nil && instance.Spec.HaproxySidecar.Enabled {
+		if err = r.reconcileHaproxyConfigMap(ctx, varnishSelector, instance, instanceStatus); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
 	if err = r.reconcileConfigMap(ctx, varnishSelector, instance, instanceStatus); err != nil {
 		return ctrl.Result{}, err
 	}

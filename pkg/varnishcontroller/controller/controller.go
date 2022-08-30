@@ -3,6 +3,8 @@ package controller
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -10,6 +12,7 @@ import (
 
 	"github.com/ibm/varnish-operator/api/v1alpha1"
 	"github.com/ibm/varnish-operator/pkg/logger"
+	"github.com/ibm/varnish-operator/pkg/names"
 	"github.com/ibm/varnish-operator/pkg/varnishcontroller/config"
 	"github.com/ibm/varnish-operator/pkg/varnishcontroller/events"
 	"github.com/ibm/varnish-operator/pkg/varnishcontroller/metrics"
@@ -41,6 +44,10 @@ type PodInfo struct {
 	PodName    string
 	Weight     float64
 }
+
+const (
+	haproxyConfigFileName = v1alpha1.HaproxyConfigDir + "/" + v1alpha1.HaproxyConfigFileName
+)
 
 // SetupVarnishReconciler creates a new VarnishCluster Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -172,6 +179,14 @@ func (r *ReconcileVarnish) reconcileWithContext(ctx context.Context, request rec
 		return reconcile.Result{}, errors.WithStack(err)
 	}
 
+	var haproxyConfigMap *v1.ConfigMap
+	if vc.Spec.HaproxySidecar.Enabled {
+		haproxyConfigMap, err = r.reconcileHaproxyConfig(ctx, vc)
+		if err != nil {
+			return reconcile.Result{}, errors.WithStack(err)
+		}
+	}
+
 	cm, err := r.getConfigMap(ctx, r.config.Namespace, *vc.Spec.VCL.ConfigMapName)
 	if err != nil {
 		return reconcile.Result{}, errors.WithStack(err)
@@ -230,11 +245,59 @@ func (r *ReconcileVarnish) reconcileWithContext(ctx context.Context, request rec
 		}
 	}
 
-	if err := r.reconcilePod(ctx, filesTouched, pod, cm, localWeight, remoteWeight); err != nil {
+	if err := r.reconcilePod(ctx, filesTouched, pod, cm, haproxyConfigMap, localWeight, remoteWeight); err != nil {
 		return reconcile.Result{}, errors.WithStack(err)
 	}
 
 	return reconcile.Result{}, nil
+}
+
+func (r *ReconcileVarnish) updateHaproxyConfig(cfgData string) (bool, error) {
+	logr := logger.FromContext(context.Background())
+	rewriteConfig := false
+	b, err := os.ReadFile(haproxyConfigFileName)
+	if err == nil {
+		orig := string(b)
+		if strings.Compare(orig, cfgData) != 0 {
+			logr.Infof("haproxy configs are different: %s\nfs: %s\ncfg: %s", haproxyConfigFileName, orig, cfgData)
+			rewriteConfig = true
+		}
+	} else { // ignore error and write the file if it didn't exist
+		logr.Infof("haproxy config not found: %s", haproxyConfigFileName)
+		rewriteConfig = true
+	}
+	if rewriteConfig {
+		err = os.WriteFile(haproxyConfigFileName, []byte(cfgData), 0644)
+	}
+	return rewriteConfig, err
+}
+
+func (r *ReconcileVarnish) hupHaproxy() error {
+	cmdString := "/haproxy-scripts/haproxy-hup.sh"
+	cmd := exec.Command(cmdString)
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *ReconcileVarnish) reconcileHaproxyConfig(ctx context.Context, vc *v1alpha1.VarnishCluster) (*v1.ConfigMap, error) {
+	logr := logger.FromContext(ctx)
+	haproxyConfigMap, err := r.getConfigMap(ctx, r.config.Namespace, names.HaproxyConfigMap(vc.Name))
+	if err != nil {
+		return nil, err
+	}
+
+	haproxyConfigUpdated, err := r.updateHaproxyConfig(haproxyConfigMap.Data[v1alpha1.HaproxyConfigFileName])
+	if err != nil {
+		return nil, err
+	} else if haproxyConfigUpdated {
+		logr.Info("hup'ing haproxy")
+		if err := r.hupHaproxy(); err != nil {
+			return nil, err
+		}
+	}
+	return haproxyConfigMap, nil
 }
 
 func (r *ReconcileVarnish) filesAndTemplates(data map[string]string) (files, templates map[string]string) {

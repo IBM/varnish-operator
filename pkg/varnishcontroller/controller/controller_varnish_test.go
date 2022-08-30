@@ -98,6 +98,9 @@ func TestReconcileVarnish(t *testing.T) {
 					VCL: &v1alpha1.VarnishClusterVCL{
 						EntrypointFileName: &entrypointFileName,
 					},
+					HaproxySidecar: &v1alpha1.HaproxySidecar{
+						Enabled: false,
+					},
 				},
 			},
 			pod:                               &v1.Pod{},
@@ -119,6 +122,9 @@ func TestReconcileVarnish(t *testing.T) {
 				Spec: v1alpha1.VarnishClusterSpec{
 					VCL: &v1alpha1.VarnishClusterVCL{
 						EntrypointFileName: &entrypointFileName,
+					},
+					HaproxySidecar: &v1alpha1.HaproxySidecar{
+						Enabled: false,
 					},
 				},
 			},

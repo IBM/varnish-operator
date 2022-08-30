@@ -15,12 +15,13 @@ import (
 const (
 	annotationConfigMapVersion     = "configMapVersion"
 	annotationVCLVersion           = "VCLVersion"
+	annotationHaproxyConfigVersion = "HaproxyConfigVersion"
 	annotationActiveVCLConfigName  = "activeVCLConfigName"
 	annotationLocalBackendsWeight  = "localBackendsWeight"
 	annotationRemoteBackendsWeight = "remoteBackendsWeight"
 )
 
-func (r *ReconcileVarnish) reconcilePod(ctx context.Context, filesChanged bool, pod *v1.Pod, cm *v1.ConfigMap, localWeight float64, remoteWeight float64) error {
+func (r *ReconcileVarnish) reconcilePod(ctx context.Context, filesChanged bool, pod *v1.Pod, cm *v1.ConfigMap, haproxyCm *v1.ConfigMap, localWeight float64, remoteWeight float64) error {
 	activeVCLName, err := r.varnish.GetActiveConfigurationName()
 	if err != nil {
 		return err
@@ -47,6 +48,10 @@ func (r *ReconcileVarnish) reconcilePod(ctx context.Context, filesChanged bool, 
 		}
 
 		podCopy.Annotations[annotationConfigMapVersion] = cm.GetResourceVersion()
+	}
+
+	if haproxyCm != nil {
+		podCopy.Annotations[annotationHaproxyConfigVersion] = haproxyCm.GetResourceVersion()
 	}
 
 	podCopy.Annotations[annotationActiveVCLConfigName] = activeVCLName

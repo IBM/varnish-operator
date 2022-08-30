@@ -104,6 +104,12 @@ func (r *ReconcileVarnishCluster) reconcileService(ctx context.Context, instance
 				TargetPort: intstr.FromString(vcapi.VarnishControllerMetricsPortName),
 				NodePort:   instance.Spec.Service.ControllerMetricsNodePort,
 			},
+			{
+				Name:       vcapi.HaproxyMetricsPortName,
+				Protocol:   v1.ProtocolTCP,
+				Port:       vcapi.HaproxyMetricsPort,
+				TargetPort: intstr.FromString(vcapi.HaproxyMetricsPortName),
+			},
 		},
 		SessionAffinity: v1.ServiceAffinityNone,
 		Type:            instance.Spec.Service.Type,

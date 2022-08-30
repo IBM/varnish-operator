@@ -191,6 +191,19 @@ func (r *ReconcileVarnishCluster) createGrafanaDashboardConfigMap(instance *vcap
 	return grafanaDashboard, nil
 }
 
+func instantiateTemplate(templateName string, templateData string, data map[string]interface{}) (string, error) {
+	t, err := template.New(templateName).Parse(templateData)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+	var b bytes.Buffer
+	err = t.Execute(&b, data)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+	return b.String(), nil
+}
+
 func generateGrafanaDashboardData(instance *vcapi.VarnishCluster) (map[string]string, error) {
 	data := map[string]interface{}{
 		"DatasourceName": *instance.Spec.Monitoring.GrafanaDashboard.DatasourceName,
@@ -199,17 +212,20 @@ func generateGrafanaDashboardData(instance *vcapi.VarnishCluster) (map[string]st
 		"Namespace":      instance.Namespace,
 	}
 
-	t, err := template.New("GrafanaDashboard").Parse(grafanaDashboardTemplate)
+	varnishDashboard, err := instantiateTemplate("GrafanaDashboard", grafanaDashboardTemplate, data)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	var b bytes.Buffer
-	err = t.Execute(&b, data)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
+	dashboardData := map[string]string{names.GrafanaDashboardFile(instance.Name): varnishDashboard}
 
-	dashboardData := map[string]string{names.GrafanaDashboardFile(instance.Name): b.String()}
+	var haproxyDashboard string
+	if instance.Spec.HaproxySidecar != nil && instance.Spec.HaproxySidecar.Enabled {
+		haproxyDashboard, err = instantiateTemplate("HaproxyGrafanaDashboard", haproxyGrafanaDashboardTemplate, data)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		dashboardData[names.HaproxyGrafanaDashboardFile(instance.Name)] = haproxyDashboard
+	}
 
 	return dashboardData, nil
 }

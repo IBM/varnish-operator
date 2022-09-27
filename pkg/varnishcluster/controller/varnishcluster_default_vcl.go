@@ -10,7 +10,6 @@ include "backends.vcl";
 
 sub vcl_init {
   call init_backends;
-  return (ok);
 }
 
 sub vcl_recv {
@@ -40,8 +39,6 @@ sub vcl_recv {
   if (req.url ~ "health") {
     return (pass);
   }
-
-  return (hash);
 }
 
 sub vcl_synth {
@@ -105,8 +102,6 @@ sub vcl_backend_response {
   if (beresp.status == 404) {
     set beresp.ttl = 0s;
   }
-
-  return (deliver);
 }
 
 sub vcl_deliver {
@@ -121,11 +116,6 @@ sub vcl_deliver {
   }
 
   return (deliver);
-}
-
-sub vcl_fini {
-
-  return (ok);
 }
 
 `

@@ -79,15 +79,6 @@ sub vcl_synth {
     return (deliver);
 }
 
-sub vcl_hash {
-
-  // Called after vcl_recv to create a hash value for the request. This is used as a key
-  // to look up the object in Varnish.
-  hash_data(req.url);
-
-  return (lookup);
-}
-
 sub vcl_hit {
   // Do not serve stale objects
   if (obj.ttl >= 0s) {

@@ -42,41 +42,41 @@ sub vcl_recv {
 }
 
 sub vcl_synth {
-       set resp.http.Content-Type = "text/html; charset=utf-8";
+  set resp.http.Content-Type = "text/html; charset=utf-8";
 
-       if (!(var.global_get("backendsFound") == "true")) { //error message if no backends configured
-          synthetic( {"<!DOCTYPE html>
-           <html>
-             <head>
-               <title>Incorrect backend configuration"</title>
-             </head>
-             <body>
-               <h1>Incorrect backend configuration</h1>
-               <p>Please check your deployment. It may not have pods running or Varnish is pointed to a non existing deployment.</p>
-               <p>XID: "} + req.xid + {"</p>
-               <hr>
-             </body>
-           </html>
-           "} );
-       } else { //default error message for the rest of the cases
-        synthetic( {"<!DOCTYPE html>
-            <html>
-              <head>
-                <title>"} + resp.status + " " + resp.reason + {"</title>
-              </head>
-              <body>
-                <h1>Error "} + resp.status + " " + resp.reason + {"</h1>
-                <p>"} + resp.reason + {"</p>
-                <h3>Guru meditation:</h3>
-                <p>XID: "} + req.xid + {"</p>
-                <hr>
-                <p>Varnish cache server</p>
-              </body>
-            </html>
-            "} );
-       }
+  if (!(var.global_get("backendsFound") == "true")) { //error message if no backends configured
+    synthetic( {"<!DOCTYPE html>
+      <html>
+        <head>
+          <title>Incorrect backend configuration"</title>
+        </head>
+        <body>
+          <h1>Incorrect backend configuration</h1>
+          <p>Please check your deployment. It may not have pods running or Varnish is pointed to a non existing deployment.</p>
+          <p>XID: "} + req.xid + {"</p>
+          <hr>
+        </body>
+      </html>
+    "} );
+  } else { //default error message for the rest of the cases
+    synthetic( {"<!DOCTYPE html>
+      <html>
+        <head>
+          <title>"} + resp.status + " " + resp.reason + {"</title>
+        </head>
+        <body>
+          <h1>Error "} + resp.status + " " + resp.reason + {"</h1>
+          <p>"} + resp.reason + {"</p>
+          <h3>Guru meditation:</h3>
+          <p>XID: "} + req.xid + {"</p>
+          <hr>
+          <p>Varnish cache server</p>
+        </body>
+      </html>
+    "} );
+  }
 
-    return (deliver);
+  return (deliver);
 }
 
 sub vcl_hit {

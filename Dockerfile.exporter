@@ -1,5 +1,5 @@
 FROM debian:bullseye-slim as importer
-ARG PROMETHEUS_VARNISH_EXPORTER_VERSION=1.6
+ARG PROMETHEUS_VARNISH_EXPORTER_VERSION=1.6.1
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends varnish curl tar gzip ca-certificates \
 && curl -L https://github.com/jonnenauha/prometheus_varnish_exporter/releases/download/${PROMETHEUS_VARNISH_EXPORTER_VERSION}/prometheus_varnish_exporter-${PROMETHEUS_VARNISH_EXPORTER_VERSION}.linux-amd64.tar.gz | \
     tar -xz  && cp prometheus_varnish_exporter-${PROMETHEUS_VARNISH_EXPORTER_VERSION}.linux-amd64/prometheus_varnish_exporter /prometheus-varnish-exporter \

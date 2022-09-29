@@ -175,7 +175,7 @@ spec:
 
 There is `PROMETHEUS_VARNISH_EXPORTER_VERSION` docker's build argument available. This allows you to specify which version of prometheus varnish metrics exporter to use in your image. Just set it to the required value before build the metrics exporter image:
 
-`docker build --build-arg PROMETHEUS_VARNISH_EXPORTER_VERSION=1.5.2  -t <image-name> -f Dockerfile.exporter .`
+`docker build --build-arg PROMETHEUS_VARNISH_EXPORTER_VERSION=1.6.1  -t <image-name> -f Dockerfile.exporter .`
 
 ### Tests
 

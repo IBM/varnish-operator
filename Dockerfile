@@ -1,4 +1,4 @@
-FROM golang:1.17.8-bullseye AS builder
+FROM golang:1.19.1-bullseye AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive INSTALL_DIRECTORY=/usr/local/bin
 

@@ -95,7 +95,8 @@ var _ = Describe("Varnish cluster", func() {
 				EntrypointFileName: proto.String("test.vcl"),
 			},
 			HaproxySidecar: &vcapi.HaproxySidecar{
-				Enabled: false,
+				Enabled:        false,
+				BackendServers: []string{},
 			},
 		},
 	}

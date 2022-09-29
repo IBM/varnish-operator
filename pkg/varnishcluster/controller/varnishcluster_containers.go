@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"github.com/gogo/protobuf/proto"
 	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -214,6 +215,11 @@ func haproxySidecarContainer(instance *vcapi.VarnishCluster) v1.Container {
 		VolumeMounts: []v1.VolumeMount{
 			haproxyConfigVolumeMount(true),
 			haproxyScriptsVolumeMount(),
+		},
+		SecurityContext: &v1.SecurityContext{
+			AllowPrivilegeEscalation: proto.Bool(false),
+			RunAsUser:                proto.Int64(101),
+			RunAsGroup:               proto.Int64(101),
 		},
 	}
 }

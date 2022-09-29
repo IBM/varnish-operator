@@ -2,6 +2,6 @@
 ./Jenkinsfile
 ./Makefile
 ./README.md
-./bin
+# ./bin
 ./varnish-operator
 ./vendor

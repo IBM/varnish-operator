@@ -12,3 +12,4 @@ _output
 *.swo
 _book
 skaffold.yaml
+*.local

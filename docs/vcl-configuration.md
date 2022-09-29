@@ -16,8 +16,8 @@ If a ConfigMap does not exist on `VarnishCluster` creation, the operator will cr
   * respond to `GET /heartbeat` checks with a 200
   * respond to `GET /liveness` checks with a 200 or 503, depending on healthy backends
   * respond to all other requests normally, caching all non-404 responses
-  * hash request based on url
   * add `X-Varnish-Cache` header to response with "HIT" or "MISS" value, based on presence in cache
+  * stale objects are never used
 
 ### Writing a Templated VCL File
 

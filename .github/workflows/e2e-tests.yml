@@ -31,10 +31,10 @@ jobs:
         run: go mod download
       - name: build images
         run: |
-          docker build --platform linux/amd64 -f Dockerfile -t ibmcom/varnish-operator:local .
-          docker build --platform linux/amd64 -f Dockerfile.varnishd -t ibmcom/varnish:local .
-          docker build --platform linux/amd64 -f Dockerfile.controller -t ibmcom/varnish-controller:local .
-          docker build --platform linux/amd64 -f Dockerfile.exporter -t ibmcom/varnish-metrics-exporter:local .
+          docker buildx build --platform linux/amd64,linux/arm64 -f Dockerfile -t ibmcom/varnish-operator:local .
+          docker buildx build --platform linux/amd64,linux/arm64 -f Dockerfile.varnishd -t ibmcom/varnish:local .
+          docker buildx build --platform linux/amd64,linux/arm64 -f Dockerfile.controller -t ibmcom/varnish-controller:local .
+          docker buildx build --platform linux/amd64,linux/arm64 -f Dockerfile.exporter -t ibmcom/varnish-metrics-exporter:local .
       - name: Create k8s Kind Cluster ${{ matrix.kubernetes-version }}
         uses: helm/kind-action@v1.3.0
         with:

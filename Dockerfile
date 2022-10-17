@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM golang:1.19.1-bullseye AS builder
+FROM --platform=$BUILDPLATFORM golang:1.19.2-bullseye AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive INSTALL_DIRECTORY=/usr/local/bin
 

@@ -11,6 +11,7 @@ VARNISH_METRICS_PUBLISH_IMG ?= varnish-metrics-exporter:${VERSION}
 VARNISH_METRICS_IMG ?= ${VARNISH_METRICS_PUBLISH_IMG}-dev
 NAMESPACE ?= "default"
 CRD_OPTIONS ?= "crd:crdVersions=v1"
+PLATFORM ?= "linux/amd64"
 
 # all: test varnish-operator
 all: test varnish-operator varnish-controller
@@ -65,7 +66,7 @@ helm-upgrade: manifests
 # Build the docker image
 # docker-build: test
 docker-build: test
-	docker build ${ROOT_DIR} -t ${IMG} -f Dockerfile
+	docker build --platform ${PLATFORM} ${ROOT_DIR} -t ${IMG} -f Dockerfile
 
 # Tag and push the docker image
 docker-tag-push:
@@ -85,7 +86,7 @@ varnish-controller: fmt vet
 
 # Build the docker image with varnishd itself and varnish modules
 docker-build-varnish:
-	docker build ${ROOT_DIR} -t ${VARNISH_IMG} -f Dockerfile.varnishd
+	docker build --platform ${PLATFORM} ${ROOT_DIR} -t ${VARNISH_IMG} -f Dockerfile.varnishd
 
 docker-tag-push-varnish:
 ifndef REPO_PATH
@@ -101,7 +102,7 @@ endif
 
 # Build the docker image with varnish controller
 docker-build-varnish-controller: fmt vet
-	docker build ${ROOT_DIR} -t ${VARNISH_CONTROLLER_IMG} -f Dockerfile.controller
+	docker build --platform ${PLATFORM} ${ROOT_DIR} -t ${VARNISH_CONTROLLER_IMG} -f Dockerfile.controller
 
 docker-tag-push-varnish-controller:
 ifndef REPO_PATH
@@ -117,7 +118,7 @@ endif
 
 # Build the docker image with varnish metrics exporter
 docker-build-varnish-exporter:
-	docker build ${ROOT_DIR} -t ${VARNISH_METRICS_IMG} -f Dockerfile.exporter
+	docker build --platform ${PLATFORM} ${ROOT_DIR} -t ${VARNISH_METRICS_IMG} -f Dockerfile.exporter
 
 docker-tag-push-varnish-exporter:
 ifndef REPO_PATH

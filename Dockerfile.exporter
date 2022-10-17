@@ -1,6 +1,6 @@
+ARG BUILDPLATFORM=linux/amd64
 FROM --platform=$BUILDPLATFORM debian:bullseye-slim as importer
 
-ARG BUILDPLATFORM=linux/amd64
 ARG PROMETHEUS_VARNISH_EXPORTER_VERSION=1.6.1
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends varnish curl tar gzip ca-certificates \

@@ -1,5 +1,6 @@
 FROM --platform=$BUILDPLATFORM golang:1.19.2-bullseye AS builder
 
+ARG BUILDPLATFORM=linux/amd64
 ENV DEBIAN_FRONTEND=noninteractive INSTALL_DIRECTORY=/usr/local/bin
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends git curl

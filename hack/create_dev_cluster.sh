@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -ex
-kube_version="1.17.0" #see https://hub.docker.com/r/kindest/node/tags for available Kubernetes version
+kube_version="1.25.2" #see https://hub.docker.com/r/kindest/node/tags for available Kubernetes version
 if [ -n "${KUBERNETES_VERSION}" ]; then
   kube_version="${KUBERNETES_VERSION}"
 fi
@@ -31,14 +31,14 @@ export KUBECONFIG=./e2e-tests-kubeconfig
 
 kubectl create ns $varnish_namespace
 
-docker build -f Dockerfile  -t ibmcom/varnish-operator:local .
-docker build -f Dockerfile.varnishd  -t ibmcom/varnish:local .
-docker build -f Dockerfile.controller  -t ibmcom/varnish-controller:local .
-docker build -f Dockerfile.exporter  -t ibmcom/varnish-metrics-exporter:local .
+docker build --platform linux/amd64 -f Dockerfile  -t ibmcom/varnish-operator:local .
+docker build --platform linux/amd64 -f Dockerfile.varnishd  -t ibmcom/varnish:local .
+docker build --platform linux/amd64 -f Dockerfile.controller  -t ibmcom/varnish-controller:local .
+docker build --platform linux/amd64 -f Dockerfile.exporter  -t ibmcom/varnish-metrics-exporter:local .
 
-kind load  docker-image ibmcom/varnish-operator:local
-kind load  docker-image ibmcom/varnish:local
+kind load docker-image ibmcom/varnish-operator:local
+kind load docker-image ibmcom/varnish:local
 kind load docker-image ibmcom/varnish-controller:local
-kind load  docker-image ibmcom/varnish-metrics-exporter:local
+kind load docker-image ibmcom/varnish-metrics-exporter:local
 
 helm install --namespace=$varnish_namespace varnish-operator --wait --set container.imagePullPolicy=Never --set container.image=ibmcom/varnish-operator:local

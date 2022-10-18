@@ -36,7 +36,7 @@ import (
 
 	apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
-	policyv1beta1 "k8s.io/api/policy/v1beta1"
+	policyv1 "k8s.io/api/policy/v1"
 	rbac "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -217,7 +217,7 @@ func CleanUpCreatedResources(vcName, vcNamespace string) {
 	Expect(err).To(haveNoErrorOrNotFoundError)
 	err = k8sClient.Delete(context.Background(), &v1.Service{ObjectMeta: metav1.ObjectMeta{Namespace: vcNamespace, Name: vcName}})
 	Expect(err).To(haveNoErrorOrNotFoundError)
-	err = k8sClient.DeleteAllOf(context.Background(), &policyv1beta1.PodDisruptionBudget{}, client.InNamespace(vcNamespace))
+	err = k8sClient.DeleteAllOf(context.Background(), &policyv1.PodDisruptionBudget{}, client.InNamespace(vcNamespace))
 	Expect(err).To(BeNil())
 	err = k8sClient.DeleteAllOf(context.Background(), &rbac.Role{}, client.InNamespace(vcNamespace))
 	Expect(err).To(BeNil())

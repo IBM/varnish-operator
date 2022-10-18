@@ -8,6 +8,7 @@ fi
 
 varnish_namespace="varnish-operator"
 cluster_name="e2e-tests"
+container_image="ibmcom/varnish-operator:local"
 
 if ! which docker; then
     echo -e "Install docker first"
@@ -24,6 +25,16 @@ if ! which helm >/dev/null; then
     exit 1
 fi
 
+if which podman >/dev/null; then
+  img=$(podman images | grep 'ibmcom/varnish-operator' | grep local | cut -f1 -d' ')
+  if [ -n "$img" ]; then
+    echo "using podman image: $img"
+    container_image=$img
+  else
+    echo "podman installed but varnish-operator image not found. using default container_image"
+  fi
+fi
+
 kind delete cluster --name $cluster_name > /dev/null 2>&1
 kind create cluster --name $cluster_name --image kindest/node:v$kube_version --kubeconfig ./e2e-tests-kubeconfig
 
@@ -36,9 +47,9 @@ docker build --platform linux/amd64 -f Dockerfile.varnishd  -t ibmcom/varnish:lo
 docker build --platform linux/amd64 -f Dockerfile.controller  -t ibmcom/varnish-controller:local .
 docker build --platform linux/amd64 -f Dockerfile.exporter  -t ibmcom/varnish-metrics-exporter:local .
 
-kind load docker-image ibmcom/varnish-operator:local
-kind load docker-image ibmcom/varnish:local
-kind load docker-image ibmcom/varnish-controller:local
-kind load docker-image ibmcom/varnish-metrics-exporter:local
+kind load docker-image -n $cluster_name ibmcom/varnish-operator:local
+kind load docker-image -n $cluster_name ibmcom/varnish:local
+kind load docker-image -n $cluster_name ibmcom/varnish-controller:local
+kind load docker-image -n $cluster_name ibmcom/varnish-metrics-exporter:local
 
-helm install --namespace=$varnish_namespace varnish-operator --wait --set container.imagePullPolicy=Never --set container.image=ibmcom/varnish-operator:local
+helm install vo varnish-operator --namespace=$varnish_namespace --wait --set container.imagePullPolicy=Never --set container.image=$container_image

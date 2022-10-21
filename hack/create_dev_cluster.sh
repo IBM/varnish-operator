@@ -25,15 +25,15 @@ if ! which helm >/dev/null; then
     exit 1
 fi
 
-if which podman >/dev/null; then
-  img=$(podman images | grep 'ibmcom/varnish-operator' | grep local | cut -f1 -d' ')
-  if [ -n "$img" ]; then
-    echo "using podman image: $img"
-    container_image=$img
-  else
-    echo "podman installed but varnish-operator image not found. using default container_image"
-  fi
-fi
+#if which podman >/dev/null; then
+#  img=$(podman images | grep 'ibmcom/varnish-operator' | grep local | cut -f1 -d' ')
+#  if [ -n "$img" ]; then
+#    echo "using podman image: $img"
+#    container_image=$img
+#  else
+#    echo "podman installed but varnish-operator image not found. using default container_image"
+#  fi
+#fi
 
 kind delete cluster --name $cluster_name > /dev/null 2>&1
 kind create cluster --name $cluster_name --image kindest/node:v$kube_version --kubeconfig ./e2e-tests-kubeconfig
@@ -42,10 +42,15 @@ export KUBECONFIG=./e2e-tests-kubeconfig
 
 kubectl create ns $varnish_namespace
 
-docker build --platform linux/amd64 -f Dockerfile  -t ibmcom/varnish-operator:local .
-docker build --platform linux/amd64 -f Dockerfile.varnishd  -t ibmcom/varnish:local .
-docker build --platform linux/amd64 -f Dockerfile.controller  -t ibmcom/varnish-controller:local .
-docker build --platform linux/amd64 -f Dockerfile.exporter  -t ibmcom/varnish-metrics-exporter:local .
+docker buildx build --build-arg VERSION=local --platform linux/arm64,linux/amd64 --push -f Dockerfile -t ibmcom/varnish-operator:local .
+docker buildx build --build-arg VERSION=local --platform linux/arm64,linux/amd64 --push -f Dockerfile.varnishd -t ibmcom/varnish:local .
+docker buildx build --build-arg VERSION=local --platform linux/arm64,linux/amd64 --push -f Dockerfile.controller -t ibmcom/varnish-controller:local .
+docker buildx build --build-arg VERSION=local --platform linux/arm64,linux/amd64 --push -f Dockerfile.exporter -t ibmcom/varnish-metrics-exporter:local .
+
+docker pull ibmcom/varnish-operator:local
+docker pull ibmcom/varnish:local
+docker pull ibmcom/varnish-controller:local
+docker pull ibmcom/varnish-metrics-exporter:local
 
 kind load docker-image -n $cluster_name ibmcom/varnish-operator:local
 kind load docker-image -n $cluster_name ibmcom/varnish:local

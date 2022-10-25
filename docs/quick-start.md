@@ -48,24 +48,22 @@ varnish-operator-fd96f48f-gn6mc   1/1     Running             0          40s
 
     ```bash
     $ cat <<EOF | kubectl create -f -
-    apiVersion: caching.ibm.com/v1alpha1
-    kind: VarnishCluster
-    metadata:
-      name: varnishcluster-example
-      namespace: varnish-cluster # the namespace we've created above
-    spec:
-      vcl:
-        configMapName: vcl-config # name of the config map that will store your VCL files. Will be created if doesn't exist.
-        entrypointFileName: entrypoint.vcl # main file used by Varnish to compile the VCL code.
-      backend:
-        port: 80
-        selector:
-          app: nginx-backend # labels that identify your backend pods
-      service:
-        port: 80 # Varnish pods will be exposed on that port
-    EOF
- 
-    varnishcluster.ibm.com/varnishcluster-example created  
+   apiVersion: caching.ibm.com/v1alpha1
+   kind: VarnishCluster
+   metadata:
+     name: varnishcluster-example
+     namespace: varnish-cluster # the namespace we've created above
+   spec:
+     vcl:
+       configMapName: vcl-config # name of the config map that will store your VCL files. Will be created if doesn't exist.
+       entrypointFileName: entrypoint.vcl # main file used by Varnish to compile the VCL code.
+     backend:
+       port: 80
+       selector:
+         app: nginx-backend # labels that identify your backend pods
+     service:
+       port: 80 # Varnish pods will be exposed on that port
+   EOF
     ```
 
 Step 2 and 3 can be executed in any order. If the backend doesn't exist on `VarnishCluster` creation, Varnish will still work but won't cache any backends responding with 504 response code. Once the backend pods are up and running, Varnish will automatically pick up the changes, reload the VCL and start serving and caching the requests.
@@ -85,7 +83,12 @@ You can check if all works by doing `kubectl port-forward` and checking the serv
 Port forward your service:
 
 ```bash
-$ kubectl port-forward -n varnish-cluster service/varnishcluster-example 8080:6081
+$ kubectl port-forward -n varnish-cluster services/varnishcluster-example 8080:80
+Forwarding from 127.0.0.1:8080 -> 6081
+Forwarding from [::1]:8080 -> 6081
+...
+$ # OR
+$ kubectl port-forward -n varnish-cluster services/varnishcluster-example-headless-service 8080:6081
 Forwarding from 127.0.0.1:8080 -> 6081
 Forwarding from [::1]:8080 -> 6081
 ...

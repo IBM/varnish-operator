@@ -55,8 +55,7 @@ Creates a dev cluster and varnish-operator install
 
 function default_vc_namespace {
   if [[ "$varnish_namespace" == "varnish-operator" ]]; then
-    vc=$(kubectl get namespace --no-headers | grep varnish-cluster | wc -l | xargs echo -n)
-    if [ "$vc" -eq 0 ]; then
+    if [ "$(kubectl get namespace --no-headers | grep varnish-cluster | wc -l | xargs echo -n)" -eq 0 ]; then
       kubectl create namespace varnish-cluster
     fi
     varnish_namespace="varnish-cluster"
@@ -152,8 +151,7 @@ if [ "$manage_cluster" = true ]; then
   export KUBECONFIG=./e2e-tests-kubeconfig
 fi
 
-vo=$(kubectl get namespace --no-headers | grep varnish-operator | wc -l | xargs echo -n)
-if [ "$vo" -eq 0 ]; then
+if [ "$(kubectl get namespace --no-headers | grep varnish-operator | wc -l | xargs echo -n)" -eq 0 ]; then
   kubectl create ns $varnish_namespace
 fi
 

@@ -33,7 +33,7 @@ manage_cluster=true
 use_buildx=false
 create_vc=false
 create_backends=false
-skip_docker_build=flase
+skip_docker_build=false
 dry_run=false
 
 function usage {
@@ -55,7 +55,7 @@ Creates a dev cluster and varnish-operator install
 
 function default_vc_namespace {
   if [[ "$varnish_namespace" == "varnish-operator" ]]; then
-    vc=$(kubectl get namespace --no-headers | grep varnish-cluster | wc -l)
+    vc=$(kubectl get namespace --no-headers | grep varnish-cluster | wc -l | xargs echo -n)
     if [ "$vc" -eq 0 ]; then
       kubectl create namespace varnish-cluster
     fi
@@ -152,13 +152,13 @@ if [ "$manage_cluster" = true ]; then
   export KUBECONFIG=./e2e-tests-kubeconfig
 fi
 
-vo=$(kubectl get namespace --no-headers | grep varnish-operator | wc -l)
+vo=$(kubectl get namespace --no-headers | grep varnish-operator | wc -l | xargs echo -n)
 if [ "$vo" -eq 0 ]; then
   kubectl create ns $varnish_namespace
 fi
 
 # if skipping docker build, ensure all the images are at least in the local docker registry
-if [ "$skip_docker_build" = true]; then
+if [ "$skip_docker_build" = true ]; then
   set +e
   for image in "${images[@]}"; do
     res=$(docker image inspect $image)
@@ -172,7 +172,7 @@ fi
 
 if [ "$skip_docker_build" = false ]; then
   for ((i=0; i<${#images[@]}; i++)); do
-    echo "docker $build_args -f ${dockerfiles[$i]} -t ${images[$i]} ."
+    docker $build_args -f ${dockerfiles[$i]} -t ${images[$i]} .
   done
 
   if [ "$use_buildx" = true ] && [ "$podman_in_use" = false ]; then

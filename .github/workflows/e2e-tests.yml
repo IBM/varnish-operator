@@ -10,16 +10,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        kubernetes-version: [ "1.24", "1.23", "1.22", "1.21"]
+        kubernetes-version: [ "1.25", "1.24", "1.23", "1.22"]
         include:
+        - kubernetes-version: "1.25"
+          kind-node: kindest/node:v1.25.2@sha256:9be91e9e9cdf116809841fc77ebdb8845443c4c72fe5218f3ae9eb57fdb4bace
         - kubernetes-version: "1.24"
-          kind-node: kindest/node:v1.24.0@sha256:0866296e693efe1fed79d5e6c7af8df71fc73ae45e3679af05342239cdc5bc8e
+          kind-node: kindest/node:v1.24.6@sha256:97e8d00bc37a7598a0b32d1fabd155a96355c49fa0d4d4790aab0f161bf31be1
         - kubernetes-version: "1.23"
-          kind-node: kindest/node:v1.23.6@sha256:b1fa224cc6c7ff32455e0b1fd9cbfd3d3bc87ecaa8fcb06961ed1afb3db0f9ae
+          kind-node: kindest/node:v1.23.12@sha256:9402cf1330bbd3a0d097d2033fa489b2abe40d479cc5ef47d0b6a6960613148a
         - kubernetes-version: "1.22"
-          kind-node: kindest/node:v1.22.9@sha256:8135260b959dfe320206eb36b3aeda9cffcb262f4b44cda6b33f7bb73f453105
-        - kubernetes-version: "1.21"
-          kind-node: kindest/node:v1.21.12@sha256:f316b33dd88f8196379f38feb80545ef3ed44d9197dca1bfd48bcb1583210207
+          kind-node: kindest/node:v1.22.15@sha256:bfd5eaae36849bfb3c1e3b9442f3da17d730718248939d9d547e86bbac5da586
     steps:
       - name: Set up Go
         uses: actions/setup-go@v3
@@ -31,10 +31,10 @@ jobs:
         run: go mod download
       - name: build images
         run: |
-          docker build -f Dockerfile -t ibmcom/varnish-operator:local .
-          docker build -f Dockerfile.varnishd -t ibmcom/varnish:local .
-          docker build -f Dockerfile.controller -t ibmcom/varnish-controller:local .
-          docker build -f Dockerfile.exporter -t ibmcom/varnish-metrics-exporter:local .
+          docker build --platform linux/amd64 -f Dockerfile -t ibmcom/varnish-operator:local .
+          docker build --platform linux/amd64 -f Dockerfile.varnishd -t ibmcom/varnish:local .
+          docker build --platform linux/amd64 -f Dockerfile.controller -t ibmcom/varnish-controller:local .
+          docker build --platform linux/amd64 -f Dockerfile.exporter -t ibmcom/varnish-metrics-exporter:local .
       - name: Create k8s Kind Cluster ${{ matrix.kubernetes-version }}
         uses: helm/kind-action@v1.3.0
         with:

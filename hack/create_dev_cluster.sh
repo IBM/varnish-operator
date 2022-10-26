@@ -183,7 +183,7 @@ if [ "$skip_docker_build" = false ]; then
 fi
 
 for image in "${images[@]}"; do
-  kind load docker-image -n $cluster_name image
+  kind load docker-image -n $cluster_name $image
 done
 
 helm install varnish-operator varnish-operator --namespace=$varnish_namespace --wait --set container.imagePullPolicy=Never --set container.image=$container_image

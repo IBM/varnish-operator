@@ -42,14 +42,14 @@ USAGE: $0 [-c cluster] [-n namespace] [-p platform] [-r repo] [-b] [-s] [-v] [-x
 
 Creates a dev cluster and varnish-operator install
 
--c|--cluster   | cluster
--n|--namespace | namespace
--p|--platform  | platform (not validated so know which build you're calling)
--r|--repo      | CR repository
--b             | create backends
--s             | skip docker build
--v             | create varnish cluster
--x             | ignore podman's presence
+-c|--cluster                | cluster
+-n|--namespace              | namespace
+-p|--platform               | platform (not validated so know which build you're calling)
+-r|--repo                   | CR repository
+-b|--backends               | create backends
+-s|--skip-docker-build      | skip docker build
+-v|--create-varnishcluster  | create varnish cluster
+-x|--ignore-podman          | ignore podman's presence
 !
 }
 
@@ -101,10 +101,10 @@ while (( "$#" )); do
   opt="$1"; shift;
   case "$opt" in
     "-b"|"--backends") create_backends=true;;
-    "-d") dry_run=true;;
-    "-s") skip_docker_build=true;;
-    "-v") create_vc=true;;
-    "-x") ignore_podman=true;;
+    "-d"|"--dry-run") dry_run=true;;
+    "-s"|"--skip-docker-build") skip_docker_build=true;;
+    "-v"|"--create-varnishcluster") create_vc=true;;
+    "-x"|"--ignore-podman") ignore_podman=true;;
     "-c"|"--cluster") cluster_name="$1"; manage_cluster=false; shift;;
     "-n"|"--namespace") varnish_namespace="$1"; shift;;
     "-p"|"--platform") platform="$1"; shift;;

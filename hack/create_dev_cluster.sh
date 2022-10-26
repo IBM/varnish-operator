@@ -64,7 +64,7 @@ function default_vc_namespace {
 }
 
 function create_nginx_backends {
-  if [ "$dry_run" = false ]; then
+  if [ "$dry_run" = true ]; then
     echo "dry-run: would otherwise be installing nginx"
     return 0
   fi
@@ -137,7 +137,7 @@ fi
 
 if [ "$ignore_podman" = false ] && which podman >/dev/null; then
   podman_in_use=true
-elif [ "$use_buildx" == true ]; then
+elif [ "$use_buildx" = true ]; then
   build_args="$build_args --push"
 fi
 

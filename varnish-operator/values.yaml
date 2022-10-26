@@ -2,7 +2,7 @@
 replicas: 1
 container:
   # path to image + tag
-  image: ibmcom/varnish-operator:0.33.0
+  image: ibmcom/varnish-operator:0.34.0
   # imagePullSecret for Varnish Operator image
   #imagePullSecret: ""
   # imagePullPolicy for Varnish Operator image

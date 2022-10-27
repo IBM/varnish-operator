@@ -1,8 +1,15 @@
 # Number of pods running the operator
 replicas: 1
 container:
-  # path to image + tag
-  image: ibmcom/varnish-operator:0.34.0
+  # Either set the registry, repository, and tag via the "container.image" value
+  # OR use the "container.registry", "container.repository", and "container.tag" values below.
+  # image: ibmcom/varnish-operator:0.1.2
+  registry: ibmcom
+  repository: varnish-operator
+  tag: 0.34.0
+  # Only specify the digest if you want to use it instead of the tag to specify what
+  # version of the image to pull.
+  digest: ""
   # imagePullSecret for Varnish Operator image
   #imagePullSecret: ""
   # imagePullPolicy for Varnish Operator image

@@ -2,11 +2,11 @@ ARG BUILDPLATFORM=linux/amd64
 FROM --platform=$BUILDPLATFORM debian:bullseye-slim as importer
 
 ARG PROMETHEUS_VARNISH_EXPORTER_VERSION=1.6.1
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends varnish curl tar gzip ca-certificates
 
-RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends varnish curl tar gzip ca-certificates \
-&& curl -L https://github.com/jonnenauha/prometheus_varnish_exporter/releases/download/${PROMETHEUS_VARNISH_EXPORTER_VERSION}/prometheus_varnish_exporter-${PROMETHEUS_VARNISH_EXPORTER_VERSION}.linux-amd64.tar.gz | \
-    tar -xz  && cp prometheus_varnish_exporter-${PROMETHEUS_VARNISH_EXPORTER_VERSION}.linux-amd64/prometheus_varnish_exporter /prometheus-varnish-exporter \
-    && chmod +x /prometheus-varnish-exporter
+RUN git clone https://github.com/jonnenauha/prometheus_varnish_exporter.git \
+  && cd prometheus_varnish_exporter \
+  && go build -o /prometheus-varnish-exporter
 
 FROM --platform=$BUILDPLATFORM debian:bullseye-slim
 LABEL maintainer="Alex Lytvynenko <oleksandr.lytvynenko@ibm.com>, Tomash Sidei <tomash.sidei@ibm.com>"

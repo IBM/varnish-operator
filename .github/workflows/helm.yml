@@ -37,7 +37,7 @@ jobs:
           chmod +x ./bin/yq
           ./bin/yq w -i varnish-operator/Chart.yaml 'appVersion' $VERSION
           ./bin/yq w -i varnish-operator/Chart.yaml 'version' $VERSION
-          ./bin/yq w -i varnish-operator/values.yaml 'container.image' $(./bin/yq r varnish-operator/values.yaml 'container.image' | sed "s/:.*/:$VERSION/")
+          ./bin/yq w -i varnish-operator/values.yaml 'container.tag' $VERSION
       - name: Package chart
         run: |
           git config --global user.email ""

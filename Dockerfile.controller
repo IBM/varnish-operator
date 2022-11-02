@@ -30,7 +30,18 @@ RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
 
 FROM --platform=$BUILDPLATFORM debian:bullseye-slim as binary
 
-RUN apt-get update && apt-get install -y --no-install-recommends varnish
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates debian-archive-keyring curl gnupg apt-transport-https git make automake libtool python3-sphinx \
+    && mkdir -p /etc/apt/keyrings/ \
+    && curl -fsSL https://packagecloud.io/varnishcache/varnish72/gpgkey \
+     | gpg --dearmor > /etc/apt/keyrings/varnishcache_varnish72-archive-keyring.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/varnishcache_varnish72-archive-keyring.gpg] https://packagecloud.io/varnishcache/varnish72/debian bullseye main" \
+     | tee /etc/apt/sources.list.d/varnishcache_varnish72.list \
+    && echo "deb-src [signed-by=/etc/apt/keyrings/varnishcache_varnish72-archive-keyring.gpg] https://packagecloud.io/varnishcache/varnish72/debian bullseye main" \
+     | tee -a /etc/apt/sources.list.d/varnishcache_varnish72.list \
+    && apt-get update \
+    && apt-get upgrade -y \
+    && apt-get install -y --no-install-recommends varnish
 
 
 # Build Final Varnish image

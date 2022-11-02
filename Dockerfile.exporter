@@ -1,12 +1,13 @@
 ARG BUILDPLATFORM=linux/amd64
-FROM --platform=$BUILDPLATFORM debian:bullseye-slim as importer
-
+FROM --platform=$BUILDPLATFORM golang:1.19.2-bullseye AS builder
+ARG TARGETOS=linux
+ARG TARGETARCH=amd64
 ARG PROMETHEUS_VARNISH_EXPORTER_VERSION=1.6.1
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends varnish curl tar gzip ca-certificates
 
-RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends varnish curl tar gzip ca-certificates \
-&& curl -L https://github.com/jonnenauha/prometheus_varnish_exporter/releases/download/${PROMETHEUS_VARNISH_EXPORTER_VERSION}/prometheus_varnish_exporter-${PROMETHEUS_VARNISH_EXPORTER_VERSION}.linux-amd64.tar.gz | \
-    tar -xz  && cp prometheus_varnish_exporter-${PROMETHEUS_VARNISH_EXPORTER_VERSION}.linux-amd64/prometheus_varnish_exporter /prometheus-varnish-exporter \
-    && chmod +x /prometheus-varnish-exporter
+RUN git clone --branch $PROMETHEUS_VARNISH_EXPORTER_VERSION --single-branch https://github.com/jonnenauha/prometheus_varnish_exporter.git \
+  && cd prometheus_varnish_exporter \
+  && CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /prometheus-varnish-exporter
 
 FROM --platform=$BUILDPLATFORM debian:bullseye-slim
 LABEL maintainer="Alex Lytvynenko <oleksandr.lytvynenko@ibm.com>, Tomash Sidei <tomash.sidei@ibm.com>"
@@ -16,8 +17,8 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
     && chown -R varnish /etc/varnish /var/lib/varnish \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=importer /prometheus-varnish-exporter /usr/bin/
-COPY --from=importer /usr/bin/varnishadm /usr/bin/varnishstat /usr/bin/
+COPY --from=builder /prometheus-varnish-exporter /usr/bin/
+COPY --from=builder /usr/bin/varnishadm /usr/bin/varnishstat /usr/bin/
 
 USER varnish
 

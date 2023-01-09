@@ -269,6 +269,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 					ServiceAccountName:            names.ServiceAccount(instance.Name),
 					NodeSelector:                  instance.Spec.NodeSelector,
 					Affinity:                      instance.Spec.Affinity,
+					PriorityClassName:             instance.Spec.PriorityClassName,
 					Tolerations:                   instance.Spec.Tolerations,
 					RestartPolicy:                 v1.RestartPolicyAlways,
 				},
@@ -326,7 +327,7 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 
 	instanceStatus.Status.VarnishArgs = strings.Join(varnishdArgs, " ")
 	instanceStatus.Status.Replicas = found.Status.Replicas
-
+	desired.Spec.Template.Spec.PriorityClassName = found.Spec.Template.Spec.PriorityClassName
 	return found, varnishLabels, nil
 }
 

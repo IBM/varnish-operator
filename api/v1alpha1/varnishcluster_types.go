@@ -96,7 +96,8 @@ type VarnishClusterSpec struct {
 	// +kubebuilder:validation:Enum=debug;info;warn;error;dpanic;panic;fatal
 	LogLevel string `json:"logLevel,omitempty"`
 	// +kubebuilder:validation:Enum=json;console
-	LogFormat string `json:"logFormat,omitempty"`
+	LogFormat         string `json:"logFormat,omitempty"`
+	PriorityClassName string `json:"priorityClassName,omitempty"`
 }
 
 type VarnishClusterUpdateStrategyType string

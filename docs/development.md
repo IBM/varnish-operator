@@ -18,7 +18,7 @@ Requirements:
 The project consists of 2 components working together:
 
 * Varnish operator itself, that manages `VarnishCluster` resources
-* Varnish Controller is a process that's running in the same container as Varnish. It is responsible for watching Kubernetes resources and reacting accordingly. For example, Varnish Controller reloads the VCL configuration when backends scale or the VCL configuration has changed in the ConfigMap.
+* Varnish Controller is a process that's running in the same pod as Varnish. It is responsible for watching Kubernetes resources and reacting accordingly. For example, Varnish Controller reloads the VCL configuration when backends scale or the VCL configuration has changed in the ConfigMap.
                                                                               
 Both components live in one repo and share the same codebase, dependencies, build scripts, etc.
 

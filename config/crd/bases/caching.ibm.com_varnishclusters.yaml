@@ -1038,6 +1038,8 @@ spec:
                     type: object
                     x-kubernetes-map-type: atomic
                 type: object
+              priorityClassName:
+                type: string
               replicas:
                 format: int32
                 type: integer

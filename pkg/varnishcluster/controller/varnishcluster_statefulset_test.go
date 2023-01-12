@@ -230,6 +230,25 @@ var _ = Describe("statefulset", func() {
 			Expect(metricsContainer.Image).To(Equal("us.icr.io/different-location/varnish-metrics-exporter:test"))
 		})
 	})
+	Context("when varnishcluster is created with priorityClassName enable", func() {
+		It("should be created with corresponding PriorityClassName set", func() {
+			newVC := vc.DeepCopy()
+			priorityClass := "test-priorityClass"
+			newVC.Spec.PriorityClassName = priorityClass
+
+			err := k8sClient.Create(context.Background(), newVC)
+			Expect(err).ToNot(HaveOccurred())
+
+			sts := &apps.StatefulSet{}
+			Eventually(func() error {
+				return k8sClient.Get(context.Background(), stsName, sts)
+			}, time.Second*5).Should(Succeed())
+
+			Expect(sts.Spec.Template.Spec.PriorityClassName).To(Equal(priorityClass))
+
+		})
+
+	})
 
 	Context("when varnishcluster is created with persistence enabled", func() {
 		It("should be created with corresponding volume mounts and volume claim templates", func() {

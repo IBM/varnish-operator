@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-//VCLConfig represents varnish's config list
+// VCLConfig represents varnish's config list
 type VCLConfig struct {
 	Status        string
 	Name          string

@@ -108,7 +108,7 @@ func (v *VarnishAdm) Ping() error {
 	}
 }
 
-//Reload loads new VCL configuration into the varnish instance. Accepts two string parameters
+// Reload loads new VCL configuration into the varnish instance. Accepts two string parameters
 // - version string, a version which describes the configuration
 // - entrypoint string, a start filename to use as a new VCL configuration
 // it is a wrapper over varnishadm vcl.load and vcl.use commands combination
@@ -162,7 +162,7 @@ func execCommandProvider(name string, args ...string) executor {
 	return cmd
 }
 
-//GetActiveConfigurationName parses varnishadm list output and compute a name of active configuration
+// GetActiveConfigurationName parses varnishadm list output and compute a name of active configuration
 func (v *VarnishAdm) GetActiveConfigurationName() (string, error) {
 	active, err := v.getActiveVCLConfig()
 	if err != nil {

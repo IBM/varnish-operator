@@ -1,0 +1,403 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <title>Installation · Varnish Operator Docs</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 3.2.3">
+        
+        
+        
+    
+    <link rel="stylesheet" href="gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-hints/plugin-hints.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="operator-configuration.html" />
+    
+    
+    <link rel="prev" href="quick-start.html" />
+    
+
+    </head>
+    <body>
+        
+<div class="book">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    Introduction
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="quick-start.html">
+            
+                <a href="quick-start.html">
+            
+                    
+                    Quick Start
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter active" data-level="1.3" data-path="installation.html">
+            
+                <a href="installation.html">
+            
+                    
+                    Installation
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4" data-path="operator-configuration.html">
+            
+                <a href="operator-configuration.html">
+            
+                    
+                    Operator Configuration
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.5" data-path="varnish-cluster.html">
+            
+                <a href="varnish-cluster.html">
+            
+                    
+                    VarnishCluster
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.6" data-path="varnish-cluster-configuration.html">
+            
+                <a href="varnish-cluster-configuration.html">
+            
+                    
+                    VarnishCluster Configuration
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.7" data-path="vcl-configuration.html">
+            
+                <a href="vcl-configuration.html">
+            
+                    
+                    VCL Configuration
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.8" data-path="monitoring.html">
+            
+                <a href="monitoring.html">
+            
+                    
+                    Monitoring
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.9" data-path="debugging-issues.html">
+            
+                <a href="debugging-issues.html">
+            
+                    
+                    Debugging Issues
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.10" data-path="architecture.html">
+            
+                <a href="architecture.html">
+            
+                    
+                    Architecture
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.11" data-path="development.html">
+            
+                <a href="development.html">
+            
+                    
+                    Development
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+            Published with GitBook
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href="." >Installation</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h1 id="varnish-operator">Varnish Operator</h1>
+<h2 id="installation">Installation</h2>
+<h3 id="prerequisites">Prerequisites</h3>
+<ul>
+<li>Kubernetes v1.21 or newer and <code>kubectl</code> configured to communicate with your cluster</li>
+<li>Helm 3</li>
+</ul>
+<h3 id="configure-helm-repo">Configure Helm repo</h3>
+<pre><code class="lang-bash">$ helm repo add varnish-operator https://raw.githubusercontent.com/IBM/varnish-operator/main/helm-releases
+$ helm repo update
+</code></pre>
+<h3 id="install-varnish-operator">Install Varnish Operator</h3>
+<p>Create a namespace for the operator:</p>
+<pre><code class="lang-bash">$ kubectl create ns varnish-operator
+</code></pre>
+<p>Install the operator:</p>
+<pre><code class="lang-bash">$ helm install varnish-operator --namespace varnish-operator varnish-operator/varnish-operator
+</code></pre>
+<p>You should see your operator pod up and running:</p>
+<pre><code class="lang-bash">$ kubectl get pods --namespace varnish-operator
+NAME                              READY   STATUS              RESTARTS   AGE
+varnish-operator-fd96f48f-gn6mc   1/1     Running             0          40s
+</code></pre>
+<p>Also, your cluster should have a new resource - <code>varnishcluster</code> (with aliases <code>varnishclusters</code> and <code>vc</code>). Now you&apos;re ready to create <code>VarnishCluster</code> resources.</p>
+<p>To tolerate pod failures, you can run multiple replicas of the operator by specifying the <code>replicas</code> field to more than <code>1</code> in Helm value overrides. Only one of the replicas - the leader - will handle the work while others monitor if the leader is healthy. If the leader fails, one of the backup replicas will start to handle the work. That also means that if you need to check operator logs for debugging purposes you need to find the leader pod and check its logs.</p>
+<p>See <a href="operator-configuration.html">Operator Configuration</a> section for more options to configure.</p>
+<h2 id="operator-update">Operator Update</h2>
+<p>Since the operator is packaged into a Helm chart, the update is done by a simple <code>helm upgrade</code> command.</p>
+<p>Note that when the operator version updates, the Varnish images get updated as well. That means that Varnish pods needs to be restarted with new configuration. As Varnish is an in-memory cache, it means losing cache data. To prevent accidental cache loss, by default, the update strategy is <code>OnDelete</code> which means the pods won&apos;t automatically get restarted. To update the pod you need to delete the pod manually, and it will come back with the new configuration. This behavior can be changed by setting the desired update strategy in the <code>.spec.statefulSet.updateStrategy</code> object. See <a href="varnish-cluster-configuration.html">VarnishCluster Configuration</a> section for more details.  </p>
+<h2 id="uninstalling-the-operator">Uninstalling the Operator</h2>
+<p>Uninstallation of the chart is also done by Helm.
+It deletes all created resources, including the CRD.</p>
+<p>The operator uses <a href="https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#finalizers" target="_blank">finalizers</a> to perform some clean-up operations. That means you need to delete all <code>VarnishCluster</code> resources before deleting the operator. Otherwise those resources won&apos;t be deleted automatically and get stuck on your cluster.</p>
+<p>If you happen to remove the operator first, to delete the remaining <code>VarnishCluster</code> resources you need to manually edit them and remove the finalizers:</p>
+<p>  <code>kubectl patch varnishcluster &lt;your-varnishcuster&gt; -p &apos;{&quot;metadata&quot;:{&quot;finalizers&quot;: []}}&apos; --type=merge</code></p>
+<p>Then you need to delete the remaining objects:</p>
+<ul>
+<li>ClusterRole named <varnishcluster-name>-varnish-clusterrole-<varnishcluster-namespace></varnishcluster-namespace></varnishcluster-name></li>
+<li>ClusterRoleBinding named <varnishcluster-name>-varnish-clusterrolebinding-<varnishcluster-namespace></varnishcluster-namespace></varnishcluster-name></li>
+</ul>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="quick-start.html" class="navigation navigation-prev " aria-label="Previous page: Quick Start">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+                <a href="operator-configuration.html" class="navigation navigation-next " aria-label="Next page: Operator Configuration">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"Installation","level":"1.3","depth":1,"next":{"title":"Operator Configuration","level":"1.4","depth":1,"path":"operator-configuration.md","ref":"operator-configuration.md","articles":[]},"previous":{"title":"Quick Start","level":"1.2","depth":1,"path":"quick-start.md","ref":"quick-start.md","articles":[]},"dir":"ltr"},"config":{"plugins":["hints"],"root":".","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"hints":{"danger":"fa fa-exclamation-circle","info":"fa fa-info-circle","tip":"fa fa-mortar-board","working":"fa fa-wrench"},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Varnish Operator Docs","gitbook":"*"},"file":{"path":"installation.md","mtime":"2023-01-17T21:10:29.000Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2023-01-17T21:11:40.244Z"},"basePath":".","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <script src="gitbook/gitbook.js"></script>
+    <script src="gitbook/theme.js"></script>
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-sharing/buttons.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+

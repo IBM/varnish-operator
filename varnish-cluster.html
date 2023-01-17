@@ -1,0 +1,511 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <title>VarnishCluster · Varnish Operator Docs</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 3.2.3">
+        
+        
+        
+    
+    <link rel="stylesheet" href="gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-hints/plugin-hints.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="varnish-cluster-configuration.html" />
+    
+    
+    <link rel="prev" href="operator-configuration.html" />
+    
+
+    </head>
+    <body>
+        
+<div class="book">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    Introduction
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="quick-start.html">
+            
+                <a href="quick-start.html">
+            
+                    
+                    Quick Start
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3" data-path="installation.html">
+            
+                <a href="installation.html">
+            
+                    
+                    Installation
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4" data-path="operator-configuration.html">
+            
+                <a href="operator-configuration.html">
+            
+                    
+                    Operator Configuration
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter active" data-level="1.5" data-path="varnish-cluster.html">
+            
+                <a href="varnish-cluster.html">
+            
+                    
+                    VarnishCluster
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.6" data-path="varnish-cluster-configuration.html">
+            
+                <a href="varnish-cluster-configuration.html">
+            
+                    
+                    VarnishCluster Configuration
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.7" data-path="vcl-configuration.html">
+            
+                <a href="vcl-configuration.html">
+            
+                    
+                    VCL Configuration
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.8" data-path="monitoring.html">
+            
+                <a href="monitoring.html">
+            
+                    
+                    Monitoring
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.9" data-path="debugging-issues.html">
+            
+                <a href="debugging-issues.html">
+            
+                    
+                    Debugging Issues
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.10" data-path="architecture.html">
+            
+                <a href="architecture.html">
+            
+                    
+                    Architecture
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.11" data-path="development.html">
+            
+                <a href="development.html">
+            
+                    
+                    Development
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+            Published with GitBook
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href="." >VarnishCluster</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h1 id="varnishcluster">VarnishCluster</h1>
+<h3 id="creating-a-varnishcluster-resource">Creating a <code>VarnishCluster</code> Resource</h3>
+<p>Once you&apos;ve <a href="installation.html">installed the operator</a>, you can create a new type of resource - <code>VarnishCluster</code>.</p>
+<p>As with any other Kubernetes resource, simply <code>kubectl apply -f &lt;varnish-cluster&gt;.yaml</code> to create a <code>VarnishCluster</code>.</p>
+<p>Here&apos;s an example of a simple <code>VarnishCluster</code>:</p>
+<pre><code class="lang-yaml"><span class="hljs-attr">apiVersion:</span> caching.ibm.com/v1alpha1
+<span class="hljs-attr">kind:</span> VarnishCluster
+<span class="hljs-attr">metadata:</span>
+<span class="hljs-attr">  labels:</span>
+<span class="hljs-attr">    operator:</span> varnish
+<span class="hljs-attr">  name:</span> varnish-cluster-example
+<span class="hljs-attr">spec:</span>
+<span class="hljs-attr">  vcl:</span>
+<span class="hljs-attr">    configMapName:</span> vcl-config
+<span class="hljs-attr">    entrypointFileName:</span> entrypoint.vcl
+<span class="hljs-attr">  backend:</span>
+<span class="hljs-attr">    selector:</span>
+<span class="hljs-attr">      app:</span> nginx
+<span class="hljs-attr">  service:</span>
+<span class="hljs-attr">    port:</span> <span class="hljs-number">8080</span>
+</code></pre>
+<p>Once the <code>VarnishCluster</code> is created, you should see:</p>
+<ul>
+<li>a StatefulSet with the name <code>&lt;varnish-cluster-name&gt;</code>.</li>
+<li>2 services, one <code>&lt;varnish-cluster-name&gt;</code> and one <code>&lt;varnish-cluster-name&gt;-no-cache</code>. As is implied by the names, using <code>&lt;varnish-cluster-name&gt;</code> will target the Varnish pods, while <code>&lt;varnish-cluster-name&gt;-no-cache</code> will target the underlying pods directly, with no Varnish caching.</li>
+<li>A ConfigMap with VCL in it (either user-created, before running <code>kubectl apply -f &lt;varnish-cluster&gt;.yaml</code>, or generated by operator)</li>
+<li>A role/rolebinding/clusterrole/clusterrolebinding/serviceAccount combination to give the Varnish pods the ability to access necessary resources.</li>
+<li>If configured, a PodDisruptionBudget</li>
+</ul>
+<p>See <a href="varnish-cluster-configuration.html">VarnishCluster configuration section</a> for all available fields for configuration.</p>
+<h3 id="varnishcluster-status">VarnishCluster Status</h3>
+<p>The VarnishCluster keeps track of its current status as events occur in the system. This can be seen through the <code>Status</code> field, visible from <code>kubectl describe vc &lt;your-varnishcluster&gt;</code>.</p>
+<h3 id="labels">Labels</h3>
+<p>The labels set for <code>VarnishCluster</code> are inherited by all dependent components (Service, StatefulSet, etc.).</p>
+<p>Besides custom labels, the operator sets its own:</p>
+<ul>
+<li><code>varnish-owner</code> - name of the VarnishCluster a particular component belongs to</li>
+<li><code>varnish-component</code> - name of the component</li>
+</ul>
+<p>The <code>varnish-component</code> could have the following values:</p>
+<ul>
+<li><code>varnish</code> - Varnish pod</li>
+<li><code>cache-service</code> - Kubernetes Service exposing Varnish instances</li>
+<li><code>nocache-service</code> - Kubernetes Service exposing backends bypassing Varnish</li>
+<li><code>clusterrole</code> - The clusterrole defining the cluster level permissions for a particular <code>VarnishCluster</code></li>
+<li><code>clusterrolebinding</code> - Binds the clusterrole to the serviceaccount used by a particular <code>VarnishCluster</code></li>
+<li><code>role</code> - The role defining the namespaced permissions for a particular <code>VarnishCluster</code></li>
+<li><code>rolebinding</code> - Binds the role to the serviceaccount used by a particular <code>VarnishCluster</code></li>
+<li><code>vcl-file-configmap</code> - The ConfigMap that stores the VCL files</li>
+<li><code>secret</code> - The Secret to keep <code>varnishadm</code> auth credentials</li>
+<li><code>headless-service</code> - A headless service that backs the StatefulSet</li>
+<li><code>poddisruptionbudget</code> - PodDisruptionBudget configuration for a particular <code>VarnishCluster</code></li>
+<li><code>serviceaccount</code> - A serviceaccount used by the Varnish pods</li>
+</ul>
+<h3 id="updating-a-varnishcluster-resource">Updating a VarnishCluster Resource</h3>
+<p>Just as with any other Kubernetes resource, using <code>kubectl apply</code>, <code>kubectl patch</code>, or <code>kubectl replace</code> will all update the <code>VarnishCluster</code> appropriately. The operator will handle how that update propagates to its dependent resources. Conversely, trying to modify any of those dependent resources (StatefulSet, Services, Roles/Rolebindings, etc) will cause the operator to revert those changes, in the same way a Deployment does for its Pods. The only exception to this is the ConfigMap, the contents of which you <a href="vcl-configuration.html">can and should modify</a>, since that is the VCL used to run the Varnish Pods.</p>
+<p>Some spec changes (like the image version or container config change) need a pod restart in order to be applied. As Varnish is an in-memory cache, it means cache data loss. To prevent accidental cache loss, by default, the update strategy is <code>OnDelete</code> which means the pods won&apos;t automatically get restarted. To update the pod you need to delete the pod manually, and it will come back with the new configuration. This behavior can be changed by setting the desired update strategy in the <code>.spec.updateStrategy</code> object. See <a href="varnish-cluster-configuration.html">VarnishCluster Configuration</a> section for more details.</p>
+<h4 id="delayedrollingupdate">DelayedRollingUpdate</h4>
+<p>Besides standard update strategies like <code>OnDelete</code> and <code>RollingUpdate</code>, the Varnish Operator has an another one - <code>DelayedRollingUpdate</code>.</p>
+<p><code>DelayedRollingUpdate</code> works the same way as <code>RollingUpdate</code> with the difference being a pause between pod updates. This is useful when all you want is to wait for a recently updated Varnish node to warm up before an another one reloads. The delay is configurable by the <code>.spec.updateStrategy.delayedRollingUpdate.delaySeconds</code> field. </p>
+<p>The delay is counted from the time the pod is created in Kubernetes, not when it got scheduled and become ready so this has to be considered when choosing the delay time.</p>
+<p>The operator respects Pods readiness and does not reload the next pod until all pods are ready, even if the delay time elapsed. </p>
+<h4 id="forcefully-restarting-varnish-pods">Forcefully restarting Varnish pods</h4>
+<p>Sometimes it is necessary to purge the cluster cache. For example, when a backend with a bug produced a bad response that got cached. After the fix is deployed, we need to purge the cache. This can be achieved by simply restarting the pods. </p>
+<p>If you need to control when the next pod should restart, you can simply delete pods one by one as necessary. A new pod will come up right after deletion (standard statefulset behavior).</p>
+<p>For more automated solution use <code>kubectl rollout restart statefulset &lt;sts-name&gt;</code> on the statefulset running your Varnish pods. It will recreate the pods with the current configuration using the configured update strategy. Keep in mind that if you use <code>OnDelete</code> update strategy, it doesn&apos;t make sense to use this approach as you still have to manually delete the pods to complete the update. Use it with <code>RollingUpdate</code> and <code>DelayedRollingUpdate</code> update strategies.</p>
+<h3 id="deleting-a-varnishcluster-resource">Deleting a VarnishCluster Resource</h3>
+<p>Simply calling <code>kubectl delete</code> on the <code>VarnishCluster</code> will recursively delete all dependent resources, so that is the only action you need to take. This includes a user-generated ConfigMap, as the VarnishCluster will take ownership of that ConfigMap after creation. Deleting any of the dependent resources will trigger the operator to recreate that resource, in the same way that deleting the Pod of a Deployment will trigger the recreation of that Pod.</p>
+<h3 id="accessing-the-management-interface">Accessing the management interface</h3>
+<p>In case you have the need to control varnish through the management interface, it is available at port <code>6082</code>.</p>
+<p>From your application you can connect to the Varnish pod using its DNS name: <code>&lt;pod-name&gt;.&lt;varnishcluster-name&gt;-headless-service.&lt;namespace&gt;.svc.cluster.local:6082</code>.
+For example, if your <code>VarnishCluster</code> is named <code>example</code>, you can connect to the first pod with the following command:</p>
+<pre><code class="lang-bash">$ varnishadm -T example-varnish-0.example-headless-service.default.svc.cluster.local:6082 -S /etc/varnish-secret/secret
+200
+-----------------------------
+Varnish Cache CLI 1.0
+-----------------------------
+Linux,5.8.0-45-generic,x86_64,-jnone,-sdefault,-sdefault,-hcritbit
+varnish-6.1.1 revision efc2f6c1536cf2272e471f5cff5f145239b19460
+
+Type <span class="hljs-string">&apos;help&apos;</span> <span class="hljs-keyword">for</span> <span class="hljs-built_in">command</span> list.
+Type <span class="hljs-string">&apos;quit&apos;</span> to close CLI session.
+
+varnish&gt;
+</code></pre>
+<p>You will need to specify the authentication secret file. It can be found in the <code>&lt;varnishcluster-name&gt;-varnish-secret</code> secret by default which can be mounted into your pod.</p>
+<h3 id="topology-aware-load-balancing">Topology-aware load balancing</h3>
+<p>The Varnish controller is capable of discovering the cluster&apos;s geographical topology by reading its node labels, specifically <code>topology.kubernetes.io/zone</code> (or <code>failure-domain.beta.kubernetes.io/zone</code> which deprecated but still may be in use). Knowing cluster topology empowers the operator to control how traffic to the application backends is distributed. Currently the topology information is used to change an application backend&apos;s priority by changing its weight, so <strong>local</strong> backends (located in the same zone as Varnish pod) can be preferred over <strong>remote</strong> backends (located in other zones related to Varnish pod location). Such a configuration may not only reduce cross-zone traffic and therefore its cost, but potentially can reduce Varnish to backend latency. However, this functionality have some limitations. At this moment, only the Random Director can accept weight as backend parameter.</p>
+<p>There are currently two zone balancing types available: <code>auto</code> and <code>thresholds</code>. Both are optional and can be configured in the <code>backend</code> section of <a href="varnish-cluster-configuration.html"><code>VarnishCluster</code></a> custom resource.</p>
+<p>Before configuring any of available zone-balancing methods, it crucial to understand how the Random Director calculates traffic flow based on backend weight. Each backend will receive approximately <code>100 * (weight / (sum(all_added_weights)))</code> percent of the traffic sent to the director. So given scenario with three backends having different weights:</p>
+<pre><code class="lang-vcl">new real = directors.random();
+real.add_backend(backend1, 5.0);
+real.add_backend(backend2, 5.0);
+real.add_backend(backend3, 10.0);
+</code></pre>
+<p>The following demonstrates the formula&apos;s usage to calculate the traffic percentage to each backend:</p>
+<pre><code>backend1: 100 * (5 / (5 + 5 + 10)) = 25%
+backend2: 100 * (5 / (5 + 5 + 10)) = 25%
+backend3: 100 * (10 / (5 + 5 + 10)) = 50%
+</code></pre><p>As seen from this example, not only raw backend weight affects traffic distribution, but also total number of backends and their weights.</p>
+<p>Following multi-zone cluster will be used in examples as the reference, however it is too busy when full traffic path is pictured. So some parts like external LB and Ingress will be omitted for clarity.</p>
+<!-- [![](https://mermaid.ink/img/eyJjb2RlIjoiZ3JhcGggVEJcbiAgICBsYltMQl0gLS0-fFJSfCBpbjAgJiBpbjEgJiBpbjJcbiAgICBpbjBbaW5ncmVzc10gLS0-fFJSfCB2MCAmIHYxICYgdjJcbiAgICBpbjFbaW5ncmVzc10gLS0-fFJSfCB2MSAmIHYwICYgdjJcbiAgICBpbjJbaW5ncmVzc10gLS0-fFJSfCB2MiAmIHYxICYgdjBcbiAgICB2MCAmIHYxICYgdjIgLS0-IGIwICYgYjEgJiBiMiAmIGIzICYgYjQgJiBiNSAmIGI2ICYgYjcgJiBiOFxuICAgIHN1YmdyYXBoIHpvbmUxXG4gICAgICAgIGluMFtpbmdyZXNzXVxuICAgICAgICB2MFt2YXJuaXNoLTBdXG4gICAgICAgIGIwXG4gICAgICAgIGIxXG4gICAgICAgIGIyXG4gICAgZW5kXG4gICAgc3ViZ3JhcGggem9uZTJcbiAgICAgICAgaW4xW2luZ3Jlc3NdXG4gICAgICAgIHYxW3Zhcm5pc2gtMV1cbiAgICAgICAgYjNcbiAgICAgICAgYjRcbiAgICAgICAgYjVcbiAgICBlbmRcbiAgICBzdWJncmFwaCB6b25lM1xuICAgICAgICBpbjJbaW5ncmVzc11cbiAgICAgICAgdjJbdmFybmlzaC0yXVxuICAgICAgICBiNlxuICAgICAgICBiN1xuICAgICAgICBiOFxuICAgIGVuZCIsIm1lcm1haWQiOnsidGhlbWUiOiJkZWZhdWx0In19)](https://mermaid-js.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoiZ3JhcGggVEJcbiAgICBsYltMQl0gLS0-fFJSfCBpbjAgJiBpbjEgJiBpbjJcbiAgICBpbjBbaW5ncmVzc10gLS0-fFJSfCB2MCAmIHYxICYgdjJcbiAgICBpbjFbaW5ncmVzc10gLS0-fFJSfCB2MSAmIHYwICYgdjJcbiAgICBpbjJbaW5ncmVzc10gLS0-fFJSfCB2MiAmIHYxICYgdjBcbiAgICB2MCAmIHYxICYgdjIgLS0-IGIwICYgYjEgJiBiMiAmIGIzICYgYjQgJiBiNSAmIGI2ICYgYjcgJiBiOFxuICAgIHN1YmdyYXBoIHpvbmUxXG4gICAgICAgIGluMFtpbmdyZXNzXVxuICAgICAgICB2MFt2YXJuaXNoLTBdXG4gICAgICAgIGIwXG4gICAgICAgIGIxXG4gICAgICAgIGIyXG4gICAgZW5kXG4gICAgc3ViZ3JhcGggem9uZTJcbiAgICAgICAgaW4xW2luZ3Jlc3NdXG4gICAgICAgIHYxW3Zhcm5pc2gtMV1cbiAgICAgICAgYjNcbiAgICAgICAgYjRcbiAgICAgICAgYjVcbiAgICBlbmRcbiAgICBzdWJncmFwaCB6b25lM1xuICAgICAgICBpbjJbaW5ncmVzc11cbiAgICAgICAgdjJbdmFybmlzaC0yXVxuICAgICAgICBiNlxuICAgICAgICBiN1xuICAgICAgICBiOFxuICAgIGVuZCIsIm1lcm1haWQiOnsidGhlbWUiOiJkZWZhdWx0In19) -->
+<p><img src="images/mermaid-diagram-reference-cluster.svg" alt=""></p>
+<h4 id="automatic-mode">Automatic mode</h4>
+<p>To enable <code>auto</code> zone balancing type it should be defined as <code>backend.zoneBalancing.type: auto</code> in the <code>VarnishCluster</code> CustomResource as follows:</p>
+<pre><code>  backend:
+    selector:
+      app: varnish-backend
+    port: 8081
+    zoneBalancing:
+      type: auto
+</code></pre><p>It doesn&apos;t requires any additional configuration. </p>
+<p>The main focus of automatic zone balancing mode is to keep most of the traffic passed through Varnish instance in the same zone. To achieve that, the Varnish controller will assign higher weights for the backends located in same zone as the Varnish pod. To figure out the backend location, the Varnish controller iterates through the list of available backends and finds where the pods are running by reading in the node topology labels. This allows the backends to be classified as <code>local</code> or <code>remote</code>.</p>
+<p>When the topology is discovered, the Varnish controller will apply weight to the backends. Under normal conditions, <code>local</code> backends will get a weight of <code>10</code>, while <code>remote</code> will have <code>1</code>.</p>
+<p>Following diagram displays simple scenario with 2 Varnish pods and 4 backends equally distributed across two zones:</p>
+<!-- [![](https://mermaid.ink/img/eyJjb2RlIjoiZ3JhcGggVEJcbiAgICB2MCAtLT58MTB8IGIwICYgYjFcbiAgICB2MCAtLT58MXwgYjIgJiBiM1xuICAgIHYxIC0tPnwxMHwgYjIgJiBiM1xuICAgIHYxIC0tPnwxfCBiMCAmIGIxXG4gICAgc3ViZ3JhcGggem9uZTFcbiAgICB2MFt2YXJuaXNoLTBdXG4gICAgYjBcbiAgICBiMVxuICAgIGVuZFxuICAgIHN1YmdyYXBoIHpvbmUyXG4gICAgdjFbdmFybmlzaC0xXVxuICAgIGIyXG4gICAgYjNcbiAgICBlbmQiLCJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJ1cGRhdGVFZGl0b3IiOmZhbHNlfQ)](https://mermaid-js.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoiZ3JhcGggVEJcbiAgICB2MCAtLT58MTB8IGIwICYgYjFcbiAgICB2MCAtLT58MXwgYjIgJiBiM1xuICAgIHYxIC0tPnwxMHwgYjIgJiBiM1xuICAgIHYxIC0tPnwxfCBiMCAmIGIxXG4gICAgc3ViZ3JhcGggem9uZTFcbiAgICB2MFt2YXJuaXNoLTBdXG4gICAgYjBcbiAgICBiMVxuICAgIGVuZFxuICAgIHN1YmdyYXBoIHpvbmUyXG4gICAgdjFbdmFybmlzaC0xXVxuICAgIGIyXG4gICAgYjNcbiAgICBlbmQiLCJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJ1cGRhdGVFZGl0b3IiOmZhbHNlfQ) -->
+<p><img src="images/mermaid-diagram-auto-1.svg" alt=""></p>
+<p>Having very polar weight might be not the best option when zone becomes degraded. Routing too much traffic to decreased amount of available backends can create a <em>hotspot</em> and even DoS. To prevent such scenario, <code>auto</code> balancing will calculate the ratio of backend count to average backend count in other zones and reduce the weight by that ratio.</p>
+<p>Next diagram shows the same small topology as before, but now <code>zone1</code> lost one of the backends:</p>
+<!-- [![](https://mermaid.ink/img/eyJjb2RlIjoiZ3JhcGggVEJcbiAgICB2MCAtLT58MTB8IGIwXG4gICAgdjAgLS0-fDF8IGIyICYgYjNcbiAgICB2MSAtLT58MTB8IGIyICYgYjNcbiAgICB2MSAtLT58MXwgYjBcbiAgICBzdWJncmFwaCB6b25lMVxuICAgIHYwW3Zhcm5pc2gtMF1cbiAgICBiMFxuICAgIGVuZFxuICAgIHN1YmdyYXBoIHpvbmUyXG4gICAgdjFbdmFybmlzaC0xXVxuICAgIGIyXG4gICAgYjNcbiAgICBlbmQiLCJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJ1cGRhdGVFZGl0b3IiOmZhbHNlfQ)](https://mermaid-js.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoiZ3JhcGggVEJcbiAgICB2MCAtLT58MTB8IGIwXG4gICAgdjAgLS0-fDF8IGIyICYgYjNcbiAgICB2MSAtLT58MTB8IGIyICYgYjNcbiAgICB2MSAtLT58MXwgYjBcbiAgICBzdWJncmFwaCB6b25lMVxuICAgIHYwW3Zhcm5pc2gtMF1cbiAgICBiMFxuICAgIGVuZFxuICAgIHN1YmdyYXBoIHpvbmUyXG4gICAgdjFbdmFybmlzaC0xXVxuICAgIGIyXG4gICAgYjNcbiAgICBlbmQiLCJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJ1cGRhdGVFZGl0b3IiOmZhbHNlfQ) -->
+<p><img src="images/mermaid-diagram-auto-2.svg" alt=""></p>
+<p>To eliminate a potential <em>hotspot</em> in <code>zone1</code>, the Varnish controller will change the local backend weight by <code>local_backends_count / (sum(remote_backends_count) / zone_count))</code>, so <code>1 / ( 2 / 1 ) = 0.5</code>. Which yields a <code>local</code> backend weight of <code>5</code>. With the same calculation applied to the healthy zone&apos;s backend weights, <code>local</code> backends in that zone will be changed by ratio <code>2 / ( 1 / 1 ) = 2</code> ending with weight of <code>20:</code></p>
+<!-- [![](https://mermaid.ink/img/eyJjb2RlIjoiZ3JhcGggVEJcbiAgICB2MCAtLT58NXwgYjBcbiAgICB2MCAtLT58MXwgYjIgJiBiM1xuICAgIHYxIC0tPnwyMHwgYjIgJiBiM1xuICAgIHYxIC0tPnwxfCBiMFxuICAgIHN1YmdyYXBoIHpvbmUxXG4gICAgdjBbdmFybmlzaC0wXVxuICAgIGIwXG4gICAgZW5kXG4gICAgc3ViZ3JhcGggem9uZTJcbiAgICB2MVt2YXJuaXNoLTFdXG4gICAgYjJcbiAgICBiM1xuICAgIGVuZCIsIm1lcm1haWQiOnsidGhlbWUiOiJkZWZhdWx0In0sInVwZGF0ZUVkaXRvciI6ZmFsc2V9)](https://mermaid-js.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoiZ3JhcGggVEJcbiAgICB2MCAtLT58NXwgYjBcbiAgICB2MCAtLT58MXwgYjIgJiBiM1xuICAgIHYxIC0tPnwyMHwgYjIgJiBiM1xuICAgIHYxIC0tPnwxfCBiMFxuICAgIHN1YmdyYXBoIHpvbmUxXG4gICAgdjBbdmFybmlzaC0wXVxuICAgIGIwXG4gICAgZW5kXG4gICAgc3ViZ3JhcGggem9uZTJcbiAgICB2MVt2YXJuaXNoLTFdXG4gICAgYjJcbiAgICBiM1xuICAgIGVuZCIsIm1lcm1haWQiOnsidGhlbWUiOiJkZWZhdWx0In0sInVwZGF0ZUVkaXRvciI6ZmFsc2V9) -->
+<p><img src="images/mermaid-diagram-auto-3.svg" alt=""></p>
+<p>All weight calculations are performed <em>in flight</em> and react to topology changes immediately as they occur.</p>
+<h4 id="manual-mode-with-pre-defined-thresholds">Manual mode with pre-defined thresholds</h4>
+<p>Another zone-balancing method is <code>thresholds</code>, it gives all control of backend weights to user. To enable this balancing method, <code>backend.zoneBalancing.type</code> should be set to <code>thresholds</code>. It is also required to provide a set of thresholds and respective weights for local and remote backends.</p>
+<pre><code>  backend:
+    selector:
+      app: varnish-backend
+    port: 8081
+    zoneBalancing:
+      type: thresholds
+      thresholds: 
+      - threshold: 100
+        local: 10
+        remote: 1
+      - threshold: 50
+        local: 1
+        remote: 1
+</code></pre><p>In the context of zone balancing, <code>threshold</code> is the percent representation of local backend count compared to average remote backend count per remote zone. Weight values defined for the threshold will be used when backend ratio is lower or equal given threshold, until next threshold condition is met. This way, if only one threshold is defined, weight values defined with it will always be applied to backends -- ignoring topology changes. This behavior allows to configure static weights for the backends.</p>
+<p>It is important to always specify the best case scenario as well as worst case scenario (filling in intermediate threshold values is optional and gives more flexibility for topology routing). Otherwise, the <em>highest</em> threshold will be treated as the best case scenario until lower threshold from the list is passed. Usually, the <code>100</code> threshold will always be defined. This provides weight values that will be used when cluster operates under normal conditions and when backends are equally distributed across zones. </p>
+<p>The provided example below configures Varnish to prioritize local backends over remote backends under normal conditions by setting the local backends&apos; weight to <code>10</code>, while remote backends will have the weight of <code>1</code>, (<code>100 * (2 / (2 / 1) = 100</code>):</p>
+<!-- [![](https://mermaid.ink/img/eyJjb2RlIjoiZ3JhcGggVEJcbiAgICB2MCAtLT58MTB8IGIwICYgYjFcbiAgICB2MCAtLT58MXwgYjIgJiBiM1xuICAgIHYxIC0tPnwxMHwgYjIgJiBiM1xuICAgIHYxIC0tPnwxfCBiMCAmIGIxXG4gICAgc3ViZ3JhcGggem9uZTFcbiAgICB2MFt2YXJuaXNoLTBdXG4gICAgYjBcbiAgICBiMVxuICAgIGVuZFxuICAgIHN1YmdyYXBoIHpvbmUyXG4gICAgdjFbdmFybmlzaC0xXVxuICAgIGIyXG4gICAgYjNcbiAgICBlbmQiLCJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJ1cGRhdGVFZGl0b3IiOmZhbHNlfQ)](https://mermaid-js.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoiZ3JhcGggVEJcbiAgICB2MCAtLT58MTB8IGIwICYgYjFcbiAgICB2MCAtLT58MXwgYjIgJiBiM1xuICAgIHYxIC0tPnwxMHwgYjIgJiBiM1xuICAgIHYxIC0tPnwxfCBiMCAmIGIxXG4gICAgc3ViZ3JhcGggem9uZTFcbiAgICB2MFt2YXJuaXNoLTBdXG4gICAgYjBcbiAgICBiMVxuICAgIGVuZFxuICAgIHN1YmdyYXBoIHpvbmUyXG4gICAgdjFbdmFybmlzaC0xXVxuICAgIGIyXG4gICAgYjNcbiAgICBlbmQiLCJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJ1cGRhdGVFZGl0b3IiOmZhbHNlfQ) -->
+<p><img src="images/mermaid-diagram-thresholds-1.svg" alt=""></p>
+<p>Next condition, <code>50</code> will be met when number of local backends as compared to remote will be <code>50</code> percent or less. In that case, varnish will be configured to set equal weight for all available backends to <code>1</code>, equalizing traffic flow (<code>100 * (1 / (2 / 1) = 50</code>):</p>
+<!-- [![](https://mermaid.ink/img/eyJjb2RlIjoiZ3JhcGggVEJcbiAgICB2MCAtLT58MXwgYjBcbiAgICB2MCAtLT58MXwgYjIgJiBiM1xuICAgIHYxIC0tPnwxMHwgYjIgJiBiM1xuICAgIHYxIC0tPnwxfCBiMFxuICAgIHN1YmdyYXBoIHpvbmUxXG4gICAgdjBbdmFybmlzaC0wXVxuICAgIGIwXG4gICAgZW5kXG4gICAgc3ViZ3JhcGggem9uZTJcbiAgICB2MVt2YXJuaXNoLTFdXG4gICAgYjJcbiAgICBiM1xuICAgIGVuZCIsIm1lcm1haWQiOnsidGhlbWUiOiJkZWZhdWx0In0sInVwZGF0ZUVkaXRvciI6ZmFsc2V9)](https://mermaid-js.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoiZ3JhcGggVEJcbiAgICB2MCAtLT58MXwgYjBcbiAgICB2MCAtLT58MXwgYjIgJiBiM1xuICAgIHYxIC0tPnwxMHwgYjIgJiBiM1xuICAgIHYxIC0tPnwxfCBiMFxuICAgIHN1YmdyYXBoIHpvbmUxXG4gICAgdjBbdmFybmlzaC0wXVxuICAgIGIwXG4gICAgZW5kXG4gICAgc3ViZ3JhcGggem9uZTJcbiAgICB2MVt2YXJuaXNoLTFdXG4gICAgYjJcbiAgICBiM1xuICAgIGVuZCIsIm1lcm1haWQiOnsidGhlbWUiOiJkZWZhdWx0In0sInVwZGF0ZUVkaXRvciI6ZmFsc2V9) -->
+<p><img src="images/mermaid-diagram-thresholds-2.svg" alt=""></p>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="operator-configuration.html" class="navigation navigation-prev " aria-label="Previous page: Operator Configuration">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+                <a href="varnish-cluster-configuration.html" class="navigation navigation-next " aria-label="Next page: VarnishCluster Configuration">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"VarnishCluster","level":"1.5","depth":1,"next":{"title":"VarnishCluster Configuration","level":"1.6","depth":1,"path":"varnish-cluster-configuration.md","ref":"varnish-cluster-configuration.md","articles":[]},"previous":{"title":"Operator Configuration","level":"1.4","depth":1,"path":"operator-configuration.md","ref":"operator-configuration.md","articles":[]},"dir":"ltr"},"config":{"plugins":["hints"],"root":".","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"hints":{"danger":"fa fa-exclamation-circle","info":"fa fa-info-circle","tip":"fa fa-mortar-board","working":"fa fa-wrench"},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Varnish Operator Docs","gitbook":"*"},"file":{"path":"varnish-cluster.md","mtime":"2023-01-17T21:10:29.000Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2023-01-17T21:11:40.244Z"},"basePath":".","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <script src="gitbook/gitbook.js"></script>
+    <script src="gitbook/theme.js"></script>
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-sharing/buttons.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+

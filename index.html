@@ -1,0 +1,411 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <title>Introduction · Varnish Operator Docs</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 3.2.3">
+        
+        
+        
+    
+    <link rel="stylesheet" href="gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-hints/plugin-hints.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="quick-start.html" />
+    
+    
+
+    </head>
+    <body>
+        
+<div class="book">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter active" data-level="1.1" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    Introduction
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="quick-start.html">
+            
+                <a href="quick-start.html">
+            
+                    
+                    Quick Start
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3" data-path="installation.html">
+            
+                <a href="installation.html">
+            
+                    
+                    Installation
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4" data-path="operator-configuration.html">
+            
+                <a href="operator-configuration.html">
+            
+                    
+                    Operator Configuration
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.5" data-path="varnish-cluster.html">
+            
+                <a href="varnish-cluster.html">
+            
+                    
+                    VarnishCluster
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.6" data-path="varnish-cluster-configuration.html">
+            
+                <a href="varnish-cluster-configuration.html">
+            
+                    
+                    VarnishCluster Configuration
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.7" data-path="vcl-configuration.html">
+            
+                <a href="vcl-configuration.html">
+            
+                    
+                    VCL Configuration
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.8" data-path="monitoring.html">
+            
+                <a href="monitoring.html">
+            
+                    
+                    Monitoring
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.9" data-path="debugging-issues.html">
+            
+                <a href="debugging-issues.html">
+            
+                    
+                    Debugging Issues
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.10" data-path="architecture.html">
+            
+                <a href="architecture.html">
+            
+                    
+                    Architecture
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.11" data-path="development.html">
+            
+                <a href="development.html">
+            
+                    
+                    Development
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+            Published with GitBook
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href="." >Introduction</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h1 id="introduction">Introduction</h1>
+<p>Varnish operator creates, configures and manages Varnish clusters. It generates the VCL configuration using user defined templates and keeps it up to date as the cluster changes.</p>
+<h2 id="features">Features</h2>
+<ul>
+<li>[x] Basic install</li>
+<li>[x] Full lifecycle support (create/update/delete)</li>
+<li>[x] Automatic VCL configuration updates (using user defined templates)</li>
+<li>[x] Prometheus metrics support</li>
+<li>[x] Scaling</li>
+<li>[x] Configurable update strategy</li>
+<li>[x] Persistence (for <a href="https://varnish-cache.org/docs/trunk/users-guide/storage-backends.html#file" target="_blank">file storage backend</a> support)</li>
+<li>[ ] Multiple Varnish versions support</li>
+<li>[ ] Autoscaling</li>
+</ul>
+<h3 id="overview">Overview</h3>
+<p>The operator works based on a CustomResourceDefinition that manages the Varnish cluster. It defines a new kind called <code>VarnishCluster</code> that describes the desired state of your Varnish instances.</p>
+<p>Example of a simple <code>VarnishCluster</code>:</p>
+<pre><code class="lang-yaml"><span class="hljs-attr">apiVersion:</span> caching.ibm.com/v1alpha1
+<span class="hljs-attr">kind:</span> VarnishCluster
+<span class="hljs-attr">metadata:</span>
+<span class="hljs-attr">  labels:</span>
+<span class="hljs-attr">    operator:</span> varnish
+<span class="hljs-attr">  name:</span> varnishcluster-sample
+<span class="hljs-attr">  namespace:</span> varnish-ns
+<span class="hljs-attr">spec:</span>
+<span class="hljs-attr">  vcl:</span>
+<span class="hljs-attr">    configMapName:</span> vcl-files
+<span class="hljs-attr">    entrypointFileName:</span> entrypoint.vcl
+<span class="hljs-attr">  replicas:</span> <span class="hljs-number">3</span>
+<span class="hljs-attr">  backend:</span>  
+<span class="hljs-attr">    selector:</span>
+<span class="hljs-attr">      app:</span> nginx
+<span class="hljs-attr">  service:</span>
+<span class="hljs-attr">    port:</span> <span class="hljs-number">80</span>
+</code></pre>
+<p>See the <a href="varnish-cluster-configuration.html">VarnishCluster configuration section</a> for more details about the <code>VarnishCluster</code> spec.</p>
+<h3 id="vcl-configuration">VCL configuration</h3>
+<p>The VCL configuration is generated using templated VCL files stored in a config map. <a href="https://golang.org/pkg/text/template/" target="_blank">Go templates</a> are used as the template engine and can be used to generate Varnish backend definitions and to build your directors.</p>
+<p>See the <a href="vcl-configuration.html">VCL files configuration</a> section for more details.</p>
+<h3 id="incentive-for-building-an-operator">Incentive for building an operator</h3>
+<ul>
+<li>Ability to manage Varnish instances in a Kubernetes native way </li>
+<li>Deploying Varnish directly as a Deployment into Kubernetes is not immediately useful because the VCL has to know about the backend hosts. Those host names (or IP addresses) need to be stable in order to keep the VCL valid, but that&apos;s not possible due to dynamic nature of Kubernetes. The only obvious way to get a stable hostname (IP address) is via a Kubernetes Service, but that Service already acts as a load balancer to the Deployment it backs, which means undefined behavior from the Varnish perspective, and adds an extra network hop. Thus, trying to use Varnish in a regular deployment is unproductive.</li>
+<li>Support of different directors for backends. If you expose your backends to Varnish as a Kubernetes service you can have only round-robin load balancing. Since the operator works with backends at the pod level, you can use different directors supported by Varnish (<a href="https://varnish-cache.org/docs/5.1/reference/vmod_directors.generated.html#obj-random" target="_blank">random</a>, <a href="https://varnish-cache.org/docs/5.1/reference/vmod_directors.generated.html#obj-fallback" target="_blank">fallback</a>)</li>
+<li>You can&apos;t build a sharded Varnish cluster due to the dynamic nature of Kubernetes and the requirement to know about each Varnish peer (pod) in order to build the VCL.</li>
+</ul>
+<h3 id="further-reading">Further reading</h3>
+<ul>
+<li><a href="quick-start.html">Quickstart</a></li>
+<li><a href="varnish-cluster-configuration.html">VarnishCluster configuration</a></li>
+<li><a href="operator-configuration.html">Varnish operator configuration</a></li>
+<li><a href="vcl-configuration.html">VCL files configuration</a></li>
+<li><a href="development.html">Contribution</a></li>
+</ul>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                
+                <a href="quick-start.html" class="navigation navigation-next navigation-unique" aria-label="Next page: Quick Start">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"Introduction","level":"1.1","depth":1,"next":{"title":"Quick Start","level":"1.2","depth":1,"path":"quick-start.md","ref":"quick-start.md","articles":[]},"dir":"ltr"},"config":{"plugins":["hints"],"root":".","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"hints":{"danger":"fa fa-exclamation-circle","info":"fa fa-info-circle","tip":"fa fa-mortar-board","working":"fa fa-wrench"},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Varnish Operator Docs","gitbook":"*"},"file":{"path":"README.md","mtime":"2023-01-17T21:10:29.000Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2023-01-17T21:11:40.244Z"},"basePath":".","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <script src="gitbook/gitbook.js"></script>
+    <script src="gitbook/theme.js"></script>
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-sharing/buttons.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+

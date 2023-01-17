@@ -1,0 +1,771 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <title>VarnishCluster Configuration · Varnish Operator Docs</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 3.2.3">
+        
+        
+        
+    
+    <link rel="stylesheet" href="gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-hints/plugin-hints.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="vcl-configuration.html" />
+    
+    
+    <link rel="prev" href="varnish-cluster.html" />
+    
+
+    </head>
+    <body>
+        
+<div class="book">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    Introduction
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="quick-start.html">
+            
+                <a href="quick-start.html">
+            
+                    
+                    Quick Start
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3" data-path="installation.html">
+            
+                <a href="installation.html">
+            
+                    
+                    Installation
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4" data-path="operator-configuration.html">
+            
+                <a href="operator-configuration.html">
+            
+                    
+                    Operator Configuration
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.5" data-path="varnish-cluster.html">
+            
+                <a href="varnish-cluster.html">
+            
+                    
+                    VarnishCluster
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter active" data-level="1.6" data-path="varnish-cluster-configuration.html">
+            
+                <a href="varnish-cluster-configuration.html">
+            
+                    
+                    VarnishCluster Configuration
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.7" data-path="vcl-configuration.html">
+            
+                <a href="vcl-configuration.html">
+            
+                    
+                    VCL Configuration
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.8" data-path="monitoring.html">
+            
+                <a href="monitoring.html">
+            
+                    
+                    Monitoring
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.9" data-path="debugging-issues.html">
+            
+                <a href="debugging-issues.html">
+            
+                    
+                    Debugging Issues
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.10" data-path="architecture.html">
+            
+                <a href="architecture.html">
+            
+                    
+                    Architecture
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.11" data-path="development.html">
+            
+                <a href="development.html">
+            
+                    
+                    Development
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+            Published with GitBook
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href="." >VarnishCluster Configuration</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h1 id="varnishcluster-configuration">VarnishCluster Configuration</h1>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Is Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>affinity</code></td>
+<td><a href="https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity" target="_blank">Affinity</a> settings for the pods. It allows you to configure onto which nodes Varnish pods should prefer being scheduled.</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>priorityClassName</code></td>
+<td><a href="https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#priorityclass" target="_blank">priorityClass</a> settings for the pods. It allows you to set a PriorityClassName and thus set a priority to your pods, to avoid eviction.</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>backend.namespaces</code></td>
+<td>Namespace(s) to look for backend pods. By default - namespace the VarnishCluster is deployed to.</td>
+<td><code>required</code></td>
+</tr>
+<tr>
+<td><code>backend.onlyReady</code></td>
+<td>Include (<code>false</code>, by default) or exclude (<code>true</code>) backend pods from the VCL (.Backends template var). Alters <code>.Backends</code> template variable based on Kubernetes health checks (by default not ready pods are also included in VCL) instead of <a href="https://varnish-cache.org/docs/6.6/reference/vcl-probe.html#backend-health-probes" target="_blank">Varnish health probes</a>.</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>backend.port</code></td>
+<td>The port of the backend pods being cached by Varnish. Can be port name or port number.</td>
+<td><code>required</code></td>
+</tr>
+<tr>
+<td><code>backend.selector</code></td>
+<td>The selector used to identify the backend Pods.</td>
+<td><code>required</code></td>
+</tr>
+<tr>
+<td><code>backend.zoneBalancing</code></td>
+<td>Controls Varnish backend topology aware routing which can assign weights to backends according to their geographical location.</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>backend.zoneBalancing.type</code></td>
+<td>Varnish backend zone-balancing type. Accepted values: <code>disabled</code>, <code>auto</code>, <code>thresholds</code></td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>backend.zoneBalancing.thresholds</code></td>
+<td>Array of thresholds objects to determine condition and respective weights to be assigned to backends: <code>threshold</code>, <code>local</code> - local backend weight, <code>remote</code> - remote backend weight</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>logLevel</code></td>
+<td>The minimum enabled logging level. Allowed values: <code>debug</code>, <code>info</code>, <code>warn</code>, <code>error</code>, <code>dpanic</code>, <code>panic</code>, <code>fatal</code>. Default: <code>info</code></td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>logFormat</code></td>
+<td>Format of the logs. Can be <code>json</code> and <code>console</code>. Default: <code>json</code></td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>monitoring</code></td>
+<td>The operator monitoring configuration object</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>monitoring.grafanaDashboard</code></td>
+<td>A dashboard that can be installed along with the operator and used in grafana. Installed as a ConfigMap.</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>monitoring.grafanaDashboard.enabled</code></td>
+<td>Enable or disable the ConfigMap installation. Default: <code>false</code></td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>monitoring.grafanaDashboard.datasourceName</code></td>
+<td>Name of the Grafana datasource the dashboard should use.</td>
+<td><code>required</code></td>
+</tr>
+<tr>
+<td><code>monitoring.grafanaDashboard.labels</code></td>
+<td>ConfigMap labels. Can be used to for discovery by grafana. See the <code>.sidecar.dashboards.label</code> config parameter of <a href="https://github.com/helm/charts/tree/master/stable/grafana" target="_blank">Grafana chart</a> for more details. Default: <code>{ grafana_dashboard: &quot;1&quot; }</code></td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>monitoring.grafanaDashboard.namespace</code></td>
+<td>Namespace that the ConfigMap with the dashboard should be installed to. Default to the namespace VarnishCluster is installed to</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>monitoring.grafanaDashboard.title</code></td>
+<td>Title of the Grafana dashboard. Default: <code>Varnish (&lt;cluster namespace&gt;/&lt;name&gt;)</code></td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>monitoring.prometheusServiceMonitor</code></td>
+<td>The Prometheus ServiceMonitor that is preconfigured to monitors the operator pods.</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>monitoring.prometheusServiceMonitor.enabled</code></td>
+<td>Enable or disable ServiceMontitor installation. Default: <code>false</code></td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>monitoring.prometheusServiceMonitor.labels</code></td>
+<td>ServiceMonitor labels that will be used by Prometheus instance to discover this ServiceMonitor.</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>monitoring.prometheusServiceMonitor.namespace</code></td>
+<td>The namespace the it should be installed to. Default to the namespace VarnishCluster is installed to</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>nodeSelector</code></td>
+<td>Node selector to control where the Varnish pods should be scheduled</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>podDisruptionBudget</code></td>
+<td><a href="https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget" target="_blank">Pod Disruption Budget</a> configuration. Can be used to tell Kubernetes how many pods are required to be up (or allowed to be down) to not cause service disruption</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>podDisruptionBudget.minAvailable</code></td>
+<td>An eviction is allowed if at least <code>minAvailable</code> pods will still be available after the eviction, i.e. even in the absence of the evicted pod</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>podDisruptionBudget.maxUnavailable</code></td>
+<td>An eviction is allowed if at most <code>maxUnavailable</code> pods are unavailable after the eviction, i.e. even in absence of the evicted pod. This is a mutually exclusive setting with <code>minAvailable</code></td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>replicas</code></td>
+<td>Number of Varnish nodes</td>
+<td><code>required</code></td>
+</tr>
+<tr>
+<td><code>service</code></td>
+<td>Varnish service configuration.</td>
+<td><code>required</code></td>
+</tr>
+<tr>
+<td><code>service.annotations</code></td>
+<td>Additional annotations for the service.</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>service.port</code></td>
+<td>The port number used to expose Varnish pods.</td>
+<td><code>required</code></td>
+</tr>
+<tr>
+<td><code>service.metricsPort</code></td>
+<td>The port that will expose the Prometheus metrics exporter. Default: <code>9131</code>.</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>service.nodePort</code></td>
+<td>The port number used to set NodePort for Varnish. Service type `NodePort should be selected.</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>service.metricsNodePort</code></td>
+<td>The port number used to set NodePort for Varnish Metrics Exporter. Service type `NodePort should be selected.</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>service.controllerMetricsNodePort</code></td>
+<td>The port number used to set NodePort for Varnish Controller Metrics exporter. Service type `NodePort should be selected.</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>service.type</code></td>
+<td>Type of the Service. Allowed values: <code>ClusterIP</code>; <code>LoadBalancer</code>; <code>NodePort</code>.</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>tolerations</code></td>
+<td>Configuration that defines which node <a href="https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/" target="_blank">taints</a> can the pods tolerate. For example to allow Varnish pods to run on nodes that are marked (tainted) as machines dedicated for in-memory cache</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>updateStrategy</code></td>
+<td>Allows to control the way Varnish pods will be <a href="https://kubernetes.io/docs/tutorials/stateful-application/basic-stateful-set/#updating-statefulsets" target="_blank">updated</a>.</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>updateStrategy.type</code></td>
+<td>Defines the type of the update strategy. Default: <code>OnDelete</code></td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>updateStrategy.delayedRollingUpdate</code></td>
+<td>Configuration for <code>DelayedRollingUpdate</code> strategy</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>updateStrategy.delayedRollingUpdate.delaySeconds</code></td>
+<td>Indicates the wait time between pod reloads during rolling update. Default: 60 seconds</td>
+<td><code>required</code></td>
+</tr>
+<tr>
+<td><code>updateStrategy.rollingUpdate</code></td>
+<td>Used to communicate parameters when type is <code>RollingUpdate</code></td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>updateStrategy.rollingUpdate.partition</code></td>
+<td>Partition indicates the ordinal at which the StatefulSet should be partitioned. Default: 0</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish</code></td>
+<td>An object that defines the configuration of a particular Varnish instance being deployed</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.admAuth</code></td>
+<td>An object that defines custom <a href="https://kubernetes.io/docs/concepts/configuration/secret/" target="_blank">kubernetes secret</a> to keep a Varnish authentication data to secure communication for <code>varnishadm</code> utility. Cluster creates its own if omitted.</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.admAuth.secretName</code></td>
+<td>The name of kubernetes secret which keeps auth data for <code>varnishadm</code>.</td>
+<td><code>required</code></td>
+</tr>
+<tr>
+<td><code>varnish.admAuth.key</code></td>
+<td>The key from kubernetes secret which to use to collect data credentials for <code>varnishadm</code>. If the key is omitted, the cluster will use &quot;secret&quot; as the key. If the value associated to the key is empty, the cluster will generate a secret.</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.args</code></td>
+<td>Additional <a href="https://varnish-cache.org/docs/trunk/reference/varnishd.html#options" target="_blank">Varnish daemon arguments</a></td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.controller</code></td>
+<td>An object that defines the configuration of a particular Varnish controller being deployed</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.controller.image</code></td>
+<td>Path to the Varnish Controller image being used. If not defined uses <code>varnish.image</code>+<code>-controller</code> suffix. Something like <code>varnish-controller</code></td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.controller.imagePullPolicy</code></td>
+<td>Image pull policy for the container. Default: <code>Always</code></td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.controller.resources</code></td>
+<td><a href="https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/#resource-requests-and-limits-of-pod-and-container" target="_blank">Resource requests and limits</a> for Varnish controller container.</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.envFrom</code></td>
+<td>Injects an env var into the Varnish container from a ConfigMap or Secret. Useful if a value needs to be passed (securely in case of Secret) to the VCL files. So it can be read using <a href="https://varnish-cache.org/docs/trunk/reference/vmod_std.html#string-getenv-string-name" target="_blank">std.getenv()</a>.</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.envFrom.configMapRef</code></td>
+<td>The ConfigMap to select from</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.envFrom.configMapRef.name</code></td>
+<td>Name of the ConfigMap</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.envFrom.configMapRef.optional</code></td>
+<td>Specify whether the ConfigMap must be defined</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.envFrom.prefix</code></td>
+<td>An optional identifier to prepend to each key. Must be a C_IDENTIFIER</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.envFrom.secretRef</code></td>
+<td>The Secret to select from</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.envFrom.secretRef.name</code></td>
+<td>Name of the Secret</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.envFrom.secretRef.optional</code></td>
+<td>Specify whether the Secret must be defined</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.extraInitContainers</code></td>
+<td>Additional init <a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.23/#container-v1-core" target="_blank">containers</a></td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.extraVolumeClaimTemplates[]</code></td>
+<td><a href="">VolumeClaimTemplates</a> for the VarnishCluster statefulset</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.extraVolumeClaimTemplates[].metadata</code></td>
+<td>Metadata for the VolumeClaimTemplate</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.extraVolumeClaimTemplates[].metadata.name</code></td>
+<td>Name of the volume</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.extraVolumeClaimTemplates[].metadata.labels</code></td>
+<td>Labels to set for the               VolumeClaimTemplate</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.extraVolumeClaimTemplates[].metadata.annotations</code></td>
+<td>Annotations to set for the               VolumeClaimTemplate</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.extraVolumeClaimTemplates[].spec</code></td>
+<td>Spec for the <a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.23/#persistentvolumeclaimspec-v1-core" target="_blank">PersistentVolumeClaim</a></td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.extraVolumeMounts</code></td>
+<td>Additional <a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.23/#volumemount-v1-core" target="_blank">volume mounts</a> for the Varnish container</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.extraVolumes</code></td>
+<td>Additional <a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.23/#volume-v1-core" target="_blank">volumes</a></td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.image</code></td>
+<td>Path to the Varnish image being used</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.imagePullPolicy</code></td>
+<td>Image pull policy for the Varnish container. Default: <code>Always</code></td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.imagePullSecret</code></td>
+<td>The name of the image pull secret to use to pull container images</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.metricsExporter</code></td>
+<td>An object that defines the configuration of a particular Varnish Prometheus metrics exporter being deployed</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.metricsExporter.image</code></td>
+<td>Path to the Varnish Metrics exporter image being used. If not defined uses <code>varnish.image</code>+<code>-metrics-exporter</code> suffix. Something like <code>varnish-metrics-exporter</code></td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.metricsExporter.imagePullPolicy</code></td>
+<td>Image pull policy for the container. Default: <code>Always</code></td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.metricsExporter.resources</code></td>
+<td><a href="https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/#resource-requests-and-limits-of-pod-and-container" target="_blank">Resource requests and limits</a> for Varnish metrics exporter container.</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>varnish.resources</code></td>
+<td><a href="https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/#resource-requests-and-limits-of-pod-and-container" target="_blank">Resource requests and limits</a> for Varnish container.</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td><code>vcl</code></td>
+<td>An object that defines the <a href="vcl-configuration.html">VCL ConfigMap configuration</a></td>
+<td><code>required</code></td>
+</tr>
+<tr>
+<td><code>vcl.configMapName</code></td>
+<td>Name of the ConfigMap containing the VCL configuration files</td>
+<td><code>required</code></td>
+</tr>
+<tr>
+<td><code>vcl.entrypointFileName</code></td>
+<td>The name of the main VCL file</td>
+<td><code>required</code></td>
+</tr>
+</tbody>
+</table>
+<p>You can also find an example of <code>VarnishCluster</code> with detailed comments <a href="https://github.com/IBM/varnish-operator/blob/master/config/samples/varnishcluster.yaml" target="_blank">here</a>. </p>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="varnish-cluster.html" class="navigation navigation-prev " aria-label="Previous page: VarnishCluster">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+                <a href="vcl-configuration.html" class="navigation navigation-next " aria-label="Next page: VCL Configuration">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"VarnishCluster Configuration","level":"1.6","depth":1,"next":{"title":"VCL Configuration","level":"1.7","depth":1,"path":"vcl-configuration.md","ref":"vcl-configuration.md","articles":[]},"previous":{"title":"VarnishCluster","level":"1.5","depth":1,"path":"varnish-cluster.md","ref":"varnish-cluster.md","articles":[]},"dir":"ltr"},"config":{"plugins":["hints"],"root":".","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"hints":{"danger":"fa fa-exclamation-circle","info":"fa fa-info-circle","tip":"fa fa-mortar-board","working":"fa fa-wrench"},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Varnish Operator Docs","gitbook":"*"},"file":{"path":"varnish-cluster-configuration.md","mtime":"2023-01-17T21:10:29.000Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2023-01-17T21:11:40.244Z"},"basePath":".","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <script src="gitbook/gitbook.js"></script>
+    <script src="gitbook/theme.js"></script>
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-sharing/buttons.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+

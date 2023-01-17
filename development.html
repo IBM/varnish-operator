@@ -1,0 +1,505 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <title>Development · Varnish Operator Docs</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 3.2.3">
+        
+        
+        
+    
+    <link rel="stylesheet" href="gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-hints/plugin-hints.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    
+    <link rel="prev" href="architecture.html" />
+    
+
+    </head>
+    <body>
+        
+<div class="book">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    Introduction
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="quick-start.html">
+            
+                <a href="quick-start.html">
+            
+                    
+                    Quick Start
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3" data-path="installation.html">
+            
+                <a href="installation.html">
+            
+                    
+                    Installation
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4" data-path="operator-configuration.html">
+            
+                <a href="operator-configuration.html">
+            
+                    
+                    Operator Configuration
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.5" data-path="varnish-cluster.html">
+            
+                <a href="varnish-cluster.html">
+            
+                    
+                    VarnishCluster
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.6" data-path="varnish-cluster-configuration.html">
+            
+                <a href="varnish-cluster-configuration.html">
+            
+                    
+                    VarnishCluster Configuration
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.7" data-path="vcl-configuration.html">
+            
+                <a href="vcl-configuration.html">
+            
+                    
+                    VCL Configuration
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.8" data-path="monitoring.html">
+            
+                <a href="monitoring.html">
+            
+                    
+                    Monitoring
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.9" data-path="debugging-issues.html">
+            
+                <a href="debugging-issues.html">
+            
+                    
+                    Debugging Issues
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.10" data-path="architecture.html">
+            
+                <a href="architecture.html">
+            
+                    
+                    Architecture
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter active" data-level="1.11" data-path="development.html">
+            
+                <a href="development.html">
+            
+                    
+                    Development
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+            Published with GitBook
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href="." >Development</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h1 id="development">Development</h1>
+<p>Requirements:</p>
+<ul>
+<li>Kubernetes 1.21 or newer. You can use <a href="https://kubernetes.io/docs/setup/minikube/" target="_blank">minikube</a> for local development.</li>
+<li>Go 1.19+</li>
+<li><a href="https://kubebuilder.io/quick-start.html#installation" target="_blank">Kubebuilder</a> 2.0.0+</li>
+<li><a href="https://github.com/kubernetes-sigs/kustomize" target="_blank">kustomize</a> 3.1.0+</li>
+<li><a href="https://helm.sh/" target="_blank">helm</a> v2.14.3+</li>
+<li><a href="https://docs.docker.com/install/" target="_blank">docker</a></li>
+<li><a href="https://godoc.org/golang.org/x/tools/cmd/goimports" target="_blank">goimports</a></li>
+<li><a href="https://github.com/golangci/golangci-lint" target="_blank">GolangCI-Lint</a> 1.19.1+</li>
+<li><a href="https://github.com/GitbookIO/gitbook-cli" target="_blank">gitbook cli</a>, if you want to modify and test the docs locally</li>
+<li><a href="https://github.com/kubernetes-sigs/kind" target="_blank">kind</a> v0.6.0+ for running end to end tests</li>
+</ul>
+<h3 id="code-structure">Code structure</h3>
+<p>The project consists of 2 components working together:</p>
+<ul>
+<li>Varnish operator itself, that manages <code>VarnishCluster</code> resources</li>
+<li>Varnish Controller is a process that&apos;s running in the same pod as Varnish. It is responsible for watching Kubernetes resources and reacting accordingly. For example, Varnish Controller reloads the VCL configuration when backends scale or the VCL configuration has changed in the ConfigMap.</li>
+</ul>
+<p>Both components live in one repo and share the same codebase, dependencies, build scripts, etc.</p>
+<p>The operator and varnish controller&apos;s codebases are located in <code>/pkg/varnishcluster/</code> and <code>pkg/varnishcontroller</code> folders respectively.
+The main packages for both components can be found in the <code>cmd/</code> folder.</p>
+<h3 id="developing-the-operator">Developing the operator</h3>
+<pre><code class="lang-bash">$ git <span class="hljs-built_in">clone</span> https://github.com/ibm/varnish-operator.git
+$ <span class="hljs-built_in">cd</span> varnish-operator
+$ go mod download
+</code></pre>
+<h4 id="run-the-operator-locally-against-a-kubernetes-cluster">Run the operator locally against a Kubernetes cluster</h4>
+<p>The operator can be run locally without building the image every time the code changes.</p>
+<p>First, you need to install the <a href="https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/" target="_blank">CRD</a> for <code>VarnishCluster</code> resource.</p>
+<pre><code class="lang-bash">$ make install
+&lt;path&gt;/&lt;to&gt;/&lt;controller-gen&gt;/controller-gen <span class="hljs-string">&quot;crd:trivialVersions=true&quot;</span> rbac:roleName=varnish-operator paths=<span class="hljs-string">&quot;./...&quot;</span> output:crd:artifacts:config=config/crd/bases
+kustomize build &lt;path&gt;/&lt;to&gt;/&lt;repo&gt;/config/crd &gt; &lt;path&gt;/&lt;to&gt;/&lt;repo&gt;/varnish-operator/templates/customresourcedefinition.yaml
+&lt;path&gt;/&lt;to&gt;/&lt;controller-gen&gt;/controller-gen <span class="hljs-string">&quot;crd:trivialVersions=true&quot;</span> rbac:roleName=varnish-operator paths=<span class="hljs-string">&quot;./...&quot;</span> output:crd:none output:rbac:stdout &gt; &lt;path&gt;/&lt;to&gt;/&lt;repo&gt;/varnish-operator/templates/clusterrole.yaml
+kustomize build &lt;path&gt;/&lt;to&gt;/&lt;repo&gt;/config/crd | kubectl apply <span class="hljs-_">-f</span> -
+customresourcedefinition.apiextensions.k8s.io/varnishclusters.ibm.com created
+</code></pre>
+<p>You should see the created CRD in your cluster:</p>
+<pre><code class="lang-bash">$ kubectl get customresourcedefinitions.apiextensions.k8s.io
+ NAME                          CREATED AT
+ varnishclusters.ibm.com       2019-06-05T09:53:26Z
+</code></pre>
+<p><code>make install</code> should be run only for the first time and after changes in the CRD schema because it is only responsible for installing and updating the CRD for the <code>VarnishCluster</code> resource.</p>
+<p>After that you&apos;re ready to run the operator:</p>
+<pre><code class="lang-bash">$ make run
+make run                                                                                                              
+&lt;path&gt;/&lt;to&gt;/&lt;controller-gen&gt;/controller-gen object:headerFile=./hack/boilerplate.go.txt paths=<span class="hljs-string">&quot;./...&quot;</span>
+<span class="hljs-built_in">cd</span> &lt;path&gt;/&lt;to&gt;/&lt;repo&gt;/varnish-operator/ &amp;&amp; go generate ./pkg/... ./cmd/...
+<span class="hljs-built_in">cd</span> &lt;path&gt;/&lt;to&gt;/&lt;repo&gt;/varnish-operator/ &amp;&amp; goimports -w ./pkg ./cmd
+<span class="hljs-built_in">cd</span> &lt;path&gt;/&lt;to&gt;/&lt;repo&gt;/varnish-operator/ &amp;&amp; go vet ./pkg/... ./cmd/...
+NAMESPACE=<span class="hljs-string">&quot;default&quot;</span> LOGLEVEL=debug LOGFORMAT=console CONTAINER_IMAGE=ibmcom/varnish:0.20.0-dev LEADERELECTION_ENABLED=<span class="hljs-literal">false</span> WEBHOOKS_ENABLED=<span class="hljs-literal">false</span> go run &lt;path&gt;/&lt;to&gt;/&lt;repo&gt;/varnish-operator/cmd/manager/main.go...
+</code></pre>
+<p>By default the operator will work in the <code>default</code> namespace. You can override that behaviour by setting the <code>NAMESPACE</code> env var:</p>
+<pre><code class="lang-bash">$ NAMESPACE=varnish-operator make run
+</code></pre>
+<p>After you&apos;ve made changes to the operator code, just rerun <code>make run</code> to test them.</p>
+<h4 id="deploying-your-operator-in-a-kubernetes-cluster">Deploying your operator in a Kubernetes cluster</h4>
+<p>Some changes can&apos;t be tested by running the operator locally:</p>
+<ul>
+<li>Validating and Mutating webhooks.</li>
+<li>Correctness of RBAC permissions. With the <code>make run</code> approach, your local <code>kubectl</code> configs are used to communicate with the cluster, not the clusterrole as it would be in production.</li>
+</ul>
+<p>To test that functionality, you would have to run your operator as a pod in the cluster.</p>
+<p>This can be done using the helm template configured to use your custom image:</p>
+<pre><code class="lang-bash">docker build -t &lt;image-name&gt; <span class="hljs-_">-f</span> Dockerfile .
+docker push &lt;image-name&gt;
+make manifests <span class="hljs-comment">#make sure your helm charts are in sync with current CRD and RBAC definitions</span>
+helm install varnish-operator --namespace varnish-operator-system --set container.image=&lt;image-name&gt; ./varnish-operator
+</code></pre>
+<p>Check the operator pod logs to make sure all works as expected:</p>
+<pre><code class="lang-bash">kubectl logs -n varnish-operator-system varnish-operator-fd96f48f-gn6mc
+{<span class="hljs-string">&quot;level&quot;</span>:<span class="hljs-string">&quot;info&quot;</span>,<span class="hljs-string">&quot;ts&quot;</span>:1559818986.866487,<span class="hljs-string">&quot;caller&quot;</span>:<span class="hljs-string">&quot;manager/main.go:34&quot;</span>,<span class="hljs-string">&quot;msg&quot;</span>:<span class="hljs-string">&quot;Version: 0.14.5&quot;</span>}
+{<span class="hljs-string">&quot;level&quot;</span>:<span class="hljs-string">&quot;info&quot;</span>,<span class="hljs-string">&quot;ts&quot;</span>:1559818986.8665597,<span class="hljs-string">&quot;caller&quot;</span>:<span class="hljs-string">&quot;manager/main.go:35&quot;</span>,<span class="hljs-string">&quot;msg&quot;</span>:<span class="hljs-string">&quot;Leader election enabled: true&quot;</span>}
+{<span class="hljs-string">&quot;level&quot;</span>:<span class="hljs-string">&quot;info&quot;</span>,<span class="hljs-string">&quot;ts&quot;</span>:1559818986.866619,<span class="hljs-string">&quot;caller&quot;</span>:<span class="hljs-string">&quot;manager/main.go:36&quot;</span>,<span class="hljs-string">&quot;msg&quot;</span>:<span class="hljs-string">&quot;Log level: info&quot;</span>}
+...
+</code></pre>
+<h3 id="developing-varnish-controller">Developing varnish controller</h3>
+<p>Varnish pods (with varnish-controller inside) can only be tested by running in Kubernetes. That means that we need to build an image every time we make a change in the code related to varnish-controller.</p>
+<p>After changes are made in the code, the typical workflow will be the following:</p>
+<pre><code class="lang-bash">docker build <span class="hljs-_">-f</span> Dockerfile.controller  -t &lt;image-name&gt; .
+docker push &lt;image-name&gt;
+</code></pre>
+<p>Then, in your <code>VarnishCluster</code>, specify your image:</p>
+<pre><code class="lang-yaml"><span class="hljs-attr">apiVersion:</span> caching.ibm.com/v1alpha1
+<span class="hljs-attr">kind:</span> VarnishCluster
+...
+<span class="hljs-attr">spec:</span>
+<span class="hljs-attr">  varnish:</span>
+...
+<span class="hljs-attr">    controller:</span>
+<span class="hljs-attr">      image:</span> &lt;image-name<span class="hljs-string">&gt;
+...
+</span></code></pre>
+<p>The StatefulSet will reload the pods with new image. If you&apos;re reusing the same image name, make sure <code>spec.statefulSet.container.imagePullPolicy</code> is set to <code>Always</code> and reload the pods manually by deleting them or recreating the <code>VarnishCluster</code>. </p>
+<p>To change varnishd - varnish daemon or varnish metrics exporter containers refer to appropriate Docker files configurations. Update <code>VarnishCluster</code> and specify your images same way as it is described for varnish controller above.</p>
+<p>To build new varnishd use:</p>
+<pre><code class="lang-bash">docker build <span class="hljs-_">-f</span> Dockerfile.varnish -t &lt;image-name&gt; .
+docker push &lt;image-name&gt;
+</code></pre>
+<p>Then, in your <code>VarnishCluster</code>, specify your image for varnishd:</p>
+<pre><code class="lang-yaml"><span class="hljs-attr">apiVersion:</span> caching.ibm.com/v1alpha1
+<span class="hljs-attr">kind:</span> VarnishCluster
+...
+<span class="hljs-attr">spec:</span>
+<span class="hljs-attr">  varnish:</span>
+<span class="hljs-attr">    image:</span> &lt;image-name<span class="hljs-string">&gt;
+...
+</span></code></pre>
+<p>To build new varnish metrics exporter use:</p>
+<pre><code class="lang-bash">docker build <span class="hljs-_">-f</span> Dockerfile.exporter -t &lt;image-name&gt; .
+docker push &lt;image-name&gt;
+</code></pre>
+<p>Then, in your <code>VarnishCluster</code>, specify your image for varnish metrics exporter:</p>
+<pre><code class="lang-yaml"><span class="hljs-attr">apiVersion:</span> caching.ibm.com/v1alpha1
+<span class="hljs-attr">kind:</span> VarnishCluster
+...
+<span class="hljs-attr">spec:</span>
+<span class="hljs-attr">  varnish:</span>
+...
+<span class="hljs-attr">    metricsExporter:</span>
+<span class="hljs-attr">      image:</span> &lt;image-name<span class="hljs-string">&gt;
+...
+</span></code></pre>
+<p>There is <code>PROMETHEUS_VARNISH_EXPORTER_VERSION</code> docker&apos;s build argument available. This allows you to specify which version of prometheus varnish metrics exporter to use in your image. Just set it to the required value before build the metrics exporter image:</p>
+<p><code>docker build --build-arg PROMETHEUS_VARNISH_EXPORTER_VERSION=1.6.1  -t &lt;image-name&gt; -f Dockerfile.exporter .</code></p>
+<h3 id="tests">Tests</h3>
+<p>To run tests simply run <code>make test</code> in repo&apos;s root directory. </p>
+<p>Tests depend on binaries provided by Kubebuilder, so it has to be <a href="https://kubebuilder.io/quick-start.html#installation" target="_blank">installed</a> first.</p>
+<h3 id="end-to-end-tests">End to End tests</h3>
+<p>To run end-to-end tests you have to have <a href="https://github.com/kubernetes-sigs/kind" target="_blank">kind</a> installed first. Then, simply run <code>make e2e-tests</code> in the root directory.</p>
+<p>It will do the following:</p>
+<ol>
+<li>Bring up a kubernetes cluster using <code>kind</code>. You can also set the Kubernetes version you want to use by setting the <code>KUBERNETES_VERSION</code> env var (e.g. <code>KUBERNETES_VERSION=1.6.3 make e2e-tests</code>)</li>
+<li>Build all docker images and load them into the cluster</li>
+<li>Install the operator using the local Helm chart. It will set the image pull policy to <code>Never</code> to be able to use the built images in previous step.</li>
+<li>Run tests written in Go. The tests also rely on the docker images built and loaded into the cluster. It requires you to remember to use the local docker images, but it also facilitates better portability.</li>
+<li>Delete the cluster</li>
+</ol>
+<h3 id="operatorhub-bundle-generation">OperatorHub bundle generation</h3>
+<p>The bundle is generated using <a href="https://sdk.operatorframework.io/" target="_blank">operator-sdk</a> CLI.</p>
+<p>The sources used for bundle generation located under <code>config/</code> directory. It includes CRD, rbac roles, samples, and the ClusterServiceVersion manifest. Modify those files in order to make changes to the deployment or the CSV.
+The autogenerated CRD and ClusterRole will be picked up automatically.</p>
+<p>To generate the bundle, you have to specify the version in an env var and run <code>make bundle</code>:</p>
+<p> <code># VERSION=0.27.0 make bundle</code></p>
+<p>After that, a directory named by the version will be generated with the necessary manifests.</p>
+<p>Review that manifests, make changes if necessary and it can be copied to the <a href="https://github.com/operator-framework/community-operators" target="_blank">community-operator</a> project under the <code>varnish-operator</code> project (in <code>community-operator</code> and/or <code>upstream-community-operators</code> directory).</p>
+<p>After generation, you can test your bundle using community operators <a href="https://github.com/operator-framework/community-operators/blob/master/docs/testing-operators.md" target="_blank">tutorial</a>. </p>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="architecture.html" class="navigation navigation-prev navigation-unique" aria-label="Previous page: Architecture">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"Development","level":"1.11","depth":1,"previous":{"title":"Architecture","level":"1.10","depth":1,"path":"architecture.md","ref":"architecture.md","articles":[]},"dir":"ltr"},"config":{"plugins":["hints"],"root":".","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"hints":{"danger":"fa fa-exclamation-circle","info":"fa fa-info-circle","tip":"fa fa-mortar-board","working":"fa fa-wrench"},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Varnish Operator Docs","gitbook":"*"},"file":{"path":"development.md","mtime":"2023-01-17T21:10:29.000Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2023-01-17T21:11:40.244Z"},"basePath":".","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <script src="gitbook/gitbook.js"></script>
+    <script src="gitbook/theme.js"></script>
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-sharing/buttons.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+

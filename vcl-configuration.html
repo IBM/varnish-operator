@@ -1,0 +1,697 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <title>VCL Configuration · Varnish Operator Docs</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 3.2.3">
+        
+        
+        
+    
+    <link rel="stylesheet" href="gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-hints/plugin-hints.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="monitoring.html" />
+    
+    
+    <link rel="prev" href="varnish-cluster-configuration.html" />
+    
+
+    </head>
+    <body>
+        
+<div class="book">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    Introduction
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="quick-start.html">
+            
+                <a href="quick-start.html">
+            
+                    
+                    Quick Start
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3" data-path="installation.html">
+            
+                <a href="installation.html">
+            
+                    
+                    Installation
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4" data-path="operator-configuration.html">
+            
+                <a href="operator-configuration.html">
+            
+                    
+                    Operator Configuration
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.5" data-path="varnish-cluster.html">
+            
+                <a href="varnish-cluster.html">
+            
+                    
+                    VarnishCluster
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.6" data-path="varnish-cluster-configuration.html">
+            
+                <a href="varnish-cluster-configuration.html">
+            
+                    
+                    VarnishCluster Configuration
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter active" data-level="1.7" data-path="vcl-configuration.html">
+            
+                <a href="vcl-configuration.html">
+            
+                    
+                    VCL Configuration
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.8" data-path="monitoring.html">
+            
+                <a href="monitoring.html">
+            
+                    
+                    Monitoring
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.9" data-path="debugging-issues.html">
+            
+                <a href="debugging-issues.html">
+            
+                    
+                    Debugging Issues
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.10" data-path="architecture.html">
+            
+                <a href="architecture.html">
+            
+                    
+                    Architecture
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.11" data-path="development.html">
+            
+                <a href="development.html">
+            
+                    
+                    Development
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+            Published with GitBook
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href="." >VCL Configuration</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h1 id="vcl-files-configuration">VCL files configuration</h1>
+<p>Varnish VCL files are stored in a ConfigMap. Each entry in the ConfigMap corresponds to a file with VCL configuration. </p>
+<p>Modifications to VCL files in the ConfigMap are automatically applied to Varnish pods. This is handled by doing a VCL reload that does not restart the Varnish process. So the existing cache will not be lost.</p>
+<p>There are 2 fields relevant to configuring the <code>VarnishCluster</code> for VCL code, in <code>.spec.vcl</code> object:</p>
+<ul>
+<li><strong>configMapName</strong>: This is a required field and tells the <code>VarnishCluster</code> resource the name of the ConfigMap that contains/will contain the VCL files</li>
+<li><strong>entrypointFileName</strong>: The name of the file that acts as the entrypoint for Varnish. If the entrypoint file is templated (ends in <code>.tmpl</code>), exclude the <code>.tmpl</code> extension. For example, if ConfigMap has file <code>mytemplatedfile.vcl.tmpl</code>, set <code>entrypointFileName: mytemplatedfile.vcl</code> as the generated file will omit the extension.</li>
+</ul>
+<p>If a ConfigMap does not exist on <code>VarnishCluster</code> creation, the operator will create one and populate it with a default <code>backends.vcl.tmpl</code> and <code>entrypoint.vcl</code>. Their behavior is as follows:</p>
+<ul>
+<li><code>backends.vcl.tmpl</code>: collect all backends into a single round-robin director</li>
+<li><code>entrypoint.vcl</code>:<ul>
+<li>respond to <code>GET /heartbeat</code> checks with a 200</li>
+<li>respond to <code>GET /liveness</code> checks with a 200 or 503, depending on healthy backends</li>
+<li>respond to all other requests normally, caching all non-404 responses</li>
+<li>add <code>X-Varnish-Cache</code> header to response with &quot;HIT&quot; or &quot;MISS&quot; value, based on presence in cache</li>
+<li>stale objects are never used</li>
+</ul>
+</li>
+</ul>
+<h3 id="writing-a-templated-vcl-file">Writing a Templated VCL File</h3>
+<p>The template file is a regular VCL file, with the addition of <a href="https://golang.org/pkg/text/template" target="_blank">Go templates</a>. This is because there is no way to know the backend&apos;s IP addresses at startup, so they must be injected at runtime. Also they can change over time if the backends get rescheduled by Kubernetes. </p>
+<p>The file is considered templated if it&apos;s in the ConfigMap and the data entry key ends with <code>.tmpl</code> extension.</p>
+<p>Here&apos;s an example of a ConfigMap containing a templated file for defining backends (<code>backends.vcl.tmpl</code>) and a static file that has the rest of the VCL configuration (<code>entrypoint.vcl</code>):</p>
+<pre><code class="lang-yaml"><span class="hljs-attr">apiVersion:</span> v1
+<span class="hljs-attr">kind:</span> ConfigMap
+<span class="hljs-attr">metadata:</span>
+<span class="hljs-attr">  name:</span> varnish-vcl-files
+<span class="hljs-attr">data:</span>
+  <span class="hljs-comment"># A templated file as has the `.tmpl` extension</span>
+  backends.vcl.tmpl: |-
+    import directors;
+
+    <span class="hljs-comment">#Backend nodes:</span>
+    {{ if .Backends -}}
+    {{ range .Backends }}
+    backend {{ .PodName }} {
+      // backend {{ .PodName }} labels:
+      {{- range $item, $key := .NodeLabels }}
+      //   {{ $item }}: {{ $key -}}
+      {{ end }}
+      .host = <span class="hljs-string">&quot;<span class="hljs-template-variable">{{ .IP }}</span>&quot;</span>;
+      .port = <span class="hljs-string">&quot;<span class="hljs-template-variable">{{ $.TargetPort }}</span>&quot;</span>;
+    }
+    {{ end }}
+    {{- else -}}
+
+    ...
+  <span class="hljs-comment"># A static file as doesn&apos;t has the `.tmpl` extension</span>
+  entrypoint.vcl: <span class="hljs-string">|
+    vcl 4.0;
+
+    import std;
+    import var;
+    import blob;
+    include &quot;backends.vcl&quot;;
+
+    sub vcl_init {
+      call init_backends;
+      return (ok);
+    }
+
+    sub vcl_backend_response {
+  ...
+</span></code></pre>
+<p>These are the available fields in the template that can be used to build your VCL files:</p>
+<ul>
+<li><code>.Backends</code> - <code>[]PodInfo</code>: array of backends<ul>
+<li><code>.IP</code> - <code>string</code>: IP address of a backend</li>
+<li><code>.NodeLabels</code> - <code>map[string]string</code>: labels of the node on which the backend is deployed.</li>
+<li><code>.PodName</code> - <code>string</code>: name of the pod representing a backend</li>
+<li><code>.Weight</code> - <code>float64</code>: backend weight
+<div class="alert alert-info hints-alert"><div class="hints-icon"><i class="fa fa-info-circle"></i></div><div class="hints-container"><p>  Please note that only the Random director can accept Weight as backend parameter
+  <a href="https://varnish-cache.org/docs/6.1/reference/vmod_directors.generated.html?highlight=round%20robin#void-xrandom-add-backend-backend-real" target="_blank">Random director documentation</a>
+  For more information regarding weight control see <a href="varnish-cluster.html">VarnishCluster</a></p>
+</div></div></li>
+</ul>
+</li>
+<li><code>.TargetPort</code> - <code>int</code>: port that is exposed on the backends</li>
+<li><code>.VarnishNodes</code> - <code>[]PodInfo</code>: array of varnish nodes. Can be used for configuration of shard director (can be ignored if using a simple round robin director)<ul>
+<li><code>.IP</code> - <code>string</code>: IP address of a varnish node</li>
+<li><code>.NodeLabels</code> - <code>map[string]string</code>: labels of the node on which a varnish node is deployed.</li>
+<li><code>.PodName</code> - <code>string</code>: name of the pod representing a varnish node</li>
+</ul>
+</li>
+<li><code>.VarnishPort</code> - <code>int</code>: port that is exposed on varnish nodes</li>
+</ul>
+<p>For example, to generate your <code>backend</code>&apos;s definitions you can use the following template:</p>
+<pre><code class="lang-vcl">{{ range .Backends }}
+backend {{ .PodName }} {
+  .host = &quot;{{ .IP }}&quot;;
+  .port = &quot;{{ $.TargetPort }}&quot;;
+}
+{{ end }}
+</code></pre>
+<p>This loops over the <code>.Backends</code> array, names each backend <code>.PodName</code>, sets <code>.host</code> to <code>.IP</code>, and then sets port to the universal <code>$.TargetPort</code>.</p>
+<p>Assuming you have 3 nginx backends that listen on port 80, the resulting code can look like this:</p>
+<pre><code class="lang-vcl">backend nginx-backend-6f4c6cbc6c-mjpck {
+  .host = &quot;172.30.243.4&quot;;
+  .port = &quot;80&quot;;
+}
+
+backend nginx-backend-6f4c6cbc6c-jmhhb {
+  .host = &quot;172.30.246.131&quot;;
+  .port = &quot;80&quot;;
+}
+
+backend nginx-backend-6f4c6cbc6c-ckqmv {
+  .host = &quot;172.30.80.137&quot;;
+  .port = &quot;80&quot;;
+}
+</code></pre>
+<p>The <code>.Backends</code> array can include both all backend nodes (default behavior) and only ready nodes. It depends on <code>.spec.backends.onlyReady</code> field.
+It depends on which readiness checks you want to respect:</p>
+<ul>
+<li>Kubernetes readiness checks - field set to <code>true</code>. In this case the <code>.Backends</code> template var in VCL will include only ready backend pods. 
+Keep in mind that every backend state change will trigger a Varnish VCL config reload.</li>
+<li>Varnish readiness probes - field set to <code>false</code> or omitted. This way the <code>.Backends</code> array will include all scheduled pods, so it is strongly recommended to set <a href="https://varnish-cache.org/docs/6.6/reference/vcl-probe.html#backend-health-probes" target="_blank">health checks</a> in your VCL configuration. Otherwise, Varnish could send traffic to not yet ready backends. </li>
+</ul>
+<p>You can also combine approaches and use both Kubernetes and Varnish health probes.</p>
+<h3 id="using-user-defined-vcl-code-versions">Using User Defined VCL Code Versions</h3>
+<p>VCL related status information is available at field <code>.status.vcl</code>. </p>
+<p>The current VCL version can be found at <code>.status.vcl.configMapVersion</code>. It matches the resource version of the ConfigMap that contains the VCL code. </p>
+<p>To tag your own user friendly versions, an annotation <code>VCLVersion</code> on the ConfigMap can be used.</p>
+<pre><code class="lang-yaml"><span class="hljs-attr">apiVersion:</span> v1
+<span class="hljs-attr">kind:</span> ConfigMap
+<span class="hljs-attr">metadata:</span>
+<span class="hljs-attr">  annotations:</span>
+<span class="hljs-attr">    VCLVersion:</span> v1<span class="hljs-number">.0</span> <span class="hljs-comment"># &lt;-- set by the user</span>
+<span class="hljs-attr">  resourceVersion:</span> <span class="hljs-string">&quot;292181&quot;</span>
+  ...
+<span class="hljs-attr">data:</span>
+    ...
+</code></pre>
+<p>After setting the annotation, that version can be seen at <code>.status.vcl.version</code>. This field is optional and will only appear if the annotation is set.</p>
+<pre><code class="lang-yaml"><span class="hljs-attr">apiVersion:</span> caching.ibm.com/v1alpha1
+<span class="hljs-attr">kind:</span> VarnishCluster
+<span class="hljs-attr">metadata:</span>
+    ...
+<span class="hljs-attr">status:</span>
+<span class="hljs-attr">  vcl:</span>
+<span class="hljs-attr">    version:</span> v1<span class="hljs-number">.0</span> <span class="hljs-comment"># &lt;-- reflects the `VCLVersion` annotation in the ConfigMap</span>
+<span class="hljs-attr">    configMapVersion:</span> <span class="hljs-string">&quot;292181&quot;</span> <span class="hljs-comment"># &lt;-- reflects the ConfigMap resource version</span>
+  ...
+</code></pre>
+<p>After the VCL in the ConfigMap has been changed, the associated status fields will be immediately updated to reflect the latest version. However that does not guarantee that Varnish pods run the latest VCL configuration. It needs time to reload and if there is a problem, such as a syntax error in the VCL, Varnish will not load until the VCL is fixed.</p>
+<p>For better observability about currently running VCL versions, see <code>.status.vcl.availability</code>, which indicates how many pods have the latest version and how many of them are outdated. </p>
+<pre><code class="lang-yaml"><span class="hljs-attr">apiVersion:</span> caching.ibm.com/v1alpha1
+<span class="hljs-attr">kind:</span> VarnishCluster
+<span class="hljs-attr">metadata:</span>
+    ...
+<span class="hljs-attr">status:</span>
+<span class="hljs-attr">  vcl:</span>
+<span class="hljs-attr">    configMapVersion:</span> <span class="hljs-string">&quot;292181&quot;</span>
+<span class="hljs-attr">    version:</span> v1<span class="hljs-number">.0</span>
+<span class="hljs-attr">    availability:</span> <span class="hljs-number">1</span> latest / <span class="hljs-number">0</span> outdated <span class="hljs-comment"># &lt;-- all pods have the latest VCL version</span>
+<span class="hljs-attr">  statefulSet:</span>
+<span class="hljs-attr">    availableReplicas:</span> <span class="hljs-number">1</span>
+    ...
+</code></pre>
+<p>To check which pods have outdated versions, simply check their annotations. The annotation <code>configMapVersion</code> on the Varnish pod will indicate the latest version of the ConfigMap used. If it&apos;s not the same as in the <code>VarnishCluster</code> status it&apos;s likely that there&apos;s an issue.</p>
+<p>Example of detecting a pod that failed to reload:</p>
+<pre><code class="lang-bash"><span class="hljs-comment"># get the latest version</span>
+&gt; kubectl get varnishcluster -n varnish-ns my-varnish -o=custom-columns=NAME:.metadata.name,CONFIG_MAP_VERSION:.status.vcl.configMapVersion
+NAME        CONFIG_MAP_VERSION
+my-varnish  292181
+<span class="hljs-comment"># figure out which pods doesn&apos;t have that latest version</span>
+&gt; kubectl get pods -n varnish-ns -o=custom-columns=NAME:.metadata.name,CONFIG_MAP_VERSION:.metadata.annotations.configMapVersion
+NAME                              CONFIG_MAP_VERSION
+my-varnish-varnish-0  351231
+my-varnish-varnish-1  351231
+my-varnish-varnish-2  351231
+<span class="hljs-comment"># Looks like all pods have outdated VCL. Lets check the logs of one of the pods</span>
+&gt; kubectl logs -n my-varnish my-varnish-varnish-0 
+2019-06-24T12:59:56.105Z    INFO    controller/controller_files.go:57    Rewriting file    {<span class="hljs-string">&quot;varnish_controller_version&quot;</span>: <span class="hljs-string">&quot;0.21.0&quot;</span>, <span class="hljs-string">&quot;varnish_cluster&quot;</span>: <span class="hljs-string">&quot;my-varnish&quot;</span>, <span class="hljs-string">&quot;pod_name&quot;</span>: <span class="hljs-string">&quot;my-varnish-varnish-0&quot;</span>, <span class="hljs-string">&quot;namespace&quot;</span>: <span class="hljs-string">&quot;my-varnish&quot;</span>, <span class="hljs-string">&quot;file_path&quot;</span>: <span class="hljs-string">&quot;/etc/varnish/backends.vcl&quot;</span>}
+2019-06-24T12:59:56.427Z    WARN    controller/controller_varnish.go:51    Message from VCC-compiler:
+Expected one of
+    <span class="hljs-string">&apos;acl&apos;</span>, <span class="hljs-string">&apos;sub&apos;</span>, <span class="hljs-string">&apos;backend&apos;</span>, <span class="hljs-string">&apos;probe&apos;</span>, <span class="hljs-string">&apos;import&apos;</span>, <span class="hljs-string">&apos;vcl&apos;</span>,  or <span class="hljs-string">&apos;default&apos;</span>
+Found: <span class="hljs-string">&apos;fsdfd&apos;</span> at
+(<span class="hljs-string">&apos;/etc/varnish/backends.vcl&apos;</span> Line 8 Pos 1)
+fsdfd
+<span class="hljs-comment">#####</span>
+
+Running VCC-compiler failed, exited with 2
+Command failed with error code 106
+VCL compilation failed
+No VCL named v-20861922-1561381196 known.
+Command failed with error code 106
+    {<span class="hljs-string">&quot;varnish_controller_version&quot;</span>: <span class="hljs-string">&quot;0.21.0&quot;</span>, <span class="hljs-string">&quot;varnish_service&quot;</span>: <span class="hljs-string">&quot;my-varnish&quot;</span>, <span class="hljs-string">&quot;pod_name&quot;</span>: <span class="hljs-string">&quot;my-varnish-varnish-0&quot;</span>, <span class="hljs-string">&quot;namespace&quot;</span>: <span class="hljs-string">&quot;my-varnish&quot;</span>}
+</code></pre>
+<p>As the logs indicate, the issue here is the invalid VCL syntax.</p>
+<h3 id="passing-additional-information-into-vcl">Passing additional information into VCL</h3>
+<p>The <code>VarnishCluster</code> spec has a field <code>.spec.varnish.envFrom</code> that allows injecting custom values into env vars. After defining, in VCL files you can read them using <a href="https://varnish-cache.org/docs/5.1/reference/vmod_std.generated.html#func-getenv" target="_blank">std.getenv()</a> function. Bot Secrets and ConfigMaps can be used to do it.</p>
+<p>Example of injecting values from a Secret:</p>
+<ol>
+<li><p>Create a secret: <code>kubectl create secret generic vcl-secrets --from-literal=secret-cookie=secret-cookie-value</code> </p>
+</li>
+<li><p>Use it by specifying it in the <code>VarnishCluster</code> spec</p>
+</li>
+</ol>
+<pre><code class="lang-yaml"><span class="hljs-attr">apiVersion:</span> caching.ibm.com/v1alpha1
+<span class="hljs-attr">kind:</span> VarnishCluster
+<span class="hljs-attr">metadata:</span>
+<span class="hljs-attr">  name:</span> example
+<span class="hljs-attr">spec:</span>
+<span class="hljs-attr">  varnish:</span>
+<span class="hljs-attr">    envFrom:</span>
+<span class="hljs-attr">    - secretRef:</span>
+<span class="hljs-attr">        name:</span> vcl-secrets
+</code></pre>
+<ol>
+<li>Read the injected env var in you VCL code</li>
+</ol>
+<pre><code class="lang-c">   ...
+    sub vcl_recv {
+      <span class="hljs-comment">// validate cookie</span>
+      <span class="hljs-keyword">if</span> (!req.http.Cookie ~ <span class="hljs-built_in">std</span>.getenv(<span class="hljs-string">&quot;secret-cookie&quot;</span>)) {
+          <span class="hljs-keyword">return</span> (synth(<span class="hljs-number">401</span>));
+      }
+   ...
+</code></pre>
+<p>That way, your secret value can be stored a separately from VCL and used securely.</p>
+<p>Note that since those values passed using env vars, if a value changes, a reload of a pod needed to pass the new value to Varnish. Which means cache loss.</p>
+<h3 id="advanced-vcl-with-varnish-sharding">Advanced VCL with Varnish sharding</h3>
+<p>Starting from Varnish 5.0 directors VMOD were extended by adding new director - shard director. It&apos;s basically a better hash director. The shard director selects backends by a key, which can be provided directly or derived from strings. For the same key, the shard director will always return the same backend, unless the backend configuration or health state changes. For differing keys, the shard director will likely choose different backends. In the default configuration, unhealthy backends are not selected.
+When used with clusters of Varnish servers, the shard director will, if otherwise configured equally, make the same decision on all servers. So requests sharing a common criterion used as the shard key will be balanced onto the same backend servers no matter which Varnish server handles the request.</p>
+<p>There are couple of very useful options that can be passed to shard director. The <code>rampup</code> feature is a slow start mechanism that allows just-gone-healthy backends to ease into full load smoothly, while the <code>warmup</code> feature prepares backends for the traffic they would see if the primary backend for a key goes down.</p>
+<h4 id="creating-shard-director">Creating shard director</h4>
+<p>Leveraging templating capabilities provided by operator, we can build <code>backends.vcl</code> config file. It will contain all entities required to setup varnish sharding cluster:</p>
+<ul>
+<li>Application backends</li>
+<li>Varnish backends (cluster members)</li>
+<li>Heartbeat probe for Varnish instances</li>
+<li>Director that holds application backends (round-robin, random, etc.)</li>
+<li>Shard director</li>
+<li>ACL with Varnish cluster members</li>
+</ul>
+<p>As described in <a href="#writing-a-templated-vcl-file">Writing a Templated VCL File</a> section, create <code>backends.vcl.tmpl</code> and create a structure with all components:</p>
+<pre><code class="lang-vcl">// Import VMOD directors
+import directors;
+
+// Define probe used for heartbeat
+probe heartbeat {
+  .request = &quot;HEAD /heartbeat HTTP/1.1&quot;
+      &quot;Connection: close&quot;
+      &quot;Host: shard&quot;;
+  .interval = 1s;
+}
+
+// Application backends
+{{ range .Backends }}
+backend {{ .PodName }} {
+  .host = &quot;{{ .IP }}&quot;;
+  .port = &quot;{{ $.TargetPort }}&quot;;
+}
+{{ end }}
+
+// Varnish cluster backends
+{{ range .VarnishNodes }}
+backend {{ .PodName }} {
+  .host = &quot;{{ .IP }}&quot;;
+  .port = &quot;{{ $.VarnishPort }}&quot;;
+  .probe = heartbeat;
+}
+{{ end }}
+
+// Create ACL with Varnish cluster members
+acl acl_cluster {
+  {{ range .VarnishNodes }}
+  &quot;{{ .IP }}&quot;/32;
+  {{ end }}
+}
+
+// Here we create two directors - &quot;real&quot;, application round-robin
+// and &quot;cluster&quot;, Varnish shard director
+sub init_backends {
+  new real = directors.round_robin();
+  {{- range .Backends }}
+  real.add_backend({{ .PodName }});
+  {{- end }}
+
+  new cluster = directors.shard();
+  {{ range .VarnishNodes }}
+  cluster.add_backend({{ .PodName }});
+  {{ end }}
+  cluster.set_rampup(30s);
+  cluster.set_warmup(0.1);
+  cluster.reconfigure();
+}
+</code></pre>
+<p>Please note <code>set_rampup</code> and <code>set_warmup</code> options being passed to <code>cluster</code> director. They provide a mechanism to change how the shard director will manage cluster members downtime. </p>
+<p><code>set_rampup</code> configures slow start interval in seconds for servers which just came back from unhealthy. If chosen backend is in its rampup period, with a probability proportional to the fraction of time since the backup became healthy to the rampup period, return the next alternative backend, unless this is also in its rampup period. If duration is <code>0</code> (default), rampup is disabled. </p>
+<p><code>set_warmup</code> configures the default warmup probability. Sets the ratio of requests (<code>0.0</code> to <code>1.0</code>) that goes to the next alternate backend to warm it up when the preferred backend is healthy. Not active if any of the preferred or alternative backend are in rampup. Setting of <code>0.5</code> is a convenient way to spread the load for each key over two backends under normal operating conditions. If probability is <code>0.0</code> (default), warmup is disabled.</p>
+<p>Note that the shard director needs to be configured using at least one <code>.add_backend()</code> call(s) followed by a <code>.reconfigure()</code> call before it can hand out backends.</p>
+<p>Now, once backends and directors are properly configured, we can proceed with configuring main logic and client requests are processed. Next configuration snippet is <strong>not complete VCL</strong>, but rather only client facing logic - <code>vcl_recv</code> subroutine. </p>
+<pre><code class="lang-vcl">// Include and initialize backends
+include &quot;backends.vcl&quot;;
+
+sub vcl_init {
+  call init_backends;
+  return (ok);
+}
+
+sub vcl_recv {
+
+  // Answer to heartbeats only from cluster members
+  if (remote.ip ~ acl_cluster) {
+    if (req.http.Host == &quot;shard&quot;) {
+      if (req.url == &quot;/heartbeat&quot;) {
+        return (synth(200));
+      }
+      return (synth(404));
+    }
+  }
+
+  // Let shard director to pick the backend (shard)
+  set req.backend_hint = cluster.backend(URL);
+  set req.http.X-shard = req.backend_hint;
+
+  // Use application backend if request came here from ourselves or from
+  // cluster members (i.e. sharding is already happened), otherwise let it pass
+  // to another shard
+  if (req.http.X-shard == server.identity || remote.ip ~ acl_cluster) {
+    set req.backend_hint = real.backend();
+  } else {
+    return(pass);
+  }
+
+  return (hash);
+}
+...
+</code></pre>
+<p>This snippet will route all requests to shard director for sharding, prevent multiple in-cluster hops when warmup is happened, and reroute requests to the shard that it primary for given request.</p>
+<p>Everything together can provide reliable way of handling lifecycle events for Varnish cluster members with graceful fallback and controlled pre-warmup of alternative backends.</p>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="varnish-cluster-configuration.html" class="navigation navigation-prev " aria-label="Previous page: VarnishCluster Configuration">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+                <a href="monitoring.html" class="navigation navigation-next " aria-label="Next page: Monitoring">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"VCL Configuration","level":"1.7","depth":1,"next":{"title":"Monitoring","level":"1.8","depth":1,"path":"monitoring.md","ref":"monitoring.md","articles":[]},"previous":{"title":"VarnishCluster Configuration","level":"1.6","depth":1,"path":"varnish-cluster-configuration.md","ref":"varnish-cluster-configuration.md","articles":[]},"dir":"ltr"},"config":{"plugins":["hints"],"root":".","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"hints":{"danger":"fa fa-exclamation-circle","info":"fa fa-info-circle","tip":"fa fa-mortar-board","working":"fa fa-wrench"},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Varnish Operator Docs","gitbook":"*"},"file":{"path":"vcl-configuration.md","mtime":"2023-01-17T21:10:29.000Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2023-01-17T21:11:40.244Z"},"basePath":".","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <script src="gitbook/gitbook.js"></script>
+    <script src="gitbook/theme.js"></script>
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-sharing/buttons.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+

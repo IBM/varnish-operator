@@ -1,6 +1,6 @@
 # Image URL to use in all building/pushing image targets
 ROOT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
-VERSION ?= "local"
+VERSION ?= local
 PUBLISH_IMG ?= ibmcom/varnish-operator:${VERSION}
 IMG ?= ${PUBLISH_IMG}-dev
 VARNISH_PUBLISH_IMG ?= varnish:${VERSION}
@@ -157,9 +157,9 @@ kustomize:
 # Generate bundle manifests and metadata, then validate generated files.
 .PHONY: bundle
 bundle: manifests kustomize
-	yq w -i config/manager/deployment.yaml 'spec.template.spec.containers(name==varnish-operator).env(name==CONTAINER_IMAGE).value' $(PUBLISH_IMG)
-	yq w -i config/manifests/bases/varnish-operator.clusterserviceversion.yaml 'metadata.annotations.containerImage' $(PUBLISH_IMG)
-	yq w -i config/manifests/bases/varnish-operator.clusterserviceversion.yaml 'metadata.annotations.createdAt' $(date +"%Y-%m-%d")
+	yq -i '(.spec.template.spec.containers[0].env[] | select(.name == "CONTAINER_IMAGE") | .value) = "$(PUBLISH_IMG)"' config/manager/deployment.yaml
+	yq -i '.metadata.annotations.containerImage = "$(PUBLISH_IMG)"' config/manifests/bases/varnish-operator.clusterserviceversion.yaml
+	yq -i '.metadata.annotations.createdAt = now' config/manifests/bases/varnish-operator.clusterserviceversion.yaml
 	operator-sdk generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(PUBLISH_IMG)
 	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)

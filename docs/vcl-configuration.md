@@ -307,7 +307,7 @@ backend {{ .PodName }} {
 // Create ACL with Varnish cluster members
 acl acl_cluster {
   {{ range .VarnishNodes }}
-  "{{ .IP }}"/32;
+  "{{ .IP }}/32";
   {{ end }}
 }
 
@@ -369,7 +369,7 @@ sub vcl_recv {
   if (req.http.X-shard == server.identity || remote.ip ~ acl_cluster) {
     set req.backend_hint = real.backend();
   } else {
-    return(pass);
+    return(pass); // Can be hash here you if want to load the answer in the local cache of calling Varnish instance
   }
 
   return (hash);

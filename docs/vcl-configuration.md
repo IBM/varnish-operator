@@ -307,7 +307,7 @@ backend {{ .PodName }} {
 // Create ACL with Varnish cluster members
 acl acl_cluster {
   {{ range .VarnishNodes }}
-  "{{ .IP }}"/32;
+  "{{ .IP }}/32";
   {{ end }}
 }
 

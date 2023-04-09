@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
-	vclabels "github.com/ibm/varnish-operator/pkg/labels"
+	vcapi "github.com/cin/varnish-operator/api/v1alpha1"
+	vclabels "github.com/cin/varnish-operator/pkg/labels"
 
 	"github.com/gogo/protobuf/proto"
 	. "github.com/onsi/ginkgo/v2"

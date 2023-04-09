@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/ibm/varnish-operator/pkg/logger"
+	"github.com/cin/varnish-operator/pkg/logger"
 
 	"go.uber.org/zap"
 

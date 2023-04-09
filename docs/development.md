@@ -3,7 +3,7 @@
 Requirements:
 
 * Kubernetes 1.21 or newer. You can use [minikube](https://kubernetes.io/docs/setup/minikube/) for local development.
-* Go 1.19+
+* Go 1.20+
 * [Kubebuilder](https://kubebuilder.io/quick-start.html#installation) 2.0.0+
 * [kustomize](https://github.com/kubernetes-sigs/kustomize) 3.1.0+
 * [helm](https://helm.sh/) v2.14.3+
@@ -27,7 +27,7 @@ The main packages for both components can be found in the `cmd/` folder.
 
 ### Developing the operator
 ```bash
-$ git clone https://github.com/ibm/varnish-operator.git
+$ git clone https://github.com/cin/varnish-operator.git
 $ cd varnish-operator
 $ go mod download
 ```
@@ -66,7 +66,7 @@ make run
 cd <path>/<to>/<repo>/varnish-operator/ && go generate ./pkg/... ./cmd/...
 cd <path>/<to>/<repo>/varnish-operator/ && goimports -w ./pkg ./cmd
 cd <path>/<to>/<repo>/varnish-operator/ && go vet ./pkg/... ./cmd/...
-NAMESPACE="default" LOGLEVEL=debug LOGFORMAT=console CONTAINER_IMAGE=ibmcom/varnish:0.20.0-dev LEADERELECTION_ENABLED=false WEBHOOKS_ENABLED=false go run <path>/<to>/<repo>/varnish-operator/cmd/manager/main.go...
+NAMESPACE="default" LOGLEVEL=debug LOGFORMAT=console CONTAINER_IMAGE=cinple/varnish:0.20.0-dev LEADERELECTION_ENABLED=false WEBHOOKS_ENABLED=false go run <path>/<to>/<repo>/varnish-operator/cmd/manager/main.go...
 ```
 
 By default the operator will work in the `default` namespace. You can override that behaviour by setting the `NAMESPACE` env var:

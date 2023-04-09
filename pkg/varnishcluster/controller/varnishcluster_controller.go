@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
-	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
-	"github.com/ibm/varnish-operator/pkg/logger"
-	"github.com/ibm/varnish-operator/pkg/names"
-	"github.com/ibm/varnish-operator/pkg/varnishcluster/compare"
-	"github.com/ibm/varnish-operator/pkg/varnishcluster/config"
-	vcreconcile "github.com/ibm/varnish-operator/pkg/varnishcluster/reconcile"
+	vcapi "github.com/cin/varnish-operator/api/v1alpha1"
+	"github.com/cin/varnish-operator/pkg/logger"
+	"github.com/cin/varnish-operator/pkg/names"
+	"github.com/cin/varnish-operator/pkg/varnishcluster/compare"
+	"github.com/cin/varnish-operator/pkg/varnishcluster/config"
+	vcreconcile "github.com/cin/varnish-operator/pkg/varnishcluster/reconcile"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"

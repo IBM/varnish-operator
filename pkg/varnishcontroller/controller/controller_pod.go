@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/ibm/varnish-operator/pkg/logger"
+	"github.com/cin/varnish-operator/pkg/logger"
 
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"

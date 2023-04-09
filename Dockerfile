@@ -1,5 +1,5 @@
 ARG BUILDPLATFORM=linux/amd64
-FROM --platform=$BUILDPLATFORM golang:1.19.5-bullseye AS builder
+FROM --platform=$BUILDPLATFORM golang:1.20-bullseye AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive INSTALL_DIRECTORY=/usr/local/bin
 
@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         curl \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /go/src/github.com/ibm/varnish-operator
+WORKDIR /go/src/github.com/cin/varnish-operator
 
 ENV GOPROXY=https://proxy.golang.org
 
@@ -29,7 +29,7 @@ RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
     -ldflags "-X main.Version=$VERSION" \
     -a \
     -o varnish-operator \
-    github.com/ibm/varnish-operator/cmd/varnish-operator
+    github.com/cin/varnish-operator/cmd/varnish-operator
 
 
 FROM --platform=$BUILDPLATFORM debian:bullseye-slim
@@ -45,7 +45,7 @@ RUN apt-get update && apt-get upgrade -y \
 
 RUN addgroup --gid 901 varnish-operator && adduser --uid 901 --gid 901 varnish-operator
 
-COPY --from=builder /go/src/github.com/ibm/varnish-operator/varnish-operator .
+COPY --from=builder /go/src/github.com/cin/varnish-operator/varnish-operator .
 
 USER varnish-operator
 

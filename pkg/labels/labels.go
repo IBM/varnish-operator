@@ -1,7 +1,7 @@
 package labels
 
 import (
-	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
+	vcapi "github.com/cin/varnish-operator/api/v1alpha1"
 )
 
 // CombinedComponentLabels create labels for a component and inherits VarnishCluster object labels

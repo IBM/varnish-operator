@@ -6,10 +6,10 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/ibm/varnish-operator/api/v1alpha1"
-	varnishEvents "github.com/ibm/varnish-operator/pkg/varnishcontroller/events"
-	"github.com/ibm/varnish-operator/pkg/varnishcontroller/metrics"
-	"github.com/ibm/varnish-operator/pkg/varnishcontroller/varnishadm"
+	"github.com/cin/varnish-operator/api/v1alpha1"
+	varnishEvents "github.com/cin/varnish-operator/pkg/varnishcontroller/events"
+	"github.com/cin/varnish-operator/pkg/varnishcontroller/metrics"
+	"github.com/cin/varnish-operator/pkg/varnishcontroller/varnishadm"
 
 	"github.com/onsi/gomega"
 	prometheusClient "github.com/prometheus/client_model/go"

@@ -5,5 +5,5 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
 - name: controller
-  newName: ibmcom/varnish-operator
+  newName: cinple/varnish-operator
   newTag: 0.27.2

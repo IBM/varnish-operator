@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
-	"github.com/ibm/varnish-operator/pkg/names"
+	vcapi "github.com/cin/varnish-operator/api/v1alpha1"
+	"github.com/cin/varnish-operator/pkg/names"
 
 	apps "k8s.io/api/apps/v1"
 	rbac "k8s.io/api/rbac/v1"

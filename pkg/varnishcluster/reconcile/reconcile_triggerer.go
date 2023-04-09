@@ -4,8 +4,8 @@ import (
 	"sync"
 	"time"
 
-	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
-	"github.com/ibm/varnish-operator/pkg/logger"
+	vcapi "github.com/cin/varnish-operator/api/v1alpha1"
+	"github.com/cin/varnish-operator/pkg/logger"
 
 	"sigs.k8s.io/controller-runtime/pkg/event"
 )

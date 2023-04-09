@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/ibm/varnish-operator/pkg/logger"
+	"github.com/cin/varnish-operator/pkg/logger"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,8 +15,8 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/ibm/varnish-operator/api/v1alpha1"
-	"github.com/ibm/varnish-operator/pkg/varnishcontroller/config"
+	"github.com/cin/varnish-operator/api/v1alpha1"
+	"github.com/cin/varnish-operator/pkg/varnishcontroller/config"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"

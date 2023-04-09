@@ -24,10 +24,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ibm/varnish-operator/pkg/logger"
-	"github.com/ibm/varnish-operator/pkg/names"
-	"github.com/ibm/varnish-operator/pkg/varnishcluster/config"
-	vcreconcile "github.com/ibm/varnish-operator/pkg/varnishcluster/reconcile"
+	"github.com/cin/varnish-operator/pkg/logger"
+	"github.com/cin/varnish-operator/pkg/names"
+	"github.com/cin/varnish-operator/pkg/varnishcluster/config"
+	vcreconcile "github.com/cin/varnish-operator/pkg/varnishcluster/reconcile"
 
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -50,7 +50,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
+	vcapi "github.com/cin/varnish-operator/api/v1alpha1"
 
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -64,7 +64,7 @@ import (
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
 const (
-	testCoupledVarnishImage = "ibmcom/varnish:test"
+	testCoupledVarnishImage = "cinple/varnish:test"
 )
 
 var cfg *rest.Config                              //config for the rest client

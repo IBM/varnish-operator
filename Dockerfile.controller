@@ -1,11 +1,11 @@
 ARG BUILDPLATFORM=linux/amd64
-FROM --platform=$BUILDPLATFORM golang:1.19.5-bullseye AS builder
+FROM --platform=$BUILDPLATFORM golang:1.20-bullseye AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive INSTALL_DIRECTORY=/usr/local/bin
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends git curl
 
-WORKDIR /go/src/github.com/ibm/varnish-operator
+WORKDIR /go/src/github.com/cin/varnish-operator
 
 ENV GOPROXY=https://proxy.golang.org
 
@@ -45,7 +45,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
     && chown -R varnish /etc/varnish /var/lib/varnish
 
 COPY --from=binary /usr/bin/varnishadm /usr/bin/varnishstat /usr/bin/
-COPY --from=builder /go/src/github.com/ibm/varnish-operator/varnish-controller /varnish-controller
+COPY --from=builder /go/src/github.com/cin/varnish-operator/varnish-controller /varnish-controller
 
 USER varnish
 

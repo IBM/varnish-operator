@@ -1,5 +1,5 @@
 ARG BUILDPLATFORM=linux/amd64
-FROM --platform=$BUILDPLATFORM golang:1.19.5-bullseye AS builder
+FROM --platform=$BUILDPLATFORM golang:1.20-bullseye AS builder
 ARG TARGETOS=linux
 ARG TARGETARCH=amd64
 ARG PROMETHEUS_VARNISH_EXPORTER_VERSION=1.6.1

@@ -4,11 +4,11 @@ import (
 	"context"
 	"strings"
 
-	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
-	vclabels "github.com/ibm/varnish-operator/pkg/labels"
-	"github.com/ibm/varnish-operator/pkg/logger"
-	"github.com/ibm/varnish-operator/pkg/names"
-	"github.com/ibm/varnish-operator/pkg/varnishcluster/compare"
+	vcapi "github.com/cin/varnish-operator/api/v1alpha1"
+	vclabels "github.com/cin/varnish-operator/pkg/labels"
+	"github.com/cin/varnish-operator/pkg/logger"
+	"github.com/cin/varnish-operator/pkg/names"
+	"github.com/cin/varnish-operator/pkg/varnishcluster/compare"
 
 	"github.com/gogo/protobuf/proto"
 

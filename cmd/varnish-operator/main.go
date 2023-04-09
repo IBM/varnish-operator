@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/ibm/varnish-operator/api/v1alpha1"
-	"github.com/ibm/varnish-operator/pkg/logger"
-	vccfg "github.com/ibm/varnish-operator/pkg/varnishcluster/config"
-	"github.com/ibm/varnish-operator/pkg/varnishcluster/controller"
+	"github.com/cin/varnish-operator/api/v1alpha1"
+	"github.com/cin/varnish-operator/pkg/logger"
+	vccfg "github.com/cin/varnish-operator/pkg/varnishcluster/config"
+	"github.com/cin/varnish-operator/pkg/varnishcluster/controller"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"

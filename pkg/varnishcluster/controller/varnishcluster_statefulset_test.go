@@ -114,7 +114,7 @@ var _ = Describe("statefulset", func() {
 
 			varnishControllerContainer, err := getContainerByName(podSpec, vcapi.VarnishControllerName)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(varnishControllerContainer.Image).To(Equal("ibmcom/varnish-controller:test"))
+			Expect(varnishControllerContainer.Image).To(Equal("cinple/varnish-controller:test"))
 			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "NAMESPACE", Value: vcNamespace}))
 			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "POD_NAME", ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{APIVersion: "v1", FieldPath: "metadata.name"}}}))
 			Expect(varnishControllerContainer.Env).To(ContainElement(v1.EnvVar{Name: "VARNISH_CLUSTER_NAME", Value: vcName}))
@@ -127,7 +127,7 @@ var _ = Describe("statefulset", func() {
 
 			metricsContainer, err := getContainerByName(podSpec, vcapi.VarnishMetricsExporterName)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(metricsContainer.Image).To(Equal("ibmcom/varnish-metrics-exporter:test"))
+			Expect(metricsContainer.Image).To(Equal("cinple/varnish-metrics-exporter:test"))
 			varnishMetricsExporterPort, err := getContainerPortByName(metricsContainer, vcapi.VarnishMetricsPortName)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(varnishMetricsExporterPort.ContainerPort).To(Equal(int32(vcapi.VarnishPrometheusExporterPort)))

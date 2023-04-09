@@ -1,7 +1,8 @@
 # Image URL to use in all building/pushing image targets
 ROOT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 VERSION ?= "local"
-PUBLISH_IMG ?= ibmcom/varnish-operator:${VERSION}
+REPO ?= "cinple"
+PUBLISH_IMG ?= ${REPO}/varnish-operator:${VERSION}
 IMG ?= ${PUBLISH_IMG}-dev
 VARNISH_PUBLISH_IMG ?= varnish:${VERSION}
 VARNISH_IMG ?= ${VARNISH_PUBLISH_IMG}-dev
@@ -30,7 +31,7 @@ varnish-operator: generate fmt vet
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet
-	NAMESPACE=${NAMESPACE} LOGLEVEL=debug LOGFORMAT=console CONTAINER_IMAGE=ibmcom/${VARNISH_IMG} LEADERELECTION_ENABLED=false WEBHOOKS_ENABLED=false go run ${ROOT_DIR}cmd/varnish-operator/main.go
+	NAMESPACE=${NAMESPACE} LOGLEVEL=debug LOGFORMAT=console CONTAINER_IMAGE=${REPO}/${VARNISH_IMG} LEADERELECTION_ENABLED=false WEBHOOKS_ENABLED=false go run ${ROOT_DIR}cmd/varnish-operator/main.go
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 install: manifests
@@ -71,7 +72,7 @@ docker-build: test
 # Tag and push the docker image
 docker-tag-push:
 ifndef REPO_PATH
-	$(error must set REPO_PATH, eg "make docker-tag-push REPO_PATH=ibmcom")
+	$(error must set REPO_PATH, eg "make docker-tag-push REPO_PATH=${REPO}")
 endif
 ifndef PUBLISH
 	docker tag ${IMG} ${REPO_PATH}/${IMG}
@@ -90,7 +91,7 @@ docker-build-varnish:
 
 docker-tag-push-varnish:
 ifndef REPO_PATH
-	$(error must set REPO_PATH, eg "make docker-tag-push REPO_PATH=ibmcom")
+	$(error must set REPO_PATH, eg "make docker-tag-push REPO_PATH=${REPO}")
 endif
 ifndef PUBLISH
 	docker tag ${VARNISH_IMG} ${REPO_PATH}/${VARNISH_IMG}
@@ -106,7 +107,7 @@ docker-build-varnish-controller: fmt vet
 
 docker-tag-push-varnish-controller:
 ifndef REPO_PATH
-	$(error must set REPO_PATH, eg "make docker-tag-push REPO_PATH=ibmcom")
+	$(error must set REPO_PATH, eg "make docker-tag-push REPO_PATH=${REPO}")
 endif
 ifndef PUBLISH
 	docker tag ${VARNISH_CONTROLLER_IMG} ${REPO_PATH}/${VARNISH_CONTROLLER_IMG}
@@ -122,7 +123,7 @@ docker-build-varnish-exporter:
 
 docker-tag-push-varnish-exporter:
 ifndef REPO_PATH
-	$(error must set REPO_PATH, eg "make docker-tag-push REPO_PATH=ibmcom")
+	$(error must set REPO_PATH, eg "make docker-tag-push REPO_PATH=${REPO}")
 endif
 ifndef PUBLISH
 	docker tag ${VARNISH_METRICS_IMG} ${REPO_PATH}/${VARNISH_METRICS_IMG}

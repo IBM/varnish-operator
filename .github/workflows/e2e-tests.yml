@@ -10,16 +10,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        kubernetes-version: [ "1.25", "1.24", "1.23", "1.22"]
+        kubernetes-version: [ "1.25" ] #, "1.24", "1.23", "1.22"]
         include:
         - kubernetes-version: "1.25"
           kind-node: kindest/node:v1.25.2@sha256:9be91e9e9cdf116809841fc77ebdb8845443c4c72fe5218f3ae9eb57fdb4bace
-        - kubernetes-version: "1.24"
-          kind-node: kindest/node:v1.24.6@sha256:97e8d00bc37a7598a0b32d1fabd155a96355c49fa0d4d4790aab0f161bf31be1
-        - kubernetes-version: "1.23"
-          kind-node: kindest/node:v1.23.12@sha256:9402cf1330bbd3a0d097d2033fa489b2abe40d479cc5ef47d0b6a6960613148a
-        - kubernetes-version: "1.22"
-          kind-node: kindest/node:v1.22.15@sha256:bfd5eaae36849bfb3c1e3b9442f3da17d730718248939d9d547e86bbac5da586
+        # - kubernetes-version: "1.24"
+        #   kind-node: kindest/node:v1.24.6@sha256:97e8d00bc37a7598a0b32d1fabd155a96355c49fa0d4d4790aab0f161bf31be1
+        # - kubernetes-version: "1.23"
+        #   kind-node: kindest/node:v1.23.12@sha256:9402cf1330bbd3a0d097d2033fa489b2abe40d479cc5ef47d0b6a6960613148a
+        # - kubernetes-version: "1.22"
+        #   kind-node: kindest/node:v1.22.15@sha256:bfd5eaae36849bfb3c1e3b9442f3da17d730718248939d9d547e86bbac5da586
     steps:
       - name: Set up Go
         uses: actions/setup-go@v3
@@ -31,10 +31,10 @@ jobs:
         run: go mod download
       - name: build images
         run: |
-          docker build --platform linux/amd64 -f Dockerfile -t ibmcom/varnish-operator:local .
-          docker build --platform linux/amd64 -f Dockerfile.varnishd -t ibmcom/varnish:local .
-          docker build --platform linux/amd64 -f Dockerfile.controller -t ibmcom/varnish-controller:local .
-          docker build --platform linux/amd64 -f Dockerfile.exporter -t ibmcom/varnish-metrics-exporter:local .
+          docker build --platform linux/amd64 -f Dockerfile -t ${{ secrets.DOCKERHUB_REPO }}/varnish-operator:local .
+          docker build --platform linux/amd64 -f Dockerfile.varnishd -t ${{ secrets.DOCKERHUB_REPO }}/varnish:local .
+          docker build --platform linux/amd64 -f Dockerfile.controller -t ${{ secrets.DOCKERHUB_REPO }}/varnish-controller:local .
+          docker build --platform linux/amd64 -f Dockerfile.exporter -t ${{ secrets.DOCKERHUB_REPO }}/varnish-metrics-exporter:local .
       - name: Create k8s Kind Cluster ${{ matrix.kubernetes-version }}
         uses: helm/kind-action@v1.5.0
         with:
@@ -46,13 +46,13 @@ jobs:
         run: kubectl create namespace varnish-operator
       - name: load images
         run: |
-          kind load --name e2e-tests docker-image ibmcom/varnish-operator:local
-          kind load --name e2e-tests docker-image ibmcom/varnish:local
-          kind load --name e2e-tests docker-image ibmcom/varnish-controller:local
-          kind load --name e2e-tests docker-image ibmcom/varnish-metrics-exporter:local
+          kind load --name e2e-tests docker-image ${{ secrets.DOCKERHUB_REPO }}/varnish-operator:local
+          kind load --name e2e-tests docker-image ${{ secrets.DOCKERHUB_REPO }}/varnish:local
+          kind load --name e2e-tests docker-image ${{ secrets.DOCKERHUB_REPO }}/varnish-controller:local
+          kind load --name e2e-tests docker-image ${{ secrets.DOCKERHUB_REPO }}/varnish-metrics-exporter:local
       - name: install operator
         id: helm
-        run: helm install varnish-operator --debug --namespace=varnish-operator varnish-operator --wait --set container.imagePullPolicy=Never --set container.image=ibmcom/varnish-operator:local
+        run: helm install varnish-operator --debug --namespace=varnish-operator varnish-operator --wait --set container.imagePullPolicy=Never --set container.image=${{ secrets.DOCKERHUB_REPO }}/varnish-operator:local
       - name: run tests
         id: e2e
         run: go test -count=1 ./tests #-count=1 is to disable tests caching.

@@ -3,8 +3,7 @@ name: end-to-end tests
 on: pull_request
 
 jobs:
-
-  kube1_18:
+  end-to-end:
     name: End to end tests
     runs-on: ubuntu-latest
     strategy:
@@ -21,6 +20,14 @@ jobs:
         - kubernetes-version: "1.23"
           kind-node: kindest/node:v1.23.17@sha256:e5fd1d9cd7a9a50939f9c005684df5a6d145e8d695e78463637b79464292e66c
     steps:
+      - name: Prep
+        id: prep
+        run: |
+          repo=cinple
+          if [[ -n "${{ secrets.DOCKERHUB_REPO }}" ]]; then
+            repo=${{ secrets.DOCKERHUB_REPO }}
+          fi
+          echo "DOCKERHUB_REPO=$repo" >> $GITHUB_ENV
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
@@ -31,10 +38,10 @@ jobs:
         run: go mod download
       - name: build images
         run: |
-          docker build --platform linux/amd64 -f Dockerfile -t ${{ secrets.DOCKERHUB_REPO }}/varnish-operator:local .
-          docker build --platform linux/amd64 -f Dockerfile.varnishd -t ${{ secrets.DOCKERHUB_REPO }}/varnish:local .
-          docker build --platform linux/amd64 -f Dockerfile.controller -t ${{ secrets.DOCKERHUB_REPO }}/varnish-controller:local .
-          docker build --platform linux/amd64 -f Dockerfile.exporter -t ${{ secrets.DOCKERHUB_REPO }}/varnish-metrics-exporter:local .
+          docker build --platform linux/amd64 -f Dockerfile -t ${{ env.DOCKERHUB_REPO }}/varnish-operator:local .
+          docker build --platform linux/amd64 -f Dockerfile.varnishd -t ${{ env.DOCKERHUB_REPO }}/varnish:local .
+          docker build --platform linux/amd64 -f Dockerfile.controller -t ${{ env.DOCKERHUB_REPO }}/varnish-controller:local .
+          docker build --platform linux/amd64 -f Dockerfile.exporter -t ${{ env.DOCKERHUB_REPO }}/varnish-metrics-exporter:local .
       - name: Create k8s Kind Cluster ${{ matrix.kubernetes-version }}
         uses: helm/kind-action@v1.5.0
         with:
@@ -46,13 +53,13 @@ jobs:
         run: kubectl create namespace varnish-operator
       - name: load images
         run: |
-          kind load --name e2e-tests docker-image ${{ secrets.DOCKERHUB_REPO }}/varnish-operator:local
-          kind load --name e2e-tests docker-image ${{ secrets.DOCKERHUB_REPO }}/varnish:local
-          kind load --name e2e-tests docker-image ${{ secrets.DOCKERHUB_REPO }}/varnish-controller:local
-          kind load --name e2e-tests docker-image ${{ secrets.DOCKERHUB_REPO }}/varnish-metrics-exporter:local
+          kind load --name e2e-tests docker-image ${{ env.DOCKERHUB_REPO }}/varnish-operator:local
+          kind load --name e2e-tests docker-image ${{ env.DOCKERHUB_REPO }}/varnish:local
+          kind load --name e2e-tests docker-image ${{ env.DOCKERHUB_REPO }}/varnish-controller:local
+          kind load --name e2e-tests docker-image ${{ env.DOCKERHUB_REPO }}/varnish-metrics-exporter:local
       - name: install operator
         id: helm
-        run: helm install varnish-operator --debug --namespace=varnish-operator varnish-operator --wait --set container.imagePullPolicy=Never --set container.image=${{ secrets.DOCKERHUB_REPO }}/varnish-operator:local
+        run: helm install varnish-operator --debug --namespace=varnish-operator varnish-operator --wait --set container.imagePullPolicy=Never --set container.image=${{ env.DOCKERHUB_REPO }}/varnish-operator:local
       - name: run tests
         id: e2e
         run: go test -count=1 ./tests #-count=1 is to disable tests caching.

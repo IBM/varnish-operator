@@ -5,7 +5,6 @@ import (
 
 	vcapi "github.com/cin/varnish-operator/api/v1alpha1"
 	"github.com/cin/varnish-operator/pkg/labels"
-	vclabels "github.com/cin/varnish-operator/pkg/labels"
 	"github.com/cin/varnish-operator/pkg/logger"
 	"github.com/cin/varnish-operator/pkg/names"
 	"github.com/cin/varnish-operator/pkg/varnishcluster/compare"
@@ -48,7 +47,7 @@ func (r *ReconcileVarnishCluster) reconcileHeadlessService(ctx context.Context, 
 			ClusterIPs:      []string{v1.ClusterIPNone},
 			Type:            v1.ServiceTypeClusterIP,
 			SessionAffinity: v1.ServiceAffinityNone,
-			Selector:        vclabels.CombinedComponentLabels(instance, vcapi.VarnishComponentVarnish),
+			Selector:        labels.CombinedComponentLabels(instance, vcapi.VarnishComponentVarnish),
 		},
 	}
 

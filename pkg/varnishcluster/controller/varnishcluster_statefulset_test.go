@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"k8s.io/apimachinery/pkg/api/resource"
-
 	vcapi "github.com/cin/varnish-operator/api/v1alpha1"
 
 	"github.com/gogo/protobuf/proto"

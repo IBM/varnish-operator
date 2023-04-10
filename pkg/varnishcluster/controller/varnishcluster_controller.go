@@ -26,10 +26,9 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -187,7 +186,7 @@ func (r *ReconcileVarnishCluster) Reconcile(ctx context.Context, request ctrl.Re
 	defer logr.Debugf("Reconciled in %s", time.Since(start).String())
 	res, err := r.reconcileWithContext(ctx, request)
 	if err != nil {
-		if statusErr, ok := errors.Cause(err).(*apierrors.StatusError); ok && statusErr.ErrStatus.Reason == metav1.StatusReasonConflict {
+		if statusErr, ok := errors.Cause(err).(*kerrors.StatusError); ok && statusErr.ErrStatus.Reason == metav1.StatusReasonConflict {
 			logr.Info("Conflict occurred. Retrying...", zap.Error(err))
 			return ctrl.Result{Requeue: true}, nil //retry but do not treat conflicts as errors
 		}

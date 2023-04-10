@@ -2,13 +2,13 @@
 ROOT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 VERSION ?= local
 REPO ?= cinple
-PUBLISH_IMG ?= ${REPO}/varnish-operator:${VERSION}
+PUBLISH_IMG ?= varnish-operator:${VERSION}
 IMG ?= ${PUBLISH_IMG}-dev
-VARNISH_PUBLISH_IMG ?= ${REPO}/varnish:${VERSION}
+VARNISH_PUBLISH_IMG ?= varnish:${VERSION}
 VARNISH_IMG ?= ${VARNISH_PUBLISH_IMG}-dev
-VARNISH_CONTROLLER_PUBLISH_IMG ?= ${REPO}/varnish-controller:${VERSION}
+VARNISH_CONTROLLER_PUBLISH_IMG ?= /varnish-controller:${VERSION}
 VARNISH_CONTROLLER_IMG ?= ${VARNISH_CONTROLLER_PUBLISH_IMG}-dev
-VARNISH_METRICS_PUBLISH_IMG ?= ${REPO}/varnish-metrics-exporter:${VERSION}
+VARNISH_METRICS_PUBLISH_IMG ?= varnish-metrics-exporter:${VERSION}
 VARNISH_METRICS_IMG ?= ${VARNISH_METRICS_PUBLISH_IMG}-dev
 NAMESPACE ?= "default"
 CRD_OPTIONS ?= "crd:crdVersions=v1"

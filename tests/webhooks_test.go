@@ -2,8 +2,9 @@ package tests
 
 import (
 	"context"
+
+	vcapi "github.com/cin/varnish-operator/api/v1alpha1"
 	"github.com/gogo/protobuf/proto"
-	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/api/errors"

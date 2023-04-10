@@ -12,8 +12,8 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 
-	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
-	"github.com/ibm/varnish-operator/pkg/logger"
+	vcapi "github.com/cin/varnish-operator/api/v1alpha1"
+	"github.com/cin/varnish-operator/pkg/logger"
 	"k8s.io/client-go/rest"
 
 	"go.uber.org/zap/zapcore"

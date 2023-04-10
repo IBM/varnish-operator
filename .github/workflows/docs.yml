@@ -25,7 +25,7 @@ jobs:
           cd docs_generated/
           git init
           git add .
-          git config --local user.name \"Tomash Sidei\"
-          git config --local user.email \"tomash.sidei@ibm.com\"
+          git config --global user.email "actions@github.com"
+          git config --global user.name "gh-actions"
           git commit -m "Deploy Docs from Actions"
           git push --force --quiet https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:gh-pages

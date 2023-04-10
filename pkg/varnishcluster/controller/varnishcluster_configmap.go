@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
-	vclabels "github.com/ibm/varnish-operator/pkg/labels"
-	"github.com/ibm/varnish-operator/pkg/logger"
-	"github.com/ibm/varnish-operator/pkg/varnishcluster/compare"
+	vcapi "github.com/cin/varnish-operator/api/v1alpha1"
+	vclabels "github.com/cin/varnish-operator/pkg/labels"
+	"github.com/cin/varnish-operator/pkg/logger"
+	"github.com/cin/varnish-operator/pkg/varnishcluster/compare"
 
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"

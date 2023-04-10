@@ -3,12 +3,12 @@ package controller
 import (
 	"context"
 
-	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
-	"github.com/ibm/varnish-operator/pkg/labels"
-	vclabels "github.com/ibm/varnish-operator/pkg/labels"
-	"github.com/ibm/varnish-operator/pkg/logger"
-	"github.com/ibm/varnish-operator/pkg/names"
-	"github.com/ibm/varnish-operator/pkg/varnishcluster/compare"
+	vcapi "github.com/cin/varnish-operator/api/v1alpha1"
+	"github.com/cin/varnish-operator/pkg/labels"
+	vclabels "github.com/cin/varnish-operator/pkg/labels"
+	"github.com/cin/varnish-operator/pkg/logger"
+	"github.com/cin/varnish-operator/pkg/names"
+	"github.com/cin/varnish-operator/pkg/varnishcluster/compare"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
 

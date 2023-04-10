@@ -8,13 +8,13 @@ import (
 
 	ctrlBuilder "sigs.k8s.io/controller-runtime/pkg/builder"
 
-	"github.com/ibm/varnish-operator/api/v1alpha1"
-	"github.com/ibm/varnish-operator/pkg/logger"
-	"github.com/ibm/varnish-operator/pkg/varnishcontroller/config"
-	"github.com/ibm/varnish-operator/pkg/varnishcontroller/events"
-	"github.com/ibm/varnish-operator/pkg/varnishcontroller/metrics"
-	"github.com/ibm/varnish-operator/pkg/varnishcontroller/predicates"
-	"github.com/ibm/varnish-operator/pkg/varnishcontroller/varnishadm"
+	"github.com/cin/varnish-operator/api/v1alpha1"
+	"github.com/cin/varnish-operator/pkg/logger"
+	"github.com/cin/varnish-operator/pkg/varnishcontroller/config"
+	"github.com/cin/varnish-operator/pkg/varnishcontroller/events"
+	"github.com/cin/varnish-operator/pkg/varnishcontroller/metrics"
+	"github.com/cin/varnish-operator/pkg/varnishcontroller/predicates"
+	"github.com/cin/varnish-operator/pkg/varnishcontroller/varnishadm"
 
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/source"

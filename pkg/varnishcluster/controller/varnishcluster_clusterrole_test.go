@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	vcapi "github.com/ibm/varnish-operator/api/v1alpha1"
-	"github.com/ibm/varnish-operator/pkg/names"
+	vcapi "github.com/cin/varnish-operator/api/v1alpha1"
+	"github.com/cin/varnish-operator/pkg/names"
 
 	rbac "k8s.io/api/rbac/v1"
 

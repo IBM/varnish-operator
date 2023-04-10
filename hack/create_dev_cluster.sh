@@ -24,7 +24,7 @@ fi
 
 varnish_namespace="varnish-operator"
 cluster_name="e2e-tests"
-repo="ibmcom"
+repo="cinple"
 build_args="--build-arg VERSION=local"
 platform="linux/amd64"
 podman_in_use=false

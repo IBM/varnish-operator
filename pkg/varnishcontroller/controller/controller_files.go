@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/ibm/varnish-operator/pkg/logger"
+	"github.com/cin/varnish-operator/pkg/logger"
 
 	"github.com/pkg/errors"
 )

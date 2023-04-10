@@ -1,7 +1,7 @@
 package predicates
 
 import (
-	"github.com/ibm/varnish-operator/pkg/logger"
+	"github.com/cin/varnish-operator/pkg/logger"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )

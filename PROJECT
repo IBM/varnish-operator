@@ -1,7 +1,7 @@
 domain: ibm.com
 layout: go.kubebuilder.io/v3
 projectName: varnish-operator
-repo: github.com/ibm/varnish-operator
+repo: github.com/cin/varnish-operator
 resources:
 - api:
     crdVersion: v1
@@ -10,7 +10,7 @@ resources:
   domain: ibm.com
   group: caching
   kind: VarnishCluster
-  path: github.com/ibm/varnish-operator/api/v1alpha1
+  path: github.com/cin/varnish-operator/api/v1alpha1
   version: v1alpha1
 version: "3"
 plugins:

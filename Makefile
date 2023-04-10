@@ -2,7 +2,7 @@
 ROOT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 VERSION ?= local
 REPO ?= cinple
-PUBLISH_IMG ?= ${REPO}/varnish-operator:${VERSION}
+PUBLISH_IMG ?= varnish-operator:${VERSION}
 IMG ?= ${PUBLISH_IMG}-dev
 VARNISH_PUBLISH_IMG ?= varnish:${VERSION}
 VARNISH_IMG ?= ${VARNISH_PUBLISH_IMG}-dev
@@ -71,15 +71,12 @@ docker-build: test
 
 # Tag and push the docker image
 docker-tag-push:
-ifndef REPO_PATH
-	$(error must set REPO_PATH, eg "make docker-tag-push REPO_PATH=${REPO}")
-endif
 ifndef PUBLISH
-	docker tag ${IMG} ${REPO_PATH}/${IMG}
-	docker push ${REPO_PATH}/${IMG}
+	docker tag ${IMG} ${REPO}/${IMG}
+	docker push ${REPO}/${IMG}
 else
-	docker tag ${IMG} ${REPO_PATH}/${PUBLISH_IMG}
-	docker push ${REPO_PATH}/${PUBLISH_IMG}
+	docker tag ${IMG} ${REPO}/${PUBLISH_IMG}
+	docker push ${REPO}/${PUBLISH_IMG}
 endif
 
 varnish-controller: fmt vet
@@ -90,15 +87,12 @@ docker-build-varnish:
 	docker build --platform ${PLATFORM} ${ROOT_DIR} -t ${VARNISH_IMG} -f Dockerfile.varnishd
 
 docker-tag-push-varnish:
-ifndef REPO_PATH
-	$(error must set REPO_PATH, eg "make docker-tag-push REPO_PATH=${REPO}")
-endif
 ifndef PUBLISH
-	docker tag ${VARNISH_IMG} ${REPO_PATH}/${VARNISH_IMG}
-	docker push ${REPO_PATH}/${VARNISH_IMG}
+	docker tag ${VARNISH_IMG} ${REPO}/${VARNISH_IMG}
+	docker push ${REPO}/${VARNISH_IMG}
 else
-	docker tag ${VARNISH_IMG} ${REPO_PATH}/${VARNISH_PUBLISH_IMG}
-	docker push ${REPO_PATH}/${VARNISH_PUBLISH_IMG}
+	docker tag ${VARNISH_IMG} ${REPO}/${VARNISH_PUBLISH_IMG}
+	docker push ${REPO}/${VARNISH_PUBLISH_IMG}
 endif
 
 # Build the docker image with varnish controller
@@ -106,15 +100,12 @@ docker-build-varnish-controller: fmt vet
 	docker build --platform ${PLATFORM} ${ROOT_DIR} -t ${VARNISH_CONTROLLER_IMG} -f Dockerfile.controller
 
 docker-tag-push-varnish-controller:
-ifndef REPO_PATH
-	$(error must set REPO_PATH, eg "make docker-tag-push REPO_PATH=${REPO}")
-endif
 ifndef PUBLISH
-	docker tag ${VARNISH_CONTROLLER_IMG} ${REPO_PATH}/${VARNISH_CONTROLLER_IMG}
-	docker push ${REPO_PATH}/${VARNISH_CONTROLLER_IMG}
+	docker tag ${VARNISH_CONTROLLER_IMG} ${REPO}/${VARNISH_CONTROLLER_IMG}
+	docker push ${REPO}/${VARNISH_CONTROLLER_IMG}
 else
-	docker tag ${VARNISH_CONTROLLER_IMG} ${REPO_PATH}/${VARNISH_CONTROLLER_PUBLISH_IMG}
-	docker push ${REPO_PATH}/${VARNISH_CONTROLLER_PUBLISH_IMG}
+	docker tag ${VARNISH_CONTROLLER_IMG} ${REPO}/${VARNISH_CONTROLLER_PUBLISH_IMG}
+	docker push ${REPO}/${VARNISH_CONTROLLER_PUBLISH_IMG}
 endif
 
 # Build the docker image with varnish metrics exporter
@@ -122,15 +113,12 @@ docker-build-varnish-exporter:
 	docker build --platform ${PLATFORM} ${ROOT_DIR} -t ${VARNISH_METRICS_IMG} -f Dockerfile.exporter
 
 docker-tag-push-varnish-exporter:
-ifndef REPO_PATH
-	$(error must set REPO_PATH, eg "make docker-tag-push REPO_PATH=${REPO}")
-endif
 ifndef PUBLISH
-	docker tag ${VARNISH_METRICS_IMG} ${REPO_PATH}/${VARNISH_METRICS_IMG}
-	docker push ${REPO_PATH}/${VARNISH_METRICS_IMG}
+	docker tag ${VARNISH_METRICS_IMG} ${REPO}/${VARNISH_METRICS_IMG}
+	docker push ${REPO}/${VARNISH_METRICS_IMG}
 else
-	docker tag ${VARNISH_METRICS_IMG} ${REPO_PATH}/${VARNISH_METRICS_PUBLISH_IMG}
-	docker push ${REPO_PATH}/${VARNISH_METRICS_PUBLISH_IMG}
+	docker tag ${VARNISH_METRICS_IMG} ${REPO}/${VARNISH_METRICS_PUBLISH_IMG}
+	docker push ${REPO}/${VARNISH_METRICS_PUBLISH_IMG}
 endif
 
 docker-build-pod: docker-build-varnish docker-build-varnish-exporter docker-build-varnish-controller
@@ -158,9 +146,9 @@ kustomize:
 # Generate bundle manifests and metadata, then validate generated files.
 .PHONY: bundle
 bundle: manifests kustomize
-	yq w -i config/manager/deployment.yaml 'spec.template.spec.containers(name==varnish-operator).env(name==CONTAINER_IMAGE).value' $(PUBLISH_IMG)
-	yq w -i config/manifests/bases/varnish-operator.clusterserviceversion.yaml 'metadata.annotations.containerImage' $(PUBLISH_IMG)
-	yq w -i config/manifests/bases/varnish-operator.clusterserviceversion.yaml 'metadata.annotations.createdAt' $(date +"%Y-%m-%d")
+	yq -i '(.spec.template.spec.containers[0].env[] | select(.name == "CONTAINER_IMAGE") | .value) = "$(PUBLISH_IMG)"' config/manager/deployment.yaml
+	yq -i '.metadata.annotations.containerImage = "$(PUBLISH_IMG)"' config/manifests/bases/varnish-operator.clusterserviceversion.yaml
+	yq -i '.metadata.annotations.createdAt = now' config/manifests/bases/varnish-operator.clusterserviceversion.yaml
 	operator-sdk generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(PUBLISH_IMG)
 	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)

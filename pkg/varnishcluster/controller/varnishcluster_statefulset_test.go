@@ -14,6 +14,7 @@ import (
 	. "github.com/onsi/gomega"
 	apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -329,6 +330,25 @@ var _ = Describe("statefulset", func() {
 			Expect(sts.Spec.Template.Spec.NodeSelector).To(Equal(nodeSelector))
 			Expect(varnishContainer.VolumeMounts).To(ContainElement(testExtraVolumeMount))
 		})
+	})
+
+	Context("when varnishcluster is created with podAnnotations enable", func() {
+		It("should be created with corresponding podAnnotations set", func() {
+			newVC := vc.DeepCopy()
+			podAnnotations := map[string]string{"foo": "bar"}
+			newVC.Spec.PodAnnotations = podAnnotations
+
+			err := k8sClient.Create(context.Background(), newVC)
+			Expect(err).ToNot(HaveOccurred())
+
+			sts := &apps.StatefulSet{}
+			Eventually(func() error {
+				return k8sClient.Get(context.Background(), stsName, sts)
+			}, time.Second*5).Should(Succeed())
+
+			Expect(sts.Spec.Template.ObjectMeta.Annotations).To(Equal(map[string]string{"foo": "bar"}))
+		})
+
 	})
 })
 

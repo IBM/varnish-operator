@@ -90,6 +90,7 @@ type VarnishClusterSpec struct {
 	Service             *VarnishClusterService            `json:"service,omitempty"`
 	PodDisruptionBudget *policyv1.PodDisruptionBudgetSpec `json:"podDisruptionBudget,omitempty"`
 	NodeSelector        map[string]string                 `json:"nodeSelector,omitempty"`
+	PodAnnotations      map[string]string                 `json:"podAnnotations,omitempty"`
 	Affinity            *v1.Affinity                      `json:"affinity,omitempty"`
 	Tolerations         []v1.Toleration                   `json:"tolerations,omitempty"`
 	Monitoring          *VarnishClusterMonitoring         `json:"monitoring,omitempty"`

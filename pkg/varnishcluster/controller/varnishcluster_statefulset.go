@@ -78,7 +78,8 @@ func (r *ReconcileVarnishCluster) reconcileStatefulSet(ctx context.Context, inst
 			VolumeClaimTemplates: pvcs,
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: varnishLabels,
+					Labels:      varnishLabels,
+					Annotations: instance.Spec.PodAnnotations,
 				},
 				Spec: v1.PodSpec{
 					// Share a single process namespace between all of the containers in a pod.

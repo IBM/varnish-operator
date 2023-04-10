@@ -6,7 +6,7 @@ container:
   # image: cinple/varnish-operator:0.1.2
   registry: cinple
   repository: varnish-operator
-  tag: 0.36.0
+  tag: 0.37.0
   # Only specify the digest if you want to use it instead of the tag to specify what
   # version of the image to pull.
   digest: ""
